@@ -3,7 +3,7 @@ const path = require("path");
 
 console.log("Générateur multi-chaînes démarré...");
 
-const ROOT_DIR = "D:\\UsersData\\victo\\Downloads\\tron-ares-reorganized-v3";
+const ROOT_DIR = path.resolve(__dirname, "..");
 const CONFIG_FILE = path.join(ROOT_DIR, "config", "channels.json");
 const OUTPUT_DIR = path.join(ROOT_DIR, "pages", "players");
 const LOG_FILE = path.join(ROOT_DIR, "log.txt");
