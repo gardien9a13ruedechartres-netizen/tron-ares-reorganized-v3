@@ -144,7 +144,7 @@
 {
 "id": "BTV",
 "name": "BTV",
-"url": "/pages/btv.html",
+"url": "/pages/players/btv hd.html",
 "logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/commons/d/d2/Logo_Benfica_TV.png" },
 "group": "Sport",
 "isFavorite": false,
