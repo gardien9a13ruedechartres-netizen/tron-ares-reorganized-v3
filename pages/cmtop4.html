@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>HLS / iframe audio unique</title>
+
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+    background: black;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+#player-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: black;
+    overflow: hidden;
+}
+
+#mainVideo,
+#fallbackFrame {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background: black;
+    transition: opacity 0.25s ease;
+}
+
+#mainVideo {
+    object-fit: fill;
+    z-index: 2;
+}
+
+#fallbackFrame {
+    z-index: 1;
+}
+
+.player-hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.player-visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+#probeVideo {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+    left: -9999px;
+    top: -9999px;
+}
+
+#status {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    background: rgba(0,0,0,0.22);
+    pointer-events: none;
+    z-index: 6;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+#status.show {
+    opacity: 1;
+}
+
+#modeToggle {
+    position: absolute;
+    top: 12px;
+    right: 68px;
+    z-index: 10;
+    border: 0;
+    border-radius: 999px;
+    padding: 7px 11px;
+    font-size: 12px;
+    font-family: Arial, sans-serif;
+    color: rgba(255,255,255,0.92);
+    background: rgba(20,20,20,0.38);
+    cursor: pointer;
+    opacity: 0.42;
+}
+
+#modeToggle:hover {
+    opacity: 0.88;
+    background: rgba(20,20,20,0.62);
+}
+</style>
+</head>
+
+<body>
+
+<div id="player-container">
+
+    <iframe
+        id="fallbackFrame"
+        class="player-hidden"
+        src=""
+        allowfullscreen
+        allow="autoplay; fullscreen"
+        sandbox="allow-scripts allow-same-origin allow-forms"
+        referrerpolicy="no-referrer">
+    </iframe>
+
+    <video
+        id="mainVideo"
+        class="player-visible"
+        controls
+        autoplay
+        playsinline>
+    </video>
+
+    <video
+        id="probeVideo"
+        autoplay
+        playsinline
+        muted>
+    </video>
+
+    <div id="status">Chargement…</div>
+
+    <button id="modeToggle" type="button">
+        Iframe
+    </button>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+<script>
+(() => {
+
+    const mainVideo = document.getElementById("mainVideo");
+    const probeVideo = document.getElementById("probeVideo");
+    const iframe = document.getElementById("fallbackFrame");
+    const statusBox = document.getElementById("status");
+    const modeToggle = document.getElementById("modeToggle");
+
+    const streamUrl =
+    "https://muc001.myturn1.top:8088/live/agrrrrr/playlist.m3u8?id=121119&pk=55e0c5e758904f24491a24dcf7b039654e47682f5cc8226acfec022aa069037a68e44c0cc92ff172e54282db1300ee571e6f3aa3b124374237e6035006853d20";
+
+    const iframeUrl = "/pages/player-hls.html";
+
+    const HLS_START_TIMEOUT = 15000;
+    const HLS_STALL_CHECK_INTERVAL = 4000;
+    const HLS_STALL_MAX_NO_PROGRESS = 12000;
+
+    const PROBE_INTERVAL = 10000;
+    const PROBE_SUCCESS_TIME = 2500;
+    const PROBE_TIMEOUT = 12000;
+
+    let activeMode = "main";
+
+    let mainHls = null;
+    let probeHls = null;
+
+    let startupTimer = null;
+    let stallWatchTimer = null;
+    let probeIntervalTimer = null;
+
+    let probeAttemptRunning = false;
+    let iframeLoaded = false;
+
+    let hlsActuallyPlaying = false;
+
+    let lastMainProgressTs = 0;
+    let lastMainCurrentTime = 0;
+
+    let isSwitching = false;
+
+    // verrou manuel
+    let manualLock = false;
+
+    function showStatus(message) {
+        statusBox.textContent = message;
+        statusBox.classList.add("show");
+    }
+
+    function hideStatus() {
+        statusBox.classList.remove("show");
+    }
+
+    function updateToggleButton() {
+
+        if (activeMode === "main") {
+            modeToggle.textContent = "Iframe";
+        } else {
+            modeToggle.textContent = "HLS";
+        }
+    }
+
+    function forceSingleAudio(mode) {
+
+        probeVideo.muted = true;
+
+        if (mode === "main") {
+
+            mainVideo.muted = false;
+            mainVideo.volume = 1;
+
+            iframe.src = "";
+            iframeLoaded = false;
+        }
+
+        if (mode === "iframe") {
+
+            mainVideo.muted = true;
+
+            try {
+                mainVideo.pause();
+            } catch (_) {}
+        }
+    }
+
+    function clearMainTimers() {
+
+        clearTimeout(startupTimer);
+        clearInterval(stallWatchTimer);
+
+        startupTimer = null;
+        stallWatchTimer = null;
+    }
+
+    function clearProbeInterval() {
+
+        clearInterval(probeIntervalTimer);
+        probeIntervalTimer = null;
+    }
+
+    function destroyMainHls() {
+
+        if (!mainHls) return;
+
+        try {
+            mainHls.destroy();
+        } catch (_) {}
+
+        mainHls = null;
+    }
+
+    function destroyProbeHls() {
+
+        if (!probeHls) return;
+
+        try {
+            probeHls.destroy();
+        } catch (_) {}
+
+        probeHls = null;
+    }
+
+    function resetMainVideo() {
+
+        try {
+            mainVideo.pause();
+        } catch (_) {}
+
+        mainVideo.removeAttribute("src");
+        mainVideo.load();
+
+        hlsActuallyPlaying = false;
+
+        lastMainCurrentTime = 0;
+        lastMainProgressTs = 0;
+    }
+
+    function resetProbeVideo() {
+
+        try {
+            probeVideo.pause();
+        } catch (_) {}
+
+        probeVideo.removeAttribute("src");
+        probeVideo.load();
+    }
+
+    function ensureIframeLoaded() {
+
+        if (iframeLoaded) return;
+
+        iframe.src = iframeUrl;
+        iframeLoaded = true;
+    }
+
+    function showMainPlayer() {
+
+        activeMode = "main";
+
+        forceSingleAudio("main");
+
+        iframe.classList.remove("player-visible");
+        iframe.classList.add("player-hidden");
+
+        mainVideo.classList.remove("player-hidden");
+        mainVideo.classList.add("player-visible");
+
+        updateToggleButton();
+
+        hideStatus();
+    }
+
+    function showIframePlayer() {
+
+        activeMode = "iframe";
+
+        forceSingleAudio("iframe");
+
+        ensureIframeLoaded();
+
+        mainVideo.classList.remove("player-visible");
+        mainVideo.classList.add("player-hidden");
+
+        iframe.classList.remove("player-hidden");
+        iframe.classList.add("player-visible");
+
+        updateToggleButton();
+
+        hideStatus();
+    }
+
+    function onMainPlaying() {
+
+        hlsActuallyPlaying = true;
+
+        lastMainProgressTs = Date.now();
+        lastMainCurrentTime = mainVideo.currentTime || 0;
+
+        showMainPlayer();
+    }
+
+    function startMainStallWatcher() {
+
+        clearInterval(stallWatchTimer);
+
+        stallWatchTimer = setInterval(() => {
+
+            if (activeMode !== "main") return;
+            if (!hlsActuallyPlaying) return;
+
+            const now = Date.now();
+            const current = mainVideo.currentTime || 0;
+
+            const progressed =
+                current > lastMainCurrentTime + 0.01;
+
+            if (progressed) {
+
+                lastMainCurrentTime = current;
+                lastMainProgressTs = now;
+
+                return;
+            }
+
+            const noProgressFor =
+                now - lastMainProgressTs;
+
+            const waitingHard =
+                mainVideo.readyState < 3 &&
+                !mainVideo.paused &&
+                !mainVideo.ended;
+
+            if (
+                waitingHard &&
+                noProgressFor >= HLS_STALL_MAX_NO_PROGRESS
+            ) {
+                fallbackToIframe("Flux HLS bloqué");
+            }
+
+        }, HLS_STALL_CHECK_INTERVAL);
+    }
+
+    function startMainPlayback(options = {}) {
+
+        const {
+            forceVisible = true
+        } = options;
+
+        clearMainTimers();
+
+        destroyMainHls();
+
+        resetMainVideo();
+
+        showStatus("Connexion HLS...");
+
+        mainVideo.muted = false;
+
+        mainVideo.onplaying = onMainPlaying;
+
+        mainVideo.ontimeupdate = () => {
+
+            const current =
+                mainVideo.currentTime || 0;
+
+            if (
+                current > lastMainCurrentTime + 0.01
+            ) {
+                lastMainCurrentTime = current;
+                lastMainProgressTs = Date.now();
+            }
+        };
+
+        if (Hls.isSupported()) {
+
+            mainHls = new Hls({
+                enableWorker: true,
+                lowLatencyMode: false,
+                backBufferLength: 30
+            });
+
+            mainHls.on(
+                Hls.Events.MEDIA_ATTACHED,
+                () => {
+                    mainHls.loadSource(streamUrl);
+                }
+            );
+
+            mainHls.on(
+                Hls.Events.MANIFEST_PARSED,
+                () => {
+                    mainVideo.play().catch(() => {});
+                }
+            );
+
+            mainHls.on(
+                Hls.Events.ERROR,
+                (event, data) => {
+
+                    if (!data.fatal) return;
+
+                    fallbackToIframe("Erreur HLS");
+                }
+            );
+
+            mainHls.attachMedia(mainVideo);
+
+        } else {
+
+            fallbackToIframe("HLS non supporté");
+
+            return;
+        }
+
+        startupTimer = setTimeout(() => {
+
+            if (
+                !hlsActuallyPlaying &&
+                activeMode === "main"
+            ) {
+                fallbackToIframe("Timeout HLS");
+            }
+
+        }, HLS_START_TIMEOUT);
+
+        startMainStallWatcher();
+
+        if (forceVisible) {
+            showMainPlayer();
+        }
+    }
+
+    function fallbackToIframe(reason) {
+
+        if (activeMode === "iframe") return;
+
+        console.log("Fallback iframe :", reason);
+
+        clearMainTimers();
+
+        destroyMainHls();
+
+        resetMainVideo();
+
+        showIframePlayer();
+
+        startProbeLoop();
+    }
+
+    function switchBackToMain(auto = false) {
+
+        // bloque le retour auto
+        if (auto && manualLock) return;
+
+        console.log(
+            auto
+            ? "Retour automatique HLS"
+            : "Retour manuel HLS"
+        );
+
+        manualLock = false;
+
+        clearProbeInterval();
+
+        probeAttemptRunning = false;
+
+        destroyProbeHls();
+
+        resetProbeVideo();
+
+        startMainPlayback({
+            forceVisible: true
+        });
+    }
+
+    function switchToIframeManual() {
+
+        console.log("Bascule manuelle iframe");
+
+        // fixe iframe
+        manualLock = true;
+
+        clearMainTimers();
+
+        destroyMainHls();
+
+        resetMainVideo();
+
+        showIframePlayer();
+
+        startProbeLoop();
+    }
+
+    function startProbeLoop() {
+
+        clearProbeInterval();
+
+        attemptProbe();
+
+        probeIntervalTimer = setInterval(() => {
+
+            if (activeMode !== "iframe") return;
+            if (probeAttemptRunning) return;
+
+            attemptProbe();
+
+        }, PROBE_INTERVAL);
+    }
+
+    function attemptProbe() {
+
+        if (probeAttemptRunning) return;
+
+        probeAttemptRunning = true;
+
+        destroyProbeHls();
+
+        resetProbeVideo();
+
+        let probeSuccessTimer = null;
+        let probeTimeoutTimer = null;
+
+        let probeStarted = false;
+
+        let lastProbeCurrentTime = 0;
+
+        function cleanup(success) {
+
+            clearTimeout(probeSuccessTimer);
+            clearTimeout(probeTimeoutTimer);
+
+            probeVideo.onplaying = null;
+            probeVideo.ontimeupdate = null;
+            probeVideo.onerror = null;
+
+            destroyProbeHls();
+
+            resetProbeVideo();
+
+            probeAttemptRunning = false;
+
+            if (
+                success &&
+                activeMode === "iframe"
+            ) {
+                switchBackToMain(true);
+            }
+        }
+
+        function markProbeStarted() {
+
+            if (probeStarted) return;
+
+            probeStarted = true;
+
+            probeSuccessTimer = setTimeout(() => {
+                cleanup(true);
+            }, PROBE_SUCCESS_TIME);
+        }
+
+        probeVideo.muted = true;
+
+        probeVideo.onplaying = markProbeStarted;
+
+        probeVideo.ontimeupdate = () => {
+
+            const current =
+                probeVideo.currentTime || 0;
+
+            if (
+                current > lastProbeCurrentTime + 0.01
+            ) {
+                lastProbeCurrentTime = current;
+                markProbeStarted();
+            }
+        };
+
+        probeVideo.onerror = () => {
+            cleanup(false);
+        };
+
+        probeTimeoutTimer = setTimeout(() => {
+            cleanup(false);
+        }, PROBE_TIMEOUT);
+
+        if (Hls.isSupported()) {
+
+            probeHls = new Hls({
+                enableWorker: true,
+                lowLatencyMode: false,
+                backBufferLength: 10
+            });
+
+            probeHls.on(
+                Hls.Events.MEDIA_ATTACHED,
+                () => {
+                    probeHls.loadSource(streamUrl);
+                }
+            );
+
+            probeHls.on(
+                Hls.Events.MANIFEST_PARSED,
+                () => {
+                    probeVideo.play().catch(() => {});
+                }
+            );
+
+            probeHls.on(
+                Hls.Events.ERROR,
+                (event, data) => {
+
+                    if (data && data.fatal) {
+                        cleanup(false);
+                    }
+                }
+            );
+
+            probeHls.attachMedia(probeVideo);
+        }
+    }
+
+    function manualToggle() {
+
+        if (isSwitching) return;
+
+        isSwitching = true;
+
+        if (activeMode === "main") {
+
+            switchToIframeManual();
+
+        } else {
+
+            manualLock = false;
+
+            switchBackToMain(false);
+        }
+
+        setTimeout(() => {
+            isSwitching = false;
+        }, 300);
+    }
+
+    function init() {
+
+        updateToggleButton();
+
+        showStatus("Initialisation...");
+
+        forceSingleAudio("main");
+
+        startMainPlayback({
+            forceVisible: true
+        });
+    }
+
+    modeToggle.addEventListener(
+        "click",
+        (event) => {
+
+            event.stopPropagation();
+
+            manualToggle();
+        }
+    );
+
+    document.addEventListener(
+        "visibilitychange",
+        () => {
+
+            if (document.hidden) return;
+
+            if (
+                activeMode === "iframe" &&
+                !probeAttemptRunning
+            ) {
+                attemptProbe();
+            }
+        }
+    );
+
+    init();
+
+})();
+</script>
+
+</body>
+</html>

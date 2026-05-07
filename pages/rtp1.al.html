@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RTP1 Live Stream from Portugal - Canlı İzle</title>
+    
+
+<style>
+    body, html {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        overflow: hidden !important;
+        background: #000;
+    }
+
+    video {
+        display: block !important;
+        position: absolute !important;
+        top: -3px !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100vw !important; /* Prendre toute la largeur de l'écran */
+        height: 100vh !important; /* Prendre toute la hauteur de l'écran */
+        object-fit: fill; /* Remplir l'écran tout en maintenant le ratio */
+        border: none !important;
+    }
+</style>
+
+</head>
+<body>
+
+    <video id="player" controls autoplay></video>
+
+    <!-- HLS.js Script -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+    <script>
+        // Vérifier si le navigateur supporte HLS.js
+        if (Hls.isSupported()) {
+            var video = document.getElementById('player');
+            var hls = new Hls();
+
+            // Charger la source HLS
+            hls.loadSource('https://endirecttv.com/klod/pt/rtp.php');
+            hls.attachMedia(video);
+
+            // Gérer les événements de HLS.js
+            hls.on(Hls.Events.MANIFEST_PARSED, function(event, data) {
+                console.log("Manifest parsed, found " + data.levels.length + " quality levels.");
+            });
+
+            hls.on(Hls.Events.ERROR, function(event, data) {
+                if (data.fatal) {
+                    switch (data.type) {
+                        case Hls.ErrorTypes.NETWORK_ERROR:
+                            console.error("A network error occurred");
+                            break;
+                        case Hls.ErrorTypes.MEDIA_ERROR:
+                            console.error("A media error occurred");
+                            break;
+                        case Hls.ErrorTypes.OTHER_ERROR:
+                            console.error("An unknown error occurred");
+                            break;
+                        default:
+                            console.error("An error occurred: ", data);
+                            break;
+                    }
+                }
+            });
+        }
+        // Si HLS.js n'est pas supporté, utiliser le lecteur natif du navigateur
+        else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = 'https://endirecttv.com/klod/pt/rtp.php';
+        } else {
+            console.error('Le flux HLS n\'est pas supporté par votre navigateur.');
+        }
+    </script>
+
+</body>
+</html>

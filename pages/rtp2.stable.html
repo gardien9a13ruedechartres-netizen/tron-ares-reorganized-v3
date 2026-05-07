@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dual iframe player avec fallback</title>
+
+<style>
+:root{
+  --ui-bg: rgba(0, 0, 0, 0.55);
+  --ui-bg-hover: rgba(0, 0, 0, 0.75);
+  --ui-border: rgba(255,255,255,0.14);
+  --ui-text: #ffffff;
+  --ui-shadow: 0 10px 28px rgba(0,0,0,0.35);
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  overflow: hidden;
+}
+
+body {
+  position: relative;
+  font-family: Arial, sans-serif;
+}
+
+#player-container {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+  overflow: hidden;
+}
+
+#iframeViewport {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+  z-index: 1;
+}
+
+#fallbackFrame {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border: 0;
+  display: block;
+  background: #000;
+  transform-origin: center center;
+  will-change: width, height, left, top, transform;
+}
+
+.hidden {
+  display: none !important;
+}
+
+#status {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  color: var(--ui-text);
+  font-size: 16px;
+  text-align: center;
+  background: rgba(0,0,0,0.18);
+  pointer-events: none;
+  z-index: 6;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+#status.show {
+  opacity: 1;
+}
+
+#toggleBtn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+  border: 1px solid var(--ui-border);
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--ui-bg);
+  color: var(--ui-text);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: var(--ui-shadow);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: background 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
+}
+
+#toggleBtn:hover {
+  background: var(--ui-bg-hover);
+  transform: translateY(-1px);
+}
+
+#toggleBtn:active {
+  transform: translateY(0);
+}
+
+#toggleBtn:focus-visible {
+  outline: 2px solid rgba(255,255,255,0.55);
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  #toggleBtn {
+    top: 10px;
+    right: 10px;
+    padding: 9px 12px;
+    font-size: 12px;
+  }
+
+  #status {
+    font-size: 14px;
+    padding: 16px;
+  }
+}
+
+#iframeUrl1 {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #000;
+}
+
+</style>
+</head>
+<body>
+<iframe id="iframeUrl1"
+  sandbox="allow-scripts allow-forms"
+  referrerpolicy="no-referrer"
+  loading="eager"
+  allowfullscreen
+></iframe>
+<div id="player-container">
+  <div id="iframeViewport">
+    <iframe
+      id="fallbackFrame"
+      src=""
+      allowfullscreen
+      allow="autoplay; fullscreen"
+      referrerpolicy="no-referrer">
+    </iframe>
+  </div>
+
+  <div id="status">Chargement…</div>
+  <button id="toggleBtn" type="button">Basculer source</button>
+</div>
+
+<script>
+(() => {
+  const iframeViewport = document.getElementById("iframeViewport");
+  const iframe = document.getElementById("fallbackFrame");
+  const statusBox = document.getElementById("status");
+  const toggleBtn = document.getElementById("toggleBtn");
+
+  const iframeUrl1 = "https://play-6eh.pages.dev/?https://streaming-live.rtp.pt/liverepeater/rtp2HD.smil/playlist.m3u8";
+  const iframeUrl2 = "https://popcdn.day/player.php?stream=RTP2";
+
+  const CONFIG = {
+    startupTimeoutMs: 12000,
+    retryBackDelayMs: 30000,
+    showVisibleMessages: true,
+
+    iframeAutoRefreshEnabled: true,
+    iframeAutoRefreshMs: (10 * 60 + 16) * 1000,
+
+    iframeBaseWidth: 1920,
+    iframeBaseHeight: 1080,
+
+    // "contain" | "cover" | "fill"
+    iframeFitMode: "contain",
+
+    iframeOffsetX: 0,
+    iframeOffsetY: 0,
+    iframeExtraScale: 1.0,
+    iframeFillBoost: 1.0
+  };
+
+  let currentSourceIndex = 1;
+  let iframeLoadTimer = null;
+  let iframeRefreshTimer = null;
+  let resizeRaf = null;
+  let isIframeLoaded = false;
+  let iframeLastLoad = 0;
+
+  function showStatus(message) {
+    if (!CONFIG.showVisibleMessages) return;
+    statusBox.textContent = message || "";
+    statusBox.classList.add("show");
+  }
+
+  function hideStatus() {
+    statusBox.classList.remove("show");
+  }
+
+  function getCurrentIframeUrl() {
+    return currentSourceIndex === 1 ? iframeUrl1 : iframeUrl2;
+  }
+
+  function getSourceLabel(index) {
+    return index === 1 ? "Source 1" : "Source 2";
+  }
+
+  function applyIframeLayout() {
+    const viewportWidth = iframeViewport.clientWidth || window.innerWidth;
+    const viewportHeight = iframeViewport.clientHeight || window.innerHeight;
+
+    const baseWidth = CONFIG.iframeBaseWidth;
+    const baseHeight = CONFIG.iframeBaseHeight;
+
+    const scaleContain = Math.min(viewportWidth / baseWidth, viewportHeight / baseHeight);
+    const scaleCover = Math.max(viewportWidth / baseWidth, viewportHeight / baseHeight);
+
+    let finalScale = scaleCover;
+
+    if (CONFIG.iframeFitMode === "contain") {
+      finalScale = scaleContain;
+    } else if (CONFIG.iframeFitMode === "cover") {
+      finalScale = scaleCover * CONFIG.iframeExtraScale;
+    } else if (CONFIG.iframeFitMode === "fill") {
+      finalScale = scaleCover * CONFIG.iframeExtraScale * CONFIG.iframeFillBoost;
+    }
+
+    const renderedWidth = baseWidth * finalScale;
+    const renderedHeight = baseHeight * finalScale;
+
+    const left = (viewportWidth - renderedWidth) / 2 + CONFIG.iframeOffsetX;
+    const top = (viewportHeight - renderedHeight) / 2 + CONFIG.iframeOffsetY;
+
+    iframe.style.width = renderedWidth + "px";
+    iframe.style.height = renderedHeight + "px";
+    iframe.style.left = left + "px";
+    iframe.style.top = top + "px";
+    iframe.style.transform = "translateZ(0)";
+  }
+
+  function refreshIframeLayout() {
+    if (resizeRaf) cancelAnimationFrame(resizeRaf);
+    resizeRaf = requestAnimationFrame(() => {
+      applyIframeLayout();
+    });
+  }
+
+  function stopIframeLoadTimer() {
+    if (iframeLoadTimer) {
+      clearTimeout(iframeLoadTimer);
+      iframeLoadTimer = null;
+    }
+  }
+
+  function stopIframeRefreshTimer() {
+    if (iframeRefreshTimer) {
+      clearInterval(iframeRefreshTimer);
+      iframeRefreshTimer = null;
+    }
+  }
+
+  function armIframeLoadTimeout(reasonPrefix = "Timeout de chargement") {
+    stopIframeLoadTimer();
+
+    iframeLoadTimer = setTimeout(() => {
+      if (!isIframeLoaded) {
+        switchToAlternateSource(`${reasonPrefix} (${getSourceLabel(currentSourceIndex)})`);
+      }
+    }, CONFIG.startupTimeoutMs);
+  }
+
+  function updateToggleLabel() {
+    toggleBtn.textContent = currentSourceIndex === 1
+      ? "Basculer vers source 2"
+      : "Basculer vers source 1";
+  }
+
+  function loadIframe(url, reason = "") {
+    stopIframeLoadTimer();
+
+    isIframeLoaded = false;
+    iframeLastLoad = 0;
+
+    showStatus(reason ? `${reason}…` : `Chargement ${getSourceLabel(currentSourceIndex)}…`);
+    refreshIframeLayout();
+
+    iframe.src = url;
+    armIframeLoadTimeout();
+    updateToggleLabel();
+  }
+
+  function switchToSource(index, reason = "") {
+    currentSourceIndex = index === 2 ? 2 : 1;
+    loadIframe(getCurrentIframeUrl(), reason || `Chargement ${getSourceLabel(currentSourceIndex)}`);
+  }
+
+  function switchToAlternateSource(reason = "") {
+    currentSourceIndex = currentSourceIndex === 1 ? 2 : 1;
+    loadIframe(getCurrentIframeUrl(), reason || "Bascule automatique");
+  }
+
+  function manualToggleSource() {
+    switchToAlternateSource("Bascule manuelle");
+  }
+
+  function refreshCurrentSource() {
+    if (!CONFIG.iframeAutoRefreshEnabled) return;
+
+    const now = Date.now();
+    if (now - iframeLastLoad < CONFIG.iframeAutoRefreshMs - 2000) {
+      return;
+    }
+
+    loadIframe(getCurrentIframeUrl(), `Rafraîchissement ${getSourceLabel(currentSourceIndex)}`);
+  }
+
+  function startIframeRefreshTimer() {
+    stopIframeRefreshTimer();
+
+    if (!CONFIG.iframeAutoRefreshEnabled) return;
+
+    iframeRefreshTimer = setInterval(() => {
+      refreshCurrentSource();
+    }, CONFIG.iframeAutoRefreshMs);
+  }
+
+  iframe.addEventListener("load", () => {
+    isIframeLoaded = true;
+    iframeLastLoad = Date.now();
+    stopIframeLoadTimer();
+    hideStatus();
+  });
+
+  iframe.addEventListener("error", () => {
+    switchToAlternateSource(`Erreur iframe (${getSourceLabel(currentSourceIndex)})`);
+  });
+
+  toggleBtn.addEventListener("click", () => {
+    manualToggleSource();
+  });
+
+  window.addEventListener("resize", refreshIframeLayout);
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key.toLowerCase() === "t") {
+      manualToggleSource();
+    }
+  });
+
+  window.toggleIframeSource = manualToggleSource;
+  window.switchToIframe1 = () => switchToSource(1, "Forçage source 1");
+  window.switchToIframe2 = () => switchToSource(2, "Forçage source 2");
+
+  refreshIframeLayout();
+  updateToggleLabel();
+  switchToSource(1, "Démarrage source principale");
+  startIframeRefreshTimer();
+})();
+</script>
+
+<script src="../js/wheel-volume-iframe.js"></script>
+</body>
+</html>

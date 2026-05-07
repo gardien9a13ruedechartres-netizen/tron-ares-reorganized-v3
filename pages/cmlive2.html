@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Canais IPTV</title>
+
+<script>
+(function () {
+  "use strict";
+
+  // 1. Bloque les popups ouvertes depuis ta page
+  try {
+    window.open = function () {
+      console.warn("[Canais IPTV] Popup bloquée");
+      return null;
+    };
+  } catch (e) {}
+
+  // 2. Bloque les liens qui veulent ouvrir un nouvel onglet depuis ta page
+  document.addEventListener("click", function (e) {
+    const link = e.target.closest && e.target.closest("a");
+
+    if (!link) return;
+
+    const target = String(link.getAttribute("target") || "").toLowerCase();
+
+    if (target === "_blank") {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      console.warn("[Canais IPTV] Lien externe bloqué :", link.href);
+    }
+  }, true);
+
+  // 3. Bloque les scripts Histats ajoutés depuis ta page
+  const originalCreateElement = document.createElement.bind(document);
+
+  document.createElement = function (tagName, options) {
+    const el = originalCreateElement(tagName, options);
+
+    if (String(tagName).toLowerCase() === "script") {
+      const originalSetAttribute = el.setAttribute.bind(el);
+
+      el.setAttribute = function (name, value) {
+        if (
+          String(name).toLowerCase() === "src" &&
+          /histats|s10\.histats\.com|sstatic1\.histats\.com/i.test(String(value))
+        ) {
+          console.warn("[Canais IPTV] Script bloqué :", value);
+          return;
+        }
+
+        return originalSetAttribute(name, value);
+      };
+
+      try {
+        Object.defineProperty(el, "src", {
+          set(value) {
+            if (/histats|s10\.histats\.com|sstatic1\.histats\.com/i.test(String(value))) {
+              console.warn("[Canais IPTV] Script bloqué :", value);
+              return;
+            }
+
+            originalSetAttribute("src", value);
+          },
+          get() {
+            return el.getAttribute("src") || "";
+          },
+          configurable: true
+        });
+      } catch (e) {}
+    }
+
+    return el;
+  };
+})();
+</script>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+}
+
+.iframe-container {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: #000;
+}
+
+.iframe-container iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+</style>
+
+</head>
+<body>
+
+<div class="iframe-container">
+  <iframe
+    src="https://livewatch.top/channels/France"
+    allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+    sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
+    referrerpolicy="origin"
+    allowfullscreen>
+  </iframe>
+</div>
+
+</body>
+</html>

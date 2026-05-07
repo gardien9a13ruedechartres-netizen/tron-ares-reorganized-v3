@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta http-equiv="Content-Security-Policy"
+      content="script-src 'self' 'nonce-abc123';">
+  <title>RTP1 - Overlay</title>
+  <style>
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #000;
+    }
+
+    .wrap {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      border-radius: 0;
+      display: block;
+      background: #000;
+    }
+
+    @supports (height: 100dvh) {
+      .wrap { height: 100dvh; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="wrap">
+  <iframe id="player"
+     src="https://play-6eh.pages.dev/?proxy=1&url=https://clouding.wideiptv.top/CMTVPT/index.fmp4.m3u8?token=ce091308290f51b011de032c38536bd861cfb5de-f68c1b03d58c4fb639817058c5f5daf7-1773256573-1773252973"
+        sandbox="allow-scripts allow-forms"
+      referrerpolicy="no-referrer"
+      loading="eager"
+      title="RTP1">  
+     
+  </iframe>
+</div>
+
+
+
+</body>
+</html>

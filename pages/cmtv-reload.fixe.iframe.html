@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>HLS / iframe avec toggle discret</title>
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+    background: black;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+#player-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: black;
+    overflow: hidden;
+}
+
+#mainVideo,
+#probeVideo,
+#status,
+#fallbackFrame {
+    position: absolute;
+    inset: 0;
+}
+
+#mainVideo,
+#fallbackFrame {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background: black;
+}
+
+#mainVideo {
+    object-fit: fill;
+    z-index: 2;
+}
+
+#fallbackFrame {
+    z-index: 1;
+}
+
+#probeVideo {
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+    left: -9999px;
+    top: -9999px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+#status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    background: rgba(0,0,0,0.22);
+    pointer-events: none;
+    z-index: 6;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+#status.show {
+    opacity: 1;
+}
+
+#modeToggle {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 10;
+    border: 0;
+    border-radius: 999px;
+    padding: 7px 11px;
+    font-size: 12px;
+    line-height: 1;
+    font-family: Arial, sans-serif;
+    color: rgba(255,255,255,0.92);
+    background: rgba(20,20,20,0.38);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    cursor: pointer;
+    opacity: 0.42;
+    transition: opacity 0.18s ease, background 0.18s ease, transform 0.18s ease;
+}
+
+#modeToggle:hover,
+#modeToggle:focus-visible {
+    opacity: 0.88;
+    background: rgba(20,20,20,0.62);
+    outline: none;
+}
+
+#modeToggle:active {
+    transform: scale(0.98);
+}
+</style>
+</head>
+<body>
+
+<div id="player-container">
+    <iframe
+        id="fallbackFrame"
+        class="hidden"
+        src=""
+        allowfullscreen
+        allow="autoplay; fullscreen"
+        sandbox="allow-scripts allow-same-origin allow-forms"
+        referrerpolicy="no-referrer">
+    </iframe>
+
+    <video id="mainVideo" controls autoplay playsinline></video>
+    <video id="probeVideo" autoplay playsinline muted></video>
+
+    <div id="status">Chargement…</div>
+
+    <button id="modeToggle" type="button" aria-label="Basculer de lecteur">Iframe</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+<script>
+(() => {
+    const mainVideo = document.getElementById("mainVideo");
+    const probeVideo = document.getElementById("probeVideo");
+    const iframe = document.getElementById("fallbackFrame");
+    const statusBox = document.getElementById("status");
+    const modeToggle = document.getElementById("modeToggle");
+
+    const streamUrl = "https://plu001.myturn1.top:8088/live/agrrrrr/playlist.m3u8?id=121119&pk=55e0c5e758904f24491a24dcf7b039654e47682f5cc8226acfec022aa069037aaa779339da9740574f8b30363781438a2727685b5150b1ca0ac894bbfff5096c";
+    const iframeUrl = "https://popcdn.day/player.php?stream=CMTVPT";
+
+    // Réglages
+    const HLS_START_TIMEOUT = 15000;
+    const HLS_STALL_CHECK_INTERVAL = 4000;
+    const HLS_STALL_MAX_NO_PROGRESS = 12000;
+    const PROBE_INTERVAL = 10000;
+    const PROBE_SUCCESS_TIME = 2500;
+    const PROBE_TIMEOUT = 12000;
+    const STATUS_DELAY = 250;
+
+    let activeMode = "main";            // "main" | "iframe"
+    let mainHls = null;
+    let probeHls = null;
+
+    let startupTimer = null;
+    let stallWatchTimer = null;
+    let probeIntervalTimer = null;
+    let probeAttemptRunning = false;
+
+    let iframeLoaded = false;
+    let hlsActuallyPlaying = false;
+    let lastMainProgressTs = 0;
+    let lastMainCurrentTime = 0;
+    let statusHideTimer = null;
+    let isSwitching = false;
+
+    // null | "iframe"
+    // si "iframe", l'utilisateur a volontairement verrouillé l'iframe
+    let manualModeLock = null;
+
+    function showStatus(message) {
+        clearTimeout(statusHideTimer);
+        statusBox.textContent = message || "";
+        statusBox.classList.add("show");
+    }
+
+    function hideStatus() {
+        clearTimeout(statusHideTimer);
+        statusHideTimer = setTimeout(() => {
+            statusBox.classList.remove("show");
+        }, STATUS_DELAY);
+    }
+
+    function updateToggleButton() {
+        if (activeMode === "main") {
+            modeToggle.textContent = "Iframe";
+            modeToggle.setAttribute("aria-label", "Basculer vers iframe");
+            modeToggle.title = "Basculer vers iframe";
+        } else {
+            modeToggle.textContent = "HLS";
+            modeToggle.setAttribute("aria-label", "Basculer vers HLS");
+            modeToggle.title = "Basculer vers HLS";
+        }
+    }
+
+    function clearMainTimers() {
+        if (startupTimer) {
+            clearTimeout(startupTimer);
+            startupTimer = null;
+        }
+
+        if (stallWatchTimer) {
+            clearInterval(stallWatchTimer);
+            stallWatchTimer = null;
+        }
+    }
+
+    function clearProbeInterval() {
+        if (probeIntervalTimer) {
+            clearInterval(probeIntervalTimer);
+            probeIntervalTimer = null;
+        }
+    }
+
+    function destroyMainHls() {
+        if (mainHls) {
+            try {
+                mainHls.destroy();
+            } catch (_) {}
+            mainHls = null;
+        }
+    }
+
+    function destroyProbeHls() {
+        if (probeHls) {
+            try {
+                probeHls.destroy();
+            } catch (_) {}
+            probeHls = null;
+        }
+    }
+
+    function resetMainVideo() {
+        try {
+            mainVideo.pause();
+        } catch (_) {}
+
+        mainVideo.onplaying = null;
+        mainVideo.ontimeupdate = null;
+        mainVideo.onerror = null;
+
+        mainVideo.removeAttribute("src");
+        mainVideo.load();
+
+        hlsActuallyPlaying = false;
+        lastMainCurrentTime = 0;
+        lastMainProgressTs = 0;
+    }
+
+    function resetProbeVideo() {
+        try {
+            probeVideo.pause();
+        } catch (_) {}
+
+        probeVideo.onplaying = null;
+        probeVideo.ontimeupdate = null;
+        probeVideo.onerror = null;
+
+        probeVideo.removeAttribute("src");
+        probeVideo.load();
+    }
+
+    function ensureIframeLoaded() {
+        if (!iframeLoaded) {
+            iframe.src = iframeUrl;
+            iframeLoaded = true;
+        }
+    }
+
+    function showMainPlayer() {
+        iframe.classList.add("hidden");
+        mainVideo.classList.remove("hidden");
+        activeMode = "main";
+        updateToggleButton();
+        hideStatus();
+    }
+
+    function showIframePlayer() {
+        ensureIframeLoaded();
+        mainVideo.classList.add("hidden");
+        iframe.classList.remove("hidden");
+        activeMode = "iframe";
+        updateToggleButton();
+        hideStatus();
+    }
+
+    function onMainPlaying() {
+        hlsActuallyPlaying = true;
+        lastMainProgressTs = Date.now();
+        lastMainCurrentTime = mainVideo.currentTime || 0;
+
+        if (manualModeLock !== "iframe") {
+            showMainPlayer();
+        }
+    }
+
+    function startMainStallWatcher() {
+        clearInterval(stallWatchTimer);
+
+        stallWatchTimer = setInterval(() => {
+            if (manualModeLock === "iframe") return;
+            if (activeMode !== "main") return;
+            if (!hlsActuallyPlaying) return;
+
+            const now = Date.now();
+            const current = mainVideo.currentTime || 0;
+            const progressed = current > lastMainCurrentTime + 0.01;
+
+            if (progressed) {
+                lastMainCurrentTime = current;
+                lastMainProgressTs = now;
+                return;
+            }
+
+            const noProgressFor = now - lastMainProgressTs;
+            const waitingHard = mainVideo.readyState < 3 && !mainVideo.paused && !mainVideo.ended;
+
+            if (waitingHard && noProgressFor >= HLS_STALL_MAX_NO_PROGRESS) {
+                fallbackToIframe("Flux HLS bloqué");
+            }
+        }, HLS_STALL_CHECK_INTERVAL);
+    }
+
+    function startMainPlayback(options = {}) {
+        const { forceVisible = true } = options;
+
+        clearMainTimers();
+        destroyMainHls();
+        resetMainVideo();
+
+        if (manualModeLock !== "iframe") {
+            showStatus("Connexion au flux HLS…");
+        }
+
+        mainVideo.onplaying = onMainPlaying;
+        mainVideo.ontimeupdate = () => {
+            const current = mainVideo.currentTime || 0;
+            if (current > lastMainCurrentTime + 0.01) {
+                lastMainCurrentTime = current;
+                lastMainProgressTs = Date.now();
+            }
+        };
+
+        if (Hls.isSupported()) {
+            mainHls = new Hls({
+                enableWorker: true,
+                lowLatencyMode: false,
+                backBufferLength: 30
+            });
+
+            mainHls.on(Hls.Events.MEDIA_ATTACHED, () => {
+                mainHls.loadSource(streamUrl);
+            });
+
+            mainHls.on(Hls.Events.MANIFEST_PARSED, () => {
+                mainVideo.play().catch(() => {});
+            });
+
+            mainHls.on(Hls.Events.ERROR, (event, data) => {
+                if (!data.fatal) return;
+
+                if (manualModeLock === "iframe") {
+                    return;
+                }
+
+                switch (data.type) {
+                    case Hls.ErrorTypes.NETWORK_ERROR:
+                        fallbackToIframe("Erreur réseau HLS");
+                        break;
+
+                    case Hls.ErrorTypes.MEDIA_ERROR:
+                        try {
+                            mainHls.recoverMediaError();
+                        } catch (_) {
+                            fallbackToIframe("Erreur média HLS");
+                        }
+                        break;
+
+                    default:
+                        fallbackToIframe("Erreur HLS");
+                        break;
+                }
+            });
+
+            mainHls.attachMedia(mainVideo);
+        } else if (mainVideo.canPlayType("application/vnd.apple.mpegurl")) {
+            mainVideo.src = streamUrl;
+            mainVideo.play().catch(() => {});
+        } else {
+            if (manualModeLock !== "iframe") {
+                fallbackToIframe("HLS non supporté");
+            }
+            return;
+        }
+
+        startupTimer = setTimeout(() => {
+            if (manualModeLock === "iframe") return;
+
+            if (!hlsActuallyPlaying && activeMode === "main") {
+                fallbackToIframe("Timeout de démarrage HLS");
+            }
+        }, HLS_START_TIMEOUT);
+
+        startMainStallWatcher();
+
+        if (forceVisible && manualModeLock !== "iframe") {
+            showMainPlayer();
+        }
+    }
+
+    function fallbackToIframe(reason) {
+        if (manualModeLock === "iframe") {
+            showIframePlayer();
+            return;
+        }
+
+        if (activeMode === "iframe") return;
+
+        console.log("Fallback vers iframe :", reason);
+
+        clearMainTimers();
+        destroyMainHls();
+        resetMainVideo();
+
+        showIframePlayer();
+        startProbeLoop();
+    }
+
+    function switchBackToMain(auto = false) {
+        if (auto && manualModeLock === "iframe") {
+            return;
+        }
+
+        console.log(auto ? "Retour automatique vers HLS" : "Retour manuel vers HLS");
+
+        manualModeLock = null;
+
+        clearProbeInterval();
+        probeAttemptRunning = false;
+        destroyProbeHls();
+        resetProbeVideo();
+
+        startMainPlayback({ forceVisible: true });
+    }
+
+    function switchToIframeManual() {
+        console.log("Bascule manuelle vers iframe (verrouillée)");
+
+        manualModeLock = "iframe";
+
+        clearMainTimers();
+        clearProbeInterval();
+        probeAttemptRunning = false;
+
+        destroyMainHls();
+        destroyProbeHls();
+
+        resetMainVideo();
+        resetProbeVideo();
+
+        showIframePlayer();
+    }
+
+    function startProbeLoop() {
+        if (manualModeLock === "iframe") {
+            return;
+        }
+
+        clearProbeInterval();
+
+        attemptProbe();
+
+        probeIntervalTimer = setInterval(() => {
+            if (manualModeLock === "iframe") return;
+            if (activeMode !== "iframe") return;
+            if (probeAttemptRunning) return;
+            attemptProbe();
+        }, PROBE_INTERVAL);
+    }
+
+    function attemptProbe() {
+        if (manualModeLock === "iframe") return;
+        if (probeAttemptRunning) return;
+
+        probeAttemptRunning = true;
+
+        destroyProbeHls();
+        resetProbeVideo();
+
+        let probeSuccessTimer = null;
+        let probeTimeoutTimer = null;
+        let probeStarted = false;
+        let lastProbeCurrentTime = 0;
+
+        function cleanup(success) {
+            if (probeSuccessTimer) {
+                clearTimeout(probeSuccessTimer);
+                probeSuccessTimer = null;
+            }
+
+            if (probeTimeoutTimer) {
+                clearTimeout(probeTimeoutTimer);
+                probeTimeoutTimer = null;
+            }
+
+            probeVideo.onplaying = null;
+            probeVideo.ontimeupdate = null;
+            probeVideo.onerror = null;
+
+            destroyProbeHls();
+            resetProbeVideo();
+
+            probeAttemptRunning = false;
+
+            if (success && activeMode === "iframe" && manualModeLock !== "iframe") {
+                switchBackToMain(true);
+            }
+        }
+
+        function markProbeStarted() {
+            if (probeStarted) return;
+            probeStarted = true;
+
+            probeSuccessTimer = setTimeout(() => {
+                cleanup(true);
+            }, PROBE_SUCCESS_TIME);
+        }
+
+        probeVideo.muted = true;
+        probeVideo.autoplay = true;
+        probeVideo.playsInline = true;
+
+        probeVideo.onplaying = () => {
+            markProbeStarted();
+        };
+
+        probeVideo.ontimeupdate = () => {
+            const current = probeVideo.currentTime || 0;
+            if (current > lastProbeCurrentTime + 0.01) {
+                lastProbeCurrentTime = current;
+                markProbeStarted();
+            }
+        };
+
+        probeVideo.onerror = () => {
+            cleanup(false);
+        };
+
+        probeTimeoutTimer = setTimeout(() => {
+            cleanup(false);
+        }, PROBE_TIMEOUT);
+
+        if (Hls.isSupported()) {
+            probeHls = new Hls({
+                enableWorker: true,
+                lowLatencyMode: false,
+                backBufferLength: 10
+            });
+
+            probeHls.on(Hls.Events.MEDIA_ATTACHED, () => {
+                probeHls.loadSource(streamUrl);
+            });
+
+            probeHls.on(Hls.Events.MANIFEST_PARSED, () => {
+                probeVideo.play().catch(() => {});
+            });
+
+            probeHls.on(Hls.Events.ERROR, (event, data) => {
+                if (data && data.fatal) {
+                    cleanup(false);
+                }
+            });
+
+            probeHls.attachMedia(probeVideo);
+        } else if (probeVideo.canPlayType("application/vnd.apple.mpegurl")) {
+            probeVideo.src = streamUrl;
+            probeVideo.play().catch(() => {});
+        } else {
+            cleanup(false);
+        }
+    }
+
+    function manualToggle() {
+        if (isSwitching) return;
+        isSwitching = true;
+
+        try {
+            if (activeMode === "main") {
+                switchToIframeManual();
+            } else {
+                switchBackToMain(false);
+            }
+        } finally {
+            setTimeout(() => {
+                isSwitching = false;
+            }, 300);
+        }
+    }
+
+    function init() {
+        updateToggleButton();
+        showStatus("Initialisation…");
+        startMainPlayback({ forceVisible: true });
+    }
+
+    modeToggle.addEventListener("click", (event) => {
+        event.stopPropagation();
+        manualToggle();
+    });
+
+    document.addEventListener("visibilitychange", () => {
+        if (document.hidden) return;
+
+        if (
+            manualModeLock !== "iframe" &&
+            activeMode === "iframe" &&
+            !probeAttemptRunning
+        ) {
+            attemptProbe();
+        }
+    });
+
+    init();
+})();
+</script>
+
+</body>
+</html>

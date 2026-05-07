@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reload invisible iframe externe</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: #111;
+      overflow: hidden;
+    }
+
+    #iframe-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: #000;
+    }
+
+    .stream-frame {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      opacity: 1;
+      transition: opacity 180ms linear;
+      background: #000;
+    }
+
+    .hidden-frame {
+      opacity: 0;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="iframe-container">
+    <iframe
+      id="activeFrame"
+      class="stream-frame"
+      src="https://lovetier.bz/player/CANALS360"
+      allow="autoplay; fullscreen"
+      sandbox="allow-scripts allow-forms"
+      referrerpolicy="no-referrer">
+    </iframe>
+  </div>
+
+  <script>
+    const STREAM_URL = "https://lovetier.bz/player/CANALS360";
+
+    const PREVENTIVE_RELOAD_MS = 4 * 60 * 1000 + 50 * 1000;
+    const LOAD_TIMEOUT_MS = 15000;
+
+    const container = document.getElementById("iframe-container");
+
+    let activeFrame = document.getElementById("activeFrame");
+    let isReloading = false;
+    let preventiveTimer = null;
+    let startedAt = Date.now();
+
+    function buildUrl() {
+      const separator = STREAM_URL.includes("?") ? "&" : "?";
+      return STREAM_URL + separator + "_ts=" + Date.now();
+    }
+
+    function createHiddenFrame(url) {
+      const frame = document.createElement("iframe");
+
+      frame.className = "stream-frame hidden-frame";
+      frame.src = url;
+      frame.allow = "autoplay; fullscreen";
+
+      frame.referrerPolicy = "no-referrer";
+      frame.setAttribute("sandbox", "allow-scripts allow-forms");
+
+      return frame;
+    }
+
+    function swapFrames(newFrame) {
+      const oldFrame = activeFrame;
+
+      newFrame.classList.remove("hidden-frame");
+      newFrame.style.pointerEvents = "auto";
+      newFrame.id = "activeFrame";
+
+      activeFrame = newFrame;
+
+      if (oldFrame && oldFrame.parentNode) {
+        oldFrame.style.pointerEvents = "none";
+        oldFrame.style.opacity = "0";
+
+        setTimeout(() => {
+          if (oldFrame.parentNode) {
+            oldFrame.remove();
+          }
+        }, 250);
+      }
+    }
+
+    function schedulePreventiveReload() {
+      clearTimeout(preventiveTimer);
+
+      preventiveTimer = setTimeout(() => {
+        invisibleReload();
+      }, PREVENTIVE_RELOAD_MS);
+    }
+
+    function invisibleReload() {
+      if (isReloading) return;
+
+      isReloading = true;
+
+      const newFrame = createHiddenFrame(buildUrl());
+      container.appendChild(newFrame);
+
+      let finished = false;
+
+      const timeoutId = setTimeout(() => {
+        if (finished) return;
+        finished = true;
+
+        if (newFrame.parentNode) {
+          newFrame.remove();
+        }
+
+        isReloading = false;
+        schedulePreventiveReload();
+      }, LOAD_TIMEOUT_MS);
+
+      newFrame.onload = () => {
+        if (finished) return;
+        finished = true;
+
+        clearTimeout(timeoutId);
+        swapFrames(newFrame);
+        isReloading = false;
+        startedAt = Date.now();
+        schedulePreventiveReload();
+      };
+    }
+
+    function hardReloadVisibleFrame() {
+      activeFrame.src = buildUrl();
+      startedAt = Date.now();
+      schedulePreventiveReload();
+    }
+
+    setInterval(() => {
+      if (!navigator.onLine) return;
+      if (document.hidden) return;
+
+      const age = Date.now() - startedAt;
+
+      if (age >= PREVENTIVE_RELOAD_MS) {
+        invisibleReload();
+      }
+    }, 30000);
+
+    window.forceInvisibleReload = invisibleReload;
+    window.forceDirectReload = hardReloadVisibleFrame;
+
+    schedulePreventiveReload();
+  </script>
+</body>
+</html>

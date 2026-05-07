@@ -1,0 +1,8 @@
+#EXTM3U
+#EXT-X-VERSION:3
+
+#EXT-X-STREAM-INF:BANDWIDTH=3500000,RESOLUTION=1280x720,NAME="T18 France HD"
+https://sv1.data-stream.top/1bf23cdd168bc882c58b621df68b6bcec698530cf31cfdb0c55e785f9df55a37/hls/simpsonsfr.m3u8
+
+#EXT-X-STREAM-INF:BANDWIDTH=3500000,RESOLUTION=1280x720,NAME="Backup"
+https://sv1.data-stream.top/1bf23cdd168bc882c58b621df68b6bcec698530cf31cfdb0c55e785f9df55a37/hls/simpsonsfr.m3u8

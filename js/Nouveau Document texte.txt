@@ -1,0 +1,51 @@
+// =====================================================
+// DEMO DE BASE + OVERLAYS CUSTOM
+// =====================================================
+(function seedDemo() {
+  const customOverlays = [
+    { title: "CMTV", logo: "/media/cmtv.png", url: "/pages/cmtv.html" },
+    { title: "TVI",  logo: "/media/TVI.png", url: "/pages/tvi.html" },
+    { title: "TVIR", logo: "/media/tvir.jpg", url: "/pages/tvi-reality.html" },
+    { title: "TVIF", logo: "https://upload.wikimedia.org/wikipedia/commons/0/0d/TVI_Fic%C3%A7%C3%A3o_%282017%29.png", url: "/pages/tvi-ficcao.html" },
+    { title: "TVII", logo: "https://upload.wikimedia.org/wikipedia/commons/0/08/TVI_Internacional_%282017%29.png", url: "pages/tvii.html" },
+    { title: "SIC",  logo: "/media/sic.jpg", url: "/pages/sic.html" },
+    { title: "SICN",  logo: "/media/SICN.webp", url: "//popcdn.day/player.php?stream=SIC-NOTICIAS" },
+    { title: "CNN",  logo: "/media/cnn.png", url: "/pages/CNN.html" },
+    { title: "RTP1", logo: "/media/rtp1.jpg", url: "//popcdn.day/player.php?stream=RTP1" },
+    { title: "RTP2", logo: "https://upload.wikimedia.org/wikipedia/commons/f/f9/RTP2_logo_2016.svg", url: "//popcdn.day/player.php?stream=RTP2" },
+    { title: "RTP3",  logo: "https://upload.wikimedia.org/wikipedia/commons/b/b9/Rtp3.png", url: "//popcdn.day/player.php?stream=RTP3" },
+    { title: "RTPN", logo: "/media/rtpn.png", url: "https://streaming-live.rtp.pt/livetvhlsDVR/rtpnHDdvr.smil/playlist.m3u8?DVR" },
+    { title: "RTPI", logo: "/media/rtpi.jpg", url: "https://streaming-live.rtp.pt/liverepeater/smil:rtpi.smil/playlist.m3u8" },
+    { title: "BTV", logo: "/media/btv.svg", url: "//popcdn.day/go.php?stream=BTV1" },
+    { title: "SCP", logo: "https://pplware.sapo.pt/wp-content/uploads/2017/06/scp_00.jpg", url: "//popcdn.day/go.php?stream=SPT1" },
+    { title: "11",  logo: "https://www.zupimages.net/up/24/13/qj99.jpg", url: "https://popcdn.day/go.php?stream=Canal11" },
+    { title: "BOLA", logo: "https://www.telesatellite.com/images/actu/a/abolatv.jpg", url: "//popcdn.day/go.php?stream=ABOLA" },
+    { title: "FIFA +", logo: "https://batista70.s3.eu-central-1.amazonaws.com/38991f882f4a8a746131c9a738a135fc/FIFA-Logo-colour.png", url: "https://f7ccf7fc.wurl.com/master/f36d25e7e52f1ba8d7e56eb859c636563214f541/UmFrdXRlblRWLXB0X0ZJRkFQbHVzUG9ydHVndWVzZV9ITFM/playlist.m3u8" },
+    { title: "Sport tv 1", logo: "https://cdn.brandfetch.io/idKvjRibkN/w/400/h/400/theme/dark/icon.jpeg?c=1dxbfHSJFAPEGdCLU4o5B", url: "//popcdn.day/go.php?stream=SPT1" },
+    { title: "Sport tv 2", logo: "https://cdn.brandfetch.io/idKvjRibkN/w/400/h/400/theme/dark/icon.jpeg?c=1dxbfHSJFAPEGdCLU4o5B", url: "//popcdn.day/go.php?stream=SPT2" },
+    { title: "Sport tv 3", logo: "https://cdn.brandfetch.io/idKvjRibkN/w/400/h/400/theme/dark/icon.jpeg?c=1dxbfHSJFAPEGdCLU4o5B", url: "//popcdn.day/go.php?stream=SPT3" },
+    { title: "Sport tv 4", logo: "https://cdn.brandfetch.io/idKvjRibkN/w/400/h/400/theme/dark/icon.jpeg?c=1dxbfHSJFAPEGdCLU4o5B", url: "//popcdn.day/go.php?stream=SPT4" },
+    { title: "Sport tv 5", logo: "https://cdn.brandfetch.io/idKvjRibkN/w/400/h/400/theme/dark/icon.jpeg?c=1dxbfHSJFAPEGdCLU4o5B", url: "//popcdn.day/go.php?stream=SPT5" },
+    { title: "DAZN 1 PT",  logo: "https://upload.wikimedia.org/wikipedia/commons/7/71/DAZN_logo.svg", url: "//popcdn.day/go.php?stream=ELEVEN1" },
+    { title: "DAZN 2 PT",  logo: "https://upload.wikimedia.org/wikipedia/commons/7/71/DAZN_logo.svg", url: "//popcdn.day/go.php?stream=ELEVEN2" },
+    { title: "DAZN 3 PT",  logo: "https://upload.wikimedia.org/wikipedia/commons/7/71/DAZN_logo.svg", url: "//popcdn.day/go.php?stream=ELEVEN3" },
+    { title: "DAZN 4 PT",  logo: "https://upload.wikimedia.org/wikipedia/commons/7/71/DAZN_logo.svg", url: "//popcdn.day/go.php?stream=ELEVEN4" },
+    { title: "DAZN 5 PT",  logo: "https://upload.wikimedia.org/wikipedia/commons/7/71/DAZN_logo.svg", url: "//popcdn.day/go.php?stream=ELEVEN5" }
+  ];
+
+  customOverlays.forEach((item) => {
+    iframeItems.push({
+      id: `custom-ov-${nextUid()}`,
+      name: item.title,
+      url: item.url,
+      logo: { type: "image", value: item.logo },
+      group: "Overlay",
+      isIframe: true,
+      isFavorite: false,
+      listType: "iframe"
+    });
+  });
+
+  renderLists();
+  updateNowPlaying(null, 'IDLE');
+})();

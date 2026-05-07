@@ -1,0 +1,22 @@
+{
+  "name": "tron-ares-reorganized-v3",
+  "version": "1.0.0",
+  "description": "Auto deploy Cloudflare Pages",
+  "main": "auto-deploy-cloudflare.js",
+  "scripts": {
+    "start": "node auto-deploy-cloudflare.js",
+    "deploy": "wrangler pages deploy . --project-name tron-ares-engine"
+  },
+  "keywords": [
+    "cloudflare",
+    "pages",
+    "deploy",
+    "watcher"
+  ],
+  "author": "victo",
+  "license": "MIT",
+  "dependencies": {
+    "chokidar": "^4.0.3",
+    "wrangler": "^4.14.1"
+  }
+}

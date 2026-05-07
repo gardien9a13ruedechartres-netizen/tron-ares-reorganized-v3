@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <title>CMTVPT - Overlay</title>
+
+  <style>
+    :root {
+      --app-bg: #000;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    html {
+      width: 100%;
+      height: 100%;
+      height: -webkit-fill-available;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: var(--app-bg);
+      overscroll-behavior: none;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+
+    body {
+      width: 100%;
+      height: 100%;
+      height: -webkit-fill-available;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: var(--app-bg);
+      overscroll-behavior: none;
+      touch-action: manipulation;
+      position: fixed;
+      inset: 0;
+    }
+
+    .app {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      min-width: 100vw;
+      min-height: 100vh;
+      overflow: hidden;
+      background: #000;
+    }
+
+    @supports (height: 100dvh) {
+      .app {
+        width: 100dvw;
+        height: 100dvh;
+        min-width: 100dvw;
+        min-height: 100dvh;
+      }
+    }
+
+    .frame-shell {
+      position: absolute;
+      top: env(safe-area-inset-top, 0);
+      right: env(safe-area-inset-right, 0);
+      bottom: env(safe-area-inset-bottom, 0);
+      left: env(safe-area-inset-left, 0);
+      overflow: hidden;
+      background: #000;
+    }
+
+    iframe {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 100vw;
+      height: 100vh;
+      min-width: 100%;
+      min-height: 100%;
+      border: 0;
+      margin: 0;
+      padding: 0;
+      display: block;
+      background: #000;
+      transform: translate(-50%, -50%) scaleX(1.08) scaleY(1.03);
+      transform-origin: center center;
+      pointer-events: auto;
+    }
+
+    @supports (width: 100dvw) and (height: 100dvh) {
+      iframe {
+        width: 100dvw;
+        height: 100dvh;
+      }
+    }
+
+    @media (orientation: landscape) {
+      iframe {
+        transform: translate(-50%, -50%) scale(1.015);
+      }
+    }
+
+    @media (orientation: portrait) {
+      iframe {
+        transform: translate(-50%, -50%) scale(1.02);
+      }
+    }
+
+    .frame-shell::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.01);
+    }
+  </style>
+</head>
+<body>
+  <main class="app" aria-label="Lecteur plein écran">
+    <div class="frame-shell">
+      <iframe
+        id="player"
+        src="https://popcdn.day/player.php?stream=CMTVPT"
+        sandbox="allow-scripts allow-forms"
+        referrerpolicy="no-referrer"
+        loading="eager"
+        allow="autoplay; fullscreen; picture-in-picture"
+        title="CMTVPT">
+      </iframe>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      const setViewportHeight = () => {
+        document.documentElement.style.setProperty("--vh", `${window.innerHeight * 0.01}px`);
+      };
+
+      setViewportHeight();
+      window.addEventListener("resize", setViewportHeight, { passive: true });
+      window.addEventListener("orientationchange", setViewportHeight, { passive: true });
+    })();
+  </script>
+<script src="../js/wheel-volume-iframe.js"></script>
+</body>
+</html>

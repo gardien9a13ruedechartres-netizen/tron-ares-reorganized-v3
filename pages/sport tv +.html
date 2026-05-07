@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Player Smooth Reload</title>
+<style>
+    html, body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #000;
+    }
+
+    #container {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        background: #000;
+    }
+
+    iframe.player-frame {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+        display: block;
+        background: #000;
+        opacity: 0;
+        transition: opacity 220ms linear;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    iframe.visible-frame {
+        opacity: 1;
+        pointer-events: auto;
+        z-index: 2;
+    }
+
+    iframe.preload-frame {
+        opacity: 0;
+        pointer-events: none;
+        z-index: 3;
+    }
+
+    iframe.fade-out-frame {
+        opacity: 0;
+        pointer-events: none;
+        z-index: 2;
+    }
+</style>
+</head>
+<body>
+
+<div id="container"></div>
+
+<script>
+(() => {
+    // Récupérer l'URL passée en paramètre (si elle existe)
+    const params = new URLSearchParams(window.location.search);
+    const PLAYER_URL = params.get('src') || "https://lovetier.bz/player/SPTPlus"; // URL par défaut
+
+    // Réglages
+    const CHECK_INTERVAL = 5000;       // vérifie toutes les 5 secondes
+    const RELOAD_TIMEOUT = 300000;     // 5 min
+    const LOAD_FAILSAFE = 25000;       // abandonne un préchargement bloqué après 25 s
+    const CROSSFADE_MS = 220;          // durée du fondu
+
+    const container = document.getElementById("container");
+
+    let activeFrame = null;
+    let preloadFrame = null;
+    let lastSwapTime = Date.now();
+    let reloading = false;
+    let preloadTimeoutId = null;
+
+    function createFrame(src, visible) {
+        const frame = document.createElement("iframe");
+        frame.className = "player-frame " + (visible ? "visible-frame" : "preload-frame");
+        frame.setAttribute("allow", "autoplay; fullscreen");
+        frame.setAttribute("referrerpolicy", "no-referrer");
+        frame.src = src;
+        return frame;
+    }
+
+    function cleanupPreload() {
+        if (preloadTimeoutId) {
+            clearTimeout(preloadTimeoutId);
+            preloadTimeoutId = null;
+        }
+
+        if (preloadFrame) {
+            preloadFrame.onload = null;
+            preloadFrame.onerror = null;
+        }
+    }
+
+    function installActiveErrorHandler(frame) {
+        frame.onerror = () => {
+            startSmoothReload();
+        };
+    }
+
+    function swapToPreloadedFrame() {
+        if (!preloadFrame || !activeFrame) return;
+
+        const oldActive = activeFrame;
+        const newActive = preloadFrame;
+
+        // La nouvelle devient visible
+        newActive.classList.remove("preload-frame");
+        newActive.classList.add("visible-frame");
+
+        // L'ancienne s'efface doucement
+        oldActive.classList.remove("visible-frame");
+        oldActive.classList.add("fade-out-frame");
+
+        activeFrame = newActive;
+        preloadFrame = null;
+        lastSwapTime = Date.now();
+        reloading = false;
+
+        installActiveErrorHandler(activeFrame);
+
+        setTimeout(() => {
+            if (oldActive && oldActive.parentNode) {
+                oldActive.remove();
+            }
+        }, CROSSFADE_MS + 30);
+    }
+
+    function startSmoothReload() {
+        if (reloading) return;
+        if (!activeFrame) return;
+
+        reloading = true;
+
+        preloadFrame = createFrame(activeFrame.src, false);
+        container.appendChild(preloadFrame);
+
+        preloadFrame.onload = () => {
+            cleanupPreload();
+            swapToPreloadedFrame();
+        };
+
+        preloadFrame.onerror = () => {
+            cleanupPreload();
+
+            if (preloadFrame && preloadFrame.parentNode) {
+                preloadFrame.remove();
+            }
+
+            preloadFrame = null;
+            reloading = false;
+        };
+
+        preloadTimeoutId = setTimeout(() => {
+            if (!reloading) return;
+
+            cleanupPreload();
+
+            if (preloadFrame && preloadFrame.parentNode) {
+                preloadFrame.remove();
+            }
+
+            preloadFrame = null;
+            reloading = false;
+        }, LOAD_FAILSAFE);
+    }
+
+    function init() {
+        activeFrame = createFrame(PLAYER_URL, true);
+        container.appendChild(activeFrame);
+        installActiveErrorHandler(activeFrame);
+
+        lastSwapTime = Date.now();
+
+        setInterval(() => {
+            const now = Date.now();
+
+            if (!reloading && (now - lastSwapTime >= RELOAD_TIMEOUT)) {
+                startSmoothReload();
+            }
+        }, CHECK_INTERVAL);
+
+        document.addEventListener("visibilitychange", () => {
+            if (!document.hidden && !reloading) {
+                const now = Date.now();
+
+                if (now - lastSwapTime >= RELOAD_TIMEOUT) {
+                    startSmoothReload();
+                }
+            }
+        });
+    }
+
+    init();
+})();
+</script>
+
+</body>
+</html>

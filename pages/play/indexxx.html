@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+ <script>
+  (function sanitizeUrl() {
+    try {
+      var search = window.location.search;
+      if (!search) return;
+
+      var params = new URLSearchParams(search);
+      var dirty = false;
+
+      ["token", "access_token", "id_token", "auth_token", "jwt"].forEach(function (key) {
+        if (params.has(key)) {
+          params.delete(key);
+          dirty = true;
+        }
+      });
+
+      if (dirty) {
+        var newSearch = params.toString();
+        var newUrl =
+          window.location.pathname +
+          (newSearch ? "?" + newSearch : "") +
+          window.location.hash;
+
+        // On remplace l’URL dans l’historique sans reload
+        window.history.replaceState(null, "", newUrl);
+      }
+    } catch (e) {
+      console.warn("URL sanitization error", e);
+    }
+  })();
+</script>
+ 
+  
+  <meta charset="utf-8" />
+  <meta name="referrer" content="no-referrer" />
+  <meta name="robots" content="noindex,nofollow,max-snippet:0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Video.js minimal -->
+  <link href="https://unpkg.com/video.js@7/dist/video-js.css" rel="stylesheet" />
+  <script src="https://unpkg.com/video.js@7/dist/video.min.js"></script>
+
+  <style>
+    .vjs-has-started .vjs-control-bar, .vjs-audio-only-mode .vjs-control-bar {
+  display: flex;
+  visibility: visible !important;
+  opacity: 1;
+  transition: visibility 0.1s, opacity 0.1s;
+}
+    
+    html, body { height: 100%; margin: 0; background: #000; overflow: hidden; }
+    /* occupe 100% de l'iframe/overlay */
+    #player { width: 100%; height: 100%; }
+    /* neutralise le ratio par défaut pour un vrai fill */
+    .vjs-fluid { padding-top: 0 !important; }
+  </style>
+</head>
+<body>
+  <video id="player"
+         class="video-js vjs-fill vjs-big-play-centered"
+         controls
+         playsinline
+         autoplay
+         preload="auto"></video>
+
+  <script>
+  (function () {
+    // Accepte 2 modes d'appel :
+    // 1) ?https://domaine/flux.m3u8 (vous passez directement l'URL après '?')
+    // 2) ?src=https://domaine/media (ou ?url= / ?u=)
+    var q = window.location.search;
+    var src = '';
+
+    if (q && q.length > 1) {
+      var raw = decodeURIComponent(q.substring(1));
+      if (/^https?:/i.test(raw)) {
+        // Cas 1: l'URL complète est passée après '?'
+        src = raw;
+      } else {
+        // Cas 2: paramètres nommés
+        var params = new URLSearchParams(q);
+        src = params.get('src') || params.get('url') || params.get('u') || '';
+      }
+    }
+
+    var player = videojs('player', {
+      fluid: true,
+      preload: 'auto',
+      inactivityTimeout: 0
+    });
+
+    function setSource(url) {
+      if (!url) return;
+      // Détection simple du mime-type
+      var type = '';
+      if (/\.m3u8(\?.*)?$/i.test(url)) type = 'application/x-mpegURL';
+      else if (/\.mpd(\?.*)?$/i.test(url)) type = 'application/dash+xml';
+      else if (/\.mp3(\?.*)?$/i.test(url)) type = 'audio/mpeg';
+      else if (/\.mp4(\?.*)?$/i.test(url)) type = 'video/mp4';
+
+      player.src(type ? { src: url, type: type } : { src: url });
+    }
+
+    setSource(src);
+
+    // Mise à jour à chaud via postMessage depuis la page parente
+    // parent.postMessage({ type: 'SET_SRC', url: 'https://…/nouveau.m3u8' }, '*')
+    // ou parent.postMessage('https://…/nouveau.m3u8', '*')
+    window.addEventListener('message', function (e) {
+      if (!e.data) return;
+      if (typeof e.data === 'string' && /^https?:/i.test(e.data)) {
+        setSource(e.data);
+      } else if (e.data && e.data.type === 'SET_SRC' && e.data.url) {
+        setSource(e.data.url);
+      }
+    });
+  })();
+  </script>
+</body>
+</html>

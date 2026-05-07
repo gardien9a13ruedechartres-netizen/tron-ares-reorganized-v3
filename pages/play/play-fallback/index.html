@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="referrer" content="no-referrer" />
+  <meta name="robots" content="noindex,nofollow,max-snippet:0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>Player vidéo</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dashjs@latest/dist/dash.all.min.js"></script>
+
+  <style>
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      background: #000;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+    }
+
+    #app {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: #000;
+    }
+
+    #player {
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: #000;
+      object-fit: contain;
+    }
+
+    #overlay {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px;
+      color: #fff;
+      background: rgba(0, 0, 0, 0.72);
+      z-index: 10;
+      box-sizing: border-box;
+    }
+
+    #overlay.show {
+      display: flex;
+    }
+
+    #box {
+      max-width: 720px;
+      line-height: 1.5;
+    }
+
+    #title {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    #message {
+      font-size: 14px;
+      opacity: 0.9;
+      word-break: break-word;
+    }
+
+    #retry {
+      margin-top: 18px;
+      padding: 10px 18px;
+      border: 0;
+      border-radius: 6px;
+      cursor: pointer;
+      background: #fff;
+      color: #000;
+      font-weight: bold;
+    }
+
+    video::-webkit-media-controls-panel {
+      background: linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0.35));
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <video
+      id="player"
+      controls
+      playsinline
+      autoplay
+      preload="auto"
+    ></video>
+
+    <div id="overlay">
+      <div id="box">
+        <div id="title">Impossible de lire la vidéo</div>
+        <div id="message"></div>
+        <button id="retry" type="button">Réessayer</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var video = document.getElementById("player");
+      var overlay = document.getElementById("overlay");
+      var message = document.getElementById("message");
+      var retryButton = document.getElementById("retry");
+
+      var hls = null;
+      var dashPlayer = null;
+      var currentUrl = "";
+      var retryCount = 0;
+      var maxRetries = 3;
+
+      /*
+        Proxy optionnel.
+        Laisse vide par défaut.
+        Exemple attendu si tu as ton propre endpoint légal :
+        var proxyEndpoint = "/proxy?url=";
+      */
+      var proxyEndpoint = "";
+
+      function sanitizeCurrentUrl() {
+        try {
+          var params = new URLSearchParams(window.location.search);
+          var dirty = false;
+
+          ["token", "access_token", "id_token", "auth_token", "jwt"].forEach(function (key) {
+            if (params.has(key)) {
+              params.delete(key);
+              dirty = true;
+            }
+          });
+
+          if (dirty) {
+            var newSearch = params.toString();
+            var newUrl =
+              window.location.pathname +
+              (newSearch ? "?" + newSearch : "") +
+              window.location.hash;
+
+            window.history.replaceState(null, "", newUrl);
+          }
+        } catch (e) {}
+      }
+
+      function showError(text) {
+        message.textContent = text || "Erreur inconnue.";
+        overlay.classList.add("show");
+      }
+
+      function hideError() {
+        overlay.classList.remove("show");
+        message.textContent = "";
+      }
+
+      function normalizeUrl(value) {
+        if (!value) return "";
+
+        try {
+          var clean = String(value).trim();
+          if (!clean) return "";
+
+          return new URL(clean, window.location.href).href;
+        } catch (e) {
+          return String(value).trim();
+        }
+      }
+
+      function getSourceFromUrl() {
+        var search = window.location.search;
+
+        if (!search || search.length <= 1) return "";
+
+        try {
+          var raw = decodeURIComponent(search.substring(1));
+
+          if (/^(https?:|\/|\.\/|\.\.\/)/i.test(raw)) {
+            return normalizeUrl(raw);
+          }
+
+          var params = new URLSearchParams(search);
+          return normalizeUrl(
+            params.get("src") ||
+            params.get("url") ||
+            params.get("u") ||
+            params.get("video") ||
+            ""
+          );
+        } catch (e) {
+          return "";
+        }
+      }
+
+      function withProxy(url) {
+        if (!proxyEndpoint) return url;
+        return proxyEndpoint + encodeURIComponent(url);
+      }
+
+      function destroyHls() {
+        if (hls) {
+          try {
+            hls.destroy();
+          } catch (e) {}
+          hls = null;
+        }
+      }
+
+      function destroyDash() {
+        if (dashPlayer) {
+          try {
+            dashPlayer.reset();
+          } catch (e) {}
+          dashPlayer = null;
+        }
+      }
+
+      function resetPlayer() {
+        destroyHls();
+        destroyDash();
+
+        try {
+          video.pause();
+        } catch (e) {}
+
+        try {
+          video.removeAttribute("src");
+          video.load();
+        } catch (e) {}
+      }
+
+      function playVideo() {
+        var promise;
+
+        try {
+          promise = video.play();
+        } catch (e) {
+          return;
+        }
+
+        if (promise && typeof promise.catch === "function") {
+          promise.catch(function () {
+            showError("La lecture automatique a été bloquée. Lance la vidéo manuellement.");
+          });
+        }
+      }
+
+      function detectType(url) {
+        var clean = String(url).split("#")[0];
+
+        if (/\.m3u8(\?.*)?$/i.test(clean)) return "hls";
+        if (/\.mpd(\?.*)?$/i.test(clean)) return "dash";
+        if (/\.mp4(\?.*)?$/i.test(clean)) return "mp4";
+        if (/\.webm(\?.*)?$/i.test(clean)) return "webm";
+        if (/\.ogg(\?.*)?$/i.test(clean)) return "ogg";
+        if (/\.mp3(\?.*)?$/i.test(clean)) return "mp3";
+        if (/\.aac(\?.*)?$/i.test(clean)) return "aac";
+        if (/\.wav(\?.*)?$/i.test(clean)) return "wav";
+
+        return "unknown";
+      }
+
+      function setNativeSource(url) {
+        video.src = url;
+        video.load();
+
+        video.addEventListener("canplay", function once() {
+          video.removeEventListener("canplay", once);
+          hideError();
+          playVideo();
+        });
+      }
+
+      function loadHls(url) {
+        if (window.Hls && Hls.isSupported()) {
+          hls = new Hls({
+            enableWorker: true,
+            lowLatencyMode: true,
+            backBufferLength: 90,
+            maxBufferLength: 60,
+            fragLoadingTimeOut: 20000,
+            manifestLoadingTimeOut: 20000
+          });
+
+          hls.loadSource(url);
+          hls.attachMedia(video);
+
+          hls.on(Hls.Events.MANIFEST_PARSED, function () {
+            hideError();
+            playVideo();
+          });
+
+          hls.on(Hls.Events.ERROR, function (event, data) {
+            if (!data) return;
+
+            if (!data.fatal) return;
+
+            if (data.type === Hls.ErrorTypes.NETWORK_ERROR && retryCount < maxRetries) {
+              retryCount++;
+              try {
+                hls.startLoad();
+              } catch (e) {}
+              return;
+            }
+
+            if (data.type === Hls.ErrorTypes.MEDIA_ERROR && retryCount < maxRetries) {
+              retryCount++;
+              try {
+                hls.recoverMediaError();
+              } catch (e) {}
+              return;
+            }
+
+            destroyHls();
+
+            if (video.canPlayType("application/vnd.apple.mpegurl")) {
+              setNativeSource(url);
+              return;
+            }
+
+            showError("Flux HLS non lisible ou bloqué par le navigateur.");
+          });
+
+          return;
+        }
+
+        if (video.canPlayType("application/vnd.apple.mpegurl")) {
+          setNativeSource(url);
+          return;
+        }
+
+        showError("Ce navigateur ne supporte pas ce flux HLS.");
+      }
+
+      function loadDash(url) {
+        if (window.dashjs && dashjs.MediaPlayer) {
+          dashPlayer = dashjs.MediaPlayer().create();
+
+          dashPlayer.updateSettings({
+            streaming: {
+              retryAttempts: {
+                MPD: 3,
+                MediaSegment: 3,
+                InitializationSegment: 3
+              },
+              retryIntervals: {
+                MPD: 1000,
+                MediaSegment: 1000,
+                InitializationSegment: 1000
+              }
+            }
+          });
+
+          dashPlayer.initialize(video, url, true);
+
+          dashPlayer.on(dashjs.MediaPlayer.events.STREAM_INITIALIZED, function () {
+            hideError();
+          });
+
+          dashPlayer.on(dashjs.MediaPlayer.events.ERROR, function () {
+            showError("Flux DASH non lisible ou bloqué.");
+          });
+
+          return;
+        }
+
+        setNativeSource(url);
+      }
+
+      function loadSource(inputUrl) {
+        var url = normalizeUrl(inputUrl);
+
+        if (!url) {
+          showError("Aucune URL vidéo fournie.");
+          return;
+        }
+
+        currentUrl = url;
+        retryCount = 0;
+        hideError();
+        resetPlayer();
+
+        var finalUrl = withProxy(url);
+        var type = detectType(finalUrl);
+
+        if (type === "hls") {
+          loadHls(finalUrl);
+          return;
+        }
+
+        if (type === "dash") {
+          loadDash(finalUrl);
+          return;
+        }
+
+        setNativeSource(finalUrl);
+      }
+
+      video.addEventListener("error", function () {
+        var error = video.error;
+        var text = "Erreur de lecture.";
+
+        if (error) {
+          if (error.code === error.MEDIA_ERR_ABORTED) {
+            text = "Lecture interrompue.";
+          } else if (error.code === error.MEDIA_ERR_NETWORK) {
+            text = "Erreur réseau pendant le chargement.";
+          } else if (error.code === error.MEDIA_ERR_DECODE) {
+            text = "Erreur de décodage média.";
+          } else if (error.code === error.MEDIA_ERR_SRC_NOT_SUPPORTED) {
+            text = "Format non supporté ou ressource inaccessible.";
+          }
+        }
+
+        showError(text);
+      });
+
+      video.addEventListener("playing", function () {
+        hideError();
+      });
+
+      retryButton.addEventListener("click", function () {
+        if (currentUrl) {
+          loadSource(currentUrl);
+        }
+      });
+
+      window.addEventListener("message", function (event) {
+        if (!event.data) return;
+
+        if (typeof event.data === "string") {
+          loadSource(event.data);
+          return;
+        }
+
+        if (event.data.type === "SET_SRC" && event.data.url) {
+          loadSource(event.data.url);
+        }
+      });
+
+      sanitizeCurrentUrl();
+      loadSource(getSourceFromUrl());
+    })();
+  </script>
+</body>
+</html>

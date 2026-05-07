@@ -1,0 +1,526 @@
+<!--
+  Ares Media Engine
+  Copyright © Salema vitor
+  All rights reserved
+-->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ares Media Engine</title>
+ 
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2064%2064%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%2300e5ff%22/%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ff9100%22/%3E%0A%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3Cfilter%20id%3D%22glow%22%20x%3D%22-50%25%22%20y%3D%22-50%25%22%20width%3D%22200%25%22%20height%3D%22200%25%22%3E%0A%20%20%20%20%20%20%3CfeGaussianBlur%20stdDeviation%3D%222.2%22%20result%3D%22b%22/%3E%0A%20%20%20%20%20%20%3CfeMerge%3E%0A%20%20%20%20%20%20%20%20%3CfeMergeNode%20in%3D%22b%22/%3E%0A%20%20%20%20%20%20%20%20%3CfeMergeNode%20in%3D%22SourceGraphic%22/%3E%0A%20%20%20%20%20%20%3C/feMerge%3E%0A%20%20%20%20%3C/filter%3E%0A%20%20%3C/defs%3E%0A%20%20%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2214%22%20fill%3D%22%2302040a%22/%3E%0A%20%20%3Cpath%20d%3D%22M32%2010%20L50%2054%20H43.5%20L39.5%2044%20H24.5%20L20.5%2054%20H14%20L32%2010%20Z%0A%20%20%20%20%20%20%20%20%20%20%20M27.2%2036.5%20H36.8%20L32%2024.5%20Z%22%0A%20%20%20%20%20%20%20%20fill%3D%22url%28%23g%29%22%20filter%3D%22url%28%23glow%29%22/%3E%0A%3C/svg%3E">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2064%2064%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%2300e5ff%22/%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ff9100%22/%3E%0A%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3Cfilter%20id%3D%22glow%22%20x%3D%22-50%25%22%20y%3D%22-50%25%22%20width%3D%22200%25%22%20height%3D%22200%25%22%3E%0A%20%20%20%20%20%20%3CfeGaussianBlur%20stdDeviation%3D%222.2%22%20result%3D%22b%22/%3E%0A%20%20%20%20%20%20%3CfeMerge%3E%0A%20%20%20%20%20%20%20%20%3CfeMergeNode%20in%3D%22b%22/%3E%0A%20%20%20%20%20%20%20%20%3CfeMergeNode%20in%3D%22SourceGraphic%22/%3E%0A%20%20%20%20%20%20%3C/feMerge%3E%0A%20%20%20%20%3C/filter%3E%0A%20%20%3C/defs%3E%0A%20%20%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2214%22%20fill%3D%22%2302040a%22/%3E%0A%20%20%3Cpath%20d%3D%22M32%2010%20L50%2054%20H43.5%20L39.5%2044%20H24.5%20L20.5%2054%20H14%20L32%2010%20Z%0A%20%20%20%20%20%20%20%20%20%20%20M27.2%2036.5%20H36.8%20L32%2024.5%20Z%22%0A%20%20%20%20%20%20%20%20fill%3D%22url%28%23g%29%22%20filter%3D%22url%28%23glow%29%22/%3E%0A%3C/svg%3E">
+  <!-- ✅ PRELOAD: doit matcher EXACTEMENT le src du <img> -->
+  <link rel="preload" as="image" href="media/image/tron3.webp" type="image/webp">
+
+  <!-- Police futuriste -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
+
+  <!-- HLS & DASH -->
+  <script defer src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/dashjs@latest/dist/dash.all.min.js"></script>
+ <!-- <link rel="stylesheet" href="css/tron-ares-assistant-3d-glb.css?v=2"> -->
+  <link rel="stylesheet" href="css/tron-ares.css?v=1">
+  <link rel="stylesheet" href="css/webtor-torrents-ui.v10.css">
+  <link rel="stylesheet" href="css/webtor-rect-overlay.css">
+
+  <link rel="dns-prefetch" href="//api.themoviedb.org">
+  <link rel="dns-prefetch" href="//image.tmdb.org">
+  <link rel="preconnect" href="https://api.themoviedb.org" crossorigin>
+  <link rel="preconnect" href="https://image.tmdb.org" crossorigin>
+  
+  
+  <style>
+  /* mini checkbox discret à côté du bouton fermer */
+  .subsearch-stealth-toggle{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:18px;
+    height:18px;
+    margin-right:43px;
+    opacity:.22;
+    cursor:pointer;
+    user-select:none;
+  }
+  .subsearch-stealth-toggle:hover{ opacity:.55; }
+  .subsearch-stealth-toggle input{
+    width:14px;
+    height:14px;
+    margin:0;
+    margin-right: 563px;
+    cursor:pointer;
+    accent-color:#ff9100;
+  }
+</style>
+  <!-- 🔑 Clé OpenSubtitles familiale (seed localStorage avant tron-ares.js) -->
+  <script>
+  (function () {
+    // Mets ici la clé familiale (elle sera partagée à tous ceux qui ont accès à l'app via Cloudflare Access)
+    const FAMILY_OPENSUBTITLES_KEY = "SZBnt9EmjgdlxNDUfeAl3A6GNxrdqOGU";
+    const FAMILY_subdl_KEY = "Xnraa63L8_tIV5ieHGl4EA1vGO0f5DIg";
+    
+    const OS_STORAGE_KEY = "tronAres.opensub.config.v1";
+
+    try {
+      const raw = localStorage.getItem(OS_STORAGE_KEY);
+      const cfg = raw ? (JSON.parse(raw) || {}) : {};
+
+      // Ne pas écraser si l'utilisateur a déjà une clé enregistrée
+      const existingKey = (cfg.apiKey || "").trim();
+
+      if (!existingKey) {
+        cfg.apiKey = FAMILY_OPENSUBTITLES_KEY;
+        localStorage.setItem(OS_STORAGE_KEY, JSON.stringify(cfg));
+      }
+    } catch (e) {
+      // si localStorage est bloqué, on ne fait rien
+    }
+  })();
+  </script>
+
+
+</head>
+<body>
+<div class="app-shell" id="appShell">
+  <!-- Sidebar: playlists -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-title">Playlist Grid</div>
+      <div class="status-pill" id="statusPill">Idle</div>
+    </div>
+<div class="tabs">
+  <button class="tab-btn active" data-tab="fr">
+    <span class="tab-flag" aria-hidden="true">
+      <!-- FR -->
+      <svg class="flag" viewBox="0 0 3 2" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="FR">
+        <rect width="1" height="2" x="0" y="0" fill="#0055A4"></rect>
+        <rect width="1" height="2" x="1" y="0" fill="#FFFFFF"></rect>
+        <rect width="1" height="2" x="2" y="0" fill="#EF4135"></rect>
+      </svg>
+    </span>
+    Chaînes FR 
+  </button>
+
+  <div class="tab-split" role="group" aria-label="Films">
+    <button class="tab-btn tab-split-part" data-tab="channels" id="tabFilmBtn">
+      <span aria-hidden="true">🎥</span>FILM
+    </button>
+    <button class="tab-split-part tab-split-vitrine" type="button" id="tabVitrineBtn" title="Ouvrir la vitrine">
+      <span aria-hidden="true">🎞️</span>VITRINE
+    </button>
+  </div>
+
+
+  <button class="tab-btn" data-tab="iframes">
+    <span class="tab-flag" aria-hidden="true">
+      <!-- PT -->
+      <svg class="flag" viewBox="0 0 3 2" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="PT">
+        <rect width="1.2" height="2" x="0" y="0" fill="#006600"></rect>
+        <rect width="1.8" height="2" x="1.2" y="0" fill="#FF0000"></rect>
+        <!-- petit disque jaune (simplifié) -->
+        <circle cx="1.2" cy="1" r="0.35" fill="#FFCC00"></circle>
+      </svg>
+    </span>
+    Chaînes PT
+  </button>
+
+  <button class="tab-btn" data-tab="favorites">
+    <span>★</span> Favoris
+  </button>
+  <button class="tab-btn" data-tab="torrents"><span>🧲</span> Torrents</button>
+</div>
+
+<div class="search-row">
+  <div class="search-bar">
+    <div class="search-wrapper">
+      <input id="globalSearchInput" class="input search-input"
+             placeholder="Rechercher (toutes listes)…" aria-label="Rechercher dans toutes les listes" />
+      <button id="clearSearchBtn" class="clear-search-btn">✖</button>
+    </div>
+    <button id="verifyLinksBtn" class="btn btn-ghost" title="Vérifie les liens visibles (liste active)">Vérifier liens</button>
+  </div>
+</div>
+<!-- Mini player radio R.Alfa -->
+
+<div id="miniRadioPlayer" class="mini-radio">
+  <img class="mini-radio-logo" src="media/img/Radio_Alfa.png" loading="lazy" decoding="async">
+
+  <div class="mini-radio-info">
+    <div class="mini-radio-title">R.Alfa</div>
+    <div class="mini-radio-rds">Hit Music Only</div>
+  </div>
+
+  <!-- Fake visualizer -->
+  <div class="mini-radio-viz" id="miniRadioViz">
+    <span class="mini-radio-viz-bar"></span>
+    <span class="mini-radio-viz-bar"></span>
+    <span class="mini-radio-viz-bar"></span>
+    <span class="mini-radio-viz-bar"></span>
+  </div>
+
+  <button id="radioPlayBtn" class="mini-radio-btn" data-luna-url="pages/luna.html">▶</button>
+</div>
+<!-- 🎥 Actions Films (visibles uniquement sur l'onglet Films) -->
+<div class="films-actions-row" id="filmsActionsRow">
+  <div id="newAdditionsContainer" class="action-slot hidden">
+    <button id="newAdditionsBtn" class="btn btn-accent" type="button">🆕 Derniers ajouts</button>
+  </div>
+  <div id="showcaseContainer" class="action-slot hidden">
+    <button id="showcaseBtn" class="btn btn-ghost" type="button" title="Ouvrir la vitrine">🎞️ Vitrine</button>
+  </div>
+</div>
+
+  
+    <div class="lists-container">
+  <div class="scroll-fade"></div>
+
+  <!-- FR d'abord et active -->
+  <div class="list active" id="channelFrList"></div>
+
+  <!-- Films ensuite -->
+  <div class="list" id="channelList"></div>
+
+  <div class="list" id="iframeList"></div>
+  <div class="list" id="favoriteList"></div>
+  <div class="list" id="torrentList"></div>
+</div>
+<div class="loader-panel">
+
+  <!-- SECTION 1 : Charger une playlist ou une source -->
+  <div class="loader-section" data-section="playlist">
+    <div class="loader-label collapsible-label">
+      <span>Charger une playlist ou une source</span>
+      <span class="loader-toggle-icon">▸</span>
+    </div>
+
+    <div class="loader-section-body">
+      <div class="loader-row">
+        <input id="urlInput" class="input" placeholder="URL d'un flux ou d'une playlist M3U…" aria-label="URL d’un flux ou d’une playlist M3U" />
+        <button class="btn btn-ghost" id="loadUrlBtn">Charger</button>
+      </div>
+      <div class="loader-subrow">
+        <span>HTTP(S), M3U, HLS, MP4, MP3, YouTube…</span>
+      </div>
+
+      <div class="loader-row">
+        <input type="file" id="fileInput" class="file-input"
+               accept=".m3u,.m3u8,.mp4,.mp3,.mpd,.ts,.aac,.flv,.mov,video/*,audio/*" aria-label="Ouvrir un fichier local" />
+        <button class="btn btn-ghost" id="openFileBtn">Ouvrir un fichier local</button>
+      </div>
+      <div class="loader-subrow">
+        <span id="fileNameLabel">Aucun fichier sélectionné</span>
+      </div>
+
+      <div class="loader-label" style="margin-top:4px;">Ajouter un overlay iFrame</div>
+      <div class="loader-row">
+        <input id="iframeTitleInput" class="input" placeholder="Titre overlay / site / widget…" aria-label="Titre de l’overlay iFrame" />
+      </div>
+      <div class="loader-row">
+        <input id="iframeUrlInput" class="input" placeholder="URL iFrame ou vidéo YouTube…" aria-label="URL de l’overlay iFrame" />
+        <button class="btn btn-accent" id="addIframeBtn">+ Ajouter</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 2 : JSON M3U / iFrame -->
+  <div class="loader-section" data-section="json">
+    <div class="loader-label collapsible-label">
+      <span>JSON M3U / iFrame</span>
+      <span class="loader-toggle-icon">▸</span>
+    </div>
+
+    <div class="loader-section-body">
+      <div class="loader-row">
+        <button class="btn btn-ghost" id="exportM3uJsonBtn">Export M3U → JSON</button>
+        <button class="btn btn-ghost" id="exportIframeJsonBtn">Export iFrame → JSON</button>
+      </div>
+      <div class="loader-row">
+        <button class="btn btn-accent" id="importJsonBtn">Importer JSON</button>
+      </div>
+      <div class="loader-row">
+        <textarea id="jsonArea" class="input"
+                  style="height:80px; resize:vertical; font-family:monospace; border-radius:12px;"
+                  placeholder="Colle ici le JSON à importer, ou regarde le JSON exporté…" aria-label="Zone de collage JSON"></textarea>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+    
+  </aside>
+
+  <!-- Main: player -->
+  <main class="main">
+    <div class="top-bar">
+      <div class="top-bar-left">
+        <!-- tu peux mettre des infos ici plus tard si tu veux -->
+      </div>
+
+      <!-- Banner tron Ares centré (ne change pas la hauteur) -->
+      <div class="top-bar-banner">
+        <img src="media/image/tron3.webp"
+             width="1399" height="471"
+             decoding="async" fetchpriority="high"
+             alt="Tron Ares IPTV Player"
+             class="banner-img">
+      </div>
+
+      <div class="top-bar-right">
+        <button class="btn btn-ghost" id="themeToggleBtn">Thème : Cyan/Orange</button>
+        <button class="btn btn-ghost" id="fxToggleBtn">FX Tron+</button>
+        <button class="btn btn-ghost" id="pipToggleBtn">PiP</button>
+        <button class="btn btn-ghost btn-icon" id="openStreamUrlBtn" title="Tester un Stream URL">🔗</button>
+        <button class="btn btn-ghost" id="toggleOverlayBtn">Vidéo / iFrame</button>
+        <button class="btn btn-ghost" id="fullPageBtn">Plein écran</button>
+        <button class="toggle-sidebar-btn" id="toggleSidebarBtn" aria-label="Menu sidebar">
+          <span class="burger-center"></span>
+        </button>
+      </div>
+    </div>
+
+    <section class="player-shell" id="playerContainer">
+      <div class="player-inner">
+        <video id="videoEl" controls preload="metadata"></video>
+        <div class="iframe-overlay hidden" id="iframeOverlay">
+          <div class="iframe-overlay-controls">
+            <button id="trailerBackBtn" class="btn btn-ghost trailer-back-btn hidden" type="button" title="Retour aux infos (TMDb)">↩ Retour infos</button>
+          </div>
+          <iframe
+        id="iframeEl"
+        allowfullscreen
+        allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+        referrerpolicy="origin"
+      ></iframe>
+        </div>
+
+        <!-- 🎞️ VITRINE (overlay inside player, same dimensions) -->
+        <div id="showcaseOverlay" class="showcase-overlay hidden" aria-hidden="true">
+          <div class="showcase-topbar">
+            <div class="showcase-search-wrap" id="showcaseSearchWrap">
+              <input id="showcaseSearchInput" class="showcase-search" type="text" placeholder="Rechercher dans la vitrine…" autocomplete="off" spellcheck="false" aria-label="Rechercher dans la vitrine" />
+              <button id="showcaseClearBtn" class="showcase-clear" type="button" title="Effacer">✕</button>
+            </div>
+
+            <select id="showcaseYearSelect" class="showcase-select" aria-label="Filtrer par année">
+              <option value="">Toutes années</option>
+            </select>
+
+            <select id="showcaseCategorySelect" class="showcase-select" aria-label="Filtrer par catégorie">
+              <option value="">Toutes catégories</option>
+            </select>
+
+            <button id="showcaseResetBtn" class="showcase-reset" type="button" title="Réinitialiser">↺</button>
+            <button id="showcaseCloseBtn" class="showcase-close" type="button" title="Fermer">✕</button>
+          </div>
+          <div id="showcaseBody" class="showcase-body"></div>
+        </div>
+      </div>
+    </section>
+<!-- RADIO FULLSCREEN INSIDE PLAYER -->
+<div id="radioPanel" class="radio-panel hidden" aria-hidden="true">
+  <button id="radioPanelClose" class="radio-panel-close" title="Retour diffusion">✕</button>
+
+  <div class="radio-panel-card">
+    <div class="radio-panel-header">
+      <div class="radio-panel-logo-wrap">
+        <img class="radio-panel-logo"
+             src="/media/img/Radio_Alfa.png" loading="lazy" decoding="async"
+             alt="Radio Alfa">
+      </div>
+      <div class="radio-panel-meta">
+        <div class="radio-panel-title">R.Alfa</div>
+        <div class="radio-panel-sub">Hit Music Only</div>
+      </div>
+    </div>
+
+    <div class="radio-panel-viz" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="radio-panel-actions">
+      <button id="radioPanelPlay" class="radio-panel-btn radio-panel-btn-primary">⏸ Pause</button>
+      <button id="radioPanelBack" class="radio-panel-btn">↩ Retour diffusion</button>
+    </div>
+  </div>
+</div>
+
+    <footer class="bottom-bar">
+      <button class="nav-btn" id="prevBtn">
+        <span class="nav-label-arrow">◀</span>
+        Prev
+      </button>
+
+      <div class="now-playing" id="nowPlaying">
+  <div class="np-logo" id="npLogo"></div>
+  <div class="np-text">
+    <div class="np-title" id="npTitle">Aucune chaîne sélectionnée</div>
+    <div class="np-sub" id="npSub">Choisissez une chaîne dans la liste</div>
+  </div>
+  <div class="np-badge" id="npBadge">IDLE</div>
+  <div class="np-counter" id="npCounter">-/-</div>
+
+  <!-- Actions (Cast, etc.) -->
+  <div class="np-actions" id="npActions">
+    <google-cast-launcher
+      id="castLauncher"
+      class="icon-btn np-action-btn cast-launcher cast-btn"
+      title="Chromecast"
+      aria-label="Chromecast"></google-cast-launcher>
+  </div>
+
+  <!-- Nouveau bloc contrôles films (channelList) -->
+  <div class="np-tracks" id="npTracks">
+
+    <!-- Bouton Audio -->
+    <div class="np-track-group" id="audioGroup">
+      <button class="icon-btn np-track-btn" id="audioTrackBtn" title="Changer la piste audio">
+        🔊
+      </button>
+      <div class="np-track-menu" id="audioTrackMenu"></div>
+    </div>
+
+    <!-- Bouton Sous-titres -->
+    <div class="np-track-group" id="subtitleGroup">
+      <button class="icon-btn np-track-btn" id="subtitleTrackBtn" title="Sous-titres">
+        💬
+      </button>
+      <div class="np-track-menu" id="subtitleTrackMenu"></div>
+    </div>
+
+  </div>
+</div>
+
+
+      <button class="nav-btn" id="nextBtn">
+        Next
+        <span class="nav-label-arrow">▶</span>
+      </button>
+
+      <div class="helper-text">
+        Next / Prev changent la chaîne <span>M3U</span> active.
+      </div>
+    </footer>
+  
+</main>
+</div>
+
+<!-- STREAM URL (Akamai-style) -->
+<div id="streamUrlOverlay" class="streamurl-overlay hidden" aria-hidden="true">
+  <div class="streamurl-card" role="dialog" aria-modal="true" aria-label="Stream URL">
+    <div class="streamurl-header">
+      <div class="streamurl-title">Stream URL</div>
+      <button id="streamUrlCloseBtn" class="streamurl-close" title="Fermer">✕</button>
+    </div>
+
+    <label class="streamurl-label" for="streamUrlInput">URL</label>
+    <input id="streamUrlInput" class="streamurl-input" type="url" inputmode="url"
+           placeholder="https://…/master.m3u8 (ou .mpd / mp3 / aac)">
+
+    <label class="streamurl-label" for="streamTitleInput">Titre (option)</label>
+    <input id="streamTitleInput" class="streamurl-input" type="text" placeholder="Nom affiché">
+
+    <div class="streamurl-actions">
+      <button id="streamUrlPlayBtn" class="btn btn-accent">Play</button>
+      <button id="streamUrlCopyBtn" class="btn btn-ghost">Copier lien</button>
+    </div>
+
+    <div class="streamurl-hint">Astuce : tu peux aussi ouvrir directement <span>?streamUrl=…</span></div>
+  </div>
+</div>
+
+
+
+<!-- =========================
+     Sous-titres (import + recherche en ligne)
+     ========================= -->
+<input type="file" id="subtitleFileInput" accept=".vtt,.srt" style="display:none" aria-label="Importer un fichier de sous-titres" />
+
+<div id="subtitleSearchOverlay" class="subsearch-overlay hidden" aria-hidden="true">
+  <div class="subsearch-card" role="dialog" aria-modal="true" aria-label="Sous-titres">
+    <div class="subsearch-header">
+      <div class="subsearch-title">Sous-titres</div>
+      
+      <label class="subsearch-stealth-toggle" title="Afficher Réglages OpenSubtitles"><input id="toggleOsSettingsBtnCheckbox" type="checkbox" aria-label="Réglages OpenSubtitles"></label>
+<button id="subtitleSearchCloseBtn" class="subsearch-close" title="Fermer">✕</button>
+    </div>
+
+    <div class="subsearch-row">
+      <label class="subsearch-label" for="subtitleSearchProviderSelect">Source</label>
+      <select id="subtitleSearchProviderSelect" class="subsearch-select">
+        <option value="opensubtitles">OpenSubtitles (via proxy)</option>
+      </select>
+    </div>
+    <div class="subsearch-row">
+      <label class="subsearch-label" for="openSubtitlesApiKeyInput"></label>
+      <input id="openSubtitlesApiKeyInput" class="subsearch-input" type="hidden" placeholder="Colle ta clé OpenSubtitles ici" value="SZBnt9EmjgdlxNDUfeAl3A6GNxrdqOGU" autocomplete="off" spellcheck="false" aria-label="Clé API OpenSubtitles">
+     
+    </div>
+
+    <div class="subsearch-row">
+      <label class="subsearch-label" for="subdlApiKeyInput"></label>
+      <input id="subdlApiKeyInput" class="subsearch-input" type="hidden" placeholder="Colle ta clé SubDL ici" value="Xnraa63L8_tIV5ieHGl4EA1vGO0f5DIg" autocomplete="off" spellcheck="false" aria-label="Clé API SubDL">
+      
+    <div class="subsearch-actions" style="justify-content: flex-start;">
+      <button id="subtitleApiKeysSaveBtn" class="btn btn-ghost">Enregistrer</button>
+      <div class="subsearch-hint" style="color: red;">Enregistrer pour déployer la liste de sous-titre de (SubDL).</div>
+      <div id="subtitleApiKeysSaveStatus" class="subsearch-hint" style="margin:0 0 0 10px;"></div>
+    </div>
+
+    </div>
+
+
+    <div class="subsearch-row">
+      <label class="subsearch-label" for="subtitleSearchTitleInput">Titre / nom du fichier</label>
+      <input id="subtitleSearchTitleInput" class="subsearch-input" type="text" placeholder="Ex: Inception 2010" autocomplete="off" spellcheck="false">
+    </div>
+
+    <div class="subsearch-row">
+      <label class="subsearch-label" for="subtitleSearchLangInput">Langues (codes, séparées par virgule)</label>
+      <input id="subtitleSearchLangInput" class="subsearch-input" type="text" placeholder="fr,en,pt-pt" value="fr,en,pt-pt,pt-br" autocomplete="off" spellcheck="false">
+      <div class="subsearch-hint">Ex: fr, en, pt-pt, pt-br…</div>
+    </div>
+
+    <div class="subsearch-actions">
+      <button id="subtitleSearchBtn" class="btn btn-accent">Rechercher</button>
+    </div>
+
+    <div id="subtitleSearchStatus" class="subsearch-status"></div>
+    <div id="subtitleSearchResults" class="subsearch-results"></div>
+
+    <div class="subsearch-footnote">
+      Astuce : tu peux aussi <span>Importer</span> un fichier .srt/.vtt depuis le menu 💬 (sous-titres).
+    </div>
+  </div>
+</div>
+
+<!-- ✅ ORDRE IMPORTANT -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script defer src="js/tmdb-cache-manager.js?v=5"></script>
+<script defer src="js/overlay-ttl.js"></script>
+<script defer src="js/tron-ares-fullscreen-media.js?v=2"></script>
+<script defer src="js/tron-ares.js?v=0"></script>
+<script defer src="js/tv-remote-nav.js?v=1"></script>
+<script defer src="js/iframe-overlay-boost.js?v=1"></script>
+<script defer src="js/overlay-ttl-adapter.priority.popups.js?v=2"></script>
+<script defer src="js/tmdb-integration.js?v=4"></script>
+
+<script defer src="js/fr-program-badges.js"></script>
+<script defer src="multi-lang-badge.js"></script>
+<script defer src="js/subdl-lang-sync.js"></script>
+<script defer src="js/subdl-lang-sync.apikey.v7.js"></script>
+
+<script defer type="text/javascript" src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
+
+<script defer src="js/webtor-rect-overlay.v12.js"></script>
+<script defer src="js/webtor-torrents-ui.v10.js"></script>
+<script defer src="js/webtor-refresh-tabs.v4.js"></script>
+
+<!-- <script type="module" src="js/tron-avatar-assistant-3d-glb.js?v=1"></script> -->
+<footer id="aresFooterSignature" aria-hidden="true" style="display:none;">Ares Media Engine — Copyright © Salema vitor — All rights reserved</footer>
+</body>
+</html>

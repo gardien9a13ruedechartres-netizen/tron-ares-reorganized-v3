@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>M6FR - Overlay</title>
+  <style>
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #000;
+    }
+
+    .wrap {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      border-radius: 0;
+      display: block;
+      background: #000;
+    }
+
+    @supports (height: 100dvh) {
+      .wrap { height: 100dvh; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="wrap">
+  <iframe id="player"
+      sandbox="allow-scripts allow-forms"
+      referrerpolicy="no-referrer"
+      loading="eager"
+      title="M6FR">
+  </iframe>
+</div>
+
+<script>
+const STREAM_URL = "https://lovetier.bz/player/M6FR";
+
+// TTL mesuré ≈ 4m16 → refresh avant (marge ~26s)
+const REFRESH_EVERY_MS = 3 * 60 * 1000 + 50 * 1000; // 3m50
+const LOAD_TIMEOUT_MS  = 10 * 1000;                 // 10s max
+const JITTER_MAX_MS    = 2000;                      // 0–2s (léger)
+
+// Reload au retour d’onglet : seulement si tu as quitté un moment
+const RELOAD_ON_RETURN_IF_HIDDEN_LONGER_THAN_MS = 20 * 1000; // 20s
+// ou si la dernière charge date déjà (utile vs TTL)
+const RELOAD_ON_RETURN_IF_LAST_LOAD_OLDER_THAN_MS = 90 * 1000; // 1m30
+
+let loadTimer = null;
+let refreshTimer = null;
+let loadSeq = 0;
+
+let lastLoadAt = 0;
+let hiddenSince = null;
+
+function cacheBust(url) {
+  return url + (url.includes('?') ? '&' : '?') + '_=' + Date.now();
+}
+
+function loadStream(reason = '') {
+  const iframe = document.getElementById('player');
+  if (!iframe) return;
+
+  loadSeq += 1;
+  const mySeq = loadSeq;
+
+  if (loadTimer) clearTimeout(loadTimer);
+
+  iframe.src = cacheBust(STREAM_URL);
+  lastLoadAt = Date.now();
+
+  loadTimer = setTimeout(() => {
+    if (mySeq !== loadSeq) return;
+    loadStream('timeout');
+  }, LOAD_TIMEOUT_MS);
+}
+
+document.getElementById('player').addEventListener('load', () => {
+  if (loadTimer) clearTimeout(loadTimer);
+});
+
+function scheduleNextRefresh() {
+  if (refreshTimer) clearTimeout(refreshTimer);
+
+  const jitter = JITTER_MAX_MS ? Math.floor(Math.random() * JITTER_MAX_MS) : 0;
+
+  refreshTimer = setTimeout(() => {
+    loadStream('periodic');
+    scheduleNextRefresh();
+  }, REFRESH_EVERY_MS + jitter);
+}
+
+function maybeReloadOnReturn(trigger) {
+  const now = Date.now();
+  const hiddenDuration = hiddenSince ? (now - hiddenSince) : 0;
+  const ageSinceLastLoad = lastLoadAt ? (now - lastLoadAt) : Infinity;
+
+  const shouldReload =
+    hiddenDuration >= RELOAD_ON_RETURN_IF_HIDDEN_LONGER_THAN_MS ||
+    ageSinceLastLoad >= RELOAD_ON_RETURN_IF_LAST_LOAD_OLDER_THAN_MS;
+
+  if (shouldReload) loadStream(trigger);
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    hiddenSince = Date.now();
+  } else {
+    maybeReloadOnReturn('visible');
+    hiddenSince = null;
+  }
+});
+
+window.addEventListener('focus', () => {
+  if (!document.hidden) maybeReloadOnReturn('focus');
+});
+
+// Initial + boucle
+loadStream('init');
+scheduleNextRefresh();
+</script>
+
+</body>
+</html>

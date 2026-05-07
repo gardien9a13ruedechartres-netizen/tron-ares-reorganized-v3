@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HLS Player avec fallback iframe et rechargement</title>
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+    background: black;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+#player-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: black;
+}
+
+#mainVideo,
+#probeVideo,
+#fallbackFrame,
+#status {
+    position: absolute;
+    inset: 0;
+}
+
+#mainVideo,
+#fallbackFrame {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background: black;
+}
+
+#mainVideo {
+    object-fit: fill;
+    z-index: 2;
+}
+
+#fallbackFrame {
+    z-index: 1;
+}
+
+#probeVideo {
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+    left: -9999px;
+    top: -9999px;
+}
+
+.hidden {
+    display: none;
+}
+
+#status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    background: rgba(0,0,0,0.25);
+    pointer-events: none;
+    z-index: 5;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+#status.show {
+    opacity: 1;
+}
+</style>
+</head>
+<body>
+
+<div id="player-container">
+    <iframe
+        id="fallbackFrame"
+        class="hidden"
+        src=""
+        allowfullscreen
+        allow="autoplay; fullscreen"
+        sandbox="allow-scripts allow-forms"
+        referrerpolicy="no-referrer">
+    </iframe>
+
+    <video id="mainVideo" controls autoplay playsinline></video>
+    <video id="probeVideo" autoplay playsinline muted></video>
+
+    <div id="status">Chargement…</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+<script>
+(() => {
+    const mainVideo = document.getElementById("mainVideo");
+    const probeVideo = document.getElementById("probeVideo");
+    const iframe = document.getElementById("fallbackFrame");
+    const statusBox = document.getElementById("status");
+
+    const streamUrl = "https://streaming-live.rtp.pt/liverepeater/rtp1HD.smil/playlist.m3u8";
+    const iframeUrl = "/pages/rtp1.al.html";
+
+    // Réglages
+    const RELOAD_TIMEOUT = 300000; // 5 minutes
+    const CHECK_INTERVAL = 5000;   // vérifie toutes les 5 secondes
+    const LOAD_FAILSAFE = 25000;   // abandonne un préchargement bloqué après 25 s
+    const CROSSFADE_MS = 220;      // durée du fondu
+
+    let activeMode = "main";
+    let reloading = false;
+    let preloadFrame = null;
+    let retryTimer = null;
+    let mainHls = null;
+
+    function showStatus(message) {
+        statusBox.textContent = message || "";
+        statusBox.classList.add("show");
+    }
+
+    function hideStatus() {
+        statusBox.classList.remove("show");
+    }
+
+    function createIframe(src, visible) {
+        const frame = document.createElement("iframe");
+        frame.className = "player-frame " + (visible ? "visible-frame" : "preload-frame");
+        frame.setAttribute("allow", "autoplay; fullscreen");
+        frame.setAttribute("referrerpolicy", "no-referrer");
+        frame.src = src;
+        return frame;
+    }
+
+    function cleanupPreload() {
+        if (preloadFrame) {
+            preloadFrame.onload = null;
+            preloadFrame.onerror = null;
+        }
+    }
+
+    function installActiveErrorHandler(frame) {
+        frame.onerror = () => {
+            startSmoothReload();
+        };
+    }
+
+    function swapToPreloadedFrame() {
+        if (!preloadFrame || !iframe) return;
+
+        const oldActive = iframe;
+        const newActive = preloadFrame;
+
+        // La nouvelle devient visible
+        newActive.classList.remove("preload-frame");
+        newActive.classList.add("visible-frame");
+
+        // L'ancienne s'efface doucement
+        oldActive.classList.remove("visible-frame");
+        oldActive.classList.add("fade-out-frame");
+
+        iframe = newActive;
+        preloadFrame = null;
+        reloading = false;
+
+        installActiveErrorHandler(iframe);
+
+        setTimeout(() => {
+            if (oldActive && oldActive.parentNode) {
+                oldActive.remove();
+            }
+        }, CROSSFADE_MS + 30);
+    }
+
+    function startSmoothReload() {
+        if (reloading) return;
+
+        reloading = true;
+        preloadFrame = createIframe(iframe.src, false);
+        document.getElementById("player-container").appendChild(preloadFrame);
+
+        preloadFrame.onload = () => {
+            cleanupPreload();
+            swapToPreloadedFrame();
+        };
+
+        preloadFrame.onerror = () => {
+            cleanupPreload();
+
+            if (preloadFrame && preloadFrame.parentNode) {
+                preloadFrame.remove();
+            }
+
+            preloadFrame = null;
+            reloading = false;
+        };
+
+        setTimeout(() => {
+            if (preloadFrame && preloadFrame.parentNode) {
+                preloadFrame.remove();
+            }
+            preloadFrame = null;
+            reloading = false;
+        }, LOAD_FAILSAFE);
+    }
+
+    function showMainPlayer() {
+        iframe.classList.add("hidden");
+        iframe.src = "";
+        mainVideo.classList.remove("hidden");
+        activeMode = "main";
+    }
+
+    function showIframePlayer() {
+        mainVideo.classList.add("hidden");
+        iframe.classList.remove("hidden");
+
+        if (iframe.src !== iframeUrl) {
+            iframe.src = iframeUrl;
+        }
+
+        activeMode = "iframe";
+    }
+
+    function fallbackToIframe(reason) {
+        showIframePlayer();
+        startSmoothReload();
+        hideStatus();
+    }
+
+    function startMainPlayback() {
+        if (retryTimer) clearTimeout(retryTimer);
+
+        mainHls = new Hls();
+
+        mainHls.on(Hls.Events.MEDIA_ATTACHED, () => {
+            mainHls.loadSource(streamUrl);
+        });
+
+        mainHls.on(Hls.Events.MANIFEST_PARSED, () => {
+            mainVideo.play().catch(() => {});
+        });
+
+        mainHls.on(Hls.Events.ERROR, (event, data) => {
+            if (!data.fatal) return;
+
+            switch (data.type) {
+                case Hls.ErrorTypes.NETWORK_ERROR:
+                    fallbackToIframe("Erreur réseau HLS fatale");
+                    break;
+                case Hls.ErrorTypes.MEDIA_ERROR:
+                    try {
+                        mainHls.recoverMediaError();
+                    } catch (e) {
+                        fallbackToIframe("Impossible de récupérer l'erreur média");
+                    }
+                    break;
+                default:
+                    fallbackToIframe("Erreur HLS fatale");
+                    break;
+            }
+        });
+
+        mainHls.attachMedia(mainVideo);
+    }
+
+    function startMonitoring() {
+        setInterval(() => {
+            if (activeMode === "iframe" && !reloading) {
+                startSmoothReload();
+            }
+        }, CHECK_INTERVAL);
+    }
+
+    document.addEventListener("click", () => {
+        startMainPlayback();
+        startMonitoring();
+    }, { passive: true });
+
+    startMainPlayback();
+    startMonitoring();
+})();
+</script>
+
+</body>
+</html>

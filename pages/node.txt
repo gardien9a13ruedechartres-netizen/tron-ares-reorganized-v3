@@ -1,0 +1,6 @@
+node generate-player.js
+
+npx wrangler deploy
+
+node auto-deploy-cloudflare.js
+

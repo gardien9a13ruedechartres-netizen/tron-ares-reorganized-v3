@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <script>
+    (function sanitizeUrl() {
+      try {
+        var search = window.location.search;
+        if (!search) return;
+
+        var params = new URLSearchParams(search);
+        var dirty = false;
+
+        ["token", "access_token", "id_token", "auth_token", "jwt"].forEach(function (key) {
+          if (params.has(key)) {
+            params.delete(key);
+            dirty = true;
+          }
+        });
+
+        if (dirty) {
+          var newSearch = params.toString();
+          var newUrl =
+            window.location.pathname +
+            (newSearch ? "?" + newSearch : "") +
+            window.location.hash;
+
+          window.history.replaceState(null, "", newUrl);
+        }
+      } catch (e) {
+        console.warn("URL sanitization error", e);
+      }
+    })();
+  </script>
+
+  <meta charset="utf-8" />
+  <meta name="referrer" content="no-referrer" />
+  <meta name="robots" content="noindex,nofollow,max-snippet:0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: #000;
+      overflow: hidden;
+    }
+
+    #player {
+      width: 100%;
+      height: 100%;
+      background: #000;
+      display: block;
+    }
+
+    /* Ajout demandé : fill visuel */
+    #player {
+      object-fit: fill !important;
+    }
+
+    /* Habillage simple pour rester proche du rendu précédent */
+    video {
+      background: #000;
+      font-family: Arial, sans-serif;
+    }
+
+    video::-webkit-media-controls-panel {
+      background: linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0.35));
+    }
+  </style>
+</head>
+<body>
+  <video
+    id="player"
+    controls
+    playsinline
+    autoplay
+    preload="auto"
+  ></video>
+
+  <script>
+    (function () {
+      var q = window.location.search;
+      var src = '';
+      var video = document.getElementById('player');
+      var hls = null;
+
+      if (q && q.length > 1) {
+        var raw = decodeURIComponent(q.substring(1));
+        if (/^https?:/i.test(raw)) {
+          src = raw;
+        } else {
+          var params = new URLSearchParams(q);
+          src = params.get('src') || params.get('url') || params.get('u') || '';
+        }
+      }
+
+      function destroyHls() {
+        if (hls) {
+          try {
+            hls.destroy();
+          } catch (e) {}
+          hls = null;
+        }
+      }
+
+      function playVideo() {
+        var promise = video.play();
+        if (promise && typeof promise.catch === 'function') {
+          promise.catch(function () {});
+        }
+      }
+
+      function setSource(url) {
+        if (!url) return;
+
+        destroyHls();
+
+        var cleanUrl = String(url).trim();
+        var isHls = /\.m3u8(\?.*)?$/i.test(cleanUrl) ||
+                    /application\/x-mpegurl/i.test(cleanUrl) ||
+                    /application\/vnd\.apple\.mpegurl/i.test(cleanUrl);
+
+        var isDash = /\.mpd(\?.*)?$/i.test(cleanUrl);
+        var isMp3 = /\.mp3(\?.*)?$/i.test(cleanUrl);
+        var isMp4 = /\.mp4(\?.*)?$/i.test(cleanUrl);
+
+        if (isHls) {
+          if (window.Hls && Hls.isSupported()) {
+            hls = new Hls({
+              enableWorker: true,
+              lowLatencyMode: true,
+              backBufferLength: 90
+            });
+
+            hls.loadSource(cleanUrl);
+            hls.attachMedia(video);
+
+            hls.on(Hls.Events.MEDIA_ATTACHED, function () {
+              playVideo();
+            });
+
+            hls.on(Hls.Events.ERROR, function (event, data) {
+              if (!data || !data.fatal) return;
+
+              switch (data.type) {
+                case Hls.ErrorTypes.NETWORK_ERROR:
+                  try {
+                    hls.startLoad();
+                  } catch (e) {}
+                  break;
+
+                case Hls.ErrorTypes.MEDIA_ERROR:
+                  try {
+                    hls.recoverMediaError();
+                  } catch (e) {}
+                  break;
+
+                default:
+                  destroyHls();
+                  break;
+              }
+            });
+
+            return;
+          }
+
+          if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = cleanUrl;
+            playVideo();
+            return;
+          }
+        }
+
+        if (isDash || isMp3 || isMp4 || /^https?:/i.test(cleanUrl)) {
+          video.src = cleanUrl;
+          playVideo();
+        }
+      }
+
+      setSource(src);
+
+      window.addEventListener('message', function (e) {
+        if (!e.data) return;
+
+        if (typeof e.data === 'string' && /^https?:/i.test(e.data)) {
+          setSource(e.data);
+        } else if (e.data && e.data.type === 'SET_SRC' && e.data.url) {
+          setSource(e.data.url);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

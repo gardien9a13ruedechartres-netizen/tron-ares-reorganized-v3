@@ -1,0 +1,224 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+    "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+    <head>
+
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>ucaster membedded 4 player</title>
+        <link rel="stylesheet" href="https://new.tryagain.top/static/styles/screen.css" type="text/css" media="screen, projection">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+		<script id="aclib" type="text/javascript" src="//acscdn.com/script/aclib.j"></script>
+
+
+	
+         <style type="text/css" media="screen">
+            .player_div
+            {
+                width: 100%;
+                height: 100%;
+                position: absolute;
+                display: block;
+                z-index: 100;
+				background-color: black;
+            
+           }
+            
+           /* FORCE VIDEO TO FILL PLAYER */
+            video {
+                width: 100%;
+                height: 100%;
+                object-fit: fill;
+            }
+
+             .logo_overlay
+            {
+                width: 100%;
+                position: absolute;
+                display: block;
+                z-index: 110;
+            }
+			.website_logo
+            {
+                width: 100%;
+                position: absolute;
+                display: block;
+                z-index: 110;
+				color: #cccccc;
+				text-align: left;
+            }	
+			#unmute-button {
+				position: absolute;
+				top: 10px;
+				z-index: 600;
+				left: 10px;
+				background-color: red;
+				color: white;
+				border: none;
+				padding: 10px;
+				cursor: pointer;
+				border-radius: 5px;
+			}
+			#unmute-button:hover {
+				background-color: rgba(0, 0, 0, 0.8);
+			}			
+			video::-webkit-media-controls-timeline {
+				display: none;
+			}
+			video::-webkit-media-controls-mute-button {
+				margin-left: auto;
+			}
+			video::-moz-media-controls-timeline {
+				display: none;
+			}
+			video::-moz-media-controls-mute-button {
+				margin-left: auto;
+			}
+			video::-webkit-media-controls-current-time-display {
+				display: none;
+			}
+		
+			video::-webkit-media-controls-time-remaining-display {
+				display: none;
+			}
+			.media-control[data-media-control] .media-control-layer[data-controls] button.media-control-button svg path {
+    			fill: #006aff;
+			}
+			.media-control[data-media-control] .media-control-layer[data-controls] .drawer-container[data-volume] .drawer-icon-container[data-volume] 									.drawer-icon[data-volume] svg path {
+    			fill: #006aff;
+			}
+			.media-control[data-media-control] .media-control-layer[data-controls] .drawer-container[data-volume] .bar-container[data-volume] 											.segmented-bar-element[data-volume] {
+    			box-shadow: inset 2px 0 0 #006aff;
+			}
+			.media-control[data-media-control] .media-control-layer[data-controls] .drawer-container[data-volume] .bar-container[data-volume] 											.segmented-bar-element[data-volume].fill {
+			    box-shadow: inset 2px 0 0 #006aff;
+			    opacity: 1;
+			}
+			.player-poster[data-poster] .play-wrapper[data-poster] svg path {
+			    fill: #006aff;
+			}
+			.spinner-three-bounce[data-spinner]>div {
+    			background-color: #006aff;
+			}
+        </style>
+	  	<script src="https://new.tryagain.top/resources/scripts/vp/hlsjs.0.12.4.min.js"></script>
+<script type="text/javascript">
+ aclib.runPop({
+ zoneId: '2304407',
+    });
+</script>
+	  	<script src="https://new.tryagain.top/resources/scripts/vp/simplepeer_9_7_2.min.js?id=jf83239huwe"></script>
+	  	<script src="https://new.tryagain.top/resources/scripts/vp/lz-string.min.js?id=fsdfw"></script>	
+		<script src="https://cdn.jsdelivr.net/npm/clappr@latest/dist/clappr.min.js"></script>
+    </head>
+<script type='text/javascript' src='https://new.tryagain.top/resources/scripts/newucaster.js?id=1573542001724'></script>
+    <body style="margin: 0px; padding: 0px; background: #3c3c3c" >
+
+         
+		
+			
+			
+			           
+       <script type="text/javascript" src="https://new.tryagain.top/static/scripts/jquery-1.10.2.min.js"></script>
+        <div class="player_div" id="player_div" align="center">
+			
+                <script hidden type="text/javascript">
+					jQuery.loadScript = function (url, callback) {
+					    jQuery.ajax({
+					        url: url,
+					        dataType: 'script',
+					        success: callback,
+					        async: true
+					    });
+					}
+					var unmuteButton = document.getElementById('unmute-button');
+					var playerElement = document.getElementById("player_div");
+					var hlsUrl;	
+					var player;
+					function setupVideo() {
+						if (0 === 1) {
+							$.loadScript("/resources/scripts/vp/vidictPeer_server_6.min.js?id=39", function() {
+								hlsUrl = "https://" + ea + ":8088/live/agrrrrr/playlist.m3u8?id=121119&pk="
+								var pk = "55e0c5e758904f24491a24dcf7b039654e47682f5cc8226acfec0t22aa069037aaa779339da9740574f8b30363781438a2727685b5150b1ca0ac894bbfff5096c"
+								hlsUrl = hlsUrl + enableVideo(pk);
+								player = new Clappr.Player({
+									hlsjsConfig: { fLoader: vidictLoader },
+									source: hlsUrl,
+									disableErrorScreen: true, // Disable the internal error screen plugin
+									mute: false,
+									autoPlay: true,
+									height: "100%",
+									width: "100%",
+									events: {
+										onError: function(e) {
+										  setTimeout(function() { player.configure(player.options); }, 10000);
+										}
+									}
+								});
+								player.attachTo(playerElement);
+							});
+						} else {
+							hlsUrl = "https://" + ea + ":8088/live/agrrrrr/playlist.m3u8?id=121119&pk="
+							var pk = "55e0c5e758904f24491a24dcf7b039654e47682f5cc8226acfec0t22aa069037aaa779339da9740574f8b30363781438a2727685b5150b1ca0ac894bbfff5096c"
+							hlsUrl = hlsUrl + enableVideo(pk);
+							player = new Clappr.Player({
+								source: hlsUrl,
+								disableErrorScreen: true, // Disable the internal error screen plugin
+								mute: false,
+								autoPlay: true,
+								height: "100%",
+								width: "100%",
+								events: {
+									onError: function(e) {
+									  setTimeout(function() { player.configure(player.options); }, 10000);
+									}
+								}
+							});
+							player.attachTo(playerElement);
+						}
+						// Conditionally show or hide the unmute button
+					if (isMobile()) {
+						// If it's a mobile device, remove the unmute button
+						unmuteButton.style.display = 'none';
+					} else {
+						// Add event listener for desktop users
+						unmuteButton.addEventListener('click', function() {
+							if (player && typeof player.setVolume === "function") {
+								player.setVolume(100); // Ã¢Åâ¦ Correct
+								unmuteButton.remove();
+							} else {
+								console.error("Player is not initialized or does not support setVolume");
+							}
+						});
+
+						player.on('volumechange', function() {unmuteButton.remove();});
+					}
+					}
+					// Detect if the user is on a mobile device
+					function isMobile() {
+						return /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+					}
+					
+					// Function to detect if the user is on an iOS device (iPhone or iPad)
+					function isIOS() {
+						return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+					}
+
+					
+                </script>
+                
+                
+                    <script type="text/javascript">
+                        ea = "plu001.myturn1.top";
+                        setupVideo();
+                    </script>
+                                
+            </span>
+		  
+        </div>
+
+		
+    </body>
+</html>
+

@@ -1,0 +1,34 @@
+[
+  {
+    "name": "CM TV",
+    "slug": "cmtv",
+    "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=CM%20TV&countries=pt.json"
+  },
+  {
+    "name": "RTP1",
+    "slug": "rtp1",
+    "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=RTP 1 HD&countries=pt.json"
+  },
+  {
+    "name": "RTP2",
+    "slug": "rtp2",
+    "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=RTP 2&countries=pt.json"
+  },
+{
+    "name": "CANAL+",
+    "slug": "canal+",
+    "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=CANAL+&countries=fr.json"
+  }
+
+]
+
+
+
+
+
+
+
+
+
+
+

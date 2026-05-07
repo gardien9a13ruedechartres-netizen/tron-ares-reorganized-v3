@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Player HLS</title>
+  <style>
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      overflow: hidden;
+    }
+
+    #video {
+      width: 100vw;
+      height: 100vh;
+      object-fit: fill;
+      background: #000;
+    }
+  </style>
+</head>
+<body>
+
+<video id="video" autoplay playsinline controls></video>
+
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+<script>
+const streamUrl = "https://livewatch.top/api/proxy?url=https%3A%2F%2Fshouurvki7jtfax.ngolpdkyoctjcddxshli469r.org%2Fsunshine%2FVPta02A64t1jmM4rjAMLESfZdcaJRrYawN_Wqq_yn0vED43R4lNTzUxEzc1oORGypempZ9UqgH4IlvR5YgCUPbema0sKybMOfwtujOko9fPEwtpErEmMvhNkzSh4pJdM9tVgM24-XtGXvd1D8AbemScnwznonqpAEmKfPcKVLJ-cq7CBa3f48X705Z4gaDVKdQ39spISUwbXGwoLRp5IL9sAP4kTPh5bj1y9sBMW6IbRZbB7TfFp09HdS11uw0dR8z45jm4mSjUvSTbAledKzQ%2Fhls%2Findex.m3u8";
+
+const video = document.getElementById("video");
+
+video.setAttribute("src", streamUrl);
+video.muted = false;
+video.volume = 1;
+
+if (Hls.isSupported()) {
+  const hls = new Hls({
+    enableWorker: true,
+    lowLatencyMode: true
+  });
+
+  hls.loadSource(streamUrl);
+  hls.attachMedia(video);
+
+  hls.on(Hls.Events.MANIFEST_PARSED, function () {
+    video.play().catch(function (error) {
+      console.error("Autoplay bloqué :", error);
+    });
+  });
+
+  hls.on(Hls.Events.ERROR, function (event, data) {
+    console.error("Erreur HLS :", data);
+  });
+
+} else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+  video.src = streamUrl;
+
+  video.addEventListener("loadedmetadata", function () {
+    video.play().catch(function (error) {
+      console.error("Autoplay bloqué :", error);
+    });
+  });
+} else {
+  console.error("HLS non supporté.");
+}
+</script>
+
+</body>
+</html>

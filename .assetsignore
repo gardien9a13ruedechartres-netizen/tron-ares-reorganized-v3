@@ -1,0 +1,11 @@
+node_modules
+.wrangler
+.git
+auto-deploy-cloudflare.js
+package.json
+package-lock.json
+wrangler.toml
+worker.js
+log.txt
+*.log
+*.txt

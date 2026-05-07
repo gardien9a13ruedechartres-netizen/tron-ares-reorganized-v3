@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecteur HLS plein écran</title>
+
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+<style>
+
+html,
+body{
+margin:0;
+padding:0;
+width:100%;
+height:100%;
+background:#000;
+overflow:hidden;
+}
+
+#video-container{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100vh;
+background:#000;
+}
+
+video{
+width:100%;
+height:100%;
+object-fit:fill;
+background:#000;
+display:block;
+}
+
+</style>
+</head>
+
+<body>
+
+<script>
+function day_css(){
+var oLink=document.createElement("link");
+oLink.href="/templates/ja_magz/local/css/themes/direct8/template.css";
+oLink.rel="stylesheet";
+oLink.type="text/css";
+document.body.appendChild(oLink);
+}
+</script>
+
+<div id="video-container">
+
+<video
+id="live_player"
+controls
+autoplay
+
+playsinline
+preload="auto"
+poster="/images/playerbackground/t18.jpg">
+
+<source src="https://sv1.data-stream.top/1bf23cdd168bc882c58b621df68b6bcec698530cf31cfdb0c55e785f9df55a37/hls/simpsonsfr.m3u8" type="application/x-mpegURL">
+
+<source src="https://live81.vkuserlive.com/1bf23c/live/0/0c55e785f9df55a37/playlist.m3u8" type="application/x-mpegURL">
+
+</video>
+
+</div>
+
+<script>
+
+day_css();
+
+const video=document.getElementById("live_player");
+
+const sources=[
+"https://sv1.data-stream.top/1bf23cdd168bc882c58b621df68b6bcec698530cf31cfdb0c55e785f9df55a37/hls/simpsonsfr.m3u8",
+"https://live81.vkuserlive.com/1bf23c/live/0/0c55e785f9df55a37/playlist.m3u8"
+];
+
+let hls=null;
+let currentSource=0;
+let fallbackUsed=false;
+
+function destroy(){
+if(hls){
+hls.destroy();
+hls=null;
+}
+}
+
+function loadStream(index){
+
+currentSource=index;
+destroy();
+
+const src=sources[index];
+
+if(Hls.isSupported()){
+
+hls=new Hls({
+enableWorker:true,
+lowLatencyMode:true
+});
+
+hls.loadSource(src);
+hls.attachMedia(video);
+
+hls.on(Hls.Events.MANIFEST_PARSED,function(){
+video.play().catch(()=>{});
+});
+
+hls.on(Hls.Events.ERROR,function(event,data){
+
+if(data.fatal){
+
+if(!fallbackUsed && currentSource===0){
+fallbackUsed=true;
+loadStream(1);
+return;
+}
+
+switch(data.type){
+
+case Hls.ErrorTypes.MEDIA_ERROR:
+hls.recoverMediaError();
+break;
+
+default:
+destroy();
+break;
+
+}
+
+}
+
+});
+
+}
+
+else if(video.canPlayType("application/vnd.apple.mpegurl")){
+
+video.src=src;
+
+video.addEventListener("loadedmetadata",function(){
+video.play().catch(()=>{});
+},{once:true});
+
+video.addEventListener("error",function(){
+
+if(!fallbackUsed && currentSource===0){
+fallbackUsed=true;
+loadStream(1);
+}
+
+},{once:true});
+
+}
+
+}
+
+loadStream(0);
+
+</script>
+
+</body>
+</html>

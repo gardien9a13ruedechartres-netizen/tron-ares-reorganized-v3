@@ -1,0 +1,943 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Lecteur Stream JSON</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: black;
+  overflow: hidden;
+}
+
+#player {
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  background: black;
+}
+
+#loadingOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  background: rgba(0,0,0,0.58);
+  z-index: 20;
+  pointer-events: none;
+  font-family: Arial, sans-serif;
+}
+
+.loaderCard {
+  width: 360px;
+  max-width: 86vw;
+  text-align: center;
+}
+
+.smartSpinner {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  margin: 0 auto 24px auto;
+}
+
+.smartSpinner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 5px solid rgba(255,255,255,0.10);
+  border-left-color: #00d9ff;
+  border-bottom-color: #00d9ff;
+  animation: ringSpin 1s linear infinite;
+}
+
+.smartBars {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 7px;
+}
+
+.smartBars span {
+  width: 5px;
+  height: 34px;
+  background: #00d9ff;
+  border-radius: 8px;
+  opacity: 0.9;
+  animation: barsPulse 0.9s ease-in-out infinite;
+}
+
+.smartBars span:nth-child(1) { animation-delay: 0s; height: 26px; }
+.smartBars span:nth-child(2) { animation-delay: 0.12s; height: 38px; }
+.smartBars span:nth-child(3) { animation-delay: 0.24s; height: 52px; }
+.smartBars span:nth-child(4) { animation-delay: 0.36s; height: 38px; }
+.smartBars span:nth-child(5) { animation-delay: 0.48s; height: 26px; }
+
+@keyframes ringSpin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes barsPulse {
+  0%, 100% {
+    transform: scaleY(0.55);
+    opacity: 0.45;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+#loadingText {
+  color: white;
+  font-size: 18px;
+  font-weight: 700;
+  text-shadow: 0 2px 5px rgba(0,0,0,0.7);
+  margin-bottom: 10px;
+}
+
+#loadingSubText {
+  color: rgba(190,200,220,0.78);
+  font-size: 15px;
+  margin-bottom: 18px;
+}
+
+.loadingProgressWrap {
+  width: 100%;
+  margin-bottom: 14px;
+}
+
+.loadingProgressHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: rgba(230,240,255,0.88);
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.loadingProgress {
+  width: 100%;
+  height: 10px;
+  background: rgba(255,255,255,0.11);
+  border-radius: 999px;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+}
+
+.loadingProgressBar {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #008cff, #00d9ff, #6ffcff);
+  border-radius: 999px;
+  transition: width 220ms ease;
+  box-shadow: 0 0 16px rgba(0,217,255,0.5);
+}
+
+#loadingSourceText {
+  color: rgba(180,190,215,0.72);
+  font-size: 14px;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+#toggleUI {
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  z-index: 999;
+  background: rgba(0,0,0,0.0);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.2);
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+}
+
+#controlPanel {
+  position: absolute;
+  top: 60px;
+  right: 15px;
+  z-index: 25;
+  background: rgba(0,0,0,0.85);
+  padding: 10px;
+  border-radius: 8px;
+  display: none;
+  width: 340px;
+}
+
+#sourceSelect,
+#reloadBtn {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+#status {
+  background: #111;
+  color: white;
+  padding: 8px;
+  font-size: 12px;
+  max-height: 200px;
+  overflow: auto;
+  white-space: pre-wrap;
+}
+
+#corsBox {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.88);
+  z-index: 9999;
+  color: white;
+  font-family: Arial, sans-serif;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 20px;
+}
+
+#corsBoxContent {
+  max-width: 430px;
+  background: #151515;
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 12px;
+  padding: 24px;
+}
+
+#corsBoxContent h2 {
+  margin-top: 0;
+}
+
+#corsBoxContent p {
+  line-height: 1.5;
+}
+
+#corsBoxContent button {
+  margin-top: 12px;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+#loadingLogo {
+  width: 140px;
+  max-width: 70%;
+  margin: 0 auto 18px auto;
+  display: block;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.6));
+}
+</style>
+</head>
+
+<body>
+
+<video id="player" controls autoplay playsinline preload="auto"></video>
+
+<div id="loadingOverlay">
+  <div class="loaderCard">
+    <img id="loadingLogo" src="https://player-engine.com/media/cmtv.png" alt="logo">
+      <div class="smartSpinner">
+      <div class="smartBars">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+    </div>
+
+    <div id="loadingText">Chargement du flux</div>
+    <div id="loadingSubText">Préparation...</div>
+
+    <div class="loadingProgressWrap">
+      <div class="loadingProgressHeader">
+        <span id="loadingStepText">Initialisation</span>
+        <span id="loadingPercentText">0%</span>
+      </div>
+      <div class="loadingProgress">
+        <div id="loadingProgressBar" class="loadingProgressBar"></div>
+      </div>
+    </div>
+
+    <div id="loadingSourceText">Préparation de la source...</div>
+  </div>
+</div>
+
+ <div id="corsBox">
+  <div id="corsBoxContent">
+    <h2>Accès au flux bloqué</h2>
+    <p>
+      Pour voir cette chaîne, installe ou active l’extension
+      <strong>CORS Unblock</strong>, puis recharge la page.
+    </p>
+    <p style="font-size:13px;color:#bbb">
+      À utiliser seulement sur des sites de confiance.
+    </p>   <button onclick="location.reload()">Recharger</button>
+  </div>
+</div>
+
+<button id="toggleUI">⚙️</button>
+
+<div id="controlPanel">
+  <select id="sourceSelect"></select>
+  <button id="reloadBtn">Recharger</button>
+  <pre id="status"></pre>
+</div>
+
+<script>
+const JSON_URL = "https://livewatch.top/api/tvvoo/stream?channel=CM%20TV&countries=pt.json";
+const BASE_PROXY_DOMAIN = "https://livewatch.top";
+
+const START_TIMEOUT_MS = 10000;
+const BUFFER_TIMEOUT_MS = 12000;
+const AUTO_NEXT_DELAY_MS = 1200;
+const AUTO_RELOAD_DELAY_MS = 1800;
+const MAX_JSON_RELOADS = 5;
+
+const video = document.getElementById("player");
+const loading = document.getElementById("loadingOverlay");
+const loadingText = document.getElementById("loadingText");
+const loadingSubText = document.getElementById("loadingSubText");
+const loadingStepText = document.getElementById("loadingStepText");
+const loadingPercentText = document.getElementById("loadingPercentText");
+const loadingProgressBar = document.getElementById("loadingProgressBar");
+const loadingSourceText = document.getElementById("loadingSourceText");
+const corsBox = document.getElementById("corsBox");
+const sourceSelect = document.getElementById("sourceSelect");
+const reloadBtn = document.getElementById("reloadBtn");
+const statusBox = document.getElementById("status");
+const toggleBtn = document.getElementById("toggleUI");
+const panel = document.getElementById("controlPanel");
+
+let hls = null;
+let panelVisible = false;
+
+let dots = 0;
+let loadingTimer = null;
+let startWatchdog = null;
+let bufferWatchdog = null;
+
+let allSources = [];
+let currentSourceIndex = 0;
+let currentUrl = "";
+
+let jsonReloadCount = 0;
+let isSwitchingSource = false;
+let playbackStarted = false;
+
+let realProgress = 0;
+let loadedFragments = 0;
+let targetBufferSeconds = 4;
+
+toggleBtn.addEventListener("click", () => {
+  panelVisible = !panelVisible;
+  panel.style.display = panelVisible ? "block" : "none";
+});
+
+function log(message) {
+  statusBox.textContent = message;
+  console.log(message);
+}
+
+function showCorsBox() {
+  corsBox.style.display = "flex";
+}
+
+function hideCorsBox() {
+  corsBox.style.display = "none";
+}
+
+function isLikelyCorsError(error) {
+  const msg = String(error && error.message ? error.message : error).toLowerCase();
+
+  return (
+    msg.includes("failed to fetch") ||
+    msg.includes("networkerror") ||
+    msg.includes("cors") ||
+    msg.includes("load failed") ||
+    msg.includes("network") ||
+    msg.includes("manifestloaderror") ||
+    msg.includes("levelloaderror") ||
+    msg.includes("fragloaderror")
+  );
+}
+
+function setProgress(value, stepText, subText) {
+  realProgress = Math.max(realProgress, Math.min(100, Math.round(value)));
+
+  loadingProgressBar.style.width = realProgress + "%";
+  loadingPercentText.textContent = realProgress + "%";
+
+  // ✅ Gestion intelligente du texte
+  if (realProgress >= 100) {
+    loadingStepText.textContent = "Lecture";
+    loadingSubText.textContent = "Flux actif";
+  } 
+  else if (realProgress >= 90) {
+    loadingStepText.textContent = "Presque prêt…";
+    loadingSubText.textContent = "Finalisation du buffer...";
+  } 
+  else {
+    if (stepText) loadingStepText.textContent = stepText;
+    if (subText) loadingSubText.textContent = subText;
+  }
+}
+
+function resetProgress() {
+  realProgress = 0;
+  loadedFragments = 0;
+  loadingProgressBar.style.width = "0%";
+  loadingPercentText.textContent = "0%";
+  loadingStepText.textContent = "Initialisation";
+}
+
+function updateBufferProgress() {
+  if (!video || !video.buffered || video.buffered.length === 0) return;
+
+  let bufferedAhead = 0;
+  const currentTime = video.currentTime || 0;
+
+  for (let i = 0; i < video.buffered.length; i++) {
+    const start = video.buffered.start(i);
+    const end = video.buffered.end(i);
+
+    if (currentTime >= start && currentTime <= end) {
+      bufferedAhead = Math.max(0, end - currentTime);
+      break;
+    }
+  }
+
+  const bufferRatio = Math.min(1, bufferedAhead / targetBufferSeconds);
+  const progressFromBuffer = 72 + bufferRatio * 23;
+
+  setProgress(progressFromBuffer, "Buffer : " + bufferedAhead.toFixed(1) + "s", "Mise en mémoire tampon...");
+}
+
+function startLoader(text = "Chargement du flux", subText = "Chargement des segments...", sourceText = "Préparation de la source...") {
+  loading.style.display = "flex";
+
+  if (loadingTimer) clearInterval(loadingTimer);
+
+  dots = 0;
+  loadingText.textContent = text;
+  loadingSubText.textContent = subText;
+  loadingSourceText.textContent = sourceText;
+
+  loadingTimer = setInterval(() => {
+    dots = (dots + 1) % 4;
+    loadingText.textContent = text + ".".repeat(dots);
+    updateBufferProgress();
+  }, 350);
+}
+
+function stopLoader() {
+  setProgress(100, "Lecture prête", "Flux actif");
+  setTimeout(() => {
+    loading.style.display = "none";
+  }, 180);
+
+  if (loadingTimer) {
+    clearInterval(loadingTimer);
+    loadingTimer = null;
+  }
+}
+
+function clearWatchdogs() {
+  if (startWatchdog) {
+    clearTimeout(startWatchdog);
+    startWatchdog = null;
+  }
+
+  if (bufferWatchdog) {
+    clearTimeout(bufferWatchdog);
+    bufferWatchdog = null;
+  }
+}
+
+function cleanJsonText(text) {
+  return text
+    .replace(/^\uFEFF/, "")
+    .replace(/[\u0000-\u001F\u007F]/g, "");
+}
+
+function cleanUrl(url) {
+  return String(url || "").trim();
+}
+
+function makeAbsoluteUrl(url) {
+  const u = cleanUrl(url);
+
+  if (!u) return "";
+  if (u.startsWith("http://") || u.startsWith("https://")) return u;
+  if (u.startsWith("//")) return "https:" + u;
+  if (u.startsWith("/")) return BASE_PROXY_DOMAIN + u;
+
+  return BASE_PROXY_DOMAIN + "/" + u;
+}
+
+function extractSources(data) {
+  const list = [];
+
+  if (data.streamUrl) {
+    list.push({
+      name: "Source principale",
+      url: makeAbsoluteUrl(data.streamUrl),
+      type: "main"
+    });
+  }
+
+  if (Array.isArray(data.sources)) {
+    data.sources.forEach((source, index) => {
+      const rawUrl =
+        source.streamUrl ||
+        source.url ||
+        source.file ||
+        source.src;
+
+      if (!rawUrl) return;
+
+      list.push({
+        name:
+          source.name ||
+          source.label ||
+          source.id ||
+          "Source Backup " + (index + 1),
+        url: makeAbsoluteUrl(rawUrl),
+        type: "backup"
+      });
+    });
+  }
+
+  return list.filter(item => item.url);
+}
+
+async function loadStreamJson(startIndex = 0) {
+  resetProgress();
+  startLoader("Chargement du flux", "Lecture du JSON...", "Recherche des sources...");
+  setProgress(5, "JSON", "Lecture de la configuration...");
+  clearWatchdogs();
+  hideCorsBox();
+
+  log("Chargement JSON...");
+
+  try {
+    const response = await fetch(JSON_URL + "?t=" + Date.now(), {
+      cache: "no-store",
+      priority: "high"
+    });
+
+    setProgress(14, "JSON reçu", "Analyse du JSON...");
+
+    if (!response.ok) {
+      throw new Error("JSON inaccessible : HTTP " + response.status);
+    }
+
+    const rawText = await response.text();
+    setProgress(20, "JSON analysé", "Extraction des sources...");
+
+    const data = JSON.parse(cleanJsonText(rawText));
+
+    allSources = extractSources(data);
+
+    if (!allSources.length) {
+      throw new Error("Aucune source trouvée dans le JSON.");
+    }
+
+    buildSourceList();
+
+    currentSourceIndex = Math.min(startIndex, allSources.length - 1);
+
+    setProgress(26, "Sources trouvées", allSources.length + " source(s) disponible(s)");
+    playSourceByIndex(currentSourceIndex, "Chargement depuis JSON");
+
+  } catch (error) {
+    stopLoader();
+
+    if (isLikelyCorsError(error)) {
+      showCorsBox();
+    }
+
+    throw error;
+  }
+}
+
+function buildSourceList() {
+  sourceSelect.innerHTML = "";
+
+  allSources.forEach((source, index) => {
+    const option = document.createElement("option");
+    option.value = String(index);
+    option.textContent = source.name;
+    sourceSelect.appendChild(option);
+  });
+
+  sourceSelect.value = String(currentSourceIndex);
+}
+
+function resetPlayer() {
+  clearWatchdogs();
+
+  if (hls) {
+    hls.destroy();
+    hls = null;
+  }
+
+  video.pause();
+  video.removeAttribute("src");
+  video.load();
+}
+
+function playSourceByIndex(index, reason = "") {
+  if (!allSources[index]) {
+    fallbackOrReloadJson("Index source invalide");
+    return;
+  }
+
+  currentSourceIndex = index;
+  sourceSelect.value = String(index);
+
+  const source = allSources[index];
+  const finalUrl = makeAbsoluteUrl(source.url);
+
+  currentUrl = finalUrl;
+  playbackStarted = false;
+  loadedFragments = 0;
+  realProgress = Math.max(realProgress, 26);
+
+  startLoader("Chargement du flux", "Connexion à la source...", source.name);
+  setProgress(30, "Connexion", "Préparation du lecteur...");
+  resetPlayer();
+
+  log(
+    "Lecture source : " + source.name + "\n" +
+    "Raison : " + reason + "\n\n" +
+    "URL :\n" + finalUrl
+  );
+
+  video.onloadedmetadata = () => {
+    setProgress(78, "Métadonnées vidéo", "Métadonnées reçues...");
+  };
+
+  video.onloadeddata = () => {
+    setProgress(88, "Image reçue", "Premières données vidéo reçues...");
+  };
+
+  video.oncanplay = () => {
+    setProgress(96, "Lecture possible", "Le flux peut démarrer...");
+    markPlaybackOk(source);
+  };
+
+  video.onplaying = () => {
+    setProgress(100, "Lecture active", "Flux actif");
+    markPlaybackOk(source);
+  };
+
+  video.onprogress = () => {
+    updateBufferProgress();
+  };
+
+  video.onwaiting = () => {
+    realProgress = Math.min(realProgress, 92);
+    startLoader("Chargement du flux", "Mise en mémoire tampon...", source.name);
+    startBufferWatchdog(finalUrl);
+  };
+
+  video.onstalled = () => {
+    realProgress = Math.min(realProgress, 88);
+    startLoader("Chargement du flux", "Connexion au flux...", source.name);
+    startBufferWatchdog(finalUrl);
+  };
+
+  video.onerror = () => {
+    showCorsBox();
+    fallbackOrReloadJson("Erreur vidéo native sur " + source.name);
+  };
+
+  startPlaybackWatchdog(finalUrl, source.name);
+
+  if (Hls.isSupported()) {
+    hls = new Hls({
+      autoStartLoad: true,
+      startPosition: -1,
+      lowLatencyMode: true,
+      enableWorker: true,
+
+      maxBufferLength: 6,
+      maxMaxBufferLength: 12,
+      backBufferLength: 15,
+
+      manifestLoadingTimeOut: 4000,
+      manifestLoadingMaxRetry: 1,
+      manifestLoadingRetryDelay: 300,
+
+      levelLoadingTimeOut: 4000,
+      levelLoadingMaxRetry: 1,
+      levelLoadingRetryDelay: 300,
+
+      fragLoadingTimeOut: 7000,
+      fragLoadingMaxRetry: 2,
+      fragLoadingRetryDelay: 300,
+
+      liveSyncDurationCount: 2,
+      liveMaxLatencyDurationCount: 5
+    });
+
+    hls.attachMedia(video);
+
+    hls.on(Hls.Events.MEDIA_ATTACHED, () => {
+      setProgress(36, "Lecteur attaché", "Chargement du manifeste HLS...");
+      hls.loadSource(finalUrl);
+    });
+
+    hls.on(Hls.Events.MANIFEST_LOADING, () => {
+      setProgress(42, "Manifeste", "Téléchargement du manifeste...");
+    });
+
+    hls.on(Hls.Events.MANIFEST_LOADED, () => {
+      setProgress(52, "Manifeste reçu", "Analyse des variantes...");
+    });
+
+    hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
+      const levelCount = data && data.levels ? data.levels.length : 1;
+      setProgress(62, "Qualités détectées", levelCount + " qualité(s) disponible(s)");
+      video.play().catch(() => {
+        setProgress(95, "Lecture manuelle", "Flux chargé, clique sur Play.");
+        log(
+          "Flux chargé mais autoplay bloqué.\n" +
+          "Clique sur Play.\n\n" +
+          "Source : " + source.name + "\n" +
+          "URL :\n" + finalUrl
+        );
+      });
+    });
+
+    hls.on(Hls.Events.LEVEL_LOADING, () => {
+      setProgress(66, "Playlist live", "Chargement de la playlist...");
+    });
+
+    hls.on(Hls.Events.LEVEL_LOADED, () => {
+      setProgress(70, "Playlist prête", "Recherche des segments...");
+    });
+
+    hls.on(Hls.Events.FRAG_LOADING, () => {
+      setProgress(74, "Segment", "Téléchargement d’un segment vidéo...");
+    });
+
+    hls.on(Hls.Events.FRAG_LOADED, () => {
+      loadedFragments++;
+      const progress = Math.min(88, 76 + loadedFragments * 4);
+      setProgress(progress, "Segments chargés", loadedFragments + " segment(s) reçu(s)");
+    });
+
+    hls.on(Hls.Events.BUFFER_APPENDING, () => {
+      setProgress(90, "Buffer", "Ajout des données au buffer...");
+    });
+
+    hls.on(Hls.Events.BUFFER_APPENDED, () => {
+      updateBufferProgress();
+    });
+
+    hls.on(Hls.Events.ERROR, (event, data) => {
+      const reason =
+        "Erreur HLS sur " + source.name + "\n" +
+        "Type : " + data.type + "\n" +
+        "Détail : " + data.details + "\n" +
+        "Fatale : " + data.fatal;
+
+      log(reason + "\n\nURL :\n" + finalUrl);
+
+      if (isLikelyCorsError(data.details)) {
+        showCorsBox();
+      }
+
+      if (data.fatal) {
+        fallbackOrReloadJson(reason);
+      }
+    });
+
+  } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+    setProgress(46, "Lecteur natif", "Chargement HLS natif...");
+    video.src = finalUrl;
+
+    video.play().catch(error => {
+      if (isLikelyCorsError(error)) {
+        showCorsBox();
+      }
+
+      setProgress(95, "Lecture manuelle", "Flux chargé, clique sur Play.");
+
+      log(
+        "Flux chargé mais autoplay bloqué.\n" +
+        "Clique sur Play.\n\n" +
+        "Source : " + source.name + "\n" +
+        "URL :\n" + finalUrl
+      );
+    });
+
+  } else {
+    stopLoader();
+    log("Navigateur incompatible HLS.");
+  }
+}
+
+function markPlaybackOk(source) {
+  playbackStarted = true;
+  jsonReloadCount = 0;
+  isSwitchingSource = false;
+  clearWatchdogs();
+  stopLoader();
+  hideCorsBox();
+
+  log(
+    "Flux actif : " + source.name + "\n\n" +
+    "URL :\n" + source.url
+  );
+}
+
+function startPlaybackWatchdog(finalUrl, sourceName) {
+  clearWatchdogs();
+
+  startWatchdog = setTimeout(() => {
+    if (!playbackStarted || video.readyState < 2 || video.networkState === HTMLMediaElement.NETWORK_NO_SOURCE) {
+      fallbackOrReloadJson(
+        "Le flux ne démarre pas assez vite.\n" +
+        "Source : " + sourceName + "\n" +
+        "URL : " + finalUrl
+      );
+    }
+  }, START_TIMEOUT_MS);
+}
+
+function startBufferWatchdog(finalUrl) {
+  if (bufferWatchdog) clearTimeout(bufferWatchdog);
+
+  bufferWatchdog = setTimeout(() => {
+    if (!playbackStarted || video.readyState < 3 || video.paused || video.seeking) {
+      fallbackOrReloadJson(
+        "Buffering trop long.\n" +
+        "URL : " + finalUrl
+      );
+    }
+  }, BUFFER_TIMEOUT_MS);
+}
+
+function fallbackOrReloadJson(reason) {
+  if (isSwitchingSource) return;
+
+  isSwitchingSource = true;
+  clearWatchdogs();
+
+  const nextIndex = currentSourceIndex + 1;
+
+  if (nextIndex < allSources.length) {
+    log(
+      "Source en échec.\n" +
+      "Passage automatique au backup...\n\n" +
+      "Raison :\n" + reason
+    );
+
+    resetProgress();
+    setProgress(12, "Backup", "Passage à la source suivante...");
+
+    setTimeout(() => {
+      isSwitchingSource = false;
+      playSourceByIndex(nextIndex, "Fallback automatique");
+    }, AUTO_NEXT_DELAY_MS);
+
+    return;
+  }
+
+  if (jsonReloadCount >= MAX_JSON_RELOADS) {
+    stopLoader();
+
+    log(
+      "Toutes les sources ont échoué.\n" +
+      "Arrêt après " + jsonReloadCount + " rechargements JSON.\n\n" +
+      "Dernière raison :\n" + reason
+    );
+
+    return;
+  }
+
+  jsonReloadCount++;
+
+  log(
+    "Toutes les sources ont échoué.\n" +
+    "Rechargement automatique du JSON...\n\n" +
+    "Tentative JSON : " + jsonReloadCount + "/" + MAX_JSON_RELOADS + "\n" +
+    "Raison :\n" + reason
+  );
+
+  resetProgress();
+  setProgress(8, "Rechargement JSON", "Nouvelle recherche de sources...");
+
+  setTimeout(() => {
+    currentUrl = "";
+
+    loadStreamJson(0)
+      .catch(error => {
+        stopLoader();
+
+        if (isLikelyCorsError(error)) {
+          showCorsBox();
+        }
+
+        log("Erreur auto-reload JSON : " + error.message);
+      })
+      .finally(() => {
+        isSwitchingSource = false;
+      });
+  }, AUTO_RELOAD_DELAY_MS);
+}
+
+sourceSelect.addEventListener("change", () => {
+  const index = Number(sourceSelect.value);
+
+  jsonReloadCount = 0;
+  isSwitchingSource = false;
+
+  resetProgress();
+  playSourceByIndex(index, "Sélection manuelle");
+});
+
+reloadBtn.addEventListener("click", () => {
+  jsonReloadCount = 0;
+  isSwitchingSource = false;
+  currentUrl = "";
+
+  resetProgress();
+
+  loadStreamJson(0).catch(error => {
+    stopLoader();
+
+    if (isLikelyCorsError(error)) {
+      showCorsBox();
+    }
+
+    log("Erreur rechargement : " + error.message);
+  });
+});
+
+loadStreamJson(0).catch(error => {
+  stopLoader();
+
+  if (isLikelyCorsError(error)) {
+    showCorsBox();
+  }
+
+  log("Erreur initiale : " + error.message);
+});
+</script>
+
+</body>
+</html>

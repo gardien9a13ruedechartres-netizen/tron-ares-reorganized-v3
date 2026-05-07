@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HLS Player avec fallback iframe + retour invisible</title>
+
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+    background: black;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+#player-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: black;
+}
+
+#mainVideo,
+#probeVideo,
+#fallbackFrame,
+#status {
+    position: absolute;
+    inset: 0;
+}
+
+#mainVideo,
+#fallbackFrame {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background: black;
+}
+
+#mainVideo {
+    object-fit: fill;
+    z-index: 2;
+}
+
+#fallbackFrame {
+    z-index: 1;
+}
+
+#probeVideo {
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+    left: -9999px;
+    top: -9999px;
+}
+
+.hidden {
+    display: none;
+}
+
+#status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    background: rgba(0,0,0,0.25);
+    pointer-events: none;
+    z-index: 5;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+#status.show {
+    opacity: 1;
+}
+</style>
+</head>
+<body>
+
+<div id="player-container">
+    <iframe
+        id="fallbackFrame"
+        class="hidden"
+        src=""
+        allowfullscreen
+        allow="autoplay; fullscreen"
+        sandbox="allow-scripts allow-forms"
+        referrerpolicy="no-referrer">
+    </iframe>
+
+    <video id="mainVideo" controls autoplay playsinline></video>
+    <video id="probeVideo" autoplay playsinline muted></video>
+
+    <div id="status">Chargement…</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+<script>
+(() => {
+    const mainVideo = document.getElementById("mainVideo");
+    const probeVideo = document.getElementById("probeVideo");
+    const iframe = document.getElementById("fallbackFrame");
+    const statusBox = document.getElementById("status");
+
+    const streamUrl = "https://streaming-live.rtp.pt/liverepeater/rtp2HD.smil/playlist.m3u8";
+    const iframeUrl = "https://popcdn.day/player.php?stream=RTP2";
+
+    const CONFIG = {
+        startupTimeoutMs: 12000,
+        stallThresholdMs: 8000,
+        silenceThresholdMs: 12000,
+        retryBackDelayMs: 30000,
+        stableBeforeReturnMs: 15000,
+        progressCheckIntervalMs: 1000,
+        minAudioRms: 0.0025,
+        showVisibleMessages: false
+    };
+
+    let activeMode = "main";
+    let mainHls = null;
+    let probeHls = null;
+
+    let mainState = null;
+    let probeState = null;
+
+    let mainAudioContext = null;
+    let mainAnalyser = null;
+    let mainSourceNode = null;
+    let mainAudioAnalysisAvailable = false;
+
+    let probeAudioContext = null;
+    let probeAnalyser = null;
+    let probeSourceNode = null;
+    let probeAudioAnalysisAvailable = false;
+
+    let retryTimer = null;
+
+    function showStatus(message) {
+        if (!CONFIG.showVisibleMessages) return;
+        statusBox.textContent = message || "";
+        statusBox.classList.add("show");
+    }
+
+    function hideStatus() {
+        statusBox.classList.remove("show");
+    }
+
+    function createRuntimeState() {
+        return {
+            startedAt: 0,
+            stableSince: 0,
+            lastCurrentTime: 0,
+            lastProgressAt: Date.now(),
+            audioTracksDetected: null,
+            silenceSince: null,
+            startupTimer: null,
+            monitorTimer: null
+        };
+    }
+
+    function clearStateTimers(state) {
+        if (!state) return;
+
+        if (state.startupTimer) {
+            clearTimeout(state.startupTimer);
+            state.startupTimer = null;
+        }
+
+        if (state.monitorTimer) {
+            clearInterval(state.monitorTimer);
+            state.monitorTimer = null;
+        }
+    }
+
+    function stopRetryTimer() {
+        if (retryTimer) {
+            clearTimeout(retryTimer);
+            retryTimer = null;
+        }
+    }
+
+    function destroyHlsInstance(instance) {
+        if (!instance) return null;
+        try {
+            instance.destroy();
+        } catch (e) {}
+        return null;
+    }
+
+    function stopVideo(video) {
+        try {
+            video.pause();
+        } catch (e) {}
+
+        try {
+            video.removeAttribute("src");
+            video.load();
+        } catch (e) {}
+    }
+
+    async function enableAudioAnalysis(video, type) {
+        try {
+            if (!window.AudioContext && !window.webkitAudioContext) {
+                return false;
+            }
+
+            if (type === "main") {
+                if (!mainAudioContext) {
+                    const Ctx = window.AudioContext || window.webkitAudioContext;
+                    mainAudioContext = new Ctx();
+                }
+
+                if (mainAudioContext.state === "suspended") {
+                    try { await mainAudioContext.resume(); } catch (e) {}
+                }
+
+                if (!mainSourceNode) {
+                    mainSourceNode = mainAudioContext.createMediaElementSource(video);
+                    mainAnalyser = mainAudioContext.createAnalyser();
+                    mainAnalyser.fftSize = 2048;
+                    mainSourceNode.connect(mainAnalyser);
+                    mainAnalyser.connect(mainAudioContext.destination);
+                }
+
+                mainAudioAnalysisAvailable = true;
+                return true;
+            }
+
+            if (type === "probe") {
+                if (!probeAudioContext) {
+                    const Ctx = window.AudioContext || window.webkitAudioContext;
+                    probeAudioContext = new Ctx();
+                }
+
+                if (probeAudioContext.state === "suspended") {
+                    try { await probeAudioContext.resume(); } catch (e) {}
+                }
+
+                if (!probeSourceNode) {
+                    probeSourceNode = probeAudioContext.createMediaElementSource(video);
+                    probeAnalyser = probeAudioContext.createAnalyser();
+                    probeAnalyser.fftSize = 2048;
+                    probeSourceNode.connect(probeAnalyser);
+                }
+
+                probeAudioAnalysisAvailable = true;
+                return true;
+            }
+
+            return false;
+        } catch (e) {
+            if (type === "main") mainAudioAnalysisAvailable = false;
+            if (type === "probe") probeAudioAnalysisAvailable = false;
+            return false;
+        }
+    }
+
+    function getAudioRms(type) {
+        try {
+            let analyser = null;
+            let available = false;
+
+            if (type === "main") {
+                analyser = mainAnalyser;
+                available = mainAudioAnalysisAvailable;
+            } else {
+                analyser = probeAnalyser;
+                available = probeAudioAnalysisAvailable;
+            }
+
+            if (!available || !analyser) return null;
+
+            const data = new Uint8Array(analyser.fftSize);
+            analyser.getByteTimeDomainData(data);
+
+            let sum = 0;
+            for (let i = 0; i < data.length; i++) {
+                const v = (data[i] - 128) / 128;
+                sum += v * v;
+            }
+
+            return Math.sqrt(sum / data.length);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function showMainPlayer() {
+        iframe.classList.add("hidden");
+        iframe.src = "";
+        mainVideo.classList.remove("hidden");
+        activeMode = "main";
+    }
+
+    function showIframePlayer() {
+        mainVideo.classList.add("hidden");
+        iframe.classList.remove("hidden");
+
+        if (iframe.src !== iframeUrl) {
+            iframe.src = iframeUrl;
+        }
+
+        
+
+
+
+       activeMode = "iframe";
+    }
+
+    function attachVideoListeners(video, state, type, onFatal) {
+        video.onplaying = async () => {
+            state.lastProgressAt = Date.now();
+            if (!state.startedAt) state.startedAt = Date.now();
+            if (!state.stableSince) state.stableSince = Date.now();
+            await enableAudioAnalysis(video, type);
+        };
+
+        video.ontimeupdate = () => {
+            const now = Date.now();
+
+            if (video.currentTime > state.lastCurrentTime + 0.05) {
+                state.lastCurrentTime = video.currentTime;
+                state.lastProgressAt = now;
+
+                if (!state.startedAt) state.startedAt = now;
+                if (!state.stableSince) state.stableSince = now;
+            }
+        };
+
+        video.onloadeddata = async () => {
+            await enableAudioAnalysis(video, type);
+        };
+
+        video.onerror = () => {
+            onFatal("Erreur élément video");
+        };
+    }
+
+    function startMonitor(video, state, type, isBackgroundProbe, onStable, onFatal) {
+        clearStateTimers(state);
+
+        state.lastProgressAt = Date.now();
+
+        state.monitorTimer = setInterval(() => {
+            const now = Date.now();
+            const hasStarted = state.startedAt > 0;
+            const isActuallyPlaying = !video.paused && !video.ended && video.readyState >= 2;
+
+            if (!hasStarted && now - state.lastProgressAt > CONFIG.startupTimeoutMs) {
+                onFatal("Le flux ne démarre pas");
+                return;
+            }
+
+            if (hasStarted && isActuallyPlaying && now - state.lastProgressAt > CONFIG.stallThresholdMs) {
+                onFatal("Le flux est figé");
+                return;
+            }
+
+            if (state.audioTracksDetected === 0) {
+                onFatal("Aucune piste audio détectée");
+                return;
+            }
+
+            const rms = getAudioRms(type);
+
+            if (rms !== null && hasStarted && isActuallyPlaying) {
+                if (rms < CONFIG.minAudioRms) {
+                    if (!state.silenceSince) state.silenceSince = now;
+
+                    if (now - state.silenceSince > CONFIG.silenceThresholdMs) {
+                        onFatal("Silence prolongé détecté");
+                        return;
+                    }
+                } else {
+                    state.silenceSince = null;
+                }
+            }
+
+            if (isBackgroundProbe && hasStarted) {
+                const stableDuration = now - state.stableSince;
+                const audioOk = state.audioTracksDetected !== 0;
+                const noLongSilenceIssue = state.silenceSince === null || (now - state.silenceSince < CONFIG.silenceThresholdMs);
+
+                if (stableDuration >= CONFIG.stableBeforeReturnMs && audioOk && noLongSilenceIssue) {
+                    onStable();
+                }
+            }
+        }, CONFIG.progressCheckIntervalMs);
+    }
+
+    function startMainPlayback() {
+        stopRetryTimer();
+        clearStateTimers(mainState);
+        mainState = createRuntimeState();
+
+        mainHls = destroyHlsInstance(mainHls);
+        stopVideo(mainVideo);
+
+        attachVideoListeners(mainVideo, mainState, "main", () => {
+            fallbackToIframe("Erreur vidéo principale");
+        });
+
+        showStatus("Chargement…");
+
+        if (mainVideo.canPlayType("application/vnd.apple.mpegurl")) {
+            mainState.startupTimer = setTimeout(() => {
+                if (!mainState.startedAt) fallbackToIframe("Timeout démarrage HLS natif");
+            }, CONFIG.startupTimeoutMs);
+
+            mainVideo.src = streamUrl;
+            mainVideo.play().catch(() => {});
+            startMonitor(
+                mainVideo,
+                mainState,
+                "main",
+                false,
+                () => {},
+                (reason) => fallbackToIframe(reason)
+            );
+            hideStatus();
+            return;
+        }
+
+        if (window.Hls && Hls.isSupported()) {
+            mainHls = new Hls({
+                enableWorker: true,
+                lowLatencyMode: false,
+                maxBufferLength: 30,
+                liveSyncDurationCount: 3,
+                liveMaxLatencyDurationCount: 10
+            });
+
+            mainHls.on(Hls.Events.MEDIA_ATTACHED, () => {
+                mainHls.loadSource(streamUrl);
+            });
+
+            mainHls.on(Hls.Events.MANIFEST_PARSED, () => {
+                mainVideo.play().catch(() => {});
+            });
+
+            mainHls.on(Hls.Events.AUDIO_TRACKS_UPDATED, (event, data) => {
+                mainState.audioTracksDetected = Array.isArray(data.audioTracks) ? data.audioTracks.length : 0;
+            });
+
+            mainHls.on(Hls.Events.ERROR, (event, data) => {
+                if (!data.fatal) return;
+
+                switch (data.type) {
+                    case Hls.ErrorTypes.NETWORK_ERROR:
+                        fallbackToIframe("Erreur réseau HLS fatale");
+                        break;
+
+                    case Hls.ErrorTypes.MEDIA_ERROR:
+                        try {
+                            mainHls.recoverMediaError();
+                        } catch (e) {
+                            fallbackToIframe("Impossible de récupérer l'erreur média");
+                        }
+                        break;
+
+                    default:
+                        fallbackToIframe("Erreur HLS fatale");
+                        break;
+                }
+            });
+
+            mainHls.attachMedia(mainVideo);
+
+            mainState.startupTimer = setTimeout(() => {
+                if (!mainState.startedAt) fallbackToIframe("Timeout démarrage HLS.js");
+            }, CONFIG.startupTimeoutMs);
+
+            startMonitor(
+                mainVideo,
+                mainState,
+                "main",
+                false,
+                () => {},
+                (reason) => fallbackToIframe(reason)
+            );
+
+            hideStatus();
+            return;
+        }
+
+        fallbackToIframe("HLS non supporté");
+    }
+
+    function startBackgroundProbe() {
+        clearStateTimers(probeState);
+        probeState = createRuntimeState();
+
+        probeHls = destroyHlsInstance(probeHls);
+        stopVideo(probeVideo);
+
+        attachVideoListeners(probeVideo, probeState, "probe", () => {
+            failBackgroundProbe("Erreur vidéo probe");
+        });
+
+        if (probeVideo.canPlayType("application/vnd.apple.mpegurl")) {
+            probeState.startupTimer = setTimeout(() => {
+                if (!probeState.startedAt) failBackgroundProbe("Timeout probe natif");
+            }, CONFIG.startupTimeoutMs);
+
+            probeVideo.src = streamUrl;
+            probeVideo.play().catch(() => {});
+
+            startMonitor(
+                probeVideo,
+                probeState,
+                "probe",
+                true,
+                () => succeedBackgroundProbe(),
+                () => failBackgroundProbe("Probe échouée")
+            );
+
+            return;
+        }
+
+        if (window.Hls && Hls.isSupported()) {
+            probeHls = new Hls({
+                enableWorker: true,
+                lowLatencyMode: false,
+                maxBufferLength: 30,
+                liveSyncDurationCount: 3,
+                liveMaxLatencyDurationCount: 10
+            });
+
+            probeHls.on(Hls.Events.MEDIA_ATTACHED, () => {
+                probeHls.loadSource(streamUrl);
+            });
+
+            probeHls.on(Hls.Events.MANIFEST_PARSED, () => {
+                probeVideo.play().catch(() => {});
+            });
+
+            probeHls.on(Hls.Events.AUDIO_TRACKS_UPDATED, (event, data) => {
+                probeState.audioTracksDetected = Array.isArray(data.audioTracks) ? data.audioTracks.length : 0;
+            });
+
+            probeHls.on(Hls.Events.ERROR, (event, data) => {
+                if (!data.fatal) return;
+
+                switch (data.type) {
+                    case Hls.ErrorTypes.NETWORK_ERROR:
+                        failBackgroundProbe("Erreur réseau probe");
+                        break;
+
+                    case Hls.ErrorTypes.MEDIA_ERROR:
+                        try {
+                            probeHls.recoverMediaError();
+                        } catch (e) {
+                            failBackgroundProbe("Erreur média probe");
+                        }
+                        break;
+
+                    default:
+                        failBackgroundProbe("Erreur HLS probe");
+                        break;
+                }
+            });
+
+            probeHls.attachMedia(probeVideo);
+
+            probeState.startupTimer = setTimeout(() => {
+                if (!probeState.startedAt) failBackgroundProbe("Timeout probe HLS.js");
+            }, CONFIG.startupTimeoutMs);
+
+            startMonitor(
+                probeVideo,
+                probeState,
+                "probe",
+                true,
+                () => succeedBackgroundProbe(),
+                () => failBackgroundProbe("Probe échouée")
+            );
+
+            return;
+        }
+
+        scheduleNextProbe();
+    }
+
+    function failBackgroundProbe(reason) {
+        clearStateTimers(probeState);
+        probeHls = destroyHlsInstance(probeHls);
+        stopVideo(probeVideo);
+        scheduleNextProbe();
+    }
+
+    function succeedBackgroundProbe() {
+        clearStateTimers(probeState);
+        probeHls = destroyHlsInstance(probeHls);
+        stopVideo(probeVideo);
+
+        showMainPlayer();
+        startMainPlayback();
+    }
+
+    function scheduleNextProbe() {
+        stopRetryTimer();
+
+        retryTimer = setTimeout(() => {
+            if (activeMode === "iframe") {
+                startBackgroundProbe();
+            }
+        }, CONFIG.retryBackDelayMs);
+    }
+
+    function fallbackToIframe(reason) {
+        clearStateTimers(mainState);
+        mainHls = destroyHlsInstance(mainHls);
+        stopVideo(mainVideo);
+
+        showIframePlayer();
+        hideStatus();
+        scheduleNextProbe();
+    }
+
+    document.addEventListener("click", () => {
+        enableAudioAnalysis(mainVideo, "main");
+        enableAudioAnalysis(probeVideo, "probe");
+    }, { passive: true });
+
+    document.addEventListener("touchstart", () => {
+        enableAudioAnalysis(mainVideo, "main");
+        enableAudioAnalysis(probeVideo, "probe");
+    }, { passive: true });
+
+    mainState = createRuntimeState();
+    probeState = createRuntimeState();
+
+    showMainPlayer();
+    startMainPlayback();
+})();
+</script>
+
+</body>
+</html>

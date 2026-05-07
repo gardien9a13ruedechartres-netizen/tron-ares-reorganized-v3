@@ -1,0 +1,51 @@
+export default {
+  async fetch(request) {
+    const url = new URL(request.url);
+    const target = url.searchParams.get("url");
+
+    if (!target) {
+      return new Response("Missing ?url=", { status: 400 });
+    }
+
+    const response = await fetch(target, {
+      headers: {
+        "User-Agent": "Mozilla/5.0",
+        "Referer": target
+      }
+    });
+
+    let contentType = response.headers.get("content-type") || "";
+
+    // Si c'est un m3u8 → on réécrit les URLs
+    if (contentType.includes("application/vnd.apple.mpegurl") || target.endsWith(".m3u8")) {
+      let text = await response.text();
+
+      const base = target.substring(0, target.lastIndexOf("/") + 1);
+
+      text = text.replace(/^(?!#)(.*)$/gm, (line) => {
+        if (line.startsWith("http")) {
+          return `${url.origin}/?url=${encodeURIComponent(line)}`;
+        } else if (line.trim() !== "") {
+          return `${url.origin}/?url=${encodeURIComponent(base + line)}`;
+        }
+        return line;
+      });
+
+      return new Response(text, {
+        headers: {
+          "content-type": "application/vnd.apple.mpegurl",
+          "Access-Control-Allow-Origin": "*"
+        }
+      });
+    }
+
+    // Sinon (segments vidéo)
+    return new Response(response.body, {
+      headers: {
+        "content-type": contentType,
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "public, max-age=10"
+      }
+    });
+  }
+};

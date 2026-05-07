@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Player HLS / iframe robuste</title>
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+    background: black;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+#player-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: black;
+    overflow: hidden;
+}
+
+#mainVideo,
+#probeVideo,
+#status,
+#fallbackFrame {
+    position: absolute;
+    inset: 0;
+}
+
+#mainVideo,
+#fallbackFrame {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background: black;
+}
+
+#mainVideo {
+    object-fit: fill;
+    z-index: 2;
+}
+
+#fallbackFrame {
+    z-index: 1;
+}
+
+#probeVideo {
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+    left: -9999px;
+    top: -9999px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+#status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    background: rgba(0, 0, 0, 0.22);
+    pointer-events: none;
+    z-index: 6;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+#status.show {
+    opacity: 1;
+}
+
+#modeToggle {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 10;
+    border: 0;
+    border-radius: 999px;
+    padding: 7px 11px;
+    font-size: 12px;
+    line-height: 1;
+    font-family: Arial, sans-serif;
+    color: rgba(255,255,255,0.92);
+    background: rgba(20,20,20,0.38);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    cursor: pointer;
+    opacity: 0.42;
+    transition: opacity 0.18s ease, background 0.18s ease, transform 0.18s ease;
+}
+
+#modeToggle:hover,
+#modeToggle:focus-visible {
+    opacity: 0.88;
+    background: rgba(20,20,20,0.62);
+    outline: none;
+}
+
+#modeToggle:active {
+    transform: scale(0.98);
+}
+</style>
+</head>
+<body>
+
+<div id="player-container">
+    <iframe
+        id="fallbackFrame"
+        class="hidden"
+        src=""
+        allowfullscreen
+        allow="autoplay; fullscreen"
+        allowpaymentrequest
+        sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
+        referrerpolicy="no-referrer">
+    </iframe>
+
+    <video id="mainVideo" controls autoplay playsinline></video>
+    <video id="probeVideo" autoplay playsinline muted></video>
+
+    <div id="status">Chargement…</div>
+    <button id="modeToggle" type="button" aria-label="Basculer de lecteur">Iframe</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+<script>
+(() => {
+    const mainVideo = document.getElementById("mainVideo");
+    const probeVideo = document.getElementById("probeVideo");
+    const iframe = document.getElementById("fallbackFrame");
+    const statusBox = document.getElementById("status");
+    const modeToggle = document.getElementById("modeToggle");
+
+    const streamUrl = "https://plu001.myturn1.top:8088/live/agrrrrr/playlist.m3u8?id=121119&pk=55e0c5e758904f24491a24dcf7b039654e47682f5cc8226acfec022aa069037aaa779339da9740574f8b30363781438a2727685b5150b1ca0ac894bbfff5096c";
+    const iframeUrl = "https://popcdn.day/player.php?stream=CMTVPT";
+
+    const STATE = {
+        AUTO_HLS: "AUTO_HLS",
+        AUTO_IFRAME: "AUTO_IFRAME",
+        MANUAL_IFRAME: "MANUAL_IFRAME"
+    };
+
+    const CFG = {
+        HLS_START_TIMEOUT: 15000,
+        HLS_STALL_CHECK_INTERVAL: 4000,
+        HLS_STALL_MAX_NO_PROGRESS: 12000,
+        PROBE_INTERVAL: 10000,
+        PROBE_SUCCESS_TIME: 2500,
+        PROBE_TIMEOUT: 12000,
+        STATUS_DELAY: 250,
+        CLICK_LOCK_MS: 300
+    };
+
+    let state = STATE.AUTO_HLS;
+
+    let mainHls = null;
+    let probeHls = null;
+
+    let startupTimer = null;
+    let stallWatchTimer = null;
+    let probeIntervalTimer = null;
+    let probeTimeoutTimer = null;
+    let probeSuccessTimer = null;
+    let statusHideTimer = null;
+
+    let iframeLoaded = false;
+    let probeAttemptRunning = false;
+    let isSwitching = false;
+
+    let hlsActuallyPlaying = false;
+    let lastMainCurrentTime = 0;
+    let lastMainProgressTs = 0;
+
+    let probeStarted = false;
+    let lastProbeCurrentTime = 0;
+
+    function log(...args) {
+        console.log("[PLAYER]", ...args);
+    }
+
+    function showStatus(message) {
+        clearTimeout(statusHideTimer);
+        statusBox.textContent = message || "";
+        statusBox.classList.add("show");
+    }
+
+    function hideStatus() {
+        clearTimeout(statusHideTimer);
+        statusHideTimer = setTimeout(() => {
+            statusBox.classList.remove("show");
+        }, CFG.STATUS_DELAY);
+    }
+
+    function isIframeState() {
+        return state === STATE.AUTO_IFRAME || state === STATE.MANUAL_IFRAME;
+    }
+
+    function isManualIframeState() {
+        return state === STATE.MANUAL_IFRAME;
+    }
+
+    function updateToggleButton() {
+        if (isIframeState()) {
+            modeToggle.textContent = "HLS";
+            modeToggle.setAttribute("aria-label", "Basculer vers HLS");
+            modeToggle.title = "Basculer vers HLS";
+        } else {
+            modeToggle.textContent = "Iframe";
+            modeToggle.setAttribute("aria-label", "Basculer vers iframe");
+            modeToggle.title = "Basculer vers iframe";
+        }
+    }
+
+    function ensureIframeLoaded() {
+        if (iframeLoaded) return;
+        iframe.src = iframeUrl;
+        iframeLoaded = true;
+    }
+
+    function showMainPlayer() {
+        iframe.classList.add("hidden");
+        mainVideo.classList.remove("hidden");
+        updateToggleButton();
+        hideStatus();
+    }
+
+    function showIframePlayer() {
+        ensureIframeLoaded();
+        mainVideo.classList.add("hidden");
+        iframe.classList.remove("hidden");
+        updateToggleButton();
+        hideStatus();
+    }
+
+    function clearStartupTimer() {
+        if (startupTimer) {
+            clearTimeout(startupTimer);
+            startupTimer = null;
+        }
+    }
+
+    function clearStallWatcher() {
+        if (stallWatchTimer) {
+            clearInterval(stallWatchTimer);
+            stallWatchTimer = null;
+        }
+    }
+
+    function clearProbeInterval() {
+        if (probeIntervalTimer) {
+            clearInterval(probeIntervalTimer);
+            probeIntervalTimer = null;
+        }
+    }
+
+    function clearProbeTimers() {
+        if (probeTimeoutTimer) {
+            clearTimeout(probeTimeoutTimer);
+            probeTimeoutTimer = null;
+        }
+        if (probeSuccessTimer) {
+            clearTimeout(probeSuccessTimer);
+            probeSuccessTimer = null;
+        }
+    }
+
+    function clearAllMainWatchers() {
+        clearStartupTimer();
+        clearStallWatcher();
+    }
+
+    function destroyMainHls() {
+        if (!mainHls) return;
+        try {
+            mainHls.destroy();
+        } catch (_) {}
+        mainHls = null;
+    }
+
+    function destroyProbeHls() {
+        if (!probeHls) return;
+        try {
+            probeHls.destroy();
+        } catch (_) {}
+        probeHls = null;
+    }
+
+    function resetMainVideo() {
+        try {
+            mainVideo.pause();
+        } catch (_) {}
+
+        mainVideo.onplaying = null;
+        mainVideo.ontimeupdate = null;
+        mainVideo.onerror = null;
+        mainVideo.onwaiting = null;
+        mainVideo.onstalled = null;
+
+        mainVideo.removeAttribute("src");
+        mainVideo.load();
+
+        hlsActuallyPlaying = false;
+        lastMainCurrentTime = 0;
+        lastMainProgressTs = 0;
+    }
+
+    function resetProbeVideo() {
+        try {
+            probeVideo.pause();
+        } catch (_) {}
+
+        probeVideo.onplaying = null;
+        probeVideo.ontimeupdate = null;
+        probeVideo.onerror = null;
+
+        probeVideo.removeAttribute("src");
+        probeVideo.load();
+
+        probeStarted = false;
+        lastProbeCurrentTime = 0;
+    }
+
+    function stopMainPipeline() {
+        clearAllMainWatchers();
+        destroyMainHls();
+        resetMainVideo();
+    }
+
+    function stopProbePipeline() {
+        clearProbeInterval();
+        clearProbeTimers();
+        probeAttemptRunning = false;
+        destroyProbeHls();
+        resetProbeVideo();
+    }
+
+    function stopAllPipelines() {
+        stopMainPipeline();
+        stopProbePipeline();
+    }
+
+    function setState(nextState) {
+        if (state === nextState) return;
+        log("state:", state, "->", nextState);
+        state = nextState;
+        updateToggleButton();
+    }
+
+    function onMainProgress() {
+        const current = mainVideo.currentTime || 0;
+        if (current > lastMainCurrentTime + 0.01) {
+            lastMainCurrentTime = current;
+            lastMainProgressTs = Date.now();
+        }
+    }
+
+    function onMainPlaying() {
+        hlsActuallyPlaying = true;
+        lastMainCurrentTime = mainVideo.currentTime || 0;
+        lastMainProgressTs = Date.now();
+
+        if (state === STATE.AUTO_HLS) {
+            showMainPlayer();
+        }
+    }
+
+    function startMainStallWatcher() {
+        clearStallWatcher();
+
+        stallWatchTimer = setInterval(() => {
+            if (state !== STATE.AUTO_HLS) return;
+            if (!hlsActuallyPlaying) return;
+
+            const now = Date.now();
+            const current = mainVideo.currentTime || 0;
+            const progressed = current > lastMainCurrentTime + 0.01;
+
+            if (progressed) {
+                lastMainCurrentTime = current;
+                lastMainProgressTs = now;
+                return;
+            }
+
+            const noProgressFor = now - lastMainProgressTs;
+            const waitingHard = mainVideo.readyState < 3 && !mainVideo.paused && !mainVideo.ended;
+
+            if (waitingHard && noProgressFor >= CFG.HLS_STALL_MAX_NO_PROGRESS) {
+                fallbackToIframe("Flux HLS bloqué");
+            }
+        }, CFG.HLS_STALL_CHECK_INTERVAL);
+    }
+
+    function attachNativeHls(videoEl, url) {
+        videoEl.src = url;
+        videoEl.play().catch(() => {});
+    }
+
+    function startMainPlayback({ showPlayerImmediately = true } = {}) {
+        stopMainPipeline();
+
+        if (state === STATE.AUTO_HLS) {
+            showStatus("Connexion au flux HLS…");
+        }
+
+        mainVideo.onplaying = onMainPlaying;
+        mainVideo.ontimeupdate = onMainProgress;
+
+        if (Hls.isSupported()) {
+            mainHls = new Hls({
+                enableWorker: true,
+                lowLatencyMode: false,
+                backBufferLength: 30
+            });
+
+            mainHls.on(Hls.Events.MEDIA_ATTACHED, () => {
+                mainHls.loadSource(streamUrl);
+            });
+
+            mainHls.on(Hls.Events.MANIFEST_PARSED, () => {
+                mainVideo.play().catch(() => {});
+            });
+
+            mainHls.on(Hls.Events.ERROR, (event, data) => {
+                if (!data || !data.fatal) return;
+
+                if (state !== STATE.AUTO_HLS) {
+                    return;
+                }
+
+                switch (data.type) {
+                    case Hls.ErrorTypes.NETWORK_ERROR:
+                        fallbackToIframe("Erreur réseau HLS");
+                        break;
+
+                    case Hls.ErrorTypes.MEDIA_ERROR:
+                        try {
+                            mainHls.recoverMediaError();
+                        } catch (_) {
+                            fallbackToIframe("Erreur média HLS");
+                        }
+                        break;
+
+                    default:
+                        fallbackToIframe("Erreur HLS");
+                        break;
+                }
+            });
+
+            mainHls.attachMedia(mainVideo);
+        } else if (mainVideo.canPlayType("application/vnd.apple.mpegurl")) {
+            attachNativeHls(mainVideo, streamUrl);
+        } else {
+            fallbackToIframe("HLS non supporté");
+            return;
+        }
+
+        clearStartupTimer();
+        startupTimer = setTimeout(() => {
+            if (state !== STATE.AUTO_HLS) return;
+            if (!hlsActuallyPlaying) {
+                fallbackToIframe("Timeout de démarrage HLS");
+            }
+        }, CFG.HLS_START_TIMEOUT);
+
+        startMainStallWatcher();
+
+        if (showPlayerImmediately && state === STATE.AUTO_HLS) {
+            showMainPlayer();
+        }
+    }
+
+    function fallbackToIframe(reason) {
+        if (state === STATE.MANUAL_IFRAME) {
+            showIframePlayer();
+            return;
+        }
+
+        log("fallback iframe:", reason);
+
+        stopMainPipeline();
+        setState(STATE.AUTO_IFRAME);
+        showIframePlayer();
+        startProbeLoop();
+    }
+
+    function switchToManualIframe() {
+        log("switch manuel vers iframe");
+
+        stopAllPipelines();
+        setState(STATE.MANUAL_IFRAME);
+        showIframePlayer();
+    }
+
+    function switchToAutoHls() {
+        log("switch vers HLS");
+
+        stopProbePipeline();
+        setState(STATE.AUTO_HLS);
+        startMainPlayback({ showPlayerImmediately: true });
+    }
+
+    function cleanupProbeAttempt(success) {
+        clearProbeTimers();
+
+        probeVideo.onplaying = null;
+        probeVideo.ontimeupdate = null;
+        probeVideo.onerror = null;
+
+        destroyProbeHls();
+        resetProbeVideo();
+        probeAttemptRunning = false;
+
+        if (success && state === STATE.AUTO_IFRAME) {
+            switchToAutoHls();
+        }
+    }
+
+    function markProbeStarted() {
+        if (probeStarted) return;
+        probeStarted = true;
+
+        clearTimeout(probeSuccessTimer);
+        probeSuccessTimer = setTimeout(() => {
+            cleanupProbeAttempt(true);
+        }, CFG.PROBE_SUCCESS_TIME);
+    }
+
+    function attemptProbe() {
+        if (state !== STATE.AUTO_IFRAME) return;
+        if (probeAttemptRunning) return;
+
+        probeAttemptRunning = true;
+        clearProbeTimers();
+        destroyProbeHls();
+        resetProbeVideo();
+
+        probeVideo.muted = true;
+        probeVideo.autoplay = true;
+        probeVideo.playsInline = true;
+
+        probeVideo.onplaying = () => {
+            markProbeStarted();
+        };
+
+        probeVideo.ontimeupdate = () => {
+            const current = probeVideo.currentTime || 0;
+            if (current > lastProbeCurrentTime + 0.01) {
+                lastProbeCurrentTime = current;
+                markProbeStarted();
+            }
+        };
+
+        probeVideo.onerror = () => {
+            cleanupProbeAttempt(false);
+        };
+
+        probeTimeoutTimer = setTimeout(() => {
+            cleanupProbeAttempt(false);
+        }, CFG.PROBE_TIMEOUT);
+
+        if (Hls.isSupported()) {
+            probeHls = new Hls({
+                enableWorker: true,
+                lowLatencyMode: false,
+                backBufferLength: 10
+            });
+
+            probeHls.on(Hls.Events.MEDIA_ATTACHED, () => {
+                probeHls.loadSource(streamUrl);
+            });
+
+            probeHls.on(Hls.Events.MANIFEST_PARSED, () => {
+                probeVideo.play().catch(() => {});
+            });
+
+            probeHls.on(Hls.Events.ERROR, (event, data) => {
+                if (data && data.fatal) {
+                    cleanupProbeAttempt(false);
+                }
+            });
+
+            probeHls.attachMedia(probeVideo);
+        } else if (probeVideo.canPlayType("application/vnd.apple.mpegurl")) {
+            attachNativeHls(probeVideo, streamUrl);
+        } else {
+            cleanupProbeAttempt(false);
+        }
+    }
+
+    function startProbeLoop() {
+        if (state !== STATE.AUTO_IFRAME) return;
+
+        clearProbeInterval();
+        attemptProbe();
+
+        probeIntervalTimer = setInterval(() => {
+            if (state !== STATE.AUTO_IFRAME) return;
+            if (probeAttemptRunning) return;
+            attemptProbe();
+        }, CFG.PROBE_INTERVAL);
+    }
+
+    function manualToggle() {
+        if (isSwitching) return;
+        isSwitching = true;
+
+        try {
+            if (state === STATE.AUTO_HLS) {
+                switchToManualIframe();
+            } else {
+                switchToAutoHls();
+            }
+        } finally {
+            setTimeout(() => {
+                isSwitching = false;
+            }, CFG.CLICK_LOCK_MS);
+        }
+    }
+
+    function init() {
+        updateToggleButton();
+        showStatus("Initialisation…");
+        setState(STATE.AUTO_HLS);
+        startMainPlayback({ showPlayerImmediately: true });
+    }
+
+    modeToggle.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        manualToggle();
+    });
+
+    document.addEventListener("visibilitychange", () => {
+        if (document.hidden) return;
+
+        if (state === STATE.AUTO_IFRAME && !probeAttemptRunning) {
+            attemptProbe();
+        }
+    });
+
+    init();
+})();
+</script>
+
+</body>
+</html>
