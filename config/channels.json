@@ -15,13 +15,18 @@
     "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=RTP 2&countries=pt.json"
   },
 {
+    "name": "BTV HD",
+    "slug": "btv hd",
+    "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=BTV HD&countries=pt.json"
+  },
+
+{
     "name": "CANAL+",
     "slug": "canal+",
     "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=CANAL+&countries=fr.json"
   }
 
 ]
-
 
 
 
