@@ -855,14 +855,14 @@
     },
     {
       "name": "Canal+ Kids",
-      "url": "https://live.streamgatos.top/hls/362/stream.m3u8",
+      "url": "/pages/players/canal-plus-kids.html",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Canal%2B%20Kids%20Logo%20%282021%29.png"
       },
       "group": "Jeunesse",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "name": "Toonami",
