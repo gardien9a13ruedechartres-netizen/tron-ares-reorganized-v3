@@ -469,7 +469,7 @@
       "isIframe": true
     },
     {
-      "name": "pages/players/canal-plus-series.html",
+      "name": "/pages/players/canal-plus-series.html",
       "url": "canal-plus-series.html",
       "logo": {
         "type": "image",
