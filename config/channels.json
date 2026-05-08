@@ -29,6 +29,11 @@
   "slug": "canal-cinema-hd",
   "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=CANAL+ CINEMA HD&countries=fr.json"
 },
+{
+  "name": "CANAL-PLUS-SERIES",
+  "slug": "canal-plus-series",
+  "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=CANAL+ SERIES HD&countries=fr.json"
+},
 
 {
     "name": "CANAL-plus",
@@ -37,8 +42,6 @@
   }
 
 ]
-
-
 
 
 

@@ -469,15 +469,15 @@
       "isIframe": true
     },
     {
-      "name": "CANAL+ Series",
-      "url": "https://qmaalhy7acgxwhm.ngolpdkyoctjcddxshli469r.org/sunshine/lApZLpgpiQizS6WltPOkYzCAB6Rg3-3QpidzPC_8Ub7kDSFHPO0E9TOllfhpkQzIwd9VudVMctEL0ujF1ISMVR0IO7nc0YwtPa5kkY_gPigf_CwUUpImQIFp1vx5RewFt11rdCnq3QK2okFESdV-pawn2XLO6_0CGoz9Wr9IVgnlQmrMoBUdRWS6VW9jGoAaPSMFDs6VyJbo5frGpI7--NQhUfy44mkG0oaeA88shTlaxSehWkeiOshTZE8dOdYqVKLcXIgsnfFMYSv9Mo1aNQ/hls/index.m3u8",
+      "name": "pages/players/canal-plus-series.html",
+      "url": "canal-plus-series.html",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20Canal%2B%20S%C3%A9ries%202013.svg"
       },
       "group": "Cinema",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "name": "CINE+ Family",
