@@ -19,6 +19,12 @@
     "slug": "btv hd",
     "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=BTV HD&countries=pt.json"
   },
+{
+    "name": "CANAL+GE",
+    "slug": "canal+ge",
+    "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=CANAL+ GRAND ECRAN FHD&countries=fr.json"
+  },
+
 
 {
     "name": "CANAL+",
