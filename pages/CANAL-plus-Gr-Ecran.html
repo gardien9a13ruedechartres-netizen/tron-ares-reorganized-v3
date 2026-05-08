@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WITV Player</title>
+
+  <script src="https://witv.team/player/playerjs/witv-player9.js" type="text/javascript"></script>
+
+  <style>
+    body {
+      overflow: hidden;
+      margin: 0;
+    }
+
+    #player {
+      width: 100%;
+      height: 100vh;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="player"></div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      var streamUrl = "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/88.m3u8";
+
+      if (streamUrl) {
+        new Playerjs({
+          id: "player",
+          file: streamUrl,
+          autoplay: 1,
+          mute: 0
+        });
+      } else {
+        console.error("Aucun ID fourni ou URL invalide !");
+      }
+    });
+  </script>
+
+</body>
+</html>
