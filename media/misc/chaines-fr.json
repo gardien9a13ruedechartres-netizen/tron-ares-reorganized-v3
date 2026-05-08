@@ -469,8 +469,8 @@
       "isIframe": true
     },
     {
-      "name": "/pages/players/canal-plus-series.html",
-      "url": "canal-plus-series.html",
+      "name": "CANAL+ SERIES",
+      "url": "/pages/players/canal-plus-series.html",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20Canal%2B%20S%C3%A9ries%202013.svg"
