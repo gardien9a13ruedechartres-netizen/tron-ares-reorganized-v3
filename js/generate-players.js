@@ -104,14 +104,11 @@ function createHtml(channel, streamUrl) {
       display: flex;
       align-items: center;
       justify-content: center;
-      flex-direction: column;
-      gap: 18px;
-      background: #000;
-      color: #fff;
-      font-family: Arial, Helvetica, sans-serif;
+      background:
+        radial-gradient(circle at center, rgba(255,255,255,0.045), rgba(0,0,0,0.94) 48%, #000 100%);
       opacity: 1;
       visibility: visible;
-      transition: opacity 0.35s ease, visibility 0.35s ease;
+      transition: opacity 0.45s ease, visibility 0.45s ease;
       pointer-events: none;
     }
 
@@ -120,85 +117,28 @@ function createHtml(channel, streamUrl) {
       visibility: hidden;
     }
 
-    .loaderRing {
-      position: relative;
-      width: 118px;
-      height: 118px;
+    .premiumLoader {
+      width: 58px;
+      height: 58px;
       border-radius: 50%;
-      background:
-        conic-gradient(from 0deg, #00d8ff 0deg, #00a7ff 88deg, transparent 92deg, transparent 360deg);
-      animation: spin 1.15s linear infinite;
+      border: 2px solid rgba(255, 255, 255, 0.16);
+      border-top-color: rgba(255, 255, 255, 0.95);
+      border-right-color: rgba(255, 255, 255, 0.50);
+      animation: premiumSpin 0.95s linear infinite;
+      filter: drop-shadow(0 0 14px rgba(255, 255, 255, 0.16));
     }
 
-    .loaderRing::before {
+    .premiumLoader::after {
       content: "";
       position: absolute;
-      inset: 7px;
+      inset: 11px;
       border-radius: 50%;
-      background: #000;
-      box-shadow: inset 0 0 0 6px rgba(255,255,255,0.10);
+      border: 1px solid rgba(255, 255, 255, 0.10);
     }
 
-    .loaderBars {
-      position: absolute;
-      inset: 0;
-      z-index: 2;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 7px;
-    }
-
-    .loaderBars span {
-      width: 7px;
-      height: 34px;
-      border-radius: 999px;
-      background: #00d8ff;
-      box-shadow: 0 0 14px rgba(0,216,255,0.55);
-      animation: pulse 0.95s ease-in-out infinite;
-    }
-
-    .loaderBars span:nth-child(2) {
-      animation-delay: 0.10s;
-      height: 44px;
-    }
-
-    .loaderBars span:nth-child(3) {
-      animation-delay: 0.20s;
-      height: 54px;
-    }
-
-    .loaderBars span:nth-child(4) {
-      animation-delay: 0.30s;
-      height: 44px;
-    }
-
-    .loaderBars span:nth-child(5) {
-      animation-delay: 0.40s;
-      height: 34px;
-    }
-
-    #loadingText {
-      font-size: 24px;
-      font-weight: 700;
-      letter-spacing: 0.2px;
-      text-shadow: 0 0 18px rgba(0, 216, 255, 0.28);
-    }
-
-    @keyframes spin {
+    @keyframes premiumSpin {
       to {
         transform: rotate(360deg);
-      }
-    }
-
-    @keyframes pulse {
-      0%, 100% {
-        transform: scaleY(0.62);
-        opacity: 0.55;
-      }
-      50% {
-        transform: scaleY(1);
-        opacity: 1;
       }
     }
   </style>
@@ -207,17 +147,8 @@ function createHtml(channel, streamUrl) {
 
 <video id="video" autoplay playsinline controls></video>
 
-<div id="loadingOverlay" aria-live="polite">
-  <div class="loaderRing">
-    <div class="loaderBars">
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-    </div>
-  </div>
-  <div id="loadingText">Chargement du flux...</div>
+<div id="loadingOverlay" aria-hidden="true">
+  <div class="premiumLoader"></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
@@ -227,16 +158,11 @@ const streamUrl = ${JSON.stringify(streamUrl)};
 
 const video = document.getElementById("video");
 const loadingOverlay = document.getElementById("loadingOverlay");
-const loadingText = document.getElementById("loadingText");
 
 video.muted = false;
 video.volume = 1;
 
-function showLoader(message) {
-  if (loadingText && message) {
-    loadingText.textContent = message;
-  }
-
+function showLoader() {
   if (loadingOverlay) {
     loadingOverlay.classList.remove("hidden");
   }
@@ -345,7 +271,7 @@ function attachHlsPlayer() {
 function initPlayer() {
   lastTime = 0;
   lastProgressAt = Date.now();
-  showLoader("Chargement du flux...");
+  showLoader();
 
   if (Hls.isSupported()) {
     attachHlsPlayer();
@@ -362,7 +288,7 @@ function invisibleReload(reason) {
   }
 
   console.warn("Reload invisible du player :", reason);
-  showLoader("Reconnexion au flux...");
+  showLoader();
 
   reloadTimer = setTimeout(function () {
     reloadTimer = null;
@@ -420,7 +346,7 @@ function startHealthMonitor() {
       noProgressFor > NO_PROGRESS_LIMIT;
 
     if (seemsStuck || noEnoughData) {
-      showLoader("Reconnexion au flux...");
+      showLoader();
       invisibleReload("absence-flux-ou-moulinage");
     }
   }, HEALTH_CHECK_INTERVAL);
@@ -428,18 +354,18 @@ function startHealthMonitor() {
 
 video.addEventListener("waiting", function () {
   console.warn("Vidéo en attente de données...");
-  showLoader("Chargement du flux...");
+  showLoader();
 });
 
 video.addEventListener("stalled", function () {
   console.warn("Flux bloqué/stalled.");
-  showLoader("Reconnexion au flux...");
+  showLoader();
   invisibleReload("stalled");
 });
 
 video.addEventListener("error", function () {
   console.error("Erreur vidéo native :", video.error);
-  showLoader("Reconnexion au flux...");
+  showLoader();
   invisibleReload("video-error");
 });
 
