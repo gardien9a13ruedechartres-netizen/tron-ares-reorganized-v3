@@ -13,10 +13,58 @@
     }
 
     #video {
+      position: fixed;
+      inset: 0;
       width: 100vw;
       height: 100vh;
       object-fit: fill;
       background: #000;
+      z-index: 1;
+    }
+
+    #loadingOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background:
+        radial-gradient(circle at center, rgba(255,255,255,0.045), rgba(0,0,0,0.94) 48%, #000 100%);
+      opacity: 1;
+      visibility: visible;
+      transition: opacity 0.45s ease, visibility 0.45s ease;
+      pointer-events: none;
+    }
+
+    #loadingOverlay.hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .premiumLoader {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.16);
+      border-top-color: rgba(255, 255, 255, 0.95);
+      border-right-color: rgba(255, 255, 255, 0.50);
+      animation: premiumSpin 0.95s linear infinite;
+      filter: drop-shadow(0 0 14px rgba(255, 255, 255, 0.16));
+    }
+
+    .premiumLoader::after {
+      content: "";
+      position: absolute;
+      inset: 11px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.10);
+    }
+
+    @keyframes premiumSpin {
+      to {
+        transform: rotate(360deg);
+      }
     }
   </style>
 </head>
@@ -24,15 +72,32 @@
 
 <video id="video" autoplay playsinline controls></video>
 
+<div id="loadingOverlay" aria-hidden="true">
+  <div class="premiumLoader"></div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <script>
-const streamUrl = "https://livewatch.top/api/proxy?url=https%3A%2F%2Ftd3wb1bchdvsahp.ngolpdkyoctjcddxshli469r.org%2Fsunshine%2FAUkR6nTtcHd0jYk5G7WEuvwUg9KBK_eWKnDU7xzGG4cu5I_PSVWV8Wx9oDo17lR_3qFN2oxBo_7UGkmQIP2kXin0nGMEymkrzjzl_jpCbWcwjqNzEd38zz223MxJdP12Knh01OdV3li8QdBKQ0IB-V1MdhgDXB66zKcj-jiNKlNVDFm8PQG05T8V_DXONoHR6il-cTSGtZOP3rG7H0MEuK396JeQv8QnQJEcoVINSeo23DE1X_ERARoaSrwO9SBFIPQ9vRAfr6P40za1AKgnVw%2Fhls%2Findex.m3u8";
+const streamUrl = "https://livewatch.top/api/proxy?url=https%3A%2F%2Fqmaalhy7acgxwhm.ngolpdkyoctjcddxshli469r.org%2Fsunshine%2F4_fl-8kr4GRVM1DjKxs2d9gfIFUXYbF8C05tFXQht3Nrq2Glokur-M50sEktIfQQAEnXwHFUYFh-sGZd71qBRI5jv66RDJpTQpjkTrTEbyVRu6G_ZUy-XxbzEqVgPPVYvjt0nG4wJcfUM3pRoT_I4wXvR-rE6FXGHch4kaeknEMbedWXHMlym2E2WF3A4QVZbH5CSQkMEzuNs-sZSgoEegVq3YBozs-I6fehBQt6CczVo20bLYipPAWOLDgdTey3z8yhF_br28HR3P0xdn6huQ%2Fhls%2Findex.m3u8";
 
 const video = document.getElementById("video");
+const loadingOverlay = document.getElementById("loadingOverlay");
 
 video.muted = false;
 video.volume = 1;
+
+function showLoader() {
+  if (loadingOverlay) {
+    loadingOverlay.classList.remove("hidden");
+  }
+}
+
+function hideLoader() {
+  if (loadingOverlay) {
+    loadingOverlay.classList.add("hidden");
+  }
+}
 
 let hls = null;
 let reloadTimer = null;
@@ -131,6 +196,7 @@ function attachHlsPlayer() {
 function initPlayer() {
   lastTime = 0;
   lastProgressAt = Date.now();
+  showLoader();
 
   if (Hls.isSupported()) {
     attachHlsPlayer();
@@ -147,6 +213,7 @@ function invisibleReload(reason) {
   }
 
   console.warn("Reload invisible du player :", reason);
+  showLoader();
 
   reloadTimer = setTimeout(function () {
     reloadTimer = null;
@@ -204,6 +271,7 @@ function startHealthMonitor() {
       noProgressFor > NO_PROGRESS_LIMIT;
 
     if (seemsStuck || noEnoughData) {
+      showLoader();
       invisibleReload("absence-flux-ou-moulinage");
     }
   }, HEALTH_CHECK_INTERVAL);
@@ -211,20 +279,28 @@ function startHealthMonitor() {
 
 video.addEventListener("waiting", function () {
   console.warn("Vidéo en attente de données...");
+  showLoader();
 });
 
 video.addEventListener("stalled", function () {
   console.warn("Flux bloqué/stalled.");
+  showLoader();
   invisibleReload("stalled");
 });
 
 video.addEventListener("error", function () {
   console.error("Erreur vidéo native :", video.error);
+  showLoader();
   invisibleReload("video-error");
 });
 
 video.addEventListener("playing", function () {
   lastProgressAt = Date.now();
+  hideLoader();
+});
+
+video.addEventListener("canplay", function () {
+  hideLoader();
 });
 
 video.addEventListener("timeupdate", function () {

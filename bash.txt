@@ -1,5 +1,5 @@
 git add .
-git commit -m "Ajout chaîne"
+git commit -m "Ajout canal-plus-series"
 git push
 
 
@@ -9,3 +9,6 @@ git push
 git add .
 git commit -m "Update channels"
 git push
+
+
+node js/generate-players.js
