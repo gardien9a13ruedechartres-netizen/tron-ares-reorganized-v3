@@ -24,10 +24,15 @@
   "slug": "canal-ge",
   "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=CANAL%2B%20GRAND%20ECRAN%20FHD&countries=fr.json"
 },
+{
+  "name": "CANAL-CINEMA-HD",
+  "slug": "canal-cinema-hd",
+  "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=CANAL+ CINEMA HD&countries=fr.json"
+},
 
 {
-    "name": "CANAL+",
-    "slug": "canal+",
+    "name": "CANAL-plus",
+    "slug": "canal-plus",
     "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=CANAL+&countries=fr.json"
   }
 
