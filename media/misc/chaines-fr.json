@@ -448,7 +448,7 @@
     },
     {
       "name": "CANAL+ Gr. Ecran",
-      "url": "/pages/players/canal+ge.html",
+      "url": "/pages/players/canal-ge.html",
       "logo": {
         "type": "image",
         "value": "media/image/canal-plus-grand-ecran.webp"
