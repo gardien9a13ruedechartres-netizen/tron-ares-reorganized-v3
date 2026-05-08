@@ -32,6 +32,7 @@
       height: 100vh;
       background: #000;
       overflow: hidden;
+      cursor: default;
     }
 
     video {
@@ -58,9 +59,7 @@
       background: #000;
       opacity: 1;
       visibility: visible;
-      transition:
-        opacity 450ms ease,
-        visibility 450ms ease;
+      transition: opacity 450ms ease, visibility 450ms ease;
       z-index: 10;
       pointer-events: none;
     }
@@ -91,7 +90,6 @@
 <body>
 
 <div id="playerOverlay">
-
   <video
     id="video"
     autoplay
@@ -100,31 +98,25 @@
     controls
   ></video>
 
-  <div id="loader">
+  <div id="loader" aria-hidden="true">
     <div class="spinner"></div>
   </div>
-
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-
+document.addEventListener("DOMContentLoaded", function () {
   const STREAM_URL = "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/88.m3u8";
 
+  const overlay = document.getElementById("playerOverlay");
   const video = document.getElementById("video");
   const loader = document.getElementById("loader");
 
   let hls = null;
-
-  let reconnecting = false;
   let spinnerVisibleAt = 0;
-  let spinnerWatchdog = null;
-
-  // =========================
-  // LOADER
-  // =========================
+  let watchdog = null;
+  let wakeRunning = false;
 
   function showLoader() {
     loader.classList.remove("is-hidden");
@@ -139,18 +131,10 @@ document.addEventListener("DOMContentLoaded", () => {
     spinnerVisibleAt = 0;
   }
 
-  // =========================
-  // VIDEO VISIBILITY
-  // =========================
-
   function showVideo() {
     video.classList.add("is-visible");
     hideLoader();
   }
-
-  // =========================
-  // PLAY
-  // =========================
 
   async function playVideo() {
     try {
@@ -163,11 +147,53 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // =========================
-  // DESTROY
-  // =========================
+  function simulateClickOnPlayer() {
+    const rect = overlay.getBoundingClientRect();
 
-  function destroyPlayer() {
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
+
+    const eventOptions = {
+      bubbles: true,
+      cancelable: true,
+      view: window,
+      clientX: x,
+      clientY: y
+    };
+
+    overlay.dispatchEvent(new MouseEvent("mousedown", eventOptions));
+    overlay.dispatchEvent(new MouseEvent("mouseup", eventOptions));
+    overlay.dispatchEvent(new MouseEvent("click", eventOptions));
+
+    video.dispatchEvent(new MouseEvent("mousedown", eventOptions));
+    video.dispatchEvent(new MouseEvent("mouseup", eventOptions));
+    video.dispatchEvent(new MouseEvent("click", eventOptions));
+  }
+
+  function wakeStream() {
+    if (wakeRunning) return;
+
+    wakeRunning = true;
+
+    simulateClickOnPlayer();
+
+    setTimeout(function () {
+      if (hls) {
+        try {
+          hls.startLoad();
+        } catch (_) {}
+      }
+
+      video.load();
+      playVideo();
+
+      wakeRunning = false;
+    }, 250);
+  }
+
+  function hardReconnect() {
+    showLoader();
+
     if (hls) {
       hls.destroy();
       hls = null;
@@ -175,91 +201,44 @@ document.addEventListener("DOMContentLoaded", () => {
 
     video.removeAttribute("src");
     video.load();
-  }
 
-  // =========================
-  // INVISIBLE RELOAD
-  // =========================
-
-  function invisibleReload() {
-
-    if (reconnecting) return;
-
-    reconnecting = true;
-
-    const currentTime = video.currentTime || 0;
-
-    destroyPlayer();
-
-    setTimeout(() => {
-
+    setTimeout(function () {
       initPlayer();
-
-      video.currentTime = currentTime;
-
-      reconnecting = false;
-
-    }, 300);
+    }, 500);
   }
 
-  // =========================
-  // WATCHDOG SPINNER
-  // =========================
+  function startWatchdog() {
+    clearInterval(watchdog);
 
-  function startSpinnerWatchdog() {
+    watchdog = setInterval(function () {
+      const loaderVisible = !loader.classList.contains("is-hidden");
 
-    clearInterval(spinnerWatchdog);
+      if (!loaderVisible || !spinnerVisibleAt) return;
 
-    spinnerWatchdog = setInterval(() => {
+      const elapsed = Date.now() - spinnerVisibleAt;
 
-      const loaderVisible =
-        !loader.classList.contains("is-hidden");
-
-      if (!loaderVisible) return;
-
-      if (!spinnerVisibleAt) return;
-
-      const elapsed =
-        Date.now() - spinnerVisibleAt;
-
-      // spinner visible > 4 sec
-      // => reload invisible
-
-      if (elapsed > 4000) {
-
-        spinnerVisibleAt = Date.now();
-
-        invisibleReload();
+      if (elapsed > 2500 && elapsed < 7000) {
+        wakeStream();
       }
 
+      if (elapsed >= 7000) {
+        spinnerVisibleAt = Date.now();
+        hardReconnect();
+      }
     }, 1000);
   }
 
-  // =========================
-  // INIT PLAYER
-  // =========================
-
   function initPlayer() {
-
     showLoader();
 
-    // Native Safari HLS
-
     if (video.canPlayType("application/vnd.apple.mpegurl")) {
-
       video.src = STREAM_URL;
-
       video.load();
-
       playVideo();
-
       return;
     }
 
-    // HLS.JS
-
     if (window.Hls && Hls.isSupported()) {
-
       hls = new Hls({
         enableWorker: true,
         lowLatencyMode: true,
@@ -269,33 +248,36 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       hls.loadSource(STREAM_URL);
-
       hls.attachMedia(video);
 
-      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+      hls.on(Hls.Events.MANIFEST_PARSED, function () {
         playVideo();
       });
 
-      hls.on(Hls.Events.ERROR, (event, data) => {
-
-        if (!data.fatal) return;
-
+      hls.on(Hls.Events.ERROR, function (event, data) {
         showLoader();
 
-        switch (data.type) {
+        if (!data || !data.fatal) return;
 
-          case Hls.ErrorTypes.NETWORK_ERROR:
+        if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+          try {
             hls.startLoad();
-            break;
-
-          case Hls.ErrorTypes.MEDIA_ERROR:
-            hls.recoverMediaError();
-            break;
-
-          default:
-            invisibleReload();
-            break;
+          } catch (_) {
+            wakeStream();
+          }
+          return;
         }
+
+        if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+          try {
+            hls.recoverMediaError();
+          } catch (_) {
+            wakeStream();
+          }
+          return;
+        }
+
+        hardReconnect();
       });
 
       return;
@@ -304,39 +286,28 @@ document.addEventListener("DOMContentLoaded", () => {
     showLoader();
   }
 
-  // =========================
-  // VIDEO EVENTS
-  // =========================
+  overlay.addEventListener("click", function () {
+    playVideo();
+  });
 
   video.addEventListener("playing", showVideo);
-
   video.addEventListener("canplay", showVideo);
-
   video.addEventListener("waiting", showLoader);
-
   video.addEventListener("stalled", showLoader);
-
   video.addEventListener("seeking", showLoader);
 
-  video.addEventListener("seeked", () => {
-
+  video.addEventListener("seeked", function () {
     if (!video.paused) {
       hideLoader();
     }
   });
 
-  video.addEventListener("error", () => {
-    invisibleReload();
+  video.addEventListener("error", function () {
+    wakeStream();
   });
 
-  // =========================
-  // START
-  // =========================
-
-  startSpinnerWatchdog();
-
+  startWatchdog();
   initPlayer();
-
 });
 </script>
 
