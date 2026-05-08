@@ -44,6 +44,9 @@
       object-fit: fill;
       opacity: 0;
       transition: opacity 700ms ease;
+
+      /* SON DÉSACTIVÉ */
+      pointer-events: none;
     }
 
     video.is-visible {
@@ -90,23 +93,26 @@
 <body>
 
 <div id="playerOverlay">
+
   <video
     id="video"
     autoplay
+    muted
     playsinline
     webkit-playsinline
-    controls
   ></video>
 
   <div id="loader" aria-hidden="true">
     <div class="spinner"></div>
   </div>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
+
   const STREAM_URL = "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/88.m3u8";
 
   const overlay = document.getElementById("playerOverlay");
@@ -118,7 +124,16 @@ document.addEventListener("DOMContentLoaded", function () {
   let watchdog = null;
   let wakeRunning = false;
 
+  // FORCE MUTE
+  video.muted = true;
+  video.volume = 0;
+
+  // =========================
+  // LOADER
+  // =========================
+
   function showLoader() {
+
     loader.classList.remove("is-hidden");
 
     if (!spinnerVisibleAt) {
@@ -127,27 +142,55 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function hideLoader() {
+
     loader.classList.add("is-hidden");
+
     spinnerVisibleAt = 0;
   }
 
+  // =========================
+  // VIDEO DISPLAY
+  // =========================
+
   function showVideo() {
+
     video.classList.add("is-visible");
+
     hideLoader();
   }
 
+  // =========================
+  // PLAY
+  // =========================
+
   async function playVideo() {
+
+    video.muted = true;
+    video.volume = 0;
+
     try {
+
       await video.play();
+
     } catch (e) {
+
       try {
+
         video.muted = true;
+        video.volume = 0;
+
         await video.play();
+
       } catch (_) {}
     }
   }
 
+  // =========================
+  // SIMULATED CLICK
+  // =========================
+
   function simulateClickOnPlayer() {
+
     const rect = overlay.getBoundingClientRect();
 
     const x = rect.left + rect.width / 2;
@@ -170,7 +213,12 @@ document.addEventListener("DOMContentLoaded", function () {
     video.dispatchEvent(new MouseEvent("click", eventOptions));
   }
 
+  // =========================
+  // WAKE STREAM
+  // =========================
+
   function wakeStream() {
+
     if (wakeRunning) return;
 
     wakeRunning = true;
@@ -178,67 +226,110 @@ document.addEventListener("DOMContentLoaded", function () {
     simulateClickOnPlayer();
 
     setTimeout(function () {
+
       if (hls) {
+
         try {
           hls.startLoad();
         } catch (_) {}
       }
 
       video.load();
+
       playVideo();
 
       wakeRunning = false;
+
     }, 250);
   }
 
+  // =========================
+  // HARD RECONNECT
+  // =========================
+
   function hardReconnect() {
+
     showLoader();
 
     if (hls) {
+
       hls.destroy();
       hls = null;
     }
 
     video.removeAttribute("src");
+
     video.load();
 
     setTimeout(function () {
+
       initPlayer();
+
     }, 500);
   }
 
+  // =========================
+  // WATCHDOG
+  // =========================
+
   function startWatchdog() {
+
     clearInterval(watchdog);
 
     watchdog = setInterval(function () {
-      const loaderVisible = !loader.classList.contains("is-hidden");
+
+      const loaderVisible =
+        !loader.classList.contains("is-hidden");
 
       if (!loaderVisible || !spinnerVisibleAt) return;
 
-      const elapsed = Date.now() - spinnerVisibleAt;
+      const elapsed =
+        Date.now() - spinnerVisibleAt;
+
+      // réveil léger
 
       if (elapsed > 2500 && elapsed < 7000) {
+
         wakeStream();
       }
 
+      // reconnexion totale
+
       if (elapsed >= 7000) {
+
         spinnerVisibleAt = Date.now();
+
         hardReconnect();
       }
+
     }, 1000);
   }
 
+  // =========================
+  // INIT PLAYER
+  // =========================
+
   function initPlayer() {
+
     showLoader();
 
+    // Native Safari HLS
+
     if (video.canPlayType("application/vnd.apple.mpegurl")) {
+
       video.src = STREAM_URL;
+
       video.load();
+
       playVideo();
+
       return;
     }
 
+    // HLS.JS
+
     if (window.Hls && Hls.isSupported()) {
+
       hls = new Hls({
         enableWorker: true,
         lowLatencyMode: true,
@@ -248,32 +339,45 @@ document.addEventListener("DOMContentLoaded", function () {
       });
 
       hls.loadSource(STREAM_URL);
+
       hls.attachMedia(video);
 
       hls.on(Hls.Events.MANIFEST_PARSED, function () {
+
         playVideo();
       });
 
       hls.on(Hls.Events.ERROR, function (event, data) {
+
         showLoader();
 
         if (!data || !data.fatal) return;
 
         if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+
           try {
+
             hls.startLoad();
+
           } catch (_) {
+
             wakeStream();
           }
+
           return;
         }
 
         if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+
           try {
+
             hls.recoverMediaError();
+
           } catch (_) {
+
             wakeStream();
           }
+
           return;
         }
 
@@ -286,28 +390,46 @@ document.addEventListener("DOMContentLoaded", function () {
     showLoader();
   }
 
+  // =========================
+  // EVENTS
+  // =========================
+
   overlay.addEventListener("click", function () {
+
     playVideo();
   });
 
   video.addEventListener("playing", showVideo);
+
   video.addEventListener("canplay", showVideo);
+
   video.addEventListener("waiting", showLoader);
+
   video.addEventListener("stalled", showLoader);
+
   video.addEventListener("seeking", showLoader);
 
   video.addEventListener("seeked", function () {
+
     if (!video.paused) {
+
       hideLoader();
     }
   });
 
   video.addEventListener("error", function () {
+
     wakeStream();
   });
 
+  // =========================
+  // START
+  // =========================
+
   startWatchdog();
+
   initPlayer();
+
 });
 </script>
 
