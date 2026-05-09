@@ -27,9 +27,11 @@ jobs:
         run: npm install
 
       - name: Generate players
+        id: generate
         run: node js/generate-players.js
 
       - name: Deploy to Cloudflare
+        if: steps.generate.outputs.changed == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'push'
         run: npx wrangler deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
