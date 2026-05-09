@@ -181,13 +181,69 @@ let lastTime = 0;
 let lastProgressAt = Date.now();
 let reloadCount = 0;
 let bufferingStartedAt = null;
-            let stallRecoveryAttempts = 0;
-            let stallRecoveryTimer = null;
+let stallRecoveryAttempts = 0;
+let stallRecoveryTimer = null;
+
+const STALL_RECOVERY_TIMEOUT = 12000;
+const MAX_STALL_RECOVERY_ATTEMPTS = 3;
 
 const HEALTH_CHECK_INTERVAL = 5000;
 const NO_PROGRESS_LIMIT = 18000;
 const RELOAD_COOLDOWN = 7000;
 const HARD_REFRESH_AFTER = 5;
+
+function logPlayerEvent(eventName, extra) {
+  console.log(
+    "[" + new Date().toISOString() + "]",
+    "[" + ${JSON.stringify(channel.slug || "unknown")} + "]",
+    eventName,
+    extra || ""
+  );
+}
+
+function clearStallRecoveryTimer() {
+  if (stallRecoveryTimer) {
+    clearTimeout(stallRecoveryTimer);
+    stallRecoveryTimer = null;
+  }
+}
+
+function scheduleStallRecovery(reason) {
+  clearStallRecoveryTimer();
+
+  stallRecoveryTimer = setTimeout(function () {
+    logPlayerEvent("STALL_TIMEOUT", reason || "waiting");
+
+    try {
+      if (hls) {
+        stallRecoveryAttempts += 1;
+        logPlayerEvent(
+          "STALL_RECOVER_ATTEMPT",
+          stallRecoveryAttempts + "/" + MAX_STALL_RECOVERY_ATTEMPTS
+        );
+
+        hls.recoverMediaError();
+        safePlay();
+
+        if (stallRecoveryAttempts >= MAX_STALL_RECOVERY_ATTEMPTS) {
+          logPlayerEvent("STALL_HARD_REFRESH", reason || "stall-timeout");
+          hardReloadPage("stall-timeout");
+        }
+      } else {
+        logPlayerEvent("STALL_HARD_REFRESH", "no-hls-instance");
+        hardReloadPage("stall-no-hls");
+      }
+    } catch (error) {
+      console.error("Erreur recovery stall :", error);
+      invisibleReload("stall-recovery-error");
+    }
+  }, STALL_RECOVERY_TIMEOUT);
+}
+
+function resetStallRecovery() {
+  clearStallRecoveryTimer();
+  stallRecoveryAttempts = 0;
+}
 
 function safePlay() {
   video.play().catch(function (error) {
@@ -338,6 +394,7 @@ function attachHlsPlayer() {
         fatal: Boolean(data?.fatal)
       });
 
+      logPlayerEvent("EXPIRED_STREAM_REFRESH", "expired-stream");
       hardReloadPage("expired-stream");
       return;
     }
@@ -454,15 +511,17 @@ video.addEventListener("waiting", function () {
 
   if (!bufferingStartedAt) {
     bufferingStartedAt = Date.now();
+    logPlayerEvent("BUFFERING_START");
   }
 
-  logPlayerEvent("BUFFERING_START");
+  scheduleStallRecovery("waiting");
 });
 
 video.addEventListener("stalled", function () {
   console.warn("Flux bloqué/stalled.");
   showLoader();
-  invisibleReload("stalled");
+  logPlayerEvent("STALL_EVENT");
+  scheduleStallRecovery("stalled");
 });
 
 video.addEventListener("error", function () {
@@ -473,6 +532,7 @@ video.addEventListener("error", function () {
 
 video.addEventListener("playing", function () {
   lastProgressAt = Date.now();
+  resetStallRecovery();
   hideLoader();
 
   if (bufferingStartedAt) {
@@ -492,6 +552,7 @@ video.addEventListener("playing", function () {
 });
 
 video.addEventListener("canplay", function () {
+  clearStallRecoveryTimer();
   hideLoader();
 });
 
@@ -506,6 +567,7 @@ startHealthMonitor();
 window.addEventListener("beforeunload", function () {
   clearInterval(healthTimer);
   clearTimeout(reloadTimer);
+  clearStallRecoveryTimer();
   destroyHls();
 });
 </script>
