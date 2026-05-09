@@ -2,61 +2,81 @@
   {
     "name": "CM TV",
     "slug": "cmtv",
+    "country": "pt",
+    "group": "Généraliste",
+    "logo": "/media/cmtv.png",
     "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=CM%20TV&countries=pt.json"
   },
   {
     "name": "RTP1",
     "slug": "rtp1",
-    "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=RTP 1 HD&countries=pt.json"
+    "country": "pt",
+    "group": "Généraliste",
+    "logo": "/media/rtp1.jpg",
+    "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=RTP%201%20HD&countries=pt.json"
   },
   {
     "name": "RTP2",
     "slug": "rtp2",
-    "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=RTP 2&countries=pt.json"
+    "country": "pt",
+    "group": "Généraliste",
+    "logo": "https://upload.wikimedia.org/wikipedia/commons/f/f9/RTP2_logo_2016.svg",
+    "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=RTP%202&countries=pt.json"
   },
-{
+  {
     "name": "BTV HD",
     "slug": "btv-hd",
-    "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=BTV HD&countries=pt.json"
+    "country": "pt",
+    "group": "Sport",
+    "logo": "https://upload.wikimedia.org/wikipedia/commons/d/d2/Logo_Benfica_TV.png",
+    "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=BTV%20HD&countries=pt.json"
   },
-{
-  "name": "CANAL+GE",
-  "slug": "canal-ge",
-  "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=CANAL%2B%20GRAND%20ECRAN%20FHD&countries=fr.json"
-},
-{
-  "name": "CANAL-CINEMA-HD",
-  "slug": "canal-cinema-hd",
-  "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=CANAL+ CINEMA HD&countries=fr.json"
-},
-{
-  "name": "CANAL-PLUS-SERIES",
-  "slug": "canal-plus-series",
-  "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=CANAL+ SERIES HD&countries=fr.json"
-},
-{
-  "name": "CANAL-PLUS-KIDS",
-  "slug": "canal-plus-kids",
-  "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=CANAL KIDS HD&countries=fr.json"
-},
-{
-  "name": "CANAL-PANDA",
-  "slug": "canal-panda",
-  "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=CANAL PANDA&countries=pt.json"
-},
-
-{
+  {
+    "name": "CANAL+GE",
+    "slug": "canal-ge",
+    "country": "fr",
+    "group": "Cinema",
+    "logo": "/media/image/canal-plus-grand-ecran.webp",
+    "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=CANAL%2B%20GRAND%20ECRAN%20FHD&countries=fr.json"
+  },
+  {
+    "name": "CANAL-CINEMA-HD",
+    "slug": "canal-cinema-hd",
+    "country": "fr",
+    "group": "Cinema",
+    "logo": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20Canal%2B%20Cin%C3%A9ma%202009.svg",
+    "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=CANAL%2B%20CINEMA%20HD&countries=fr.json"
+  },
+  {
+    "name": "CANAL-PLUS-SERIES",
+    "slug": "canal-plus-series",
+    "country": "fr",
+    "group": "Cinema",
+    "logo": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20Canal%2B%20S%C3%A9ries%202013.svg",
+    "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=CANAL%2B%20SERIES%20HD&countries=fr.json"
+  },
+  {
+    "name": "CANAL-PLUS-KIDS",
+    "slug": "canal-plus-kids",
+    "country": "fr",
+    "group": "Jeunesse",
+    "logo": "/media/image/canal-plus-kids.webp",
+    "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=CANAL%20KIDS%20HD&countries=fr.json"
+  },
+  {
+    "name": "CANAL-PANDA",
+    "slug": "canal-panda",
+    "country": "pt",
+    "group": "Généraliste",
+    "logo": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/canal-panda-pt.png",
+    "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=CANAL%20PANDA&countries=pt.json"
+  },
+  {
     "name": "CANAL-plus",
     "slug": "canal-plus",
-    "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=CANAL+&countries=fr.json"
+    "country": "fr",
+    "group": "Généraliste",
+    "logo": "https://witv.team/images/logo/canal-plus-logo.png",
+    "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=CANAL%2B&countries=fr.json"
   }
-
 ]
-
-
-
-
-
-
-
-
