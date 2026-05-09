@@ -180,6 +180,7 @@ let healthTimer = null;
 let lastTime = 0;
 let lastProgressAt = Date.now();
 let reloadCount = 0;
+let bufferingStartedAt = null;
 
 const HEALTH_CHECK_INTERVAL = 5000;
 const NO_PROGRESS_LIMIT = 18000;
@@ -448,6 +449,12 @@ function startHealthMonitor() {
 video.addEventListener("waiting", function () {
   console.warn("Vidéo en attente de données...");
   showLoader();
+
+  if (!bufferingStartedAt) {
+    bufferingStartedAt = Date.now();
+  }
+
+  logPlayerEvent("BUFFERING_START");
 });
 
 video.addEventListener("stalled", function () {
@@ -465,6 +472,21 @@ video.addEventListener("error", function () {
 video.addEventListener("playing", function () {
   lastProgressAt = Date.now();
   hideLoader();
+
+  if (bufferingStartedAt) {
+    const bufferingDuration = Math.round(
+      (Date.now() - bufferingStartedAt) / 1000
+    );
+
+    logPlayerEvent(
+      "BUFFERING_END",
+      bufferingDuration + "s"
+    );
+
+    bufferingStartedAt = null;
+  }
+
+  logPlayerEvent("PLAYING");
 });
 
 video.addEventListener("canplay", function () {
