@@ -181,6 +181,8 @@ let lastTime = 0;
 let lastProgressAt = Date.now();
 let reloadCount = 0;
 let bufferingStartedAt = null;
+            let stallRecoveryAttempts = 0;
+            let stallRecoveryTimer = null;
 
 const HEALTH_CHECK_INTERVAL = 5000;
 const NO_PROGRESS_LIMIT = 18000;
@@ -336,8 +338,7 @@ function attachHlsPlayer() {
         fatal: Boolean(data?.fatal)
       });
 
-      logPlayerEvent("EXPIRED_STREAM_REFRESH", reason || "expired-stream");
-              hardReloadPage("expired-stream");
+      hardReloadPage("expired-stream");
       return;
     }
 
@@ -445,16 +446,6 @@ function startHealthMonitor() {
       invisibleReload("absence-flux-ou-moulinage");
     }
   }, HEALTH_CHECK_INTERVAL);
-}
-
-
-function logPlayerEvent(eventName, extra) {
-  console.log(
-    "[" + new Date().toISOString() + "]",
-    "[PLAYER]",
-    eventName,
-    extra || ""
-  );
 }
 
 video.addEventListener("waiting", function () {
