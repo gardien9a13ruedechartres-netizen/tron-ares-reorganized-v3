@@ -2,3 +2,5 @@ node_modules/
 .wrangler/
 *.log
 log.txt
+.DS_Store
+Thumbs.db

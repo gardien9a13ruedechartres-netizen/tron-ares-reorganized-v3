@@ -8,4 +8,4 @@ wrangler.toml
 worker.js
 log.txt
 *.log
-*.txt
+bash.txt
