@@ -93,53 +93,9 @@ function createHtml(channel, streamUrl) {
       object-fit: fill;
       background: #000;
     }
-  
-      #loadingOverlay {
-        position: fixed;
-        inset: 0;
-        background: #000;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 999999;
-        transition: opacity 0.35s ease;
-      }
-
-      #loadingOverlay.hidden {
-        opacity: 0;
-        pointer-events: none;
-      }
-
-      .premiumLoader {
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        border: 4px solid rgba(255,255,255,0.12);
-        border-top: 4px solid #ffffff;
-        border-right: 4px solid rgba(255,255,255,0.7);
-        animation: premiumSpin 0.9s linear infinite;
-        box-shadow:
-          0 0 12px rgba(255,255,255,0.08),
-          0 0 30px rgba(255,255,255,0.05);
-      }
-
-      @keyframes premiumSpin {
-        0% {
-          transform: rotate(0deg);
-        }
-        100% {
-          transform: rotate(360deg);
-        }
-      }
-
-    </style>
+  </style>
 </head>
 <body>
-
-<div id="loadingOverlay">
-  <div class="premiumLoader"></div>
-</div>
-
 
 <video id="video" autoplay playsinline controls></video>
 
@@ -182,6 +138,55 @@ function destroyHls() {
   }
 }
 
+function getHlsResponseStatus(data) {
+  try {
+    return (
+      data?.response?.code ||
+      data?.response?.status ||
+      data?.networkDetails?.status ||
+      data?.networkDetails?.response?.status ||
+      data?.loader?.stats?.status ||
+      0
+    );
+  } catch (error) {
+    return 0;
+  }
+}
+
+function isExpiredStreamError(data) {
+  if (!data) return false;
+
+  const status = getHlsResponseStatus(data);
+
+  const corsBlocked =
+    status === 0 &&
+    data?.type === "networkError" &&
+    (
+      data?.details === "manifestLoadError" ||
+      data?.details === "levelLoadError"
+    );
+
+  return (
+    status === 410 ||
+    status === 403 ||
+    status === 404 ||
+
+    (
+      data.type === "networkError" &&
+      data.details === "manifestLoadError" &&
+      data.fatal === true
+    ) ||
+
+    (
+      data.type === "networkError" &&
+      data.details === "levelLoadError" &&
+      data.fatal === true
+    ) ||
+
+    corsBlocked
+  );
+}
+
 function attachNativePlayer() {
   video.src = streamUrl;
   video.load();
@@ -189,28 +194,6 @@ function attachNativePlayer() {
   video.addEventListener("loadedmetadata", function () {
     safePlay();
   }, { once: true });
-}
-
-
-function getHlsResponseStatus(data) {
-  if (!data) {
-    return 0;
-  }
-
-  if (data.response && typeof data.response.code === "number") {
-    return data.response.code;
-  }
-
-  if (data.networkDetails && typeof data.networkDetails.status === "number") {
-    return data.networkDetails.status;
-  }
-
-  return 0;
-}
-
-function isExpiredStreamError(data) {
-  const status = getHlsResponseStatus(data);
-  return status === 410 || status === 403 || status === 404;
 }
 
 function attachHlsPlayer() {
@@ -253,21 +236,11 @@ function attachHlsPlayer() {
         JSON.stringify({
           type: data.type,
           details: data.details,
-          fatal: data.fatal,
-          status: getHlsResponseStatus(data)
+          fatal: data.fatal
         })
       );
     } catch (error) {
       console.error("Erreur monitoring HLS :", error);
-    }
-
-    if (isExpiredStreamError(data)) {
-      logEvent(
-        "EXPIRED_STREAM_HTTP",
-        "status=" + getHlsResponseStatus(data)
-      );
-      hardReloadPage("expired-http-" + getHlsResponseStatus(data));
-      return;
     }
 
     if (!data || !data.fatal) {
@@ -325,23 +298,7 @@ function saveMonitoringStats() {
   }
 }
 
-
-    function hideLoadingOverlay() {
-      const overlay = document.getElementById("loadingOverlay");
-
-      if (!overlay) {
-        return;
-      }
-
-      overlay.classList.add("hidden");
-
-      setTimeout(function () {
-        overlay.remove();
-      }, 400);
-    }
-
-
-    function initPlayer() {
+function initPlayer() {
   lastTime = 0;
   lastProgressAt = Date.now();
 
@@ -444,11 +401,7 @@ video.addEventListener("error", function () {
   invisibleReload("video-error");
 });
 
-video.addEventListener("canplay", function () {
-      hideLoadingOverlay();
-    });
-
-    video.addEventListener("playing", function () {
+video.addEventListener("playing", function () {
   lastProgressAt = Date.now();
 
   if (bufferingStartedAt) {
@@ -465,8 +418,6 @@ video.addEventListener("canplay", function () {
   }
 
   logEvent("PLAYING");
-
-      hideLoadingOverlay();
 });
 
 video.addEventListener("timeupdate", function () {
