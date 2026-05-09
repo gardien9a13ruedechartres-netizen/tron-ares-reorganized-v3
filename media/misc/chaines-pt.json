@@ -124,6 +124,16 @@
 "isIframe": false
 },
 {
+"id": "canal-panda",
+"name": "CANAL PANDA",
+"url": "/pages/players/canal-panda.html",
+"logo": { "type": "image", "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/canal-panda-pt.png" },
+"group": "Généraliste",
+"isFavorite": false,
+"isIframe": true
+},
+
+{
 "id": "fifaplus",
 "name": "FIFA+",
 "url": "https://f7ccf7fc.wurl.com/master/f36d25e7e52f1ba8d7e56eb859c636563214f541/UmFrdXRlblRWLXB0X0ZJRkFQbHVzUG9ydHVndWVzZV9ITFM/playlist.m3u8",

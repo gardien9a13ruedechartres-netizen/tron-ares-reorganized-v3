@@ -39,6 +39,11 @@
   "slug": "canal-plus-kids",
   "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=CANAL KIDS HD&countries=fr.json"
 },
+{
+  "name": "CANAL-PANDA",
+  "slug": "canal-panda",
+  "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=CANAL PANDA&countries=pt.json"
+},
 
 {
     "name": "CANAL-plus",
