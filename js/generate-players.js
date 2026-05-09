@@ -181,6 +181,8 @@ let lastTime = 0;
 let lastProgressAt = Date.now();
 let reloadCount = 0;
 let bufferingStartedAt = null;
+            let lastHardReloadAt = 0;
+            let hardReloadCount = 0;
 let stallRecoveryAttempts = 0;
 let stallRecoveryTimer = null;
 
@@ -315,12 +317,42 @@ function isExpiredStreamError(data) {
 }
 
 function hardReloadPage(reason) {
-  console.warn("Hard reload du player :", reason);
-  showLoader();
+              const now = Date.now();
 
-  try {
-    destroyHls();
-  } catch (error) {
+              if ((now - lastHardReloadAt) < 15000) {
+                hardReloadCount++;
+
+                logPlayerEvent("HARD_REFRESH_BLOCKED", hardReloadCount + "/3");
+
+                if (hardReloadCount >= 3) {
+                  console.warn("Boucle de refresh détectée, arrêt des reloads.");
+                  return;
+                }
+              } else {
+                hardReloadCount = 0;
+              }
+
+              lastHardReloadAt = now;
+
+              console.warn("Hard reload du player :", reason);
+
+              showLoader();
+
+              try {
+                if (hls) {
+                  hls.destroy();
+                }
+              } catch (e) {}
+
+              try {
+                const url = new URL(window.location.href);
+                url.searchParams.set("_r", Date.now());
+                url.searchParams.set("refreshStream", "1");
+                window.location.replace(url.toString());
+              } catch (e) {
+                window.location.reload();
+              }
+            } catch (error) {
     console.error("Erreur avant hard reload :", error);
   }
 
