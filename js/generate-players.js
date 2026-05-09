@@ -111,8 +111,8 @@ function createHtml(channel, streamUrl) {
       }
 
       .premiumLoader {
-        width: 78px;
-        height: 78px;
+        width: 50px;
+        height: 50px;
         border-radius: 50%;
         border: 4px solid rgba(255,255,255,0.12);
         border-top: 4px solid #ffffff;
