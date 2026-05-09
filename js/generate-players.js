@@ -191,6 +191,28 @@ function attachNativePlayer() {
   }, { once: true });
 }
 
+
+function getHlsResponseStatus(data) {
+  if (!data) {
+    return 0;
+  }
+
+  if (data.response && typeof data.response.code === "number") {
+    return data.response.code;
+  }
+
+  if (data.networkDetails && typeof data.networkDetails.status === "number") {
+    return data.networkDetails.status;
+  }
+
+  return 0;
+}
+
+function isExpiredStreamError(data) {
+  const status = getHlsResponseStatus(data);
+  return status === 410 || status === 403 || status === 404;
+}
+
 function attachHlsPlayer() {
   destroyHls();
 
@@ -231,11 +253,21 @@ function attachHlsPlayer() {
         JSON.stringify({
           type: data.type,
           details: data.details,
-          fatal: data.fatal
+          fatal: data.fatal,
+          status: getHlsResponseStatus(data)
         })
       );
     } catch (error) {
       console.error("Erreur monitoring HLS :", error);
+    }
+
+    if (isExpiredStreamError(data)) {
+      logEvent(
+        "EXPIRED_STREAM_HTTP",
+        "status=" + getHlsResponseStatus(data)
+      );
+      hardReloadPage("expired-http-" + getHlsResponseStatus(data));
+      return;
     }
 
     if (!data || !data.fatal) {
