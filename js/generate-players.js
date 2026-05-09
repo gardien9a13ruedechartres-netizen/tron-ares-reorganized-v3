@@ -336,7 +336,8 @@ function attachHlsPlayer() {
         fatal: Boolean(data?.fatal)
       });
 
-      hardReloadPage("expired-stream");
+      logPlayerEvent("EXPIRED_STREAM_REFRESH", reason || "expired-stream");
+              hardReloadPage("expired-stream");
       return;
     }
 
@@ -444,6 +445,16 @@ function startHealthMonitor() {
       invisibleReload("absence-flux-ou-moulinage");
     }
   }, HEALTH_CHECK_INTERVAL);
+}
+
+
+function logPlayerEvent(eventName, extra) {
+  console.log(
+    "[" + new Date().toISOString() + "]",
+    "[PLAYER]",
+    eventName,
+    extra || ""
+  );
 }
 
 video.addEventListener("waiting", function () {
