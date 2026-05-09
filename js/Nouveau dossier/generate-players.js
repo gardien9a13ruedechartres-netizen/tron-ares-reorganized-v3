@@ -1,8 +1,129 @@
-<!DOCTYPE html>
+const fs = require("fs");
+const path = require("path");
+
+console.log("Générateur multi-chaînes démarré...");
+
+const ROOT_DIR = path.resolve(__dirname, "..");
+const CONFIG_FILE = path.join(ROOT_DIR, "config", "channels.json");
+const OUTPUT_DIR = path.join(ROOT_DIR, "pages", "players");
+const LOG_FILE = path.join(ROOT_DIR, "log.txt");
+const LAST_STREAMS_FILE = path.join(ROOT_DIR, "config", "last-streams.json");
+const BASE_DOMAIN = "https://livewatch.top";
+
+function writeLog(message) {
+  const line = "[" + new Date().toLocaleString() + "] " + message + "\n";
+  fs.appendFileSync(LOG_FILE, line, "utf8");
+}
+
+function readLastStreams() {
+  try {
+    if (!fs.existsSync(LAST_STREAMS_FILE)) {
+      return {};
+    }
+
+    const raw = fs.readFileSync(LAST_STREAMS_FILE, "utf8").trim();
+
+    if (!raw) {
+      return {};
+    }
+
+    return JSON.parse(raw);
+  } catch (error) {
+    console.error("Impossible de lire last-streams.json :", error.message);
+    return {};
+  }
+}
+
+function writeLastStreams(streams) {
+  const directory = path.dirname(LAST_STREAMS_FILE);
+
+  if (!fs.existsSync(directory)) {
+    fs.mkdirSync(directory, { recursive: true });
+  }
+
+  fs.writeFileSync(
+    LAST_STREAMS_FILE,
+    JSON.stringify(streams, null, 2) + "\n",
+    "utf8"
+  );
+}
+
+function writeChangedFlag(hasChanges) {
+  const githubOutput = process.env.GITHUB_OUTPUT;
+
+  if (githubOutput) {
+    fs.appendFileSync(
+      githubOutput,
+      "changed=" + (hasChanges ? "true" : "false") + "\n",
+      "utf8"
+    );
+  }
+}
+
+function normalizeUrl(url) {
+  const cleanUrl = String(url || "").trim();
+
+  if (cleanUrl.startsWith("http://") || cleanUrl.startsWith("https://")) {
+    return cleanUrl;
+  }
+
+  if (cleanUrl.startsWith("/")) {
+    return BASE_DOMAIN + cleanUrl;
+  }
+
+  return BASE_DOMAIN + "/" + cleanUrl;
+}
+
+function findStreamUrl(data) {
+  if (typeof data === "string") {
+    if (data.includes(".m3u8") || data.includes("api/proxy")) {
+      return data;
+    }
+    return null;
+  }
+
+  if (Array.isArray(data)) {
+    for (const item of data) {
+      const found = findStreamUrl(item);
+      if (found) return found;
+    }
+  }
+
+  if (data && typeof data === "object") {
+    for (const value of Object.values(data)) {
+      const found = findStreamUrl(value);
+      if (found) return found;
+    }
+  }
+
+  return null;
+}
+
+function sanitizeSlug(slug) {
+  return String(slug || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9-_]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function createHtml(channel, streamUrl) {
+  const title = escapeHtml(channel.name || channel.slug || "Player HLS");
+
+  return `<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>CANAL-PLUS-SERIES</title>
+  <title>${title}</title>
   <style>
     html, body {
       margin: 0;
@@ -79,7 +200,7 @@
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <script>
-const streamUrl = "https://livewatch.top/api/proxy?url=https%3A%2F%2Fshouurvki7jtfax.ngolpdkyoctjcddxshli469r.org%2Fsunshine%2FmWPhQeWTTUI_Dw7JgBmXnD6zJdYWugk0wNVqC9I1_gFf7SB3QDlVsq_EZlNIasRiLzaAZU7pOBaJqF7mwSvOvSLr-ZN4tWbfDSKNQ-srhMQKRyy6SuJLoH0D5XoM2hkkIRGtCU1gT0f8Jg5pTVUk4Vb4-4--oymk0T9vMfNmOUGOCbD7s9H9pgpY1K4wbcimIzLHDFXnntsPrMPxAFsLqkt8yWA3R-yVOffAgE7oFWmdOyOCYnAQQ5_K933J5FRzyxVvH8llze8cn636WHMTnA%2Fhls%2Findex.m3u8";
+const streamUrl = ${JSON.stringify(streamUrl)};
 
 const video = document.getElementById("video");
 const loadingOverlay = document.getElementById("loadingOverlay");
@@ -319,4 +440,146 @@ window.addEventListener("beforeunload", function () {
 </script>
 
 </body>
-</html>
+</html>`;
+}
+
+async function generateChannel(channel, lastStreams, nextStreams) {
+  const slug = sanitizeSlug(channel.slug);
+
+  if (!slug) {
+    throw new Error("Chaîne sans slug valide : " + JSON.stringify(channel));
+  }
+
+  if (!channel.jsonUrl) {
+    throw new Error("Chaîne sans jsonUrl : " + slug);
+  }
+
+  console.log("");
+  console.log("Chaîne :", channel.name || slug);
+  console.log("Slug :", slug);
+  console.log("JSON :", channel.jsonUrl);
+
+  const response = await fetch(channel.jsonUrl, {
+    cache: "no-store"
+  });
+
+  console.log("Statut HTTP :", response.status);
+
+  if (!response.ok) {
+    throw new Error("Erreur HTTP " + response.status + " pour " + slug);
+  }
+
+  const json = await response.json();
+  const extractedUrl = findStreamUrl(json);
+
+  if (!extractedUrl) {
+    throw new Error("Aucune URL .m3u8 trouvée pour " + slug);
+  }
+
+  const finalUrl = normalizeUrl(extractedUrl);
+  const previousUrl = lastStreams[slug] || null;
+  const outputFile = path.join(OUTPUT_DIR, slug + ".html");
+  const playerExists = fs.existsSync(outputFile);
+  const hasChanged = previousUrl !== finalUrl || !playerExists;
+
+  nextStreams[slug] = finalUrl;
+
+  console.log("URL finale :", finalUrl);
+
+  if (!hasChanged) {
+    console.log("Aucun changement :", slug);
+    writeLog("Aucun changement : " + slug);
+    return false;
+  }
+
+  fs.writeFileSync(outputFile, createHtml(channel, finalUrl), "utf8");
+
+  if (!playerExists) {
+    console.log("Nouveau player généré :", outputFile);
+    writeLog("Nouveau player généré : " + slug);
+  } else {
+    console.log("Player mis à jour :", outputFile);
+    writeLog("Player mis à jour : " + slug);
+  }
+
+  return true;
+}
+
+async function main() {
+  try {
+    writeLog("Générateur multi-chaînes exécuté");
+
+    if (!fs.existsSync(CONFIG_FILE)) {
+      throw new Error("Fichier introuvable : " + CONFIG_FILE);
+    }
+
+    if (!fs.existsSync(OUTPUT_DIR)) {
+      fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+    }
+
+    const channels = JSON.parse(fs.readFileSync(CONFIG_FILE, "utf8"));
+
+    if (!Array.isArray(channels)) {
+      throw new Error("channels.json doit contenir un tableau JSON.");
+    }
+
+    console.log("Nombre de chaînes :", channels.length);
+
+    const lastStreams = readLastStreams();
+    const nextStreams = {};
+
+    let successCount = 0;
+    let errorCount = 0;
+    let changedCount = 0;
+
+    for (const channel of channels) {
+      try {
+        const changed = await generateChannel(channel, lastStreams, nextStreams);
+        successCount += 1;
+
+        if (changed) {
+          changedCount += 1;
+        }
+      } catch (error) {
+        errorCount += 1;
+        console.error("Erreur chaîne :", error.message);
+        writeLog("Erreur chaîne : " + error.message);
+      }
+    }
+
+    if (successCount > 0) {
+      writeLastStreams(nextStreams);
+    }
+
+    const hasChanges = changedCount > 0;
+
+    writeChangedFlag(hasChanges);
+
+    console.log("");
+    console.log("Génération terminée.");
+    console.log("Succès :", successCount);
+    console.log("Erreurs :", errorCount);
+    console.log("Players modifiés :", changedCount);
+
+    if (!hasChanges) {
+      console.log("Aucun changement détecté. Déploiement Cloudflare inutile.");
+    }
+
+    writeLog(
+      "Génération terminée. Succès=" +
+      successCount +
+      " Erreurs=" +
+      errorCount +
+      " Changements=" +
+      changedCount
+    );
+
+  } catch (error) {
+    writeChangedFlag(false);
+    console.error("Erreur générale :", error.message);
+    writeLog("Erreur générale : " + error.message);
+    process.exitCode = 1;
+  }
+}
+
+main();

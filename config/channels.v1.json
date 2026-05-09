@@ -1,0 +1,62 @@
+[
+  {
+    "name": "CM TV",
+    "slug": "cmtv",
+    "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=CM%20TV&countries=pt.json"
+  },
+  {
+    "name": "RTP1",
+    "slug": "rtp1",
+    "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=RTP 1 HD&countries=pt.json"
+  },
+  {
+    "name": "RTP2",
+    "slug": "rtp2",
+    "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=RTP 2&countries=pt.json"
+  },
+{
+    "name": "BTV HD",
+    "slug": "btv-hd",
+    "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=BTV HD&countries=pt.json"
+  },
+{
+  "name": "CANAL+GE",
+  "slug": "canal-ge",
+  "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=CANAL%2B%20GRAND%20ECRAN%20FHD&countries=fr.json"
+},
+{
+  "name": "CANAL-CINEMA-HD",
+  "slug": "canal-cinema-hd",
+  "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=CANAL+ CINEMA HD&countries=fr.json"
+},
+{
+  "name": "CANAL-PLUS-SERIES",
+  "slug": "canal-plus-series",
+  "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=CANAL+ SERIES HD&countries=fr.json"
+},
+{
+  "name": "CANAL-PLUS-KIDS",
+  "slug": "canal-plus-kids",
+  "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=CANAL KIDS HD&countries=fr.json"
+},
+{
+  "name": "CANAL-PANDA",
+  "slug": "canal-panda",
+  "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=CANAL PANDA&countries=pt.json"
+},
+
+{
+    "name": "CANAL-plus",
+    "slug": "canal-plus",
+    "jsonUrl": "https://livewatch.top/api/tvvoo/stream?channel=CANAL+&countries=fr.json"
+  }
+
+]
+
+
+
+
+
+
+
+
