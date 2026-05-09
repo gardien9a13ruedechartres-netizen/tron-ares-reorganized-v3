@@ -120,11 +120,31 @@
     }
   }
 
+
+  function isGeneratedPlayerPageUrl(url) {
+    try {
+      const u = new URL(String(url || ""), window.location.href);
+      const path = u.pathname.replace(/\/+$/, "");
+
+      return (
+        path.startsWith("/pages/players/") &&
+        path.endsWith(".html") &&
+        (
+          u.origin === window.location.origin ||
+          u.hostname === "player-engine.com"
+        )
+      );
+    } catch {
+      return false;
+    }
+  }
+
   function isNoSandboxExceptionUrl(url) {
     return (
       isLivewatchChannelAllowed(url) ||
       isLivewatchPlayerUrl(url) ||
-      isCMLivePortugalPageUrl(url)
+      isCMLivePortugalPageUrl(url) ||
+      isGeneratedPlayerPageUrl(url)
     );
   }
 
