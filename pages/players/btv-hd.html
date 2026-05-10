@@ -79,7 +79,7 @@
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <script>
-let streamUrl = "https://livewatch.top/api/proxy?url=http%3A%2F%2F45.143.220.207%3A8008%2Fsunshine%2Fb15QQWN3PvjiUT0rOcUsL1CSAdi9UwXZfqe4nh-XjIJ8bRSn569e2NkgAtcRUHmdqmPp1N1g3sbzFNW0xepSodsvZzLN6NA51x-hnb1erIYfJduchHArzSvKWZt4KfKQgQ3YmewPUVH6ur5hngrQ68H5rs9diafRBfQnzBOr5xfFII5UQEg7Pc-nL7GDkXHMrznRdDr2CmB1YFu8gSRHu2Odaa0YSeNMTByQRac3Z6Xq927qdPNS1Uzrp9414I3ZVY6g7BzeZ8ln9ktzz9gFZg%2Fhls%2Findex.m3u8";
+let streamUrl = "https://livewatch.top/api/proxy?url=http%3A%2F%2F45.143.222.167%3A8008%2Fsunshine%2Fr8bknrE3LrR6M4l09upL8nMrP9l54ezVjDuq_o0qzFoBafohs2ATNtjwaPYut0_UwO9gkFJTUnkJV2clqfIsPpXI39SIl35yKhrZbxLzS6AVyH8H478_EjFmzJEgibrg2oBjLN6VllsE5LrTbebpGOLwodi01lBpJGlXnludVIaXF9AGqgBpjTvxGE6FUztWRFSqTj6L-osq8whcrcKUF2og-TbNUUqZlIsf7fn2SQfR7V2-glPS5Trb3w04HisCf5juUgo9pBZeTXL2uqlajw%2Fhls%2Findex.m3u8";
 const jsonUrl = "https://livewatch.top/api/tvvoo/stream?channel=BTV HD&countries=pt.json";
 const refreshWorkerUrl = 'https://tvvoo-refresh.victor-salema-53d.workers.dev/';
 
@@ -111,6 +111,7 @@ let lastProgressAt = Date.now();
 let reloadCount = 0;
 let bufferingStartedAt = null;
 let jsonRefreshFailures = 0;
+let stallEvents = [];
 
 const HEALTH_CHECK_INTERVAL = 5000;
 const NO_PROGRESS_LIMIT = 18000;
@@ -118,6 +119,8 @@ const RELOAD_COOLDOWN = 7000;
 const HARD_REFRESH_AFTER = 5;
 const JSON_REFRESH_RETRY_DELAYS = [0, 15000, 30000, 60000, 90000];
 const MAX_JSON_REFRESH_FAILURES = 5;
+const STALL_REFRESH_WINDOW = 2 * 60 * 1000;
+const STALL_REFRESH_THRESHOLD = 3;
 
 function logPlayerEvent(eventName, extra = "") {
   console.log(
@@ -126,6 +129,31 @@ function logPlayerEvent(eventName, extra = "") {
     eventName,
     extra
   );
+}
+
+function recordStallEvent(details) {
+  const now = Date.now();
+
+  stallEvents = stallEvents.filter(function (timestamp) {
+    return now - timestamp <= STALL_REFRESH_WINDOW;
+  });
+
+  stallEvents.push(now);
+
+  logPlayerEvent(
+    "STALL_TRACKED",
+    (details || "unknown") + " count=" + stallEvents.length + "/" + STALL_REFRESH_THRESHOLD
+  );
+
+  if (stallEvents.length >= STALL_REFRESH_THRESHOLD) {
+    stallEvents = [];
+    logPlayerEvent("STALL_JSON_REFRESH", details || "repeated-stalls");
+    refreshStreamFromJson("repeated-stalls");
+  }
+}
+
+function resetStallEvents() {
+  stallEvents = [];
 }
 
 function safePlay() {
@@ -344,6 +372,7 @@ async function refreshStreamFromJson(reason) {
     jsonRefreshFailures = 0;
     reloadCount = 0;
     bufferingStartedAt = null;
+    resetStallEvents();
 
     logPlayerEvent("STREAM_URL_UPDATED", streamUrl);
 
@@ -429,6 +458,7 @@ function attachHlsPlayer() {
 
   hls.on(Hls.Events.FRAG_LOADED, function () {
     lastProgressAt = Date.now();
+    resetStallEvents();
   });
 
   hls.on(Hls.Events.LEVEL_LOADED, function () {
@@ -464,6 +494,17 @@ function attachHlsPlayer() {
     }
 
     if (!data || !data.fatal) {
+      if (
+        data &&
+        data.type === Hls.ErrorTypes.MEDIA_ERROR &&
+        (
+          data.details === "bufferStalledError" ||
+          data.details === "bufferNudgeOnStall"
+        )
+      ) {
+        recordStallEvent(data.details);
+      }
+
       return;
     }
 
@@ -598,6 +639,8 @@ video.addEventListener("playing", function () {
     logPlayerEvent("BUFFERING_END", bufferingDuration + "s");
     bufferingStartedAt = null;
   }
+
+  resetStallEvents();
 
   logPlayerEvent("PLAYING");
 });

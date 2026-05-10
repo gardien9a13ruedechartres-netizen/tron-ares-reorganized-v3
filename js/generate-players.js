@@ -186,6 +186,7 @@ let lastProgressAt = Date.now();
 let reloadCount = 0;
 let bufferingStartedAt = null;
 let jsonRefreshFailures = 0;
+let stallEvents = [];
 
 const HEALTH_CHECK_INTERVAL = 5000;
 const NO_PROGRESS_LIMIT = 18000;
@@ -193,6 +194,8 @@ const RELOAD_COOLDOWN = 7000;
 const HARD_REFRESH_AFTER = 5;
 const JSON_REFRESH_RETRY_DELAYS = [0, 15000, 30000, 60000, 90000];
 const MAX_JSON_REFRESH_FAILURES = 5;
+const STALL_REFRESH_WINDOW = 2 * 60 * 1000;
+const STALL_REFRESH_THRESHOLD = 3;
 
 function logPlayerEvent(eventName, extra = "") {
   console.log(
@@ -201,6 +204,31 @@ function logPlayerEvent(eventName, extra = "") {
     eventName,
     extra
   );
+}
+
+function recordStallEvent(details) {
+  const now = Date.now();
+
+  stallEvents = stallEvents.filter(function (timestamp) {
+    return now - timestamp <= STALL_REFRESH_WINDOW;
+  });
+
+  stallEvents.push(now);
+
+  logPlayerEvent(
+    "STALL_TRACKED",
+    (details || "unknown") + " count=" + stallEvents.length + "/" + STALL_REFRESH_THRESHOLD
+  );
+
+  if (stallEvents.length >= STALL_REFRESH_THRESHOLD) {
+    stallEvents = [];
+    logPlayerEvent("STALL_JSON_REFRESH", details || "repeated-stalls");
+    refreshStreamFromJson("repeated-stalls");
+  }
+}
+
+function resetStallEvents() {
+  stallEvents = [];
 }
 
 function safePlay() {
@@ -419,6 +447,7 @@ async function refreshStreamFromJson(reason) {
     jsonRefreshFailures = 0;
     reloadCount = 0;
     bufferingStartedAt = null;
+    resetStallEvents();
 
     logPlayerEvent("STREAM_URL_UPDATED", streamUrl);
 
@@ -504,6 +533,7 @@ function attachHlsPlayer() {
 
   hls.on(Hls.Events.FRAG_LOADED, function () {
     lastProgressAt = Date.now();
+    resetStallEvents();
   });
 
   hls.on(Hls.Events.LEVEL_LOADED, function () {
@@ -539,6 +569,17 @@ function attachHlsPlayer() {
     }
 
     if (!data || !data.fatal) {
+      if (
+        data &&
+        data.type === Hls.ErrorTypes.MEDIA_ERROR &&
+        (
+          data.details === "bufferStalledError" ||
+          data.details === "bufferNudgeOnStall"
+        )
+      ) {
+        recordStallEvent(data.details);
+      }
+
       return;
     }
 
@@ -673,6 +714,8 @@ video.addEventListener("playing", function () {
     logPlayerEvent("BUFFERING_END", bufferingDuration + "s");
     bufferingStartedAt = null;
   }
+
+  resetStallEvents();
 
   logPlayerEvent("PLAYING");
 });
