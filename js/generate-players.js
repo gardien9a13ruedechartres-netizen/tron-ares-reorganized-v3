@@ -1,18 +1,18 @@
 const fs = require("fs");
 const path = require("path");
 
-console.log("Générateur multi-chaînes démarré...");
+console.log("Script démarré...");
+const LOG_FILE =
+  "D:\\UsersData\\victo\\Downloads\\tron-ares-reorganized-v3\\log.txt";
 
-const ROOT_DIR = path.resolve(__dirname, "..");
-const CONFIG_FILE = path.join(ROOT_DIR, "config", "channels.json");
-const OUTPUT_DIR = path.join(ROOT_DIR, "pages", "players");
-const LOG_FILE = path.join(ROOT_DIR, "log.txt");
+fs.appendFileSync(
+  LOG_FILE,
+  "[" + new Date().toLocaleString() + "] Script exécuté\n"
+);
+
+const JSON_URL = "https://livewatch.top/api/tvvoo/stream?channel=CM%20TV&countries=pt.json";
 const BASE_DOMAIN = "https://livewatch.top";
-
-function writeLog(message) {
-  const line = "[" + new Date().toLocaleString() + "] " + message + "\n";
-  fs.appendFileSync(LOG_FILE, line, "utf8");
-}
+const OUTPUT_HTML = "D:\\UsersData\\victo\\Downloads\\tron-ares-reorganized-v3\\pages\\player-hls.html";
 
 function normalizeUrl(url) {
   const cleanUrl = String(url || "").trim();
@@ -53,31 +53,12 @@ function findStreamUrl(data) {
   return null;
 }
 
-function sanitizeSlug(slug) {
-  return String(slug || "")
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9-_]/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-}
-
-function escapeHtml(value) {
-  return String(value || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
-function createHtml(channel, streamUrl) {
-  const title = escapeHtml(channel.name || channel.slug || "Player HLS");
-
+function createHtml(streamUrl) {
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>${title}</title>
+  <title>Player HLS</title>
   <style>
     html, body {
       margin: 0;
@@ -88,58 +69,10 @@ function createHtml(channel, streamUrl) {
     }
 
     #video {
-      position: fixed;
-      inset: 0;
       width: 100vw;
       height: 100vh;
       object-fit: fill;
       background: #000;
-      z-index: 1;
-    }
-
-    #loadingOverlay {
-      position: fixed;
-      inset: 0;
-      z-index: 2;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background:
-        radial-gradient(circle at center, rgba(255,255,255,0.045), rgba(0,0,0,0.94) 48%, #000 100%);
-      opacity: 1;
-      visibility: visible;
-      transition: opacity 0.45s ease, visibility 0.45s ease;
-      pointer-events: none;
-    }
-
-    #loadingOverlay.hidden {
-      opacity: 0;
-      visibility: hidden;
-    }
-
-    .premiumLoader {
-      width: 58px;
-      height: 58px;
-      border-radius: 50%;
-      border: 2px solid rgba(255, 255, 255, 0.16);
-      border-top-color: rgba(255, 255, 255, 0.95);
-      border-right-color: rgba(255, 255, 255, 0.50);
-      animation: premiumSpin 0.95s linear infinite;
-      filter: drop-shadow(0 0 14px rgba(255, 255, 255, 0.16));
-    }
-
-    .premiumLoader::after {
-      content: "";
-      position: absolute;
-      inset: 11px;
-      border-radius: 50%;
-      border: 1px solid rgba(255, 255, 255, 0.10);
-    }
-
-    @keyframes premiumSpin {
-      to {
-        transform: rotate(360deg);
-      }
     }
   </style>
 </head>
@@ -147,563 +80,96 @@ function createHtml(channel, streamUrl) {
 
 <video id="video" autoplay playsinline controls></video>
 
-<div id="loadingOverlay" aria-hidden="true">
-  <div class="premiumLoader"></div>
-</div>
-
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <script>
 const streamUrl = ${JSON.stringify(streamUrl)};
-const playerSlug = ${JSON.stringify(channel.slug || "unknown")};
 
 const video = document.getElementById("video");
-const loadingOverlay = document.getElementById("loadingOverlay");
 
+video.setAttribute("src", streamUrl);
 video.muted = false;
 video.volume = 1;
 
-let hls = null;
-let reloadTimer = null;
-let healthTimer = null;
-let stallRecoveryTimer = null;
-let lastTime = 0;
-let lastProgressAt = Date.now();
-let reloadCount = 0;
-let bufferingStartedAt = null;
-let stallRecoveryAttempts = 0;
-let fatalRefreshInProgress = false;
-
-const HEALTH_CHECK_INTERVAL = 5000;
-const NO_PROGRESS_LIMIT = 18000;
-const RELOAD_COOLDOWN = 7000;
-const HARD_REFRESH_AFTER = 5;
-const STALL_RECOVERY_TIMEOUT = 12000;
-const MAX_STALL_RECOVERY_ATTEMPTS = 3;
-const HARD_RELOAD_LOOP_WINDOW = 30000;
-const MAX_HARD_RELOADS_IN_WINDOW = 2;
-
-function logPlayerEvent(eventName, extra) {
-  console.log(
-    "[" + new Date().toISOString() + "]",
-    "[" + playerSlug + "]",
-    eventName,
-    extra || ""
-  );
-}
-
-function showLoader() {
-  if (loadingOverlay) {
-    loadingOverlay.classList.remove("hidden");
-  }
-}
-
-function hideLoader() {
-  if (loadingOverlay) {
-    loadingOverlay.classList.add("hidden");
-  }
-}
-
-function safePlay() {
-  const playPromise = video.play();
-
-  if (playPromise && typeof playPromise.catch === "function") {
-    playPromise.catch(function (error) {
-      console.error("Autoplay bloqué :", error);
-    });
-  }
-}
-
-function clearStallRecoveryTimer() {
-  if (stallRecoveryTimer) {
-    clearTimeout(stallRecoveryTimer);
-    stallRecoveryTimer = null;
-  }
-}
-
-function destroyHls() {
-  clearStallRecoveryTimer();
-
-  if (hls) {
-    try {
-      hls.destroy();
-    } catch (error) {
-      console.error("Erreur destruction HLS :", error);
-    }
-
-    hls = null;
-  }
-}
-
-function getHlsResponseStatus(data) {
-  try {
-    return (
-      data?.response?.code ||
-      data?.response?.status ||
-      data?.networkDetails?.status ||
-      data?.networkDetails?.response?.status ||
-      data?.loader?.stats?.status ||
-      0
-    );
-  } catch (error) {
-    return 0;
-  }
-}
-
-function isExpiredStreamError(data) {
-  if (!data) {
-    return false;
-  }
-
-  const status = getHlsResponseStatus(data);
-  const isNetworkError = data.type === Hls.ErrorTypes.NETWORK_ERROR;
-  const isManifestOrLevel =
-    data.details === "manifestLoadError" ||
-    data.details === "levelLoadError";
-
-  return (
-    status === 410 ||
-    status === 403 ||
-    status === 404 ||
-    (isNetworkError && isManifestOrLevel && data.fatal === true && status === 0)
-  );
-}
-
-function getHardReloadStateKey() {
-  return "hls-hard-reload-state:" + playerSlug;
-}
-
-function getHardReloadState() {
-  try {
-    const raw = sessionStorage.getItem(getHardReloadStateKey());
-    if (!raw) {
-      return { firstAt: 0, count: 0 };
-    }
-
-    const parsed = JSON.parse(raw);
-    return {
-      firstAt: Number(parsed.firstAt || 0),
-      count: Number(parsed.count || 0)
-    };
-  } catch (error) {
-    return { firstAt: 0, count: 0 };
-  }
-}
-
-function setHardReloadState(state) {
-  try {
-    sessionStorage.setItem(getHardReloadStateKey(), JSON.stringify(state));
-  } catch (error) {}
-}
-
-function clearHardReloadState() {
-  try {
-    sessionStorage.removeItem(getHardReloadStateKey());
-  } catch (error) {}
-}
-
-function hardReloadPage(reason) {
-  if (fatalRefreshInProgress) {
-    logPlayerEvent("HARD_REFRESH_ALREADY_IN_PROGRESS", reason || "unknown");
-    return;
-  }
-
-  const now = Date.now();
-  const state = getHardReloadState();
-  const insideWindow = state.firstAt && (now - state.firstAt) < HARD_RELOAD_LOOP_WINDOW;
-  const nextState = insideWindow
-    ? { firstAt: state.firstAt, count: state.count + 1 }
-    : { firstAt: now, count: 1 };
-
-  setHardReloadState(nextState);
-
-  if (nextState.count > MAX_HARD_RELOADS_IN_WINDOW) {
-    fatalRefreshInProgress = true;
-    logPlayerEvent("HARD_REFRESH_BLOCKED", reason || "reload-loop");
-    console.warn("Boucle de refresh bloquée. Même URL HLS probablement expirée.");
-    showLoader();
-    destroyHls();
-    return;
-  }
-
-  fatalRefreshInProgress = true;
-  logPlayerEvent("HARD_REFRESH", reason || "unknown");
-  console.warn("Hard reload du player :", reason);
-  showLoader();
-  destroyHls();
-
-  try {
-    const url = new URL(window.location.href);
-    url.searchParams.set("_r", String(Date.now()));
-    url.searchParams.set("refreshStream", "1");
-    window.location.replace(url.toString());
-  } catch (error) {
-    window.location.reload();
-  }
-}
-
-function scheduleStallRecovery(reason) {
-  clearStallRecoveryTimer();
-
-  stallRecoveryTimer = setTimeout(function () {
-    logPlayerEvent("STALL_TIMEOUT", reason || "waiting");
-
-    if (fatalRefreshInProgress) {
-      return;
-    }
-
-    try {
-      stallRecoveryAttempts += 1;
-      logPlayerEvent("STALL_RECOVER_ATTEMPT", stallRecoveryAttempts + "/" + MAX_STALL_RECOVERY_ATTEMPTS);
-
-      if (hls) {
-        hls.recoverMediaError();
-      }
-
-      safePlay();
-
-      if (stallRecoveryAttempts >= MAX_STALL_RECOVERY_ATTEMPTS) {
-        logPlayerEvent("STALL_HARD_REFRESH", reason || "stall-timeout");
-        hardReloadPage("stall-timeout");
-      } else {
-        scheduleStallRecovery(reason || "stall-retry");
-      }
-    } catch (error) {
-      console.error("Erreur recovery stall :", error);
-      invisibleReload("stall-recovery-error");
-    }
-  }, STALL_RECOVERY_TIMEOUT);
-}
-
-function resetStallRecovery() {
-  clearStallRecoveryTimer();
-  stallRecoveryAttempts = 0;
-}
-
-function attachNativePlayer() {
-  video.src = streamUrl;
-  video.load();
-
-  video.addEventListener("loadedmetadata", function () {
-    safePlay();
-  }, { once: true });
-}
-
-function attachHlsPlayer() {
-  destroyHls();
-
-  hls = new Hls({
+if (Hls.isSupported()) {
+  const hls = new Hls({
     enableWorker: true,
-    lowLatencyMode: true,
-    liveSyncDurationCount: 3,
-    liveMaxLatencyDurationCount: 8,
-    maxBufferLength: 20,
-    maxMaxBufferLength: 30,
-    backBufferLength: 30,
-    fragLoadingTimeOut: 20000,
-    manifestLoadingTimeOut: 20000,
-    levelLoadingTimeOut: 20000
+    lowLatencyMode: true
   });
 
   hls.loadSource(streamUrl);
   hls.attachMedia(video);
 
   hls.on(Hls.Events.MANIFEST_PARSED, function () {
-    safePlay();
-  });
-
-  hls.on(Hls.Events.FRAG_LOADED, function () {
-    lastProgressAt = Date.now();
-  });
-
-  hls.on(Hls.Events.LEVEL_LOADED, function () {
-    lastProgressAt = Date.now();
+    video.play().catch(function (error) {
+      console.error("Autoplay bloqué :", error);
+    });
   });
 
   hls.on(Hls.Events.ERROR, function (event, data) {
     console.error("Erreur HLS :", data);
-
-    const status = getHlsResponseStatus(data);
-
-    logPlayerEvent("HLS_ERROR", JSON.stringify({
-      type: data?.type || null,
-      details: data?.details || null,
-      fatal: Boolean(data?.fatal),
-      status: status
-    }));
-
-    if (isExpiredStreamError(data)) {
-      console.warn("Flux expiré détecté → refresh contrôlé :", {
-        status: status,
-        type: data?.type || null,
-        details: data?.details || null,
-        fatal: Boolean(data?.fatal)
-      });
-
-      logPlayerEvent("EXPIRED_STREAM_REFRESH", "expired-stream");
-      hardReloadPage("expired-stream");
-      return;
-    }
-
-    if (!data || !data.fatal) {
-      if (data && data.details === "bufferStalledError") {
-        showLoader();
-        scheduleStallRecovery("bufferStalledError");
-      }
-      return;
-    }
-
-    if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-      invisibleReload("network-error");
-      return;
-    }
-
-    if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
-      try {
-        hls.recoverMediaError();
-        safePlay();
-      } catch (error) {
-        invisibleReload("media-error");
-      }
-      return;
-    }
-
-    invisibleReload("fatal-error");
   });
+
+} else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+  video.src = streamUrl;
+
+  video.addEventListener("loadedmetadata", function () {
+    video.play().catch(function (error) {
+      console.error("Autoplay bloqué :", error);
+    });
+  });
+} else {
+  console.error("HLS non supporté.");
 }
-
-function initPlayer() {
-  lastTime = 0;
-  lastProgressAt = Date.now();
-  showLoader();
-
-  if (Hls.isSupported()) {
-    attachHlsPlayer();
-  } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-    attachNativePlayer();
-  } else {
-    console.error("HLS non supporté.");
-  }
-}
-
-function invisibleReload(reason) {
-  if (fatalRefreshInProgress || reloadTimer) {
-    return;
-  }
-
-  console.warn("Reload invisible du player :", reason);
-  showLoader();
-
-  reloadTimer = setTimeout(function () {
-    reloadTimer = null;
-    reloadCount += 1;
-
-    const currentMuted = video.muted;
-    const currentVolume = video.volume;
-
-    try {
-      video.pause();
-      video.removeAttribute("src");
-      video.load();
-    } catch (error) {
-      console.error("Erreur reset vidéo :", error);
-    }
-
-    destroyHls();
-
-    video.muted = currentMuted;
-    video.volume = currentVolume;
-
-    initPlayer();
-
-    if (reloadCount >= HARD_REFRESH_AFTER) {
-      reloadCount = 0;
-      setTimeout(function () {
-        hardReloadPage("too-many-invisible-reloads");
-      }, 2000);
-    }
-  }, RELOAD_COOLDOWN);
-}
-
-function startHealthMonitor() {
-  clearInterval(healthTimer);
-
-  healthTimer = setInterval(function () {
-    const currentTime = video.currentTime || 0;
-    const now = Date.now();
-
-    if (!video.paused && !video.ended && currentTime > lastTime) {
-      lastTime = currentTime;
-      lastProgressAt = now;
-      return;
-    }
-
-    const noProgressFor = now - lastProgressAt;
-    const seemsStuck = !video.paused && !video.ended && noProgressFor > NO_PROGRESS_LIMIT;
-    const noEnoughData = video.readyState < 2 && noProgressFor > NO_PROGRESS_LIMIT;
-
-    if (seemsStuck || noEnoughData) {
-      showLoader();
-      scheduleStallRecovery("absence-flux-ou-moulinage");
-    }
-  }, HEALTH_CHECK_INTERVAL);
-}
-
-video.addEventListener("waiting", function () {
-  console.warn("Vidéo en attente de données...");
-  showLoader();
-
-  if (!bufferingStartedAt) {
-    bufferingStartedAt = Date.now();
-  }
-
-  logPlayerEvent("BUFFERING_START");
-  scheduleStallRecovery("waiting");
-});
-
-video.addEventListener("stalled", function () {
-  console.warn("Flux bloqué/stalled.");
-  showLoader();
-  logPlayerEvent("STALLED");
-  scheduleStallRecovery("stalled");
-});
-
-video.addEventListener("error", function () {
-  console.error("Erreur vidéo native :", video.error);
-  showLoader();
-  logPlayerEvent("VIDEO_ERROR");
-  invisibleReload("video-error");
-});
-
-video.addEventListener("playing", function () {
-  lastProgressAt = Date.now();
-  resetStallRecovery();
-  clearHardReloadState();
-  hideLoader();
-
-  if (bufferingStartedAt) {
-    const bufferingDuration = Math.round((Date.now() - bufferingStartedAt) / 1000);
-    logPlayerEvent("BUFFERING_END", bufferingDuration + "s");
-    bufferingStartedAt = null;
-  }
-
-  logPlayerEvent("PLAYING");
-});
-
-video.addEventListener("canplay", function () {
-  lastProgressAt = Date.now();
-  hideLoader();
-});
-
-video.addEventListener("timeupdate", function () {
-  lastProgressAt = Date.now();
-  lastTime = video.currentTime || 0;
-});
-
-initPlayer();
-startHealthMonitor();
-
-window.addEventListener("beforeunload", function () {
-  clearInterval(healthTimer);
-  clearTimeout(reloadTimer);
-  clearStallRecoveryTimer();
-  destroyHls();
-});
 </script>
 
 </body>
 </html>`;
 }
 
-async function generateChannel(channel) {
-  const slug = sanitizeSlug(channel.slug);
-
-  if (!slug) {
-    throw new Error("Chaîne sans slug valide : " + JSON.stringify(channel));
-  }
-
-  if (!channel.jsonUrl) {
-    throw new Error("Chaîne sans jsonUrl : " + slug);
-  }
-
-  console.log("");
-  console.log("Chaîne :", channel.name || slug);
-  console.log("Slug :", slug);
-  console.log("JSON :", channel.jsonUrl);
-
-  const response = await fetch(channel.jsonUrl, {
-    cache: "no-store"
-  });
-
-  console.log("Statut HTTP :", response.status);
-
-  if (!response.ok) {
-    throw new Error("Erreur HTTP " + response.status + " pour " + slug);
-  }
-
-  const json = await response.json();
-  const extractedUrl = findStreamUrl(json);
-
-  if (!extractedUrl) {
-    throw new Error("Aucune URL .m3u8 trouvée pour " + slug);
-  }
-
-  const finalUrl = normalizeUrl(extractedUrl);
-  const outputFile = path.join(OUTPUT_DIR, slug + ".html");
-
-  fs.writeFileSync(outputFile, createHtml(channel, finalUrl), "utf8");
-
-  console.log("URL finale :", finalUrl);
-  console.log("Player généré :", outputFile);
-
-  writeLog("Player généré : " + slug);
-}
-
 async function main() {
   try {
-    writeLog("Générateur multi-chaînes exécuté");
+    console.log("Récupération du JSON...");
 
-    if (!fs.existsSync(CONFIG_FILE)) {
-      throw new Error("Fichier introuvable : " + CONFIG_FILE);
+    const response = await fetch(JSON_URL, {
+      cache: "no-store"
+    });
+
+    console.log("Statut HTTP :", response.status);
+
+    if (!response.ok) {
+      throw new Error("Erreur HTTP " + response.status);
     }
 
-    if (!fs.existsSync(OUTPUT_DIR)) {
-      fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+    const json = await response.json();
+
+    console.log("JSON reçu.");
+
+    const extractedUrl = findStreamUrl(json);
+
+    if (!extractedUrl) {
+      console.log(JSON.stringify(json, null, 2));
+      throw new Error("Aucune URL .m3u8 trouvée dans le JSON.");
     }
 
-    const channels = JSON.parse(fs.readFileSync(CONFIG_FILE, "utf8"));
+    const finalUrl = normalizeUrl(extractedUrl);
 
-    if (!Array.isArray(channels)) {
-      throw new Error("channels.json doit contenir un tableau JSON.");
+    console.log("URL extraite :", extractedUrl);
+    console.log("URL finale :", finalUrl);
+
+    const outputDir = path.dirname(OUTPUT_HTML);
+
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
     }
 
-    console.log("Nombre de chaînes :", channels.length);
+    fs.writeFileSync(OUTPUT_HTML, createHtml(finalUrl), "utf8");
 
-    let successCount = 0;
-    let errorCount = 0;
-
-    for (const channel of channels) {
-      try {
-        await generateChannel(channel);
-        successCount += 1;
-      } catch (error) {
-        errorCount += 1;
-        console.error("Erreur chaîne :", error.message);
-        writeLog("Erreur chaîne : " + error.message);
-      }
-    }
-
-    console.log("");
-    console.log("Génération terminée.");
-    console.log("Succès :", successCount);
-    console.log("Erreurs :", errorCount);
-
-    writeLog("Génération terminée. Succès=" + successCount + " Erreurs=" + errorCount);
+    console.log("Fichier HTML remplacé avec succès :");
+    console.log(OUTPUT_HTML);
 
   } catch (error) {
-    console.error("Erreur générale :", error.message);
-    writeLog("Erreur générale : " + error.message);
-    process.exitCode = 1;
+    console.error("Erreur :", error);
   }
 }
 
