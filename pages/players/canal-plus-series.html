@@ -79,7 +79,7 @@
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <script>
-let streamUrl = "https://livewatch.top/api/proxy?url=http%3A%2F%2F45.143.222.113%3A8008%2Fsunshine%2FovQWXRef7WQnODtZJMAdGrsVD0sZ0jw3NCyIM88_eTIYIhXWt1DP2etNHEPLB7MlYbravYXaH3WQ95uRz-GitUWGWmWQZdJUgIeCwcrbnI4EqVEg6t_7fI6kawcbHkbpwfhJ9kXnPsSBwRNBOao1EOH_hz54xm5h1bzObDaPVyEp2uOgqG97ZEqppkNtUHxkPnuzwnXb0eAB2Zr0fpEU55q_2fv6_hy5chqGbP1Zl5OKI0H55_CRlcrTelbbRuNohUzNKdcn-7CLz7TPdsi_Pg%2Fhls%2Findex.m3u8";
+let streamUrl = "https://livewatch.top/api/proxy?url=http%3A%2F%2F45.143.220.208%3A8008%2Fsunshine%2FVS_K6aBw5VuPPbMtt9nqhRZxVfJvqCbChEtuf39vsOBlfV3XIpASy0vB-DvhnedqL8j-idzWbr-h0SomAHuCUSfWUhRQ7tB59arl-LsW5s6AClFf_7tLPPFZa-QSVyF-VRRxtDyUw7MImYBK67UU1Dr7EaQ815yGxEn2qp08q_p0uYIb847-Lj6oP9Oy65KeMJG6UqooVrRCZMkXmTsGLf4SFvTP4wD2zU7qLA7wNJgUshz_fxNMYtS6mgkoAFOIye2566ir2qpuVqDT0a-aGg%2Fhls%2Findex.m3u8";
 const jsonUrl = "https://livewatch.top/api/tvvoo/stream?channel=CANAL SERIES HD&countries=fr.json";
 const refreshWorkerUrl = 'https://tvvoo-refresh.victor-salema-53d.workers.dev/';
 
@@ -639,8 +639,6 @@ video.addEventListener("playing", function () {
     logPlayerEvent("BUFFERING_END", bufferingDuration + "s");
     bufferingStartedAt = null;
   }
-
-  resetStallEvents();
 
   logPlayerEvent("PLAYING");
 });

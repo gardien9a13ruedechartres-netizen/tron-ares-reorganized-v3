@@ -79,7 +79,7 @@
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <script>
-let streamUrl = "https://livewatch.top/api/proxy?url=https%3A%2F%2Fshouurvki7jtfax.ngolpdkyoctjcddxshli469r.org%2Fsunshine%2FQ-jpbAKdn8otyt2SGZ1SGp3n4euWwTyXh5c1w2lX0MiOFNFtc89W7KwXrlp3OE3EkjGru9P0eiuTWhJPbzIXLOOZy1C2NolXeAKsN9CvOVUFH0bWlXMZxD31oBTl6cVaysfrcfkWAaHXK1r4z6VTQTE740wtSQHts_jQ9SE73RTjOo3FrjYDZAaCFJ-fRnn6bFVWs3T6yP6wiENvmmVfZ4miS--V506UltDxh6T5MIn2LM3i2wU8o8QvUsHCRzkyC7-p-Pya_fy8i7itu4UNfQ%2Fhls%2Findex.m3u8";
+let streamUrl = "https://livewatch.top/api/proxy?url=https%3A%2F%2Fshouurvki7jtfax.ngolpdkyoctjcddxshli469r.org%2Fsunshine%2FgxtpA8EQT5K8HN6wD2NkVofFx6XaDNuj9vsT1xjMDGVdchLmLUuOgesH-EgUw5VOYclc6bBYmkJodaRIdNxJ9Yd4SsHMddcRtL15Cbu6UD9Oxc9VaZLajIQDPQCXb1W21VPNqd1tXl9c5zbFHvJOvXl9TxldU4bdHWiB40yhIFOWs0GGVHF_nWYdMglX3MbLKZVRwPrSGvWEsKDr2G2uKmV_q_FvJNzJuzS_LYm47ovtd95khRyYQ66tg_ynuSWmYqtwYaf3qvSewMBMsTOhsQ%2Fhls%2Findex.m3u8";
 const jsonUrl = "https://livewatch.top/api/tvvoo/stream?channel=CM TV&countries=pt.json";
 const refreshWorkerUrl = 'https://tvvoo-refresh.victor-salema-53d.workers.dev/';
 
@@ -639,8 +639,6 @@ video.addEventListener("playing", function () {
     logPlayerEvent("BUFFERING_END", bufferingDuration + "s");
     bufferingStartedAt = null;
   }
-
-  resetStallEvents();
 
   logPlayerEvent("PLAYING");
 });

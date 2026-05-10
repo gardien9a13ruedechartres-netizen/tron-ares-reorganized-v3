@@ -79,7 +79,7 @@
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <script>
-let streamUrl = "https://livewatch.top/api/proxy?url=http%3A%2F%2F45.143.220.207%3A8008%2Fsunshine%2FCh7VUgiNPaM_qezLFM4getwpY2_2dOgJUYqN8AGB3yZAiJhwjbhlBXWNRI-8T9wTkWCPNFns7ZE7xmc-cE3OxI14iMb077FQqynkMUWcsvJBh7yZR057e_b2JRADiDT1fLz2Dc16WGa_TK9FOMsFy-yDaDvLFoReLoj1uyMiivIo2uGgIl5SNbTgUqsxa0vOWLWef7WNZmpong1ULly89cI33SUCn9-n_NDxuax4tUVo0LpTkgcJo9eUGQhU5sf2FulPn14hyNlaoqHsXdAPFA%2Fhls%2Findex.m3u8";
+let streamUrl = "https://livewatch.top/api/proxy?url=http%3A%2F%2F45.143.220.207%3A8008%2Fsunshine%2FKO97GtMWV00gdm8tPt_peCOGHJ7_1lmJIvljpmM0ZqEubuyGfPDht3cDqQVYmlGAQCU1iP0BAirLJjxiIB-zGhXSia0xfBgaR2i7PcEH16iBu5cZhNyv6PUKyDw9bcMV1zSQFb5KTeGF5ulcFgBjAXlwgqUs_Ewd7G88zQ1gBtRRZC8EtVuwk4qbgbmgLGvV82cm-x7aoOmXuiqSJOdDde4PYSxSb_s-0ly7JUJ0zITWaX9s6IPYEDB70A5J0cjkkydpsIZNsGjTMuu6G7NOFQ%2Fhls%2Findex.m3u8";
 const jsonUrl = "https://livewatch.top/api/tvvoo/stream?channel=CANAL PANDA&countries=pt.json";
 const refreshWorkerUrl = 'https://tvvoo-refresh.victor-salema-53d.workers.dev/';
 
@@ -639,8 +639,6 @@ video.addEventListener("playing", function () {
     logPlayerEvent("BUFFERING_END", bufferingDuration + "s");
     bufferingStartedAt = null;
   }
-
-  resetStallEvents();
 
   logPlayerEvent("PLAYING");
 });

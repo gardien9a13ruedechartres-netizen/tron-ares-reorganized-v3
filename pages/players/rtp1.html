@@ -79,7 +79,7 @@
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <script>
-let streamUrl = "https://livewatch.top/api/proxy?url=http%3A%2F%2F45.143.220.207%3A8008%2Fsunshine%2FcOUjFEcOwCc_hs644IJOTjQWa2MttMN8CqMexCunYU4rzXfCkWSie9YKdbtag5ay3-ldun9UFP51-oyJbpyQra4_GPziRcHne2p3w-z_RTg2-WHdlOCyTTeq-959I9eN4VkIfAb6Ti4c62OZ_hzeVT8kPnrQiIB8xsG43e-9nWz8JT4_WxShnIQqDZ95DbP8mdsyZPnIlLxTG6CjQhE6DsIQalYOx-4ip0H_T8j7fHd4KBevrOJBilYwyPbqJU42_RUEkXG1ft6MJweoqry2ow%2Fhls%2Findex.m3u8";
+let streamUrl = "https://livewatch.top/api/proxy?url=http%3A%2F%2F45.143.220.207%3A8008%2Fsunshine%2FKGxh5Id4sU0D1HrQGdlHDJkAub4PbARZez1bdQoFBOA17PEM3K5wXI-OO5kYSAgaJxExgFD06-peCx6b-evPHTuX2KmX-WERWm0WfD5DXGpaWAtYGe9JkuHY3KDT0SsZg5L19r73z0JL2lbDiQlDg5WfKhJc_0due37QmmUL-v2uODudFCiMeiFyEndqxCOc2Ddfp8Wy9JD2-GvYJjYejg6GT08WobperO8jLMDAMeEQ-IQ2YMXCD_WMgCVyfm3pcXYyZQ41W1XX4doRKcpq8g%2Fhls%2Findex.m3u8";
 const jsonUrl = "https://livewatch.top/api/tvvoo/stream?channel=RTP 1 HD&countries=pt.json";
 const refreshWorkerUrl = 'https://tvvoo-refresh.victor-salema-53d.workers.dev/';
 
@@ -639,8 +639,6 @@ video.addEventListener("playing", function () {
     logPlayerEvent("BUFFERING_END", bufferingDuration + "s");
     bufferingStartedAt = null;
   }
-
-  resetStallEvents();
 
   logPlayerEvent("PLAYING");
 });

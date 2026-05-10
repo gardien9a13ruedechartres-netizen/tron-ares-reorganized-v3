@@ -715,8 +715,6 @@ video.addEventListener("playing", function () {
     bufferingStartedAt = null;
   }
 
-  resetStallEvents();
-
   logPlayerEvent("PLAYING");
 });
 

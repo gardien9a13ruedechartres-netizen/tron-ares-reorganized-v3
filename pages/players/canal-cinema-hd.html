@@ -79,7 +79,7 @@
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <script>
-let streamUrl = "https://livewatch.top/api/proxy?url=http%3A%2F%2F45.143.222.113%3A8008%2Fsunshine%2FIerWGnhRiEycFLYinhrq8JNjjetmdFGntrGAJY4rj1itzSx0rJYgOSHSbbXWg5S7_uU4wFVbrMdPB-RRwwZTZl9mJb4PDqtZkT8uwB0_duGtbNBdKr7nhw4oUSMVA-nG00lpSa7B46ls1exlKXp_YeRAG-NyeOZLALNfvY2eq8gr_v09WDBgAwSd86UHFxAu_iPR_5K4Q7fLPdnwEi90ViUg3VJjGGgW5TXU4iV2QfbV_B9-8TVAmL9xwYzfq0Vfx__EzpQ4WEAIY2QtC6NjWg%2Fhls%2Findex.m3u8";
+let streamUrl = "https://livewatch.top/api/proxy?url=https%3A%2F%2Fqmaalhy7acgxwhm.ngolpdkyoctjcddxshli469r.org%2Fsunshine%2FOIv_PHsF-eqXStn3hoJpmeWA5QlHWczhssE-nC5smJSwMwjfJmirJM06YTde-_WzvDU-hO7AGNwFI8g-1AwRfevSHLML1z4Cnv-QGBPql2kkj-c64u3NTADgvwV6McXRnIUAkRca7GEeCHOm9oEED1BjbXJCSQLdYpiiSmh2A0rNNFLexV3SYrwA4DhOKXHxrqLxyhXEa4losWRDvihpeS1CymrynQcpc75RSsooAEq1dfPXmMlMuNPhgZGSMm-1VDai-DAAd0A_X_kF9jCxCQ%2Fhls%2Findex.m3u8";
 const jsonUrl = "https://livewatch.top/api/tvvoo/stream?channel=CANAL CINEMA HD&countries=fr.json";
 const refreshWorkerUrl = 'https://tvvoo-refresh.victor-salema-53d.workers.dev/';
 
@@ -639,8 +639,6 @@ video.addEventListener("playing", function () {
     logPlayerEvent("BUFFERING_END", bufferingDuration + "s");
     bufferingStartedAt = null;
   }
-
-  resetStallEvents();
 
   logPlayerEvent("PLAYING");
 });

@@ -79,7 +79,7 @@
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <script>
-let streamUrl = "https://livewatch.top/api/proxy?url=http%3A%2F%2F45.143.222.167%3A8008%2Fsunshine%2Fr8bknrE3LrR6M4l09upL8nMrP9l54ezVjDuq_o0qzFoBafohs2ATNtjwaPYut0_UwO9gkFJTUnkJV2clqfIsPpXI39SIl35yKhrZbxLzS6AVyH8H478_EjFmzJEgibrg2oBjLN6VllsE5LrTbebpGOLwodi01lBpJGlXnludVIaXF9AGqgBpjTvxGE6FUztWRFSqTj6L-osq8whcrcKUF2og-TbNUUqZlIsf7fn2SQfR7V2-glPS5Trb3w04HisCf5juUgo9pBZeTXL2uqlajw%2Fhls%2Findex.m3u8";
+let streamUrl = "https://livewatch.top/api/proxy?url=http%3A%2F%2F45.143.222.167%3A8008%2Fsunshine%2FElc_a9Sp5SHFVuf8lXI-2f1FE6ISzqp0ev60I__2f4zul_7pPu3pFdpZkM8N2BVbZpVT-S5RsnEqvUwco3qZft31CJjbadeT0IJKJUYILlJ97YWjsbYVd8ijdn9ETcSmUgJcav6iDQPkSBZPiMcpeQS0d5JLjzaYJOahmXtgJBaFTm_7rLaeqZQrf80xp4eImA04DFmFHhhiKjLcRVYJ0yAFbTbY_OKui2LoTJAWLqtmH5LAwdULc2pdMHBMBnVv0wtg59qPvv6mVqrvp5QRFg%2Fhls%2Findex.m3u8";
 const jsonUrl = "https://livewatch.top/api/tvvoo/stream?channel=BTV HD&countries=pt.json";
 const refreshWorkerUrl = 'https://tvvoo-refresh.victor-salema-53d.workers.dev/';
 
@@ -639,8 +639,6 @@ video.addEventListener("playing", function () {
     logPlayerEvent("BUFFERING_END", bufferingDuration + "s");
     bufferingStartedAt = null;
   }
-
-  resetStallEvents();
 
   logPlayerEvent("PLAYING");
 });
