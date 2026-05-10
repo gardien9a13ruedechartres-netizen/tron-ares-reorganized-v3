@@ -156,6 +156,7 @@ function createHtml(channel, streamUrl) {
 <script>
 let streamUrl = ${JSON.stringify(streamUrl)};
 const jsonUrl = ${JSON.stringify(channel.jsonUrl || "")};
+const refreshWorkerUrl = 'https://tvvoo-refresh.victor-salema-53d.workers.dev/';
 
 const video = document.getElementById("video");
 const loadingOverlay = document.getElementById("loadingOverlay");
@@ -367,7 +368,18 @@ async function refreshStreamFromJson(reason) {
   try {
     logPlayerEvent("JSON_REFRESH_START", reason || "expired-stream");
 
-    const jsonRefreshUrl = 'https://tvvoo-refresh.victor-salema-53d.workers.dev/' + "?_r=" + Date.now();
+    const sourceUrl = new URL(jsonUrl);
+    const channelName = sourceUrl.searchParams.get("channel") || "";
+    const countries = sourceUrl.searchParams.get("countries") || "pt.json";
+
+    const jsonRefreshTarget = new URL(refreshWorkerUrl);
+    jsonRefreshTarget.searchParams.set("channel", channelName);
+    jsonRefreshTarget.searchParams.set("countries", countries);
+    jsonRefreshTarget.searchParams.set("_r", String(Date.now()));
+
+    const jsonRefreshUrl = jsonRefreshTarget.toString();
+
+    logPlayerEvent("JSON_REFRESH_URL", jsonRefreshUrl);
 
     const response = await fetch(jsonRefreshUrl, {
       cache: "no-store"

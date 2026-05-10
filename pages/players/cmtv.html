@@ -79,8 +79,9 @@
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <script>
-let streamUrl = "https://livewatch.top/api/proxy?url=http%3A%2F%2F45.143.220.207%3A8008%2Fsunshine%2FZwxeFPiFxe_sDuafUWsao7YTpeU0jxB71xDtNyYtJCyQOKoBkuUtLCPkJRpvZzWsDJIjtNdf1W8p9xLnh_i12GxwwxwU9GjjIMVA0lt3o-V4_wNLtvyfEkrU0YOKOSC5QnugsbovXZYAvrqyD-h5yi21jkthTzkXRpHRxoH_S17fVm-UEKPnVmDqfu-psbQtoa8DbIg-bHFZdg7Lsk82Wz6HqfAp8k7O1Rnlg8mvKwaGL67GjyQMyFDsktSoC-Dfel0maBSTNwIx6loC6GwryQ%2Fhls%2Findex.m3u8";
+let streamUrl = "https://livewatch.top/api/proxy?url=https%3A%2F%2Fshouurvki7jtfax.ngolpdkyoctjcddxshli469r.org%2Fsunshine%2FfGeJwQ77BIhKoezOrNzDskzAtxldJUfsOoxj9YwBlaJsFGVKfen4zzrOXgB3apDOSL-uGYCS9mPFyX7KCJzFa0YhIvE2DWMgj8ET5ffb7CbXTFfE6q_aJfL0Lym_VQ3UM-dsqkcmadJKpm_-GcrkRbHNOh_HtCpi9vEnPx5YzhaCtxabbYJJHbgF1uUViUOOgeF2DLM4MkyKKNpWjoQM3F3_rvy2LKUV_ZECkB0VBYl7--m2WDRF8YQITqP5FOvsMVSuA67O2YMPiP0JXdF2Ug%2Fhls%2Findex.m3u8";
 const jsonUrl = "https://livewatch.top/api/tvvoo/stream?channel=CM TV&countries=pt.json";
+const refreshWorkerUrl = 'https://tvvoo-refresh.victor-salema-53d.workers.dev/';
 
 const video = document.getElementById("video");
 const loadingOverlay = document.getElementById("loadingOverlay");
@@ -292,7 +293,18 @@ async function refreshStreamFromJson(reason) {
   try {
     logPlayerEvent("JSON_REFRESH_START", reason || "expired-stream");
 
-    const jsonRefreshUrl = 'https://tvvoo-refresh.victor-salema-53d.workers.dev/' + "?_r=" + Date.now();
+    const sourceUrl = new URL(jsonUrl);
+    const channelName = sourceUrl.searchParams.get("channel") || "";
+    const countries = sourceUrl.searchParams.get("countries") || "pt.json";
+
+    const jsonRefreshTarget = new URL(refreshWorkerUrl);
+    jsonRefreshTarget.searchParams.set("channel", channelName);
+    jsonRefreshTarget.searchParams.set("countries", countries);
+    jsonRefreshTarget.searchParams.set("_r", String(Date.now()));
+
+    const jsonRefreshUrl = jsonRefreshTarget.toString();
+
+    logPlayerEvent("JSON_REFRESH_URL", jsonRefreshUrl);
 
     const response = await fetch(jsonRefreshUrl, {
       cache: "no-store"
