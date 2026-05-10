@@ -25,48 +25,84 @@
     #loadingOverlay {
       position: fixed;
       inset: 0;
-      z-index: 2;
+      z-index: 999999;
+      background: #000;
       display: flex;
       align-items: center;
       justify-content: center;
-      background:
-        radial-gradient(circle at center, rgba(255,255,255,0.045), rgba(0,0,0,0.94) 48%, #000 100%);
-      opacity: 1;
-      visibility: visible;
-      transition: opacity 0.45s ease, visibility 0.45s ease;
+      flex-direction: column;
+      color: #fff;
+      transition:
+        opacity 0.35s ease,
+        visibility 0.35s ease;
       pointer-events: none;
     }
 
     #loadingOverlay.hidden {
       opacity: 0;
       visibility: hidden;
+      pointer-events: none;
     }
 
-    .premiumLoader {
-      width: 58px;
-      height: 58px;
+    .pro-spinner {
+      width: 68px;
+      height: 68px;
       border-radius: 50%;
-      border: 2px solid rgba(255, 255, 255, 0.16);
-      border-top-color: rgba(255, 255, 255, 0.95);
-      border-right-color: rgba(255, 255, 255, 0.50);
-      animation: premiumSpin 0.95s linear infinite;
-      filter: drop-shadow(0 0 14px rgba(255, 255, 255, 0.16));
+      border: 5px solid rgba(255,255,255,0.12);
+      border-top-color: #3b82f6;
+      border-right-color: #60a5fa;
+      animation: proSpin 0.9s linear infinite;
+      margin-bottom: 22px;
+      box-shadow:
+        0 0 25px rgba(59,130,246,0.35),
+        0 0 60px rgba(59,130,246,0.15);
     }
 
-    .premiumLoader::after {
+    .loading-text {
+      font-size: 18px;
+      font-weight: 600;
+      color: #f3f4f6;
+      letter-spacing: 0.4px;
+      text-align: center;
+    }
+
+    .dots::after {
       content: "";
-      position: absolute;
-      inset: 11px;
-      border-radius: 50%;
-      border: 1px solid rgba(255, 255, 255, 0.10);
+      display: inline-block;
+      width: 24px;
+      text-align: left;
+      animation: dotsAnim 1.5s infinite;
     }
 
-    @keyframes premiumSpin {
+    @keyframes proSpin {
       to {
         transform: rotate(360deg);
       }
     }
-  </style>
+
+    @keyframes dotsAnim {
+      0% {
+        content: "";
+      }
+
+      25% {
+        content: ".";
+      }
+
+      50% {
+        content: "..";
+      }
+
+      75% {
+        content: "...";
+      }
+
+      100% {
+        content: "";
+      }
+    }
+
+  </style></style>
 </head>
 <body>
 
@@ -79,7 +115,7 @@
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <script>
-let streamUrl = "https://livewatch.top/api/proxy?url=https%3A%2F%2Fshouurvki7jtfax.ngolpdkyoctjcddxshli469r.org%2Fsunshine%2FP7YPgk_ozT9E3X522tEgRea1hlBZQXsRMhIUs65MI4_fCTOT0QXbZIRJn1LtvlMy4yh_puQRnoQ658UwKAk5NrRXSafQMbSZX1y24Mcy9f8rOYvwymZSGOBhv69dKjN28BQkV74N0MCAtA4Zx-eP7R4FT-8dHfQBskt1WiCuG-TJMk56QNLRTEVqwdTa3nFE8jB8gtaPc8dF-cp4IKT0JiOLQrUdpxp24cjPM9RdZMe_VDrOzrcBMlpDxbIiOZWVtb9YCAqJD42tPTJqV-sR9A%2Fhls%2Findex.m3u8";
+let streamUrl = "https://livewatch.top/api/proxy?url=https%3A%2F%2Fmjkskdvpfpb1fbv.ngolpdkyoctjcddxshli469r.org%2Fsunshine%2FFatbVc7GVecioYa_g0KRCvjztqXf_nVrV0iSG8VQRCz5qazqmge6SwHUlGITo9EJ-R_cuH1lLRn_E24sLXTkrfq6l8thO87BWx3MuyFvlzn88OF0TsDqPfZvHgnVi2jPavKyX4LewkCP6BA6zK2zwGYXoaGt1jmwjHZHUqfirSvTaItRsmYq5kiZHo7MYPZHyQqfu6XhvXg7swNbrEXHpSaRdOz1wf0Gf4nCZtgwJa5ddtnZ0BIdzy4BYxyR2L6MA6U-ObAwEV-ZRa3q8JV1JA%2Fhls%2Findex.m3u8";
 const jsonUrl = "https://livewatch.top/api/tvvoo/stream?channel=CANAL PLUS&countries=fr.json";
 const refreshWorkerUrl = 'https://tvvoo-refresh.victor-salema-53d.workers.dev/';
 

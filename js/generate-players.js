@@ -100,48 +100,84 @@ function createHtml(channel, streamUrl) {
     #loadingOverlay {
       position: fixed;
       inset: 0;
-      z-index: 2;
+      z-index: 999999;
+      background: #000;
       display: flex;
       align-items: center;
       justify-content: center;
-      background:
-        radial-gradient(circle at center, rgba(255,255,255,0.045), rgba(0,0,0,0.94) 48%, #000 100%);
-      opacity: 1;
-      visibility: visible;
-      transition: opacity 0.45s ease, visibility 0.45s ease;
+      flex-direction: column;
+      color: #fff;
+      transition:
+        opacity 0.35s ease,
+        visibility 0.35s ease;
       pointer-events: none;
     }
 
     #loadingOverlay.hidden {
       opacity: 0;
       visibility: hidden;
+      pointer-events: none;
     }
 
-    .premiumLoader {
-      width: 58px;
-      height: 58px;
+    .pro-spinner {
+      width: 68px;
+      height: 68px;
       border-radius: 50%;
-      border: 2px solid rgba(255, 255, 255, 0.16);
-      border-top-color: rgba(255, 255, 255, 0.95);
-      border-right-color: rgba(255, 255, 255, 0.50);
-      animation: premiumSpin 0.95s linear infinite;
-      filter: drop-shadow(0 0 14px rgba(255, 255, 255, 0.16));
+      border: 5px solid rgba(255,255,255,0.12);
+      border-top-color: #3b82f6;
+      border-right-color: #60a5fa;
+      animation: proSpin 0.9s linear infinite;
+      margin-bottom: 22px;
+      box-shadow:
+        0 0 25px rgba(59,130,246,0.35),
+        0 0 60px rgba(59,130,246,0.15);
     }
 
-    .premiumLoader::after {
+    .loading-text {
+      font-size: 18px;
+      font-weight: 600;
+      color: #f3f4f6;
+      letter-spacing: 0.4px;
+      text-align: center;
+    }
+
+    .dots::after {
       content: "";
-      position: absolute;
-      inset: 11px;
-      border-radius: 50%;
-      border: 1px solid rgba(255, 255, 255, 0.10);
+      display: inline-block;
+      width: 24px;
+      text-align: left;
+      animation: dotsAnim 1.5s infinite;
     }
 
-    @keyframes premiumSpin {
+    @keyframes proSpin {
       to {
         transform: rotate(360deg);
       }
     }
-  </style>
+
+    @keyframes dotsAnim {
+      0% {
+        content: "";
+      }
+
+      25% {
+        content: ".";
+      }
+
+      50% {
+        content: "..";
+      }
+
+      75% {
+        content: "...";
+      }
+
+      100% {
+        content: "";
+      }
+    }
+
+  </style></style>
 </head>
 <body>
 
