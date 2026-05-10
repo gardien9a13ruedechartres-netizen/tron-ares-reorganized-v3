@@ -79,43 +79,14 @@
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <script>
-const streamUrl = "https://livewatch.top/api/proxy?url=https%3A%2F%2Ftd3wb1bchdvsahp.ngolpdkyoctjcddxshli469r.org%2Fsunshine%2FY22EFo5GqtSzDl8c827w5NhHYTwwX6k7LX-GOaYHrtlqTKGbnzNtUD9AsFU7x3_ViXn7825_twjHSrdZCPiEBLkwHCRHQ0wLkwDJ3VWxnoYRLFJs2Rss9naTQSuQxu7FdsJ7jBxdGlXAUDL0CVkdfz2ewI3LurnDkHYCydcxNeP-zluzFdN9noLZPL9WrPTamWVc6YprKtRsbFodRxKx-1_JqEErT5jkybw4c2N2545yy5owyyeaIJ-BspcKPYtmq3jcbezAsglTJNJMcp9EmQ%2Fhls%2Findex.m3u8";
-const playerSlug = "cmtv";
+let streamUrl = "https://livewatch.top/api/proxy?url=https%3A%2F%2Fqmaalhy7acgxwhm.ngolpdkyoctjcddxshli469r.org%2Fsunshine%2FMwWnWLwSxV8MB2GC5RvP_jvapuGgjO1kzEV0pp_6lz4jktM080qdQztapvvhbC2XcMWWvcuVFCpUWqCyVSvJbzr9A92m1rO2-NH50x5rrkE6k3qMtKMV8GxgBmHArGjP9W6YnMW3UHBeF5rkTXd7tlPo1fLmIAS2K75u_I2zfes_v95cpnZwNCIzMA05sLwkfho_TRr2G03tUdJUY1SmfP45yxskZMY5gJyY7heAenfNREKPTbStYm8M0rwuyMFsjlPLMmVZ8x22jCxcWnIKQw%2Fhls%2Findex.m3u8";
+const jsonUrl = "https://livewatch.top/api/tvvoo/stream?channel=CM TV&countries=pt.json";
 
 const video = document.getElementById("video");
 const loadingOverlay = document.getElementById("loadingOverlay");
 
 video.muted = false;
 video.volume = 1;
-
-let hls = null;
-let reloadTimer = null;
-let healthTimer = null;
-let stallRecoveryTimer = null;
-let lastTime = 0;
-let lastProgressAt = Date.now();
-let reloadCount = 0;
-let bufferingStartedAt = null;
-let stallRecoveryAttempts = 0;
-let fatalRefreshInProgress = false;
-
-const HEALTH_CHECK_INTERVAL = 5000;
-const NO_PROGRESS_LIMIT = 18000;
-const RELOAD_COOLDOWN = 7000;
-const HARD_REFRESH_AFTER = 5;
-const STALL_RECOVERY_TIMEOUT = 12000;
-const MAX_STALL_RECOVERY_ATTEMPTS = 3;
-const HARD_RELOAD_LOOP_WINDOW = 30000;
-const MAX_HARD_RELOADS_IN_WINDOW = 2;
-
-function logPlayerEvent(eventName, extra) {
-  console.log(
-    "[" + new Date().toISOString() + "]",
-    "[" + playerSlug + "]",
-    eventName,
-    extra || ""
-  );
-}
 
 function showLoader() {
   if (loadingOverlay) {
@@ -129,34 +100,57 @@ function hideLoader() {
   }
 }
 
-function safePlay() {
-  const playPromise = video.play();
+let hls = null;
+let reloadTimer = null;
+let healthTimer = null;
+let jsonRefreshTimer = null;
+let jsonRefreshInProgress = false;
+let lastTime = 0;
+let lastProgressAt = Date.now();
+let reloadCount = 0;
+let bufferingStartedAt = null;
+let jsonRefreshFailures = 0;
 
-  if (playPromise && typeof playPromise.catch === "function") {
-    playPromise.catch(function (error) {
-      console.error("Autoplay bloqué :", error);
-    });
-  }
+const HEALTH_CHECK_INTERVAL = 5000;
+const NO_PROGRESS_LIMIT = 18000;
+const RELOAD_COOLDOWN = 7000;
+const HARD_REFRESH_AFTER = 5;
+const JSON_REFRESH_RETRY_DELAYS = [0, 15000, 30000, 60000, 90000];
+const MAX_JSON_REFRESH_FAILURES = 5;
+
+function logPlayerEvent(eventName, extra = "") {
+  console.log(
+    "[" + new Date().toISOString() + "]",
+    "[" + "cmtv" + "]",
+    eventName,
+    extra
+  );
 }
 
-function clearStallRecoveryTimer() {
-  if (stallRecoveryTimer) {
-    clearTimeout(stallRecoveryTimer);
-    stallRecoveryTimer = null;
-  }
+function safePlay() {
+  video.play().catch(function (error) {
+    console.error("Autoplay bloqué :", error);
+  });
 }
 
 function destroyHls() {
-  clearStallRecoveryTimer();
-
   if (hls) {
     try {
       hls.destroy();
     } catch (error) {
       console.error("Erreur destruction HLS :", error);
     }
-
     hls = null;
+  }
+}
+
+function resetVideoElement() {
+  try {
+    video.pause();
+    video.removeAttribute("src");
+    video.load();
+  } catch (error) {
+    console.error("Erreur reset vidéo :", error);
   }
 }
 
@@ -167,7 +161,6 @@ function getHlsResponseStatus(data) {
       data?.response?.status ||
       data?.networkDetails?.status ||
       data?.networkDetails?.response?.status ||
-      data?.loader?.stats?.status ||
       0
     );
   } catch (error) {
@@ -181,81 +174,95 @@ function isExpiredStreamError(data) {
   }
 
   const status = getHlsResponseStatus(data);
-  const isNetworkError = data.type === Hls.ErrorTypes.NETWORK_ERROR;
-  const isManifestOrLevel =
-    data.details === "manifestLoadError" ||
-    data.details === "levelLoadError";
+
+  const fatalManifestError =
+    data.type === Hls.ErrorTypes.NETWORK_ERROR &&
+    data.details === "manifestLoadError" &&
+    data.fatal === true;
+
+  const fatalLevelError =
+    data.type === Hls.ErrorTypes.NETWORK_ERROR &&
+    data.details === "levelLoadError" &&
+    data.fatal === true;
+
+  const corsMaskedExpiredError =
+    status === 0 &&
+    data.type === Hls.ErrorTypes.NETWORK_ERROR &&
+    (
+      data.details === "manifestLoadError" ||
+      data.details === "levelLoadError"
+    ) &&
+    data.fatal === true;
 
   return (
     status === 410 ||
     status === 403 ||
     status === 404 ||
-    (isNetworkError && isManifestOrLevel && data.fatal === true && status === 0)
+    fatalManifestError ||
+    fatalLevelError ||
+    corsMaskedExpiredError
   );
 }
 
-function getHardReloadStateKey() {
-  return "hls-hard-reload-state:" + playerSlug;
-}
-
-function getHardReloadState() {
-  try {
-    const raw = sessionStorage.getItem(getHardReloadStateKey());
-    if (!raw) {
-      return { firstAt: 0, count: 0 };
-    }
-
-    const parsed = JSON.parse(raw);
-    return {
-      firstAt: Number(parsed.firstAt || 0),
-      count: Number(parsed.count || 0)
-    };
-  } catch (error) {
-    return { firstAt: 0, count: 0 };
+function findStreamUrlInJson(value) {
+  if (!value) {
+    return null;
   }
+
+  if (typeof value === "string") {
+    if (value.includes(".m3u8")) {
+      return value;
+    }
+    return null;
+  }
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = findStreamUrlInJson(item);
+      if (found) {
+        return found;
+      }
+    }
+    return null;
+  }
+
+  if (typeof value === "object") {
+    for (const key of Object.keys(value)) {
+      const found = findStreamUrlInJson(value[key]);
+      if (found) {
+        return found;
+      }
+    }
+  }
+
+  return null;
 }
 
-function setHardReloadState(state) {
-  try {
-    sessionStorage.setItem(getHardReloadStateKey(), JSON.stringify(state));
-  } catch (error) {}
-}
+function normalizeClientUrl(url) {
+  if (!url) {
+    return "";
+  }
 
-function clearHardReloadState() {
-  try {
-    sessionStorage.removeItem(getHardReloadStateKey());
-  } catch (error) {}
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    return url;
+  }
+
+  return "https://livewatch.top" + (url.startsWith("/") ? url : "/" + url);
 }
 
 function hardReloadPage(reason) {
-  if (fatalRefreshInProgress) {
-    logPlayerEvent("HARD_REFRESH_ALREADY_IN_PROGRESS", reason || "unknown");
-    return;
-  }
-
-  const now = Date.now();
-  const state = getHardReloadState();
-  const insideWindow = state.firstAt && (now - state.firstAt) < HARD_RELOAD_LOOP_WINDOW;
-  const nextState = insideWindow
-    ? { firstAt: state.firstAt, count: state.count + 1 }
-    : { firstAt: now, count: 1 };
-
-  setHardReloadState(nextState);
-
-  if (nextState.count > MAX_HARD_RELOADS_IN_WINDOW) {
-    fatalRefreshInProgress = true;
-    logPlayerEvent("HARD_REFRESH_BLOCKED", reason || "reload-loop");
-    console.warn("Boucle de refresh bloquée. Même URL HLS probablement expirée.");
-    showLoader();
-    destroyHls();
-    return;
-  }
-
-  fatalRefreshInProgress = true;
   logPlayerEvent("HARD_REFRESH", reason || "unknown");
   console.warn("Hard reload du player :", reason);
   showLoader();
-  destroyHls();
+
+  try {
+    clearInterval(healthTimer);
+    clearTimeout(reloadTimer);
+    clearTimeout(jsonRefreshTimer);
+    destroyHls();
+  } catch (error) {
+    console.error("Erreur avant hard reload :", error);
+  }
 
   try {
     const url = new URL(window.location.href);
@@ -267,46 +274,115 @@ function hardReloadPage(reason) {
   }
 }
 
-function scheduleStallRecovery(reason) {
-  clearStallRecoveryTimer();
+async function refreshStreamFromJson(reason) {
+  if (jsonRefreshInProgress) {
+    logPlayerEvent("JSON_REFRESH_ALREADY_RUNNING", reason || "unknown");
+    return;
+  }
 
-  stallRecoveryTimer = setTimeout(function () {
-    logPlayerEvent("STALL_TIMEOUT", reason || "waiting");
+  if (!jsonUrl) {
+    logPlayerEvent("JSON_REFRESH_NO_URL", reason || "missing-json-url");
+    hardReloadPage("missing-json-url");
+    return;
+  }
 
-    if (fatalRefreshInProgress) {
+  jsonRefreshInProgress = true;
+  showLoader();
+
+  try {
+    logPlayerEvent("JSON_REFRESH_START", reason || "expired-stream");
+
+    const response = await fetch(jsonUrl + (jsonUrl.includes("?") ? "&" : "?") + "_r=" + Date.now(), {
+      cache: "no-store"
+    });
+
+    logPlayerEvent("JSON_REFRESH_HTTP", String(response.status));
+
+    if (!response.ok) {
+      throw new Error("HTTP " + response.status);
+    }
+
+    const json = await response.json();
+    const extractedUrl = findStreamUrlInJson(json);
+    const nextStreamUrl = normalizeClientUrl(extractedUrl);
+
+    if (!nextStreamUrl) {
+      throw new Error("Aucune URL .m3u8 trouvée dans le JSON");
+    }
+
+    if (nextStreamUrl === streamUrl) {
+      jsonRefreshFailures += 1;
+      logPlayerEvent("JSON_REFRESH_SAME_URL", jsonRefreshFailures + "/" + MAX_JSON_REFRESH_FAILURES);
+
+      if (jsonRefreshFailures >= MAX_JSON_REFRESH_FAILURES) {
+        hardReloadPage("json-same-url");
+      } else {
+        scheduleJsonRefresh("same-url");
+      }
+
       return;
     }
 
-    try {
-      stallRecoveryAttempts += 1;
-      logPlayerEvent("STALL_RECOVER_ATTEMPT", stallRecoveryAttempts + "/" + MAX_STALL_RECOVERY_ATTEMPTS);
+    const currentMuted = video.muted;
+    const currentVolume = video.volume;
 
-      if (hls) {
-        hls.recoverMediaError();
-      }
+    streamUrl = nextStreamUrl;
+    jsonRefreshFailures = 0;
+    reloadCount = 0;
+    bufferingStartedAt = null;
 
-      safePlay();
+    logPlayerEvent("STREAM_URL_UPDATED", streamUrl);
 
-      if (stallRecoveryAttempts >= MAX_STALL_RECOVERY_ATTEMPTS) {
-        logPlayerEvent("STALL_HARD_REFRESH", reason || "stall-timeout");
-        hardReloadPage("stall-timeout");
-      } else {
-        scheduleStallRecovery(reason || "stall-retry");
-      }
-    } catch (error) {
-      console.error("Erreur recovery stall :", error);
-      invisibleReload("stall-recovery-error");
+    clearTimeout(reloadTimer);
+    reloadTimer = null;
+    clearTimeout(jsonRefreshTimer);
+    jsonRefreshTimer = null;
+
+    destroyHls();
+    resetVideoElement();
+
+    video.muted = currentMuted;
+    video.volume = currentVolume;
+
+    initPlayer();
+    logPlayerEvent("JSON_REFRESH_OK", reason || "json-refresh");
+  } catch (error) {
+    jsonRefreshFailures += 1;
+    console.error("Erreur refresh JSON :", error);
+    logPlayerEvent("JSON_REFRESH_ERROR", jsonRefreshFailures + "/" + MAX_JSON_REFRESH_FAILURES);
+
+    if (jsonRefreshFailures >= MAX_JSON_REFRESH_FAILURES) {
+      hardReloadPage("json-refresh-error");
+    } else {
+      scheduleJsonRefresh("json-refresh-error");
     }
-  }, STALL_RECOVERY_TIMEOUT);
+  } finally {
+    jsonRefreshInProgress = false;
+  }
 }
 
-function resetStallRecovery() {
-  clearStallRecoveryTimer();
-  stallRecoveryAttempts = 0;
+function scheduleJsonRefresh(reason) {
+  if (jsonRefreshTimer) {
+    logPlayerEvent("JSON_REFRESH_ALREADY_WAITING", reason || "unknown");
+    return;
+  }
+
+  const index = Math.min(jsonRefreshFailures, JSON_REFRESH_RETRY_DELAYS.length - 1);
+  const delay = JSON_REFRESH_RETRY_DELAYS[index];
+
+  logPlayerEvent(
+    "JSON_REFRESH_WAIT",
+    "delay=" + Math.round(delay / 1000) + "s reason=" + (reason || "unknown")
+  );
+
+  jsonRefreshTimer = setTimeout(function () {
+    jsonRefreshTimer = null;
+    refreshStreamFromJson(reason || "scheduled-json-refresh");
+  }, delay);
 }
 
 function attachNativePlayer() {
-  video.src = streamUrl;
+  video.src = normalizeClientUrl(streamUrl);
   video.load();
 
   video.addEventListener("loadedmetadata", function () {
@@ -330,7 +406,7 @@ function attachHlsPlayer() {
     levelLoadingTimeOut: 20000
   });
 
-  hls.loadSource(streamUrl);
+  hls.loadSource(normalizeClientUrl(streamUrl));
   hls.attachMedia(video);
 
   hls.on(Hls.Events.MANIFEST_PARSED, function () {
@@ -350,36 +426,35 @@ function attachHlsPlayer() {
 
     const status = getHlsResponseStatus(data);
 
-    logPlayerEvent("HLS_ERROR", JSON.stringify({
-      type: data?.type || null,
-      details: data?.details || null,
-      fatal: Boolean(data?.fatal),
-      status: status
-    }));
+    logPlayerEvent(
+      "HLS_ERROR",
+      JSON.stringify({
+        type: data?.type || null,
+        details: data?.details || null,
+        fatal: Boolean(data?.fatal),
+        status: status
+      })
+    );
 
     if (isExpiredStreamError(data)) {
-      console.warn("Flux expiré détecté → refresh contrôlé :", {
+      console.warn("Flux expiré détecté → refresh JSON dynamique :", {
         status: status,
         type: data?.type || null,
         details: data?.details || null,
         fatal: Boolean(data?.fatal)
       });
 
-      logPlayerEvent("EXPIRED_STREAM_REFRESH", "expired-stream");
-      hardReloadPage("expired-stream");
+      logPlayerEvent("EXPIRED_STREAM_REFRESH", "json-refresh");
+      refreshStreamFromJson("expired-stream");
       return;
     }
 
     if (!data || !data.fatal) {
-      if (data && data.details === "bufferStalledError") {
-        showLoader();
-        scheduleStallRecovery("bufferStalledError");
-      }
       return;
     }
 
     if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-      invisibleReload("network-error");
+      refreshStreamFromJson("fatal-network-error");
       return;
     }
 
@@ -412,7 +487,7 @@ function initPlayer() {
 }
 
 function invisibleReload(reason) {
-  if (fatalRefreshInProgress || reloadTimer) {
+  if (reloadTimer || jsonRefreshInProgress) {
     return;
   }
 
@@ -426,14 +501,7 @@ function invisibleReload(reason) {
     const currentMuted = video.muted;
     const currentVolume = video.volume;
 
-    try {
-      video.pause();
-      video.removeAttribute("src");
-      video.load();
-    } catch (error) {
-      console.error("Erreur reset vidéo :", error);
-    }
-
+    resetVideoElement();
     destroyHls();
 
     video.muted = currentMuted;
@@ -443,9 +511,7 @@ function invisibleReload(reason) {
 
     if (reloadCount >= HARD_REFRESH_AFTER) {
       reloadCount = 0;
-      setTimeout(function () {
-        hardReloadPage("too-many-invisible-reloads");
-      }, 2000);
+      refreshStreamFromJson("reload-limit");
     }
   }, RELOAD_COOLDOWN);
 }
@@ -464,12 +530,19 @@ function startHealthMonitor() {
     }
 
     const noProgressFor = now - lastProgressAt;
-    const seemsStuck = !video.paused && !video.ended && noProgressFor > NO_PROGRESS_LIMIT;
-    const noEnoughData = video.readyState < 2 && noProgressFor > NO_PROGRESS_LIMIT;
+
+    const seemsStuck =
+      !video.paused &&
+      !video.ended &&
+      noProgressFor > NO_PROGRESS_LIMIT;
+
+    const noEnoughData =
+      video.readyState < 2 &&
+      noProgressFor > NO_PROGRESS_LIMIT;
 
     if (seemsStuck || noEnoughData) {
       showLoader();
-      scheduleStallRecovery("absence-flux-ou-moulinage");
+      refreshStreamFromJson("absence-flux-ou-moulinage");
     }
   }, HEALTH_CHECK_INTERVAL);
 }
@@ -483,31 +556,31 @@ video.addEventListener("waiting", function () {
   }
 
   logPlayerEvent("BUFFERING_START");
-  scheduleStallRecovery("waiting");
 });
 
 video.addEventListener("stalled", function () {
   console.warn("Flux bloqué/stalled.");
-  showLoader();
   logPlayerEvent("STALLED");
-  scheduleStallRecovery("stalled");
+  showLoader();
+  refreshStreamFromJson("stalled");
 });
 
 video.addEventListener("error", function () {
   console.error("Erreur vidéo native :", video.error);
-  showLoader();
   logPlayerEvent("VIDEO_ERROR");
-  invisibleReload("video-error");
+  showLoader();
+  refreshStreamFromJson("video-error");
 });
 
 video.addEventListener("playing", function () {
   lastProgressAt = Date.now();
-  resetStallRecovery();
-  clearHardReloadState();
   hideLoader();
 
   if (bufferingStartedAt) {
-    const bufferingDuration = Math.round((Date.now() - bufferingStartedAt) / 1000);
+    const bufferingDuration = Math.round(
+      (Date.now() - bufferingStartedAt) / 1000
+    );
+
     logPlayerEvent("BUFFERING_END", bufferingDuration + "s");
     bufferingStartedAt = null;
   }
@@ -516,7 +589,6 @@ video.addEventListener("playing", function () {
 });
 
 video.addEventListener("canplay", function () {
-  lastProgressAt = Date.now();
   hideLoader();
 });
 
@@ -531,7 +603,7 @@ startHealthMonitor();
 window.addEventListener("beforeunload", function () {
   clearInterval(healthTimer);
   clearTimeout(reloadTimer);
-  clearStallRecoveryTimer();
+  clearTimeout(jsonRefreshTimer);
   destroyHls();
 });
 </script>
