@@ -79,7 +79,7 @@
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <script>
-let streamUrl = "https://livewatch.top/api/proxy?url=https%3A%2F%2Fqmaalhy7acgxwhm.ngolpdkyoctjcddxshli469r.org%2Fsunshine%2FP2JwsWkDMKuF5OnEU-Z8p_QvX61160EYXWVZt9zQ5vlaKaK187PpYlJNlQSEvVJf2qzbCvCEoiiatH1DiCqsdXqIEze35ExXO5BY-8olSu9G9cvf7yqM3CIthlOXyJ96P-f4fJgsc4CDAmm7cm9vcMl6UG7_1B4ASK7HupVm-Ou2vNY0tPhb6DxnEnhD0gle2sLfQDNR_O5bdPLVJqXCUTcEBwjtVKwvf2aOvvXEG1eXs_FjEk0bPjVd4RxQDSDdV8b0HxJqzzTBOoXNtxT3RQ%2Fhls%2Findex.m3u8";
+let streamUrl = "https://livewatch.top/api/proxy?url=https%3A%2F%2Fqmaalhy7acgxwhm.ngolpdkyoctjcddxshli469r.org%2Fsunshine%2FVtq7WeH5MWGGaVh1NNknV0a-i5JeyPPozKPTRKXkc3vsV-C7wL30NaEdsF6ikG0UzzXSD6zJYWMibSXOt8Ejcc3c0McwuOjXVRRwuH88qYyt7QAuZIF6HsDABLzInziYDcFq-d8VwPvIp0aF7PLSKQxuLTxQHTWqfj-Qvuco1hCeYu9RovddED7ZMV1hcwDefz2qbZeUdh1RXUSUCd15yd30Mo7FZCYbLbIKrrsJXtjOk637k-3VLj_oAKVY0cGVmuUwVgn4WN8X4nYpaZhi5Q%2Fhls%2Findex.m3u8";
 const jsonUrl = "https://livewatch.top/api/tvvoo/stream?channel=CANAL GRAND ECRAN FHD&countries=fr.json";
 
 const video = document.getElementById("video");
@@ -292,7 +292,13 @@ async function refreshStreamFromJson(reason) {
   try {
     logPlayerEvent("JSON_REFRESH_START", reason || "expired-stream");
 
-    const response = await fetch(jsonUrl + (jsonUrl.includes("?") ? "&" : "?") + "_r=" + Date.now(), {
+    const cacheParam = (jsonUrl.includes("?") ? "&" : "?") + "_r=" + Date.now();
+
+    const jsonRefreshUrl =
+      "https://livewatch.top/api/proxy?url=" +
+      encodeURIComponent(jsonUrl + cacheParam);
+
+    const response = await fetch(jsonRefreshUrl, {
       cache: "no-store"
     });
 

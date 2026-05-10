@@ -367,7 +367,13 @@ async function refreshStreamFromJson(reason) {
   try {
     logPlayerEvent("JSON_REFRESH_START", reason || "expired-stream");
 
-    const response = await fetch(jsonUrl + (jsonUrl.includes("?") ? "&" : "?") + "_r=" + Date.now(), {
+    const cacheParam = (jsonUrl.includes("?") ? "&" : "?") + "_r=" + Date.now();
+
+    const jsonRefreshUrl =
+      "https://livewatch.top/api/proxy?url=" +
+      encodeURIComponent(jsonUrl + cacheParam);
+
+    const response = await fetch(jsonRefreshUrl, {
       cache: "no-store"
     });
 

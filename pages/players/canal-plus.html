@@ -79,7 +79,7 @@
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <script>
-let streamUrl = "https://livewatch.top/api/proxy?url=https%3A%2F%2Fqmaalhy7acgxwhm.ngolpdkyoctjcddxshli469r.org%2Fsunshine%2FMZ_hUCVS0H4lL2qbhv6QyspCC_KglLEgwmeIdqX6OOuZ8CI3WtBnhgeLR76ckxtDTVgKerbAZocEDbSSa-1VwRSd8I7xF7PUGylhKuQp5pgUv2AI5zrEWFHPepPeSHnGi7VLGeFVEIWSzezGhaV0HZdVH1eV0_jdIJn4SD4bOLITFfCbV6ZVJyNe2DZtVmxJ7DKNvyzgHhTjiKK3GzQJ5ZJYEEjQrv6LM1xnGcxDL-2LeolpVfkSiFAUz_ywxQCvPrW0hKDPSCirL0AAghwdFg%2Fhls%2Findex.m3u8";
+let streamUrl = "https://livewatch.top/api/proxy?url=http%3A%2F%2F45.143.220.208%3A8008%2Fsunshine%2FidzhlGS1GYGk4CroH4dMcSZAOyQyjW4w9lsDab-6nZ9dPRmFA8oLnw0VGRdJFTRCsoJrEs42f16QaRnfYy8s2gMdt6Y95NP6w1qylrIk0Dmp_wHLGAHbyjIn21ViZX7zHDWSEp9vc9uJUDn3TtCSHRX4crP8WwP4256KUDc8nPrZn04m2ZrVd3GwxQAePoFZxypUn0ZN0-Od4lbnxKZy0ON7-yBP24lso-kvyLFfdfJYTWLRyfOzpmvzVKRBEe7yieNu9OkykGECwIK1FamynQ%2Fhls%2Findex.m3u8";
 const jsonUrl = "https://livewatch.top/api/tvvoo/stream?channel=CANAL PLUS&countries=fr.json";
 
 const video = document.getElementById("video");
@@ -292,7 +292,13 @@ async function refreshStreamFromJson(reason) {
   try {
     logPlayerEvent("JSON_REFRESH_START", reason || "expired-stream");
 
-    const response = await fetch(jsonUrl + (jsonUrl.includes("?") ? "&" : "?") + "_r=" + Date.now(), {
+    const cacheParam = (jsonUrl.includes("?") ? "&" : "?") + "_r=" + Date.now();
+
+    const jsonRefreshUrl =
+      "https://livewatch.top/api/proxy?url=" +
+      encodeURIComponent(jsonUrl + cacheParam);
+
+    const response = await fetch(jsonRefreshUrl, {
       cache: "no-store"
     });
 

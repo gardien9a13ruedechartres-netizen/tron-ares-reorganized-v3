@@ -79,7 +79,7 @@
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <script>
-let streamUrl = "https://livewatch.top/api/proxy?url=http%3A%2F%2F45.143.220.208%3A8008%2Fsunshine%2F7_k7NfDvV9jHxvSHfPAs1sd9T0dL6R51OGoMWzMlNYdFNqqbMKcMs8c7YjvdB_AWiz_slMO9SU4A55IikYuhaIdVYPS9WD3tHe3nlECe3bJ5fliRK71-lchkOgh2woiGNGlT-3mkYq9FhIpmx-wC0HPcmV2jPCLzzMrnjV5Bl5CKvdINu5x4sSPcPA1r1nD1jFRlThojWp-MyNqg8xe9X1fi2nk7zP_XOIkVYBmJiNICibN30NiKLaZdRvZ2CQe61CgaURVZIfhW1zYfkfbSRA%2Fhls%2Findex.m3u8";
+let streamUrl = "https://livewatch.top/api/proxy?url=http%3A%2F%2F117.55.202.236%3A8008%2Fsunshine%2FmAEClZFaLQ3Jokkfd5NJargWOov6SgJXyGYNnfZEe-5sVPt1ocEugbLRdM9tSwchii7k6J1fggcU97gyneVt34MM73FZkZqOgXdppoykvhRg-tTRl_ShYgTd3tx-7EipeFltWqnh9bRH_ZcGQI4t1uVxn0Au2nogD60c3KsjcrD9_IQNx7OlocAYPCWsBQrP4vcVJpX_FwNxFPlB2tSsyxV7nmydvk3WGGtIiomHdaf9L_HGPQbEs3CKXybwFTWrXhwUkyw1IS4cUFmWx2iT0w%2Fhls%2Findex.m3u8";
 const jsonUrl = "https://livewatch.top/api/tvvoo/stream?channel=CANAL SERIES HD&countries=fr.json";
 
 const video = document.getElementById("video");
@@ -292,7 +292,13 @@ async function refreshStreamFromJson(reason) {
   try {
     logPlayerEvent("JSON_REFRESH_START", reason || "expired-stream");
 
-    const response = await fetch(jsonUrl + (jsonUrl.includes("?") ? "&" : "?") + "_r=" + Date.now(), {
+    const cacheParam = (jsonUrl.includes("?") ? "&" : "?") + "_r=" + Date.now();
+
+    const jsonRefreshUrl =
+      "https://livewatch.top/api/proxy?url=" +
+      encodeURIComponent(jsonUrl + cacheParam);
+
+    const response = await fetch(jsonRefreshUrl, {
       cache: "no-store"
     });
 

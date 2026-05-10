@@ -79,7 +79,7 @@
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <script>
-let streamUrl = "https://livewatch.top/api/proxy?url=http%3A%2F%2F45.143.222.113%3A8008%2Fsunshine%2FYVaczHYCv5pF8aCFVe2QIKfnwIndHMWdWVDhlkEew-0_k4aPNYvP014cyYUrDRudz5CEM07nBmybwM0Z16a_4yKzxd789gW6_SwNaCH4hePCh57nN37DFPrfF2NdyRVIr3agr8qi-12673jjIR424T3QcX_TjcKh3bBMQqVcux_bIvM77VauoMc5AJdlX9fD6uPN9aPK1RHEfofCPCX-kzML_OkhZBYEfsduh1XZey3SpRLTMGtNQECCHJT92nD_6mXi6k-Bb5GhO8YBgdLJ4g%2Fhls%2Findex.m3u8";
+let streamUrl = "https://livewatch.top/api/proxy?url=https%3A%2F%2Fshouurvki7jtfax.ngolpdkyoctjcddxshli469r.org%2Fsunshine%2FD_PqWXG7CiObsMJQj9wPeK_0yJB5Y41MESIGKU8P86RDoTpKV1vsIvo5nXHGBoqxTLXhGhKg6hzKUVDfIy8fE-s-Fh8_UYKhuyT2nY_Y6IE1JInbUqy_V-IwCVrFSP9DDvHRO8rdgERObK0tZx3SiIzrMuI5wX_C30DHLBmr5cqlEGvYuSWxJ4tegA8luEAZSA0m_sCPz0PY9vPwQxpcrq4EX5neTX5NTp7kJFmQDKrXjKL2FQDnVloaJixjj7vaB3CJyJyQnYlrnD8-r8I7tg%2Fhls%2Findex.m3u8";
 const jsonUrl = "https://livewatch.top/api/tvvoo/stream?channel=CANAL PANDA&countries=pt.json";
 
 const video = document.getElementById("video");
@@ -292,7 +292,13 @@ async function refreshStreamFromJson(reason) {
   try {
     logPlayerEvent("JSON_REFRESH_START", reason || "expired-stream");
 
-    const response = await fetch(jsonUrl + (jsonUrl.includes("?") ? "&" : "?") + "_r=" + Date.now(), {
+    const cacheParam = (jsonUrl.includes("?") ? "&" : "?") + "_r=" + Date.now();
+
+    const jsonRefreshUrl =
+      "https://livewatch.top/api/proxy?url=" +
+      encodeURIComponent(jsonUrl + cacheParam);
+
+    const response = await fetch(jsonRefreshUrl, {
       cache: "no-store"
     });
 

@@ -79,7 +79,7 @@
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <script>
-let streamUrl = "https://livewatch.top/api/proxy?url=http%3A%2F%2F45.143.220.208%3A8008%2Fsunshine%2FPdxXbtjItnghtxgGE6K9NXQ6FI1ZEtCndd-1o-hpP53pvYydzPAWLZO-10f3YviebBpVR3af-OhUuw7WAUpiJ8ORievnQsWuP5X3mw3mu3WDht_XTAJJzwSAnHg_K9i1q4uuQYqL6JYSTsLUaPppzQ-Xk0lRJiuBKYFSoHN2hqCv5evBhBDUeJtcALqNHtgQCEiORD2sjTA4RXN3dktnxRdjQn3Ux4S5dfTaZq4tv6F54QJiw7yKuiULUOd1XvDpSR-_zHGIX_8EQfWBrxEH7g%2Fhls%2Findex.m3u8";
+let streamUrl = "https://livewatch.top/api/proxy?url=http%3A%2F%2F45.143.222.113%3A8008%2Fsunshine%2FCT7HJmCoAx3UHrLz89NdPVrw1DNbw9X5i2bodn5XcMbuF3B3TDQsph2WWXOvcXhrSQvqU-G4XxTbwUfPKX2Wnl2y2rRNNHpZPAfQ033w3swFqtA5TCqllrRhS7ZYom11HRuIvdP_aC-XCe8kYGcDBVSZ8kxW_apz4F3U-zq975O5GrGxaoqN3qs8MVw716fmAR4WxjMwgyCyM7ohaFJATLZucJGydxD7V_cst_TiI2LAwuXi6rn9-ofe7ZvmjqQEnAShn9r6RrqQjsvZa1HgZg%2Fhls%2Findex.m3u8";
 const jsonUrl = "https://livewatch.top/api/tvvoo/stream?channel=BTV HD&countries=pt.json";
 
 const video = document.getElementById("video");
@@ -292,7 +292,13 @@ async function refreshStreamFromJson(reason) {
   try {
     logPlayerEvent("JSON_REFRESH_START", reason || "expired-stream");
 
-    const response = await fetch(jsonUrl + (jsonUrl.includes("?") ? "&" : "?") + "_r=" + Date.now(), {
+    const cacheParam = (jsonUrl.includes("?") ? "&" : "?") + "_r=" + Date.now();
+
+    const jsonRefreshUrl =
+      "https://livewatch.top/api/proxy?url=" +
+      encodeURIComponent(jsonUrl + cacheParam);
+
+    const response = await fetch(jsonRefreshUrl, {
       cache: "no-store"
     });
 

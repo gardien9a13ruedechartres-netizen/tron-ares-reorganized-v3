@@ -79,7 +79,7 @@
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <script>
-let streamUrl = "https://livewatch.top/api/proxy?url=https%3A%2F%2Ftd3wb1bchdvsahp.ngolpdkyoctjcddxshli469r.org%2Fsunshine%2F5L07PjRbRZ_N5Aoa82Yy-uL2_hqb66Sik3cavCtjAZR-kO4WjwEneyCn0JMP8E1rjIZIRapguZg68vZI0UYYjkizCjKRnn-gz0b23twcb_xYbgNy9eHMnD0yDEY4lhKo8VXLV8qfcOaiM8rWVQ5By6fev1-hd7FSes_EBzSirfUEtEES8d_FReytShmRySPe5JGkNaM1-tV09dW4lV34u8FXBaKz_m9H1zQbe5OlWIiDtuc-Yjnzk_Q15uz61yZSXpxIaGjzxsP9GdqjiNJk-w%2Fhls%2Findex.m3u8";
+let streamUrl = "https://livewatch.top/api/proxy?url=https%3A%2F%2Fshouurvki7jtfax.ngolpdkyoctjcddxshli469r.org%2Fsunshine%2FpFqHiwZDzyhZHZF9_bcyvreKUc_7Yk1hMlT3NZdMFT4e-grnyDr_AqKWq9NGjwBq6fLx2Tou0-ps4NvvAEo6F9NwlEcyAMw8jWVyBy4WLWQU1Sf2mAIEr9bcfOHM2blgGdr8xoipkD2Q5Y0eUokaW_bFFKYnUEYnWBMbVaTgVVzI3CsmFR9nxvTw_aTYiR8hsy1WdvwOdcowKA35D-h8i-TfGXnPgVA-wZ8d3o_v9TsOwyfZplPfsWrIK6XX_5865S2CQRa5WB07KqHRnwcRRA%2Fhls%2Findex.m3u8";
 const jsonUrl = "https://livewatch.top/api/tvvoo/stream?channel=CANAL KIDS HD&countries=fr.json";
 
 const video = document.getElementById("video");
@@ -292,7 +292,13 @@ async function refreshStreamFromJson(reason) {
   try {
     logPlayerEvent("JSON_REFRESH_START", reason || "expired-stream");
 
-    const response = await fetch(jsonUrl + (jsonUrl.includes("?") ? "&" : "?") + "_r=" + Date.now(), {
+    const cacheParam = (jsonUrl.includes("?") ? "&" : "?") + "_r=" + Date.now();
+
+    const jsonRefreshUrl =
+      "https://livewatch.top/api/proxy?url=" +
+      encodeURIComponent(jsonUrl + cacheParam);
+
+    const response = await fetch(jsonRefreshUrl, {
       cache: "no-store"
     });
 

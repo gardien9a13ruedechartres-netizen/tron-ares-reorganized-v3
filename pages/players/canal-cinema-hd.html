@@ -79,7 +79,7 @@
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <script>
-let streamUrl = "https://livewatch.top/api/proxy?url=https%3A%2F%2Ftd3wb1bchdvsahp.ngolpdkyoctjcddxshli469r.org%2Fsunshine%2FCrrSgnApPoP3uEXLwiI6IU5yl2M3YirgEpdCxawpcRhk7HN4jCI7yJn3h8rP-C6QnONJ4VDO0FybjzxQhjoAKvcHVnNl2ujSoSc0AN5LnxnVi-kCAfOc-Gep0BazR9NUUz2Z8ms2SmOPjGn-8tLnEva3NsAr4LGKA9cRxFHssQvPCDUcN0dQXkfHP2ybq4MjJHmaFJmg00f014le6P-OtvkBqW5yLzzyWNh2B42BEbsCPse-KzXapeSRLxkp1EOWuoUyXscuu4rudKtCdog_Qw%2Fhls%2Findex.m3u8";
+let streamUrl = "https://livewatch.top/api/proxy?url=http%3A%2F%2F45.143.220.208%3A8008%2Fsunshine%2Fv-UZ9nbzo5aEbp-1NcPQZqbpfkvmExdEaJvIU1SU9Fl-v9b-LCt7p5hXBbZiTj7Qv7sb0nFIrnW1Du2S93xSt6WWnNgKovXHshUdHoZ-wxDOnL9jH5598-Ee8DSBqb39nGyhaSKoEKcU7-mC_QWrs1_Z7JSpTMzb-6LPmcqO6obeihGUoSC2ShLkQ3fm02IplrpNf0qXUnBWpIqYae2i6EotYWLjDq5tu6Ygz44PQ1vXBqxawRhay0-eWq8nV6fmFIHe2dmEAT2m8gmVYn2ODQ%2Fhls%2Findex.m3u8";
 const jsonUrl = "https://livewatch.top/api/tvvoo/stream?channel=CANAL CINEMA HD&countries=fr.json";
 
 const video = document.getElementById("video");
@@ -292,7 +292,13 @@ async function refreshStreamFromJson(reason) {
   try {
     logPlayerEvent("JSON_REFRESH_START", reason || "expired-stream");
 
-    const response = await fetch(jsonUrl + (jsonUrl.includes("?") ? "&" : "?") + "_r=" + Date.now(), {
+    const cacheParam = (jsonUrl.includes("?") ? "&" : "?") + "_r=" + Date.now();
+
+    const jsonRefreshUrl =
+      "https://livewatch.top/api/proxy?url=" +
+      encodeURIComponent(jsonUrl + cacheParam);
+
+    const response = await fetch(jsonRefreshUrl, {
       cache: "no-store"
     });
 
