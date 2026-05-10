@@ -7,57 +7,11 @@ const ROOT_DIR = path.resolve(__dirname, "..");
 const CONFIG_FILE = path.join(ROOT_DIR, "config", "channels.json");
 const OUTPUT_DIR = path.join(ROOT_DIR, "pages", "players");
 const LOG_FILE = path.join(ROOT_DIR, "log.txt");
-const LAST_STREAMS_FILE = path.join(ROOT_DIR, "config", "last-streams.json");
 const BASE_DOMAIN = "https://livewatch.top";
 
 function writeLog(message) {
   const line = "[" + new Date().toLocaleString() + "] " + message + "\n";
   fs.appendFileSync(LOG_FILE, line, "utf8");
-}
-
-function readLastStreams() {
-  try {
-    if (!fs.existsSync(LAST_STREAMS_FILE)) {
-      return {};
-    }
-
-    const raw = fs.readFileSync(LAST_STREAMS_FILE, "utf8").trim();
-
-    if (!raw) {
-      return {};
-    }
-
-    return JSON.parse(raw);
-  } catch (error) {
-    console.error("Impossible de lire last-streams.json :", error.message);
-    return {};
-  }
-}
-
-function writeLastStreams(streams) {
-  const directory = path.dirname(LAST_STREAMS_FILE);
-
-  if (!fs.existsSync(directory)) {
-    fs.mkdirSync(directory, { recursive: true });
-  }
-
-  fs.writeFileSync(
-    LAST_STREAMS_FILE,
-    JSON.stringify(streams, null, 2) + "\n",
-    "utf8"
-  );
-}
-
-function writeChangedFlag(hasChanges) {
-  const githubOutput = process.env.GITHUB_OUTPUT;
-
-  if (githubOutput) {
-    fs.appendFileSync(
-      githubOutput,
-      "changed=" + (hasChanges ? "true" : "false") + "\n",
-      "utf8"
-    );
-  }
 }
 
 function normalizeUrl(url) {
@@ -201,12 +155,42 @@ function createHtml(channel, streamUrl) {
 
 <script>
 const streamUrl = ${JSON.stringify(streamUrl)};
+const playerSlug = ${JSON.stringify(channel.slug || "unknown")};
 
 const video = document.getElementById("video");
 const loadingOverlay = document.getElementById("loadingOverlay");
 
 video.muted = false;
 video.volume = 1;
+
+let hls = null;
+let reloadTimer = null;
+let healthTimer = null;
+let stallRecoveryTimer = null;
+let lastTime = 0;
+let lastProgressAt = Date.now();
+let reloadCount = 0;
+let bufferingStartedAt = null;
+let stallRecoveryAttempts = 0;
+let fatalRefreshInProgress = false;
+
+const HEALTH_CHECK_INTERVAL = 5000;
+const NO_PROGRESS_LIMIT = 18000;
+const RELOAD_COOLDOWN = 7000;
+const HARD_REFRESH_AFTER = 5;
+const STALL_RECOVERY_TIMEOUT = 12000;
+const MAX_STALL_RECOVERY_ATTEMPTS = 3;
+const HARD_RELOAD_LOOP_WINDOW = 30000;
+const MAX_HARD_RELOADS_IN_WINDOW = 2;
+
+function logPlayerEvent(eventName, extra) {
+  console.log(
+    "[" + new Date().toISOString() + "]",
+    "[" + playerSlug + "]",
+    eventName,
+    extra || ""
+  );
+}
 
 function showLoader() {
   if (loadingOverlay) {
@@ -220,33 +204,180 @@ function hideLoader() {
   }
 }
 
-let hls = null;
-let reloadTimer = null;
-let healthTimer = null;
-let lastTime = 0;
-let lastProgressAt = Date.now();
-let reloadCount = 0;
-
-const HEALTH_CHECK_INTERVAL = 5000;
-const NO_PROGRESS_LIMIT = 18000;
-const RELOAD_COOLDOWN = 7000;
-const HARD_REFRESH_AFTER = 5;
-
 function safePlay() {
-  video.play().catch(function (error) {
-    console.error("Autoplay bloqué :", error);
-  });
+  const playPromise = video.play();
+
+  if (playPromise && typeof playPromise.catch === "function") {
+    playPromise.catch(function (error) {
+      console.error("Autoplay bloqué :", error);
+    });
+  }
+}
+
+function clearStallRecoveryTimer() {
+  if (stallRecoveryTimer) {
+    clearTimeout(stallRecoveryTimer);
+    stallRecoveryTimer = null;
+  }
 }
 
 function destroyHls() {
+  clearStallRecoveryTimer();
+
   if (hls) {
     try {
       hls.destroy();
     } catch (error) {
       console.error("Erreur destruction HLS :", error);
     }
+
     hls = null;
   }
+}
+
+function getHlsResponseStatus(data) {
+  try {
+    return (
+      data?.response?.code ||
+      data?.response?.status ||
+      data?.networkDetails?.status ||
+      data?.networkDetails?.response?.status ||
+      data?.loader?.stats?.status ||
+      0
+    );
+  } catch (error) {
+    return 0;
+  }
+}
+
+function isExpiredStreamError(data) {
+  if (!data) {
+    return false;
+  }
+
+  const status = getHlsResponseStatus(data);
+  const isNetworkError = data.type === Hls.ErrorTypes.NETWORK_ERROR;
+  const isManifestOrLevel =
+    data.details === "manifestLoadError" ||
+    data.details === "levelLoadError";
+
+  return (
+    status === 410 ||
+    status === 403 ||
+    status === 404 ||
+    (isNetworkError && isManifestOrLevel && data.fatal === true && status === 0)
+  );
+}
+
+function getHardReloadStateKey() {
+  return "hls-hard-reload-state:" + playerSlug;
+}
+
+function getHardReloadState() {
+  try {
+    const raw = sessionStorage.getItem(getHardReloadStateKey());
+    if (!raw) {
+      return { firstAt: 0, count: 0 };
+    }
+
+    const parsed = JSON.parse(raw);
+    return {
+      firstAt: Number(parsed.firstAt || 0),
+      count: Number(parsed.count || 0)
+    };
+  } catch (error) {
+    return { firstAt: 0, count: 0 };
+  }
+}
+
+function setHardReloadState(state) {
+  try {
+    sessionStorage.setItem(getHardReloadStateKey(), JSON.stringify(state));
+  } catch (error) {}
+}
+
+function clearHardReloadState() {
+  try {
+    sessionStorage.removeItem(getHardReloadStateKey());
+  } catch (error) {}
+}
+
+function hardReloadPage(reason) {
+  if (fatalRefreshInProgress) {
+    logPlayerEvent("HARD_REFRESH_ALREADY_IN_PROGRESS", reason || "unknown");
+    return;
+  }
+
+  const now = Date.now();
+  const state = getHardReloadState();
+  const insideWindow = state.firstAt && (now - state.firstAt) < HARD_RELOAD_LOOP_WINDOW;
+  const nextState = insideWindow
+    ? { firstAt: state.firstAt, count: state.count + 1 }
+    : { firstAt: now, count: 1 };
+
+  setHardReloadState(nextState);
+
+  if (nextState.count > MAX_HARD_RELOADS_IN_WINDOW) {
+    fatalRefreshInProgress = true;
+    logPlayerEvent("HARD_REFRESH_BLOCKED", reason || "reload-loop");
+    console.warn("Boucle de refresh bloquée. Même URL HLS probablement expirée.");
+    showLoader();
+    destroyHls();
+    return;
+  }
+
+  fatalRefreshInProgress = true;
+  logPlayerEvent("HARD_REFRESH", reason || "unknown");
+  console.warn("Hard reload du player :", reason);
+  showLoader();
+  destroyHls();
+
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.set("_r", String(Date.now()));
+    url.searchParams.set("refreshStream", "1");
+    window.location.replace(url.toString());
+  } catch (error) {
+    window.location.reload();
+  }
+}
+
+function scheduleStallRecovery(reason) {
+  clearStallRecoveryTimer();
+
+  stallRecoveryTimer = setTimeout(function () {
+    logPlayerEvent("STALL_TIMEOUT", reason || "waiting");
+
+    if (fatalRefreshInProgress) {
+      return;
+    }
+
+    try {
+      stallRecoveryAttempts += 1;
+      logPlayerEvent("STALL_RECOVER_ATTEMPT", stallRecoveryAttempts + "/" + MAX_STALL_RECOVERY_ATTEMPTS);
+
+      if (hls) {
+        hls.recoverMediaError();
+      }
+
+      safePlay();
+
+      if (stallRecoveryAttempts >= MAX_STALL_RECOVERY_ATTEMPTS) {
+        logPlayerEvent("STALL_HARD_REFRESH", reason || "stall-timeout");
+        hardReloadPage("stall-timeout");
+      } else {
+        scheduleStallRecovery(reason || "stall-retry");
+      }
+    } catch (error) {
+      console.error("Erreur recovery stall :", error);
+      invisibleReload("stall-recovery-error");
+    }
+  }, STALL_RECOVERY_TIMEOUT);
+}
+
+function resetStallRecovery() {
+  clearStallRecoveryTimer();
+  stallRecoveryAttempts = 0;
 }
 
 function attachNativePlayer() {
@@ -292,7 +423,33 @@ function attachHlsPlayer() {
   hls.on(Hls.Events.ERROR, function (event, data) {
     console.error("Erreur HLS :", data);
 
+    const status = getHlsResponseStatus(data);
+
+    logPlayerEvent("HLS_ERROR", JSON.stringify({
+      type: data?.type || null,
+      details: data?.details || null,
+      fatal: Boolean(data?.fatal),
+      status: status
+    }));
+
+    if (isExpiredStreamError(data)) {
+      console.warn("Flux expiré détecté → refresh contrôlé :", {
+        status: status,
+        type: data?.type || null,
+        details: data?.details || null,
+        fatal: Boolean(data?.fatal)
+      });
+
+      logPlayerEvent("EXPIRED_STREAM_REFRESH", "expired-stream");
+      hardReloadPage("expired-stream");
+      return;
+    }
+
     if (!data || !data.fatal) {
+      if (data && data.details === "bufferStalledError") {
+        showLoader();
+        scheduleStallRecovery("bufferStalledError");
+      }
       return;
     }
 
@@ -304,6 +461,7 @@ function attachHlsPlayer() {
     if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
       try {
         hls.recoverMediaError();
+        safePlay();
       } catch (error) {
         invisibleReload("media-error");
       }
@@ -329,7 +487,7 @@ function initPlayer() {
 }
 
 function invisibleReload(reason) {
-  if (reloadTimer) {
+  if (fatalRefreshInProgress || reloadTimer) {
     return;
   }
 
@@ -361,7 +519,7 @@ function invisibleReload(reason) {
     if (reloadCount >= HARD_REFRESH_AFTER) {
       reloadCount = 0;
       setTimeout(function () {
-        window.location.reload();
+        hardReloadPage("too-many-invisible-reloads");
       }, 2000);
     }
   }, RELOAD_COOLDOWN);
@@ -381,19 +539,12 @@ function startHealthMonitor() {
     }
 
     const noProgressFor = now - lastProgressAt;
-
-    const seemsStuck =
-      !video.paused &&
-      !video.ended &&
-      noProgressFor > NO_PROGRESS_LIMIT;
-
-    const noEnoughData =
-      video.readyState < 2 &&
-      noProgressFor > NO_PROGRESS_LIMIT;
+    const seemsStuck = !video.paused && !video.ended && noProgressFor > NO_PROGRESS_LIMIT;
+    const noEnoughData = video.readyState < 2 && noProgressFor > NO_PROGRESS_LIMIT;
 
     if (seemsStuck || noEnoughData) {
       showLoader();
-      invisibleReload("absence-flux-ou-moulinage");
+      scheduleStallRecovery("absence-flux-ou-moulinage");
     }
   }, HEALTH_CHECK_INTERVAL);
 }
@@ -401,26 +552,46 @@ function startHealthMonitor() {
 video.addEventListener("waiting", function () {
   console.warn("Vidéo en attente de données...");
   showLoader();
+
+  if (!bufferingStartedAt) {
+    bufferingStartedAt = Date.now();
+  }
+
+  logPlayerEvent("BUFFERING_START");
+  scheduleStallRecovery("waiting");
 });
 
 video.addEventListener("stalled", function () {
   console.warn("Flux bloqué/stalled.");
   showLoader();
-  invisibleReload("stalled");
+  logPlayerEvent("STALLED");
+  scheduleStallRecovery("stalled");
 });
 
 video.addEventListener("error", function () {
   console.error("Erreur vidéo native :", video.error);
   showLoader();
+  logPlayerEvent("VIDEO_ERROR");
   invisibleReload("video-error");
 });
 
 video.addEventListener("playing", function () {
   lastProgressAt = Date.now();
+  resetStallRecovery();
+  clearHardReloadState();
   hideLoader();
+
+  if (bufferingStartedAt) {
+    const bufferingDuration = Math.round((Date.now() - bufferingStartedAt) / 1000);
+    logPlayerEvent("BUFFERING_END", bufferingDuration + "s");
+    bufferingStartedAt = null;
+  }
+
+  logPlayerEvent("PLAYING");
 });
 
 video.addEventListener("canplay", function () {
+  lastProgressAt = Date.now();
   hideLoader();
 });
 
@@ -435,6 +606,7 @@ startHealthMonitor();
 window.addEventListener("beforeunload", function () {
   clearInterval(healthTimer);
   clearTimeout(reloadTimer);
+  clearStallRecoveryTimer();
   destroyHls();
 });
 </script>
@@ -443,7 +615,7 @@ window.addEventListener("beforeunload", function () {
 </html>`;
 }
 
-async function generateChannel(channel, lastStreams, nextStreams) {
+async function generateChannel(channel) {
   const slug = sanitizeSlug(channel.slug);
 
   if (!slug) {
@@ -477,32 +649,14 @@ async function generateChannel(channel, lastStreams, nextStreams) {
   }
 
   const finalUrl = normalizeUrl(extractedUrl);
-  const previousUrl = lastStreams[slug] || null;
   const outputFile = path.join(OUTPUT_DIR, slug + ".html");
-  const playerExists = fs.existsSync(outputFile);
-  const hasChanged = previousUrl !== finalUrl || !playerExists;
-
-  nextStreams[slug] = finalUrl;
-
-  console.log("URL finale :", finalUrl);
-
-  if (!hasChanged) {
-    console.log("Aucun changement :", slug);
-    writeLog("Aucun changement : " + slug);
-    return false;
-  }
 
   fs.writeFileSync(outputFile, createHtml(channel, finalUrl), "utf8");
 
-  if (!playerExists) {
-    console.log("Nouveau player généré :", outputFile);
-    writeLog("Nouveau player généré : " + slug);
-  } else {
-    console.log("Player mis à jour :", outputFile);
-    writeLog("Player mis à jour : " + slug);
-  }
+  console.log("URL finale :", finalUrl);
+  console.log("Player généré :", outputFile);
 
-  return true;
+  writeLog("Player généré : " + slug);
 }
 
 async function main() {
@@ -525,21 +679,13 @@ async function main() {
 
     console.log("Nombre de chaînes :", channels.length);
 
-    const lastStreams = readLastStreams();
-    const nextStreams = {};
-
     let successCount = 0;
     let errorCount = 0;
-    let changedCount = 0;
 
     for (const channel of channels) {
       try {
-        const changed = await generateChannel(channel, lastStreams, nextStreams);
+        await generateChannel(channel);
         successCount += 1;
-
-        if (changed) {
-          changedCount += 1;
-        }
       } catch (error) {
         errorCount += 1;
         console.error("Erreur chaîne :", error.message);
@@ -547,35 +693,14 @@ async function main() {
       }
     }
 
-    if (successCount > 0) {
-      writeLastStreams(nextStreams);
-    }
-
-    const hasChanges = changedCount > 0;
-
-    writeChangedFlag(hasChanges);
-
     console.log("");
     console.log("Génération terminée.");
     console.log("Succès :", successCount);
     console.log("Erreurs :", errorCount);
-    console.log("Players modifiés :", changedCount);
 
-    if (!hasChanges) {
-      console.log("Aucun changement détecté. Déploiement Cloudflare inutile.");
-    }
-
-    writeLog(
-      "Génération terminée. Succès=" +
-      successCount +
-      " Erreurs=" +
-      errorCount +
-      " Changements=" +
-      changedCount
-    );
+    writeLog("Génération terminée. Succès=" + successCount + " Erreurs=" + errorCount);
 
   } catch (error) {
-    writeChangedFlag(false);
     console.error("Erreur générale :", error.message);
     writeLog("Erreur générale : " + error.message);
     process.exitCode = 1;
