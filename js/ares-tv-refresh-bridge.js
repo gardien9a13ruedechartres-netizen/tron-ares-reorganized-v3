@@ -1,26 +1,17 @@
 /*
-  Ares TV Refresh Bridge
-  Version finale - sans modifier tron-ares.js
+  Ares TV Refresh Bridge - playUrl patch
+  Ne modifie pas tron-ares.js.
+
+  Il intercepte automatiquement les entrées :
+  {
+    "type": "tv-refresh",
+    "url": "about:blank",
+    "jsonUrl": "https://tv-channel-refresh.victor-salema-53d.workers.dev/?channel=TF1&countries=fr.json"
+  }
 
   Placement exact dans index.html :
   <script defer src="js/tron-ares.js?v=0"></script>
-  <script defer src="js/ares-tv-refresh-bridge.js?v=1"></script>
-
-  Format recommandé dans ton JSON :
-  {
-    "name": "TF1",
-    "slug": "tf1-refresh",
-    "type": "tv-refresh",
-    "url": "about:blank",
-    "jsonUrl": "https://tv-channel-refresh.victor-salema-53d.workers.dev/?channel=TF1&countries=fr.json",
-    "logo": {
-      "type": "image",
-      "value": "media/tf1.png"
-    },
-    "group": "Généraliste",
-    "isFavorite": false,
-    "isIframe": false
-  }
+  <script defer src="js/ares-tv-refresh-bridge.js?v=3"></script>
 */
 
 (function () {
@@ -31,6 +22,7 @@
   const STARTUP_WATCHDOG_MS = 12000;
   const MAX_AUTO_RECOVERY_ATTEMPTS = 3;
 
+  let originalPlayUrl = null;
   let currentChannel = null;
   let currentHls = null;
   let refreshTimer = null;
@@ -47,21 +39,19 @@
   }
 
   function normalizeUrl(url) {
-    let cleanUrl = String(url || "").trim();
+    let clean = String(url || "").trim();
 
-    if (!cleanUrl) {
-      return "";
+    if (!clean) return "";
+
+    if (clean.startsWith("//")) {
+      clean = "https:" + clean;
     }
 
-    if (cleanUrl.startsWith("//")) {
-      cleanUrl = "https:" + cleanUrl;
+    if (clean.startsWith("/")) {
+      clean = DEFAULT_DOMAIN + clean;
     }
 
-    if (cleanUrl.startsWith("/")) {
-      cleanUrl = DEFAULT_DOMAIN + cleanUrl;
-    }
-
-    return cleanUrl;
+    return clean;
   }
 
   function getVideoElement() {
@@ -73,17 +63,10 @@
   }
 
   function getJsonUrl(channel) {
-    if (!channel) {
-      return "";
-    }
+    if (!channel) return "";
 
-    if (channel.jsonUrl) {
-      return normalizeUrl(channel.jsonUrl);
-    }
-
-    if (channel.refreshUrl) {
-      return normalizeUrl(channel.refreshUrl);
-    }
+    if (channel.jsonUrl) return normalizeUrl(channel.jsonUrl);
+    if (channel.refreshUrl) return normalizeUrl(channel.refreshUrl);
 
     if (
       channel.url &&
@@ -94,6 +77,16 @@
     }
 
     return "";
+  }
+
+  function isRefreshChannel(entry) {
+    if (!entry) return false;
+
+    if (entry.type === "tv-refresh") return true;
+    if (entry.tvRefresh === true) return true;
+    if (entry.jsonUrl || entry.refreshUrl) return true;
+
+    return false;
   }
 
   function findM3u8Links(value) {
@@ -146,7 +139,6 @@
     }
 
     scan(value);
-
     return Array.from(results).filter(Boolean);
   }
 
@@ -179,6 +171,12 @@
   function setStatus(message) {
     log(message);
 
+    try {
+      if (typeof window.setStatus === "function") {
+        window.setStatus(message);
+      }
+    } catch {}
+
     const statusPill = document.querySelector("#statusPill");
 
     if (statusPill) {
@@ -200,12 +198,28 @@
     }
   }
 
+  function destroyExistingMediaEngines() {
+    try {
+      if (typeof window.destroyHls === "function") window.destroyHls();
+    } catch {}
+
+    try {
+      if (typeof window.destroyDash === "function") window.destroyDash();
+    } catch {}
+
+    if (currentHls) {
+      try {
+        currentHls.destroy();
+      } catch {}
+
+      currentHls = null;
+    }
+  }
+
   function ensureBufferingIndicator() {
     let indicator = document.querySelector("#aresTvRefreshBuffering");
 
-    if (indicator) {
-      return indicator;
-    }
+    if (indicator) return indicator;
 
     const style = document.createElement("style");
     style.textContent = `
@@ -311,9 +325,7 @@
     streamStarted = false;
 
     startupWatchdog = setTimeout(function () {
-      if (streamStarted) {
-        return;
-      }
+      if (streamStarted) return;
 
       autoRecoveryAttempts += 1;
 
@@ -343,7 +355,7 @@
     setStatus("Live");
   }
 
-  function playHls(url) {
+  function playHlsDirect(url) {
     const directUrl = normalizeUrl(url);
     const video = getVideoElement();
 
@@ -354,12 +366,8 @@
 
     hideIframeOverlayIfPresent();
     hideBufferingMessage();
+    destroyExistingMediaEngines();
     startPlaybackWatchdog();
-
-    if (currentHls) {
-      currentHls.destroy();
-      currentHls = null;
-    }
 
     video.pause();
     video.removeAttribute("src");
@@ -414,9 +422,7 @@
   }
 
   async function refreshCurrentChannel(forceReplay) {
-    if (!currentChannel || isRefreshing) {
-      return;
-    }
+    if (!currentChannel || isRefreshing) return;
 
     isRefreshing = true;
 
@@ -427,7 +433,7 @@
 
       if (forceReplay || directUrl !== lastPlayedUrl) {
         lastPlayedUrl = directUrl;
-        playHls(directUrl);
+        playHlsDirect(directUrl);
       }
 
       setStatus("Flux chargé");
@@ -469,9 +475,7 @@
   function attachVideoWatchers() {
     const video = getVideoElement();
 
-    if (!video || video.dataset.aresTvRefreshAttached === "1") {
-      return;
-    }
+    if (!video || video.dataset.aresTvRefreshAttached === "1") return;
 
     video.dataset.aresTvRefreshAttached = "1";
 
@@ -488,7 +492,7 @@
       showBufferingMessage();
       clearPlaybackWatchdog();
 
-      if (autoRecoveryAttempts < MAX_AUTO_RECOVERY_ATTEMPTS) {
+      if (currentChannel && autoRecoveryAttempts < MAX_AUTO_RECOVERY_ATTEMPTS) {
         autoRecoveryAttempts += 1;
         refreshCurrentChannel(true);
       }
@@ -496,9 +500,7 @@
   }
 
   function openRefreshChannel(channel) {
-    if (!channel) {
-      return;
-    }
+    if (!channel) return;
 
     currentChannel = channel;
     lastPlayedUrl = "";
@@ -510,13 +512,39 @@
     startAutoRefresh();
   }
 
-  function normalizeChannelFromDom(item) {
-    return {
-      name: item.dataset.name || item.textContent.trim() || "Chaîne",
-      type: "tv-refresh",
-      url: "about:blank",
-      jsonUrl: item.dataset.jsonUrl || item.dataset.refreshUrl || item.dataset.url || ""
+  function patchPlayUrl() {
+    if (window.__aresTvRefreshBridgePatched) return;
+
+    if (typeof window.playUrl !== "function") {
+      setTimeout(patchPlayUrl, 200);
+      return;
+    }
+
+    originalPlayUrl = window.playUrl;
+
+    window.playUrl = function patchedPlayUrl(entry) {
+      if (isRefreshChannel(entry)) {
+        openRefreshChannel(entry);
+        return;
+      }
+
+      if (currentChannel) {
+        currentChannel = null;
+        lastPlayedUrl = "";
+        stopAutoRefresh();
+        hideBufferingMessage();
+
+        if (currentHls) {
+          try { currentHls.destroy(); } catch {}
+          currentHls = null;
+        }
+      }
+
+      return originalPlayUrl.apply(this, arguments);
     };
+
+    window.__aresTvRefreshBridgePatched = true;
+    log("playUrl intercepté");
   }
 
   window.TVRefreshBridge = {
@@ -531,7 +559,7 @@
       stopAutoRefresh();
 
       if (currentHls) {
-        currentHls.destroy();
+        try { currentHls.destroy(); } catch {}
         currentHls = null;
       }
 
@@ -541,27 +569,12 @@
     }
   };
 
-  document.addEventListener(
-    "click",
-    function (event) {
-      const item = event.target.closest("[data-tv-refresh='1']");
-
-      if (!item) {
-        return;
-      }
-
-      event.preventDefault();
-      event.stopPropagation();
-      event.stopImmediatePropagation();
-
-      openRefreshChannel(normalizeChannelFromDom(item));
-    },
-    true
-  );
-
   window.addEventListener("load", function () {
     attachVideoWatchers();
+    patchPlayUrl();
   });
+
+  patchPlayUrl();
 
   log("Bridge chargé");
 })();
