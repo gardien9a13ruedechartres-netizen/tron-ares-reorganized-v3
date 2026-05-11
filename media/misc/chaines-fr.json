@@ -24,21 +24,7 @@
       "isFavorite": false,
       "isIframe": false
     },
-    {
-  "name": "TF1",
-  "slug": "tf1-refresh",
-  "type": "tv-refresh",
-  "url": "about:blank",
-  "jsonUrl": "https://tv-channel-refresh.victor-salema-53d.workers.dev/?channel=TF1&countries=fr.json",
-  "logo": {
-    "type": "image",
-    "value": "media/tf1.png"
-  },
-  "group": "Généraliste",
-  "isFavorite": false,
-  "isIframe": false
-},
-    {
+        {
       "name": "France 2",
       "url": "https://raw.githubusercontent.com/schumijo/iptv/refs/heads/main/playlists/francetv/france2.m3u8",
       "logo": {
