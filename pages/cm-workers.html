@@ -2,20 +2,25 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>JSON Live Control Panel + Fullscreen HLS Player</title>
+  <title>Fullscreen HLS Auto Refresh Player</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
   <style>
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
+    html,
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
+      width: 100%;
+      height: 100%;
       background: #000;
-      color: #f9fafb;
       overflow: hidden;
+      font-family: Arial, sans-serif;
+      color: #f9fafb;
     }
 
     #playerWrapper {
@@ -42,7 +47,6 @@
       align-items: center;
       justify-content: center;
       flex-direction: column;
-      color: #fff;
       transition: opacity 0.35s ease, visibility 0.35s ease;
     }
 
@@ -53,48 +57,71 @@
     }
 
     .pro-spinner {
-      width: 64px;
-      height: 64px;
-      border: 5px solid rgba(255,255,255,0.15);
-      border-top-color: #3b82f6;
+      width: 66px;
+      height: 66px;
       border-radius: 50%;
+      border: 5px solid rgba(255, 255, 255, 0.14);
+      border-top-color: #3b82f6;
+      border-right-color: #60a5fa;
       animation: spin 0.9s linear infinite;
-      margin-bottom: 18px;
+      margin-bottom: 20px;
+      box-shadow:
+        0 0 25px rgba(59, 130, 246, 0.35),
+        0 0 60px rgba(59, 130, 246, 0.15);
     }
 
     .loading-text {
       font-size: 18px;
       font-weight: 600;
-      letter-spacing: 0.3px;
       color: #e5e7eb;
+      letter-spacing: 0.3px;
     }
 
     .dots::after {
       content: "";
-      animation: dots 1.4s infinite steps(4);
+      display: inline-block;
+      width: 24px;
+      text-align: left;
+      animation: dots 1.4s infinite;
     }
 
     @keyframes spin {
-      to { transform: rotate(360deg); }
+      to {
+        transform: rotate(360deg);
+      }
     }
 
     @keyframes dots {
-      0% { content: ""; }
-      25% { content: "."; }
-      50% { content: ".."; }
-      75% { content: "..."; }
-      100% { content: ""; }
+      0% {
+        content: "";
+      }
+
+      25% {
+        content: ".";
+      }
+
+      50% {
+        content: "..";
+      }
+
+      75% {
+        content: "...";
+      }
+
+      100% {
+        content: "";
+      }
     }
 
     #toggleControlPanel {
       position: fixed;
       top: 16px;
       right: 16px;
-      z-index: 20;
+      z-index: 30;
       padding: 10px 14px;
       border: 1px solid rgba(255,255,255,0.35);
       border-radius: 8px;
-      background: rgba(17, 24, 39, 0);
+      background: rgba(17, 24, 39, 0.25);
       color: #fff;
       cursor: pointer;
       font-weight: bold;
@@ -109,8 +136,8 @@
       max-width: calc(100vw - 32px);
       max-height: calc(100vh - 90px);
       overflow: auto;
-      z-index: 15;
-      background: rgba(31, 41, 55, 0.92);
+      z-index: 25;
+      background: rgba(31, 41, 55, 0.94);
       border: 1px solid rgba(255,255,255,0.15);
       border-radius: 12px;
       padding: 16px;
@@ -118,7 +145,9 @@
       box-shadow: 0 20px 60px rgba(0,0,0,0.5);
     }
 
-    #controlPanel.hidden { display: none; }
+    #controlPanel.hidden {
+      display: none;
+    }
 
     .panel {
       background: rgba(17, 24, 39, 0.8);
@@ -128,9 +157,18 @@
       margin-bottom: 14px;
     }
 
-    h1, h2 { margin-top: 0; }
-    h1 { font-size: 20px; }
-    h2 { font-size: 16px; }
+    h1,
+    h2 {
+      margin-top: 0;
+    }
+
+    h1 {
+      font-size: 20px;
+    }
+
+    h2 {
+      font-size: 16px;
+    }
 
     label {
       display: block;
@@ -158,11 +196,28 @@
       font-weight: bold;
     }
 
-    .start { background: #22c55e; }
-    .stop { background: #ef4444; color: white; }
-    .reload { background: #3b82f6; color: white; }
-    .copy { background: #f59e0b; }
-    .play { background: #8b5cf6; color: white; }
+    .start {
+      background: #22c55e;
+    }
+
+    .stop {
+      background: #ef4444;
+      color: white;
+    }
+
+    .reload {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .copy {
+      background: #f59e0b;
+    }
+
+    .play {
+      background: #8b5cf6;
+      color: white;
+    }
 
     pre {
       background: #020617;
@@ -180,8 +235,13 @@
       font-size: 13px;
     }
 
-    .success { color: #22c55e; }
-    .error { color: #f87171; }
+    .success {
+      color: #22c55e;
+    }
+
+    .error {
+      color: #f87171;
+    }
 
     .m3u8-item {
       padding: 10px 0;
@@ -203,7 +263,9 @@
 
   <div id="loadingOverlay">
     <div class="pro-spinner"></div>
-    <div class="loading-text">Chargement du flux<span class="dots"></span></div>
+    <div class="loading-text">
+      Chargement du flux<span class="dots"></span>
+    </div>
   </div>
 
   <button id="toggleControlPanel" onclick="toggleControlPanel()">☰</button>
@@ -213,14 +275,18 @@
 
     <section class="panel">
       <label>URL JSON dynamique</label>
-      <input id="jsonUrl" type="text" value="https://cm-tv-refresh.victor-salema-53d.workers.dev/" />
+      <input
+        id="jsonUrl"
+        type="text"
+        value="https://cm-tv-refresh.victor-salema-53d.workers.dev/"
+      />
 
       <label>Intervalle en minutes</label>
       <input id="intervalMinutes" type="number" min="1" value="30" />
 
       <button class="start" onclick="startAutoReload()">Démarrer</button>
       <button class="stop" onclick="stopAutoReload()">Arrêter</button>
-      <button class="reload" onclick="loadJson()">Recharger maintenant</button>
+      <button class="reload" onclick="loadJson(true)">Recharger maintenant</button>
 
       <div id="status" class="status">Statut : en attente</div>
     </section>
@@ -229,7 +295,11 @@
       <h2>Player HLS</h2>
 
       <label>URL M3U8 directe</label>
-      <input id="playerUrl" type="text" placeholder="Le lien .m3u8 direct sera collé ici automatiquement" />
+      <input
+        id="playerUrl"
+        type="text"
+        placeholder="Le lien .m3u8 direct sera collé ici automatiquement"
+      />
 
       <button class="play" onclick="playCurrentUrl()">Lire cette URL directe</button>
       <button class="copy" onclick="copyText(playerUrlInput.value)">Copier URL du player</button>
@@ -249,13 +319,13 @@
   </aside>
 
   <script>
-    const REVERSE_PROXY = "https://cm-tv-refresh.victor-salema-53d.workers.dev/";
     const DEFAULT_DOMAIN = "https://livewatch.top";
     const AUTO_RELOAD_MINUTES = 30;
 
     let reloadTimer = null;
     let hlsInstance = null;
     let lastPlayedUrl = "";
+    let isLoadingJson = false;
 
     const controlPanel = document.getElementById("controlPanel");
     const urlInput = document.getElementById("jsonUrl");
@@ -286,31 +356,41 @@
 
     function normalizeUrl(url) {
       let cleanUrl = String(url || "").trim();
-      if (!cleanUrl) return "";
-      if (cleanUrl.startsWith("//")) cleanUrl = "https:" + cleanUrl;
-      if (cleanUrl.startsWith("/")) cleanUrl = DEFAULT_DOMAIN + cleanUrl;
+
+      if (!cleanUrl) {
+        return "";
+      }
+
+      if (cleanUrl.startsWith("//")) {
+        cleanUrl = "https:" + cleanUrl;
+      }
+
+      if (cleanUrl.startsWith("/")) {
+        cleanUrl = DEFAULT_DOMAIN + cleanUrl;
+      }
+
       return cleanUrl;
     }
 
-    function buildProxyUrl(url) {
-      const absoluteUrl = normalizeUrl(url);
-      return REVERSE_PROXY + encodeURIComponent(absoluteUrl);
-    }
-
-    async function loadJson() {
-      const rawUrl = urlInput.value.trim();
-
-      if (!rawUrl) {
-        setStatus("Erreur : aucune URL renseignée.", "error");
+    async function loadJson(forceReplay) {
+      if (isLoadingJson) {
         return;
       }
 
+      const jsonUrl = normalizeUrl(urlInput.value);
+
+      if (!jsonUrl) {
+        setStatus("Erreur : aucune URL JSON renseignée.", "error");
+        showLoader();
+        return;
+      }
+
+      isLoadingJson = true;
+
       try {
-        setStatus("Chargement en cours...", "");
+        setStatus("Recherche automatique du flux en cours...", "");
 
-        const proxyUrl = buildProxyUrl(rawUrl);
-
-        const response = await fetch(proxyUrl, {
+        const response = await fetch(jsonUrl, {
           method: "GET",
           cache: "no-store"
         });
@@ -324,28 +404,38 @@
         jsonViewer.textContent = JSON.stringify(data, null, 2);
 
         const foundM3u8 = findM3u8Links(data);
+
         renderM3u8Links(foundM3u8);
 
-        if (foundM3u8.length > 0) {
-          const firstDirectUrl = normalizeUrl(foundM3u8[0]);
-          playerUrlInput.value = firstDirectUrl;
-
-          if (firstDirectUrl !== lastPlayedUrl) {
-            lastPlayedUrl = firstDirectUrl;
-            playHls(firstDirectUrl);
-            setPlayerStatus("Nouvelle URL M3U8 directe détectée et lancée.", "success");
-          } else {
-            setPlayerStatus("Même URL M3U8 conservée. Lecture maintenue.", "success");
-          }
-        } else {
+        if (!foundM3u8.length) {
           showLoader();
-          setPlayerStatus("Aucune URL .m3u8 trouvée dans le JSON.", "error");
+          setStatus("JSON chargé, mais aucun lien .m3u8 trouvé.", "error");
+          setPlayerStatus("Aucune URL .m3u8 trouvée.", "error");
+          return;
         }
 
-        setStatus("JSON chargé. M3U8 trouvés : " + foundM3u8.length, "success");
+        const directUrl = normalizeUrl(foundM3u8[0]);
+
+        playerUrlInput.value = directUrl;
+
+        if (forceReplay || directUrl !== lastPlayedUrl) {
+          lastPlayedUrl = directUrl;
+          playHls(directUrl);
+
+          setPlayerStatus("URL M3U8 détectée et lancée automatiquement.", "success");
+        } else {
+          playHls(directUrl);
+
+          setPlayerStatus("Même URL détectée, flux relancé automatiquement.", "success");
+        }
+
+        setStatus("Recherche terminée. M3U8 trouvés : " + foundM3u8.length, "success");
       } catch (error) {
         showLoader();
         setStatus("Erreur : " + error.message, "error");
+        setPlayerStatus("Impossible de charger le flux.", "error");
+      } finally {
+        isLoadingJson = false;
       }
     }
 
@@ -354,15 +444,22 @@
 
       function scan(item) {
         if (typeof item === "string") {
-          const matches = item.match(/https?:\/\/[^"' <>\n\r]+\.m3u8[^"' <>\n\r]*/g);
+          const directMatches = item.match(/https?:\/\/[^"' <>\n\r]+\.m3u8[^"' <>\n\r]*/g);
+          const relativeMatches = item.match(/\/[^"' <>\n\r]+\.m3u8[^"' <>\n\r]*/g);
 
-          if (matches) {
-            matches.forEach(function (url) {
+          if (directMatches) {
+            directMatches.forEach(function (url) {
               results.add(normalizeUrl(url));
             });
           }
 
-          if (item.includes(".m3u8")) {
+          if (relativeMatches) {
+            relativeMatches.forEach(function (url) {
+              results.add(normalizeUrl(url));
+            });
+          }
+
+          if (item.includes(".m3u8") && !directMatches && !relativeMatches) {
             results.add(normalizeUrl(item));
           }
 
@@ -380,6 +477,7 @@
       }
 
       scan(value);
+
       return Array.from(results);
     }
 
@@ -393,7 +491,6 @@
 
       links.forEach(function (link, index) {
         const directLink = normalizeUrl(link);
-        const proxyLink = buildProxyUrl(directLink);
 
         const item = document.createElement("div");
         item.className = "m3u8-item";
@@ -406,20 +503,12 @@
           <code>${escapeHtml(directLink)}</code>
           <br><br>
 
-          <div><strong>Lien proxy pour copie :</strong></div>
-          <code>${escapeHtml(proxyLink)}</code>
-          <br><br>
-
           <button class="play" onclick="pasteAndPlay('${escapeJs(directLink)}')">
-            Coller et lire direct
+            Coller et lire
           </button>
 
           <button class="copy" onclick="copyText('${escapeJs(directLink)}')">
-            Copier direct
-          </button>
-
-          <button class="copy" onclick="copyText('${escapeJs(proxyLink)}')">
-            Copier proxy
+            Copier
           </button>
         `;
 
@@ -429,10 +518,17 @@
 
     function pasteAndPlay(url) {
       const directUrl = normalizeUrl(url);
+
+      if (!directUrl) {
+        setPlayerStatus("URL invalide.", "error");
+        return;
+      }
+
       playerUrlInput.value = directUrl;
       lastPlayedUrl = directUrl;
       playHls(directUrl);
-      setPlayerStatus("URL directe collée dans le player.", "success");
+
+      setPlayerStatus("URL directe collée et lancée.", "success");
     }
 
     function playCurrentUrl() {
@@ -440,6 +536,7 @@
 
       if (!directUrl) {
         setPlayerStatus("Aucune URL dans le player.", "error");
+        showLoader();
         return;
       }
 
@@ -494,7 +591,7 @@
           }
         });
 
-        setPlayerStatus("Chargement du flux HLS direct...", "");
+        setPlayerStatus("Chargement du flux HLS...", "");
         return;
       }
 
@@ -505,7 +602,7 @@
           setPlayerStatus("Flux chargé. Clique sur lecture si l’autoplay est bloqué.", "success");
         });
 
-        setPlayerStatus("Lecture native HLS directe activée.", "success");
+        setPlayerStatus("Lecture native HLS activée.", "success");
         return;
       }
 
@@ -513,24 +610,20 @@
       setPlayerStatus("Ce navigateur ne supporte pas HLS.", "error");
     }
 
-    videoPlayer.addEventListener("playing", hideLoader);
-    videoPlayer.addEventListener("canplay", hideLoader);
-    videoPlayer.addEventListener("waiting", showLoader);
-    videoPlayer.addEventListener("stalled", showLoader);
-    videoPlayer.addEventListener("error", showLoader);
-
     function startAutoReload() {
       stopAutoReload();
 
-      intervalInput.value = AUTO_RELOAD_MINUTES;
+      const minutes = Number(intervalInput.value) || AUTO_RELOAD_MINUTES;
 
-      loadJson();
+      intervalInput.value = minutes;
+
+      loadJson(true);
 
       reloadTimer = setInterval(function () {
-        loadJson();
-      }, AUTO_RELOAD_MINUTES * 60 * 1000);
+        loadJson(true);
+      }, minutes * 60 * 1000);
 
-      setStatus("Auto-refresh activé toutes les 30 minutes.", "success");
+      setStatus("Auto-refresh activé toutes les " + minutes + " minutes.", "success");
     }
 
     function stopAutoReload() {
@@ -577,6 +670,12 @@
         .replaceAll("\n", "\\n")
         .replaceAll("\r", "\\r");
     }
+
+    videoPlayer.addEventListener("playing", hideLoader);
+    videoPlayer.addEventListener("canplay", hideLoader);
+    videoPlayer.addEventListener("waiting", showLoader);
+    videoPlayer.addEventListener("stalled", showLoader);
+    videoPlayer.addEventListener("error", showLoader);
 
     window.addEventListener("load", function () {
       showLoader();
