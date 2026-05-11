@@ -79,7 +79,7 @@
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <script>
-let streamUrl = "https://livewatch.top/api/proxy?url=https%3A%2F%2Fqmaalhy7acgxwhm.ngolpdkyoctjcddxshli469r.org%2Fsunshine%2FqsR_807CRoRZJhNYhlzMtpbQgSeVrD2Fl3AK9-N3Vyjzp1kCAsZ81QZ5wSM03P69hUYpuEKj2XLnlGPJ1ZWVf3GIDNAAeciZW54opfR04lyU2FyCjO9eJ8plfFg-7GFOsgYEx_YvIYG3YZmjzWxUxNG-sOXHfltHA4nJdeck9mCcxn6wgx3uziGfI7xAF0J7QR1Mi_wRHtB3E5Qx06niyZHF4NyTupZt5nOu_leGFBCtWInXZBGrl_lhU_yAnCF_mEZJB4D0Q-Sa4FmbYrrsAQ%2Fhls%2Findex.m3u8";
+let streamUrl = "https://livewatch.top/api/proxy?url=https%3A%2F%2Fqmaalhy7acgxwhm.ngolpdkyoctjcddxshli469r.org%2Fsunshine%2FD_II2ooO-Mrh9r1ltzL65cHhpIaKocPr9wnvFuKElRlca_k1lHFZ0S7wW40M5bpo69aSFLMchw0cZHIif-M2QVDCAmI5sZL0lWRn7woqpTgPHgtpsd8uLdbLaXSWAP1JLq2bOz0c5MnO2fsQFo5i4edn6GkCh5YBo1tE_ctiRWoxzPb1r07k3SPrbD39Fh0QuIiT8sbaBkNgiCDXRU5TmXqSeYXNyqnE4dWD1GzKXEjhW8RtiK-r5Azs9GGc8W9Y3BZDODlqvbF2_myzNXIl4g%2Fhls%2Findex.m3u8";
 const jsonUrl = "https://livewatch.top/api/tvvoo/stream?channel=CANAL PANDA&countries=pt.json";
 const refreshWorkerUrl = 'https://tvvoo-refresh.victor-salema-53d.workers.dev/';
 
@@ -590,6 +590,8 @@ function invisibleReload(reason) {
 function startHealthMonitor() {
   clearInterval(healthTimer);
 
+  logPlayerEvent("HEALTH_MONITOR_STARTED", "interval=" + HEALTH_CHECK_INTERVAL + "ms");
+
   healthTimer = setInterval(function () {
     const currentTime = video.currentTime || 0;
     const now = Date.now();
@@ -612,6 +614,11 @@ function startHealthMonitor() {
       noProgressFor > NO_PROGRESS_LIMIT;
 
     if (seemsStuck || noEnoughData) {
+      logPlayerEvent(
+        "HEALTH_MONITOR_TRIGGER",
+        "readyState=" + video.readyState + " noProgressFor=" + Math.round(noProgressFor / 1000) + "s"
+      );
+
       showLoader();
       refreshStreamFromJson("absence-flux-ou-moulinage");
     }

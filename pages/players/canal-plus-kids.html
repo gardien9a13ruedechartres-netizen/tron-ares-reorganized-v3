@@ -79,7 +79,7 @@
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <script>
-let streamUrl = "https://livewatch.top/api/proxy?url=https%3A%2F%2Fqmaalhy7acgxwhm.ngolpdkyoctjcddxshli469r.org%2Fsunshine%2FXKyP2MeM1FtG_dyXerHcrjsLp5nrrZ8LVYP5AyXvECSjWletzUbE5luwDw_kT5aXHw2FNIhvJHu9UMv_ObqV3fGbVGtqKJWHdzp48fjWsTWtzRsmuQMqi2Jp_KEBM4xqVLNSwATASjsnUvXTB0zeRkJxut1RYBU73-Cxg1JtUHF5TJVM0uT90EVKAkt2ihFRD6iTXC8ARfTe9sI7_7N_vb-SYDbktPHYpOAjXWt2n5Kby1y3OKy1COJ_f7dLZVk9DvyNiRFSG67BBWXtgzxjdA%2Fhls%2Findex.m3u8";
+let streamUrl = "https://livewatch.top/api/proxy?url=https%3A%2F%2Fqmaalhy7acgxwhm.ngolpdkyoctjcddxshli469r.org%2Fsunshine%2FBxFhPH4mUfpPWSKDCPY0SmuxX9N6jtLvOiTjMSvDnbtttstNzXtSUOHf5_6UhTuLyPv0ZdgcUJfqbD9XCola1B4DYpZqAju1631cn6ZKkpxJLzxYdcvN9tdB5ltDtqj-FBmJ4Ng3_tkp_ChxAFvHvsuQEjyAIorRQ--BKhmHlCyv8tZ-f-5rbuXah8hyWjXjiLUMIk9b5inAyw4D-ThSFBxNanQ8wxRhBGP4z0AGN9EO_KDQK0nbAtlY1fpvYGWDGdQ-vQhIOMP8bubkG_145g%2Fhls%2Findex.m3u8";
 const jsonUrl = "https://livewatch.top/api/tvvoo/stream?channel=CANAL KIDS HD&countries=fr.json";
 const refreshWorkerUrl = 'https://tvvoo-refresh.victor-salema-53d.workers.dev/';
 
@@ -590,6 +590,8 @@ function invisibleReload(reason) {
 function startHealthMonitor() {
   clearInterval(healthTimer);
 
+  logPlayerEvent("HEALTH_MONITOR_STARTED", "interval=" + HEALTH_CHECK_INTERVAL + "ms");
+
   healthTimer = setInterval(function () {
     const currentTime = video.currentTime || 0;
     const now = Date.now();
@@ -612,6 +614,11 @@ function startHealthMonitor() {
       noProgressFor > NO_PROGRESS_LIMIT;
 
     if (seemsStuck || noEnoughData) {
+      logPlayerEvent(
+        "HEALTH_MONITOR_TRIGGER",
+        "readyState=" + video.readyState + " noProgressFor=" + Math.round(noProgressFor / 1000) + "s"
+      );
+
       showLoader();
       refreshStreamFromJson("absence-flux-ou-moulinage");
     }

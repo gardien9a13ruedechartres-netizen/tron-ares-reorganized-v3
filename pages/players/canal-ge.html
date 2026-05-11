@@ -79,7 +79,7 @@
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <script>
-let streamUrl = "https://livewatch.top/api/proxy?url=https%3A%2F%2Fqmaalhy7acgxwhm.ngolpdkyoctjcddxshli469r.org%2Fsunshine%2FymVmZb88k9Cd7QWEaas9LDx7_cJBbHz45DWz3lJYkxQBIG-A01x04zNpwNIi70N2ZcSGkmW8dTxCgdS7cBWVIjQY3ftbmF535SmrYlarLt26KqwSRwUIFseMmg0mbWj-gMZTP1l0Egdh7KUXSu6jEDFty01PWMKLafEPjtPYXH-xmdlLGSgfjtI-NtDSXL_BqSP22DZkebIkkVws4OInj-ZMTRYmhqZ-jpSYmDExoIutoHJZClYJpCtS7wQ5DuDGaDzBWbDHS0G5Uc6Ky33OCg%2Fhls%2Findex.m3u8";
+let streamUrl = "https://livewatch.top/api/proxy?url=https%3A%2F%2Fqmaalhy7acgxwhm.ngolpdkyoctjcddxshli469r.org%2Fsunshine%2FFGFcdMeOzHdauK9gGxSYhn6sPQzNJiRdxdZo9AX9HzCKpQLEVxE-UZKum8Uoz0BYW6eFZxYOC56WTZvZ9O-mEfOjJpZSp7hFkDvAgdf6hgxwdSgm9q906b3nSWnlznQ55HUItFo3hs3pN5GtIGDYDSA5_KFtine563LTGYH69OhRA4uWCt9_KfQzgY_MFKbZfR3HSsdor9S4mnA-nSjNTmpDOGp6prf5wQl4BNltJPttUJuYXETwuUv0RmjfQ3TFHRWtSohTN6X_qF2A4zj4OQ%2Fhls%2Findex.m3u8";
 const jsonUrl = "https://livewatch.top/api/tvvoo/stream?channel=CANAL GRAND ECRAN FHD&countries=fr.json";
 const refreshWorkerUrl = 'https://tvvoo-refresh.victor-salema-53d.workers.dev/';
 
@@ -590,6 +590,8 @@ function invisibleReload(reason) {
 function startHealthMonitor() {
   clearInterval(healthTimer);
 
+  logPlayerEvent("HEALTH_MONITOR_STARTED", "interval=" + HEALTH_CHECK_INTERVAL + "ms");
+
   healthTimer = setInterval(function () {
     const currentTime = video.currentTime || 0;
     const now = Date.now();
@@ -612,6 +614,11 @@ function startHealthMonitor() {
       noProgressFor > NO_PROGRESS_LIMIT;
 
     if (seemsStuck || noEnoughData) {
+      logPlayerEvent(
+        "HEALTH_MONITOR_TRIGGER",
+        "readyState=" + video.readyState + " noProgressFor=" + Math.round(noProgressFor / 1000) + "s"
+      );
+
       showLoader();
       refreshStreamFromJson("absence-flux-ou-moulinage");
     }
