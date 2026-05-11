@@ -115,7 +115,7 @@
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <script>
-let streamUrl = "https://livewatch.top/api/proxy?url=https%3A%2F%2Fqmaalhy7acgxwhm.ngolpdkyoctjcddxshli469r.org%2Fsunshine%2FRnl2fHZ7Nv5ASIjeLGsm55ukKINBuwgsX2W4KUlKS0q5PCmw6Floa2bIuN5_85K6VgAv9puTtJGJk-CZ7DtkGELe0qXTKgnOXtmSvxW32yBtm68RzN4ADMj4cr2X9EP_I7lPKYcXafoSTlygUM7v9i4FWeiZeVTAT5DmNyF4GmQWVQIBPytNfd6TNrwEi43VY7h2eGqj6E4Lb0SfPBbfdxJqIWX25OExJqJU_29ysv9CoNzCafjxQWPf4zWnD6M-f3gD9tnuss0-ryEhZ5S-XQ%2Fhls%2Findex.m3u8";
+let streamUrl = "https://livewatch.top/api/proxy?url=https%3A%2F%2Fqmaalhy7acgxwhm.ngolpdkyoctjcddxshli469r.org%2Fsunshine%2FpTBORe7AhWl81q7Fod2hYwV1tQiRzaH5KT1fIZmJ_KhxRUiFtwCxyg-6M1yZ5sIGFVPbGC__7Wk4KWupwCHtzpBIPHBbsNwvk7lW-svOU_-WXx7ySdOtWf2UGxzcvPIXxmPP2T_V7vmpsFr8MhfrZRBlg93xzcZA3gucV7Kf7nOaJGFnaz-VjFSZCD1qTB7Ry4U_cn-QKjA7kwFQ9DtlvFjty2mb0HiLB-c2wb2ct1nVL34yMvOopEKc9ftb3quCepYYIE8y1wXAWT31fAqqwA%2Fhls%2Findex.m3u8";
 const jsonUrl = "https://livewatch.top/api/tvvoo/stream?channel=CANAL GRAND ECRAN FHD&countries=fr.json";
 const refreshWorkerUrl = 'https://tvvoo-refresh.victor-salema-53d.workers.dev/';
 
@@ -664,6 +664,9 @@ video.addEventListener("error", function () {
 });
 
 video.addEventListener("playing", function () {
+  setTimeout(function () {
+    hideLoader();
+  }, 800);
   lastProgressAt = Date.now();
   hideLoader();
 

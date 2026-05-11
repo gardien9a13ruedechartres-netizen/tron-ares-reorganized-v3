@@ -115,7 +115,7 @@
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <script>
-let streamUrl = "https://livewatch.top/api/proxy?url=https%3A%2F%2Fshouurvki7jtfax.ngolpdkyoctjcddxshli469r.org%2Fsunshine%2FG-A7_OIGVNiv0F7_CXQMlBBKxZtqRhOLEgjdjFu6jpO_rClW4IRTiiA_nEAaUXkB7gZYheN7EcqYZo8jc_kT-p6nyeATYoP0TYRy523aVVdxxQAcCUJRAeGqq3P2-S99BnF1AS5IH4JgUc8m3lp5_Ve54_K_svaWtdW1mgIRnuKAvQMHTO7Fgc-2r63nkwcAi3Q4PBqCAlVjaJnEGXqf3kiNKldw1IdEV9oNo3WguxnsD8mZOq5_lRnU7gaNHy7MRLdOiwjLL9emCrwpI8Oigw%2Fhls%2Findex.m3u8";
+let streamUrl = "https://livewatch.top/api/proxy?url=https%3A%2F%2Fqmaalhy7acgxwhm.ngolpdkyoctjcddxshli469r.org%2Fsunshine%2FSMvUN12DZlr9C3uNjtxwpN6NAwdJIf8LVvkZiPt29OhSddzrfkELcrI1KUAwBKA7Oa485kZGUiZ8jTdKh0El6U4bD5O25lF6BWtnD_05KmeU977z5BgW1Ov6HV-n2ZsGnCjmOhtwxVKyUkFWZO3dH-PcFmUSzdzFQX7WzXRmplen4JUB0D-lKYqb9rO16hJsIuZKh-WUn0bHNS2ShaEr93mQdoqGtlkkgHyZO-Kz7IENpV6DUafV00gKCNEjhTJGtGYTQZwJBW07xWJ1hw-KLg%2Fhls%2Findex.m3u8";
 const jsonUrl = "https://livewatch.top/api/tvvoo/stream?channel=BTV HD&countries=pt.json";
 const refreshWorkerUrl = 'https://tvvoo-refresh.victor-salema-53d.workers.dev/';
 
@@ -664,6 +664,9 @@ video.addEventListener("error", function () {
 });
 
 video.addEventListener("playing", function () {
+  setTimeout(function () {
+    hideLoader();
+  }, 800);
   lastProgressAt = Date.now();
   hideLoader();
 

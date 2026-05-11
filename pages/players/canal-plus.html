@@ -115,7 +115,7 @@
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <script>
-let streamUrl = "https://livewatch.top/api/proxy?url=https%3A%2F%2Fqmaalhy7acgxwhm.ngolpdkyoctjcddxshli469r.org%2Fsunshine%2F8wWwQb-SXp7faSJGNdYGjZciJnizaahUavz6iAQHSnZq_yX9HH2YOgWUJJf-0yopaPa3SC03_pwxYuLdNwlAfcSt-IzJEFhGUvulHGB5W7hs9S0KO7UXoHj43RjBMyFHGczsF2WngoRYP6euwwCY005s9Dl2zsf9CQKvhqjG8xPvnumdS6ga5NgMVIRw0dg1a91QkcnD4PMv09P-Wgvt5VFcItyNcz0HOyr7Rr_5HWs-ly21JXChooQTrX5sahkp3-rBosqE_F4wUHCOsLM-gA%2Fhls%2Findex.m3u8";
+let streamUrl = "https://livewatch.top/api/proxy?url=https%3A%2F%2Fqmaalhy7acgxwhm.ngolpdkyoctjcddxshli469r.org%2Fsunshine%2FQBRmv_mEIJJx0yCJKCq8EnPYBJS8-4ri4ssTXhL87w6etUHp40P02JWEM_GDzwvbmLVRFqgTulNEwDKHNeTxfpICzKcmR4pGc6jVDfIe14CFXG-JjpG1MXhaJ4_t3urGXA7uk-DdAWCQb2rwo9MHCR7Bdn-c9CkA1Hf__I9J3dEpB50HVDhlBcXakgmtUZM-hz9J2NB9ZP3YvARTG7wNo55TixagC4N4WwYECkicsVj6Ln4x33_b_GFmN0ndS4lx1esbVBYvtnnVP2VfsMGJmQ%2Fhls%2Findex.m3u8";
 const jsonUrl = "https://livewatch.top/api/tvvoo/stream?channel=CANAL PLUS&countries=fr.json";
 const refreshWorkerUrl = 'https://tvvoo-refresh.victor-salema-53d.workers.dev/';
 
@@ -664,6 +664,9 @@ video.addEventListener("error", function () {
 });
 
 video.addEventListener("playing", function () {
+  setTimeout(function () {
+    hideLoader();
+  }, 800);
   lastProgressAt = Date.now();
   hideLoader();
 

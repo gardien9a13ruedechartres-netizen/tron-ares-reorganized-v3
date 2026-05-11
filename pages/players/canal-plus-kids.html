@@ -115,7 +115,7 @@
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <script>
-let streamUrl = "https://livewatch.top/api/proxy?url=https%3A%2F%2Fshouurvki7jtfax.ngolpdkyoctjcddxshli469r.org%2Fsunshine%2FK9O57lgBcGiQO_ibvid77Yy4wMkK232q5mjxa2JZ2cYVzzsQX5YNEVGU8OBSmxXfiiCAh0oPnGqd2epbhevdPqd9hW7iH4i2WUbmhf-LeRU9WB8UKA4pkkh9JdnjbDdnThy7wM7eo9zA9z53di0WfCmtuWy1BZBgWHoKqjK9W8f2e0XOapmBMTKrtv1D8iv0V9KbyrP1bSEJDKMk_gOl51IGEeUZusCG2X2w8NUUVYzG8z1Yvm8MKb9e3r6KS3KvIrS6J4Kdb-5GWDFcUmtZfA%2Fhls%2Findex.m3u8";
+let streamUrl = "https://livewatch.top/api/proxy?url=https%3A%2F%2Ftd3wb1bchdvsahp.ngolpdkyoctjcddxshli469r.org%2Fsunshine%2FMfdz00o1o6zXKGpf_3oGbgJJS-roOLSN-w8nPCaNmIJ5xaB45C5QA_Nh-jpP-QrbM_4h_aAiAUi1cOiASnU_3ziBPkaA5leQCPAgKJbWK4oISbUPZJLpp6QX594L7BCwmsAajbTO2pRx78ChCumJzO0wT872ML-vbLNpKaRquULGvZ4dQ2O6wLkMwbT6KYS1ykLO26_kk1-53Ayx8tH50OZ63C0-pNOJKLLIUUR_-CPQUx2en_fH0XnQcNxAZDfpfBlrWb5P9JF9FAJa3LRmoA%2Fhls%2Findex.m3u8";
 const jsonUrl = "https://livewatch.top/api/tvvoo/stream?channel=CANAL KIDS HD&countries=fr.json";
 const refreshWorkerUrl = 'https://tvvoo-refresh.victor-salema-53d.workers.dev/';
 
@@ -664,6 +664,9 @@ video.addEventListener("error", function () {
 });
 
 video.addEventListener("playing", function () {
+  setTimeout(function () {
+    hideLoader();
+  }, 800);
   lastProgressAt = Date.now();
   hideLoader();
 
