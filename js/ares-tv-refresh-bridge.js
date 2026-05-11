@@ -1,17 +1,26 @@
 /*
-  Ares TV Refresh Bridge - JSON Watchdog Mode v2
-  À charger après tron-ares.js.
+  Ares TV Refresh Bridge
+  Version finale - sans modifier tron-ares.js
 
-  Utilisation recommandée dans tes chaînes :
+  Placement exact dans index.html :
+  <script defer src="js/tron-ares.js?v=0"></script>
+  <script defer src="js/ares-tv-refresh-bridge.js?v=1"></script>
+
+  Format recommandé dans ton JSON :
   {
-    "name": "CM TV",
+    "name": "TF1",
+    "slug": "tf1-refresh",
     "type": "tv-refresh",
-    "jsonUrl": "https://tv-channel-refresh.victor-salema-53d.workers.dev/?channel=CM%20TV&countries=pt.json"
+    "url": "about:blank",
+    "jsonUrl": "https://tv-channel-refresh.victor-salema-53d.workers.dev/?channel=TF1&countries=fr.json",
+    "logo": {
+      "type": "image",
+      "value": "media/tf1.png"
+    },
+    "group": "Généraliste",
+    "isFavorite": false,
+    "isIframe": false
   }
-
-  Important :
-  - Ne pas utiliser /hls.m3u8 dans le JSON des chaînes.
-  - Le bridge fait fetch(jsonUrl), trouve le .m3u8, puis lance seulement le .m3u8.
 */
 
 (function () {
@@ -22,25 +31,27 @@
   const STARTUP_WATCHDOG_MS = 12000;
   const MAX_AUTO_RECOVERY_ATTEMPTS = 3;
 
-  let refreshTimer = null;
   let currentChannel = null;
   let currentHls = null;
-  let lastPlayedUrl = "";
-  let isRefreshing = false;
-
+  let refreshTimer = null;
   let startupWatchdog = null;
-  let streamStarted = false;
-  let autoRecoveryAttempts = 0;
   let bufferingTimer = null;
 
+  let lastPlayedUrl = "";
+  let isRefreshing = false;
+  let streamStarted = false;
+  let autoRecoveryAttempts = 0;
+
   function log() {
-    console.log.apply(console, ["[Ares TV Refresh]"].concat(Array.from(arguments)));
+    console.log.apply(console, ["[Ares TV Refresh Bridge]"].concat(Array.from(arguments)));
   }
 
   function normalizeUrl(url) {
     let cleanUrl = String(url || "").trim();
 
-    if (!cleanUrl) return "";
+    if (!cleanUrl) {
+      return "";
+    }
 
     if (cleanUrl.startsWith("//")) {
       cleanUrl = "https:" + cleanUrl;
@@ -53,8 +64,18 @@
     return cleanUrl;
   }
 
+  function getVideoElement() {
+    return (
+      document.querySelector("#videoEl") ||
+      document.querySelector("#videoPlayer") ||
+      document.querySelector("video")
+    );
+  }
+
   function getJsonUrl(channel) {
-    if (!channel) return "";
+    if (!channel) {
+      return "";
+    }
 
     if (channel.jsonUrl) {
       return normalizeUrl(channel.jsonUrl);
@@ -129,164 +150,6 @@
     return Array.from(results).filter(Boolean);
   }
 
-  function getVideoElement() {
-    return (
-      document.querySelector("#videoEl") ||
-      document.querySelector("#videoPlayer") ||
-      document.querySelector("video")
-    );
-  }
-
-  function setStatus(message) {
-    log(message);
-
-    const statusPill = document.querySelector("#statusPill");
-    if (statusPill) {
-      statusPill.textContent = message;
-    }
-  }
-
-  function hideIframeOverlayIfPresent() {
-    const iframeOverlay = document.querySelector("#iframeOverlay");
-    if (iframeOverlay) {
-      iframeOverlay.classList.add("hidden");
-    }
-  }
-
-  function ensureBufferingIndicator() {
-    let indicator = document.querySelector("#aresTvRefreshBuffering");
-
-    if (indicator) return indicator;
-
-    indicator = document.createElement("div");
-    indicator.id = "aresTvRefreshBuffering";
-    indicator.className = "hidden";
-    indicator.innerHTML = '<span class="ares-tv-refresh-spinner"></span><span>Flux instable wait<span class="ares-tv-refresh-dots"></span></span>';
-
-    const style = document.createElement("style");
-    style.textContent = `
-      #aresTvRefreshBuffering {
-        position: fixed;
-        left: 50%;
-        bottom: 34px;
-        transform: translateX(-50%);
-        z-index: 999999;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 12px 18px;
-        border-radius: 999px;
-        background: rgba(0,0,0,.84);
-        color: #f3f4f6;
-        border: 1px solid rgba(255,255,255,.14);
-        backdrop-filter: blur(12px);
-        font: 600 14px Arial, sans-serif;
-        transition: opacity .25s ease, visibility .25s ease, transform .25s ease;
-      }
-
-      #aresTvRefreshBuffering.hidden {
-        opacity: 0;
-        visibility: hidden;
-        pointer-events: none;
-        transform: translateX(-50%) translateY(10px);
-      }
-
-      .ares-tv-refresh-spinner {
-        width: 22px;
-        height: 22px;
-        border-radius: 50%;
-        border: 3px solid rgba(255,255,255,.18);
-        border-top-color: #3b82f6;
-        animation: aresTvRefreshSpin .8s linear infinite;
-      }
-
-      .ares-tv-refresh-dots::after {
-        content: "";
-        display: inline-block;
-        width: 24px;
-        text-align: left;
-        animation: aresTvRefreshDots 1.4s infinite;
-      }
-
-      @keyframes aresTvRefreshSpin {
-        to { transform: rotate(360deg); }
-      }
-
-      @keyframes aresTvRefreshDots {
-        0% { content: ""; }
-        25% { content: "."; }
-        50% { content: ".."; }
-        75% { content: "..."; }
-        100% { content: ""; }
-      }
-    `;
-
-    document.head.appendChild(style);
-    document.body.appendChild(indicator);
-
-    return indicator;
-  }
-
-  function showBufferingMessage() {
-    const indicator = ensureBufferingIndicator();
-
-    clearTimeout(bufferingTimer);
-    bufferingTimer = setTimeout(function () {
-      indicator.classList.remove("hidden");
-    }, 400);
-  }
-
-  function hideBufferingMessage() {
-    clearTimeout(bufferingTimer);
-
-    const indicator = document.querySelector("#aresTvRefreshBuffering");
-    if (indicator) {
-      indicator.classList.add("hidden");
-    }
-  }
-
-  function startPlaybackWatchdog() {
-    clearPlaybackWatchdog();
-
-    streamStarted = false;
-
-    startupWatchdog = setTimeout(function () {
-      if (streamStarted) return;
-
-      autoRecoveryAttempts += 1;
-
-      setStatus(
-        "Flux bloqué → récupération " +
-        autoRecoveryAttempts +
-        "/" +
-        MAX_AUTO_RECOVERY_ATTEMPTS
-      );
-
-      showBufferingMessage();
-
-      if (autoRecoveryAttempts <= MAX_AUTO_RECOVERY_ATTEMPTS) {
-        refreshCurrentChannel(true);
-      } else {
-        setStatus("Flux indisponible");
-      }
-    }, STARTUP_WATCHDOG_MS);
-  }
-
-  function clearPlaybackWatchdog() {
-    if (startupWatchdog) {
-      clearTimeout(startupWatchdog);
-      startupWatchdog = null;
-    }
-  }
-
-  function markStreamStarted() {
-    streamStarted = true;
-    autoRecoveryAttempts = 0;
-    clearPlaybackWatchdog();
-    hideBufferingMessage();
-    setStatus("Live");
-  }
-
   async function fetchJsonAndFindM3u8(channel) {
     const jsonUrl = getJsonUrl(channel);
 
@@ -313,36 +176,171 @@
     return normalizeUrl(links[0]);
   }
 
-  async function refreshCurrentChannel(forceReplay) {
-    if (!currentChannel || isRefreshing) return;
+  function setStatus(message) {
+    log(message);
 
-    isRefreshing = true;
+    const statusPill = document.querySelector("#statusPill");
 
-    try {
-      setStatus("Recherche flux...");
-
-      const directUrl = await fetchJsonAndFindM3u8(currentChannel);
-
-      if (forceReplay || directUrl !== lastPlayedUrl) {
-        lastPlayedUrl = directUrl;
-        playHls(directUrl);
-      }
-
-      setStatus("Flux chargé");
-    } catch (error) {
-      console.error("[Ares TV Refresh]", error);
-
-      if (autoRecoveryAttempts < MAX_AUTO_RECOVERY_ATTEMPTS) {
-        autoRecoveryAttempts += 1;
-        setTimeout(function () {
-          refreshCurrentChannel(true);
-        }, 1200);
-      } else {
-        setStatus("Erreur flux");
-      }
-    } finally {
-      isRefreshing = false;
+    if (statusPill) {
+      statusPill.textContent = message;
     }
+  }
+
+  function hideIframeOverlayIfPresent() {
+    const iframeOverlay = document.querySelector("#iframeOverlay");
+
+    if (iframeOverlay) {
+      iframeOverlay.classList.add("hidden");
+    }
+
+    const iframeEl = document.querySelector("#iframeEl");
+
+    if (iframeEl) {
+      iframeEl.removeAttribute("src");
+    }
+  }
+
+  function ensureBufferingIndicator() {
+    let indicator = document.querySelector("#aresTvRefreshBuffering");
+
+    if (indicator) {
+      return indicator;
+    }
+
+    const style = document.createElement("style");
+    style.textContent = `
+      #aresTvRefreshBuffering {
+        position: fixed;
+        left: 50%;
+        bottom: 34px;
+        transform: translateX(-50%);
+        z-index: 999999;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 18px;
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.84);
+        color: #f3f4f6;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        backdrop-filter: blur(12px);
+        font: 600 14px Arial, sans-serif;
+        transition: opacity .25s ease, visibility .25s ease, transform .25s ease;
+      }
+
+      #aresTvRefreshBuffering.hidden {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transform: translateX(-50%) translateY(10px);
+      }
+
+      .ares-tv-refresh-spinner {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        border: 3px solid rgba(255, 255, 255, 0.18);
+        border-top-color: #3b82f6;
+        animation: aresTvRefreshSpin .8s linear infinite;
+      }
+
+      .ares-tv-refresh-dots::after {
+        content: "";
+        display: inline-block;
+        width: 24px;
+        text-align: left;
+        animation: aresTvRefreshDots 1.4s infinite;
+      }
+
+      @keyframes aresTvRefreshSpin {
+        to { transform: rotate(360deg); }
+      }
+
+      @keyframes aresTvRefreshDots {
+        0% { content: ""; }
+        25% { content: "."; }
+        50% { content: ".."; }
+        75% { content: "..."; }
+        100% { content: ""; }
+      }
+    `;
+
+    indicator = document.createElement("div");
+    indicator.id = "aresTvRefreshBuffering";
+    indicator.className = "hidden";
+    indicator.innerHTML =
+      '<span class="ares-tv-refresh-spinner"></span>' +
+      '<span>Flux instable wait<span class="ares-tv-refresh-dots"></span></span>';
+
+    document.head.appendChild(style);
+    document.body.appendChild(indicator);
+
+    return indicator;
+  }
+
+  function showBufferingMessage() {
+    const indicator = ensureBufferingIndicator();
+
+    clearTimeout(bufferingTimer);
+
+    bufferingTimer = setTimeout(function () {
+      indicator.classList.remove("hidden");
+    }, 400);
+  }
+
+  function hideBufferingMessage() {
+    clearTimeout(bufferingTimer);
+
+    const indicator = document.querySelector("#aresTvRefreshBuffering");
+
+    if (indicator) {
+      indicator.classList.add("hidden");
+    }
+  }
+
+  function clearPlaybackWatchdog() {
+    if (startupWatchdog) {
+      clearTimeout(startupWatchdog);
+      startupWatchdog = null;
+    }
+  }
+
+  function startPlaybackWatchdog() {
+    clearPlaybackWatchdog();
+
+    streamStarted = false;
+
+    startupWatchdog = setTimeout(function () {
+      if (streamStarted) {
+        return;
+      }
+
+      autoRecoveryAttempts += 1;
+
+      setStatus(
+        "Flux bloqué → récupération " +
+        autoRecoveryAttempts +
+        "/" +
+        MAX_AUTO_RECOVERY_ATTEMPTS
+      );
+
+      showBufferingMessage();
+
+      if (autoRecoveryAttempts <= MAX_AUTO_RECOVERY_ATTEMPTS) {
+        refreshCurrentChannel(true);
+      } else {
+        setStatus("Flux indisponible");
+      }
+    }, STARTUP_WATCHDOG_MS);
+  }
+
+  function markStreamStarted() {
+    streamStarted = true;
+    autoRecoveryAttempts = 0;
+
+    clearPlaybackWatchdog();
+    hideBufferingMessage();
+    setStatus("Live");
   }
 
   function playHls(url) {
@@ -403,14 +401,51 @@
 
     if (video.canPlayType("application/vnd.apple.mpegurl")) {
       video.src = directUrl;
+
       video.play().catch(function () {
         setStatus("Autoplay bloqué");
       });
+
       return;
     }
 
     clearPlaybackWatchdog();
     setStatus("HLS non supporté");
+  }
+
+  async function refreshCurrentChannel(forceReplay) {
+    if (!currentChannel || isRefreshing) {
+      return;
+    }
+
+    isRefreshing = true;
+
+    try {
+      setStatus("Recherche flux...");
+
+      const directUrl = await fetchJsonAndFindM3u8(currentChannel);
+
+      if (forceReplay || directUrl !== lastPlayedUrl) {
+        lastPlayedUrl = directUrl;
+        playHls(directUrl);
+      }
+
+      setStatus("Flux chargé");
+    } catch (error) {
+      console.error("[Ares TV Refresh Bridge]", error);
+
+      if (autoRecoveryAttempts < MAX_AUTO_RECOVERY_ATTEMPTS) {
+        autoRecoveryAttempts += 1;
+
+        setTimeout(function () {
+          refreshCurrentChannel(true);
+        }, 1200);
+      } else {
+        setStatus("Erreur flux");
+      }
+    } finally {
+      isRefreshing = false;
+    }
   }
 
   function startAutoRefresh() {
@@ -434,7 +469,9 @@
   function attachVideoWatchers() {
     const video = getVideoElement();
 
-    if (!video || video.dataset.aresTvRefreshAttached === "1") return;
+    if (!video || video.dataset.aresTvRefreshAttached === "1") {
+      return;
+    }
 
     video.dataset.aresTvRefreshAttached = "1";
 
@@ -458,24 +495,39 @@
     });
   }
 
+  function openRefreshChannel(channel) {
+    if (!channel) {
+      return;
+    }
+
+    currentChannel = channel;
+    lastPlayedUrl = "";
+    autoRecoveryAttempts = 0;
+
+    attachVideoWatchers();
+
+    refreshCurrentChannel(true);
+    startAutoRefresh();
+  }
+
+  function normalizeChannelFromDom(item) {
+    return {
+      name: item.dataset.name || item.textContent.trim() || "Chaîne",
+      type: "tv-refresh",
+      url: "about:blank",
+      jsonUrl: item.dataset.jsonUrl || item.dataset.refreshUrl || item.dataset.url || ""
+    };
+  }
+
   window.TVRefreshBridge = {
-    async open(channel) {
-      currentChannel = channel;
-      lastPlayedUrl = "";
-      autoRecoveryAttempts = 0;
+    open: openRefreshChannel,
 
-      attachVideoWatchers();
-
-      await refreshCurrentChannel(true);
-      startAutoRefresh();
-    },
-
-    refresh() {
+    refresh: function () {
       autoRecoveryAttempts = 0;
       return refreshCurrentChannel(true);
     },
 
-    stop() {
+    stop: function () {
       stopAutoRefresh();
 
       if (currentHls) {
@@ -483,30 +535,33 @@
         currentHls = null;
       }
 
-      currentHls = null;
       currentChannel = null;
       lastPlayedUrl = "";
       hideBufferingMessage();
     }
   };
 
-  document.addEventListener("click", function (event) {
-    const item = event.target.closest("[data-tv-refresh='1']");
+  document.addEventListener(
+    "click",
+    function (event) {
+      const item = event.target.closest("[data-tv-refresh='1']");
 
-    if (!item) return;
+      if (!item) {
+        return;
+      }
 
-    event.preventDefault();
-    event.stopPropagation();
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
 
-    const channel = {
-      name: item.dataset.name || item.textContent.trim() || "Chaîne",
-      jsonUrl: item.dataset.jsonUrl || item.dataset.url || ""
-    };
+      openRefreshChannel(normalizeChannelFromDom(item));
+    },
+    true
+  );
 
-    window.TVRefreshBridge.open(channel);
-  }, true);
+  window.addEventListener("load", function () {
+    attachVideoWatchers();
+  });
 
-  window.addEventListener("load", attachVideoWatchers);
-
-  log("Bridge JSON watchdog v2 chargé");
+  log("Bridge chargé");
 })();

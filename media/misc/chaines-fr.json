@@ -24,50 +24,20 @@
       "isFavorite": false,
       "isIframe": false
     },
-    
-
-
-
-
-
-{
-    "name": "TF1",
-    "slug": "tf1",
-    "country": "fr",
-    "group": "Généraliste",
-
-    "logo": {
-      "type": "image",
-      "value": "media/tf1.png"
-    },
-
-    "type": "tv-refresh",
-
-    "url": "https://tv-channel-refresh.victor-salema-53d.workers.dev/?channel=TF1&countries=fr.json"
+    {
+  "name": "TF1",
+  "slug": "tf1-refresh",
+  "type": "tv-refresh",
+  "url": "about:blank",
+  "jsonUrl": "https://tv-channel-refresh.victor-salema-53d.workers.dev/?channel=TF1&countries=fr.json",
+  "logo": {
+    "type": "image",
+    "value": "media/tf1.png"
   },
-
-
-
-
-
-
-
-
-
-
-
-
-{
-      "name": "tf1 séries films",
-      "url": "https://raw.githubusercontent.com/mikekaprielian/rtnaodhor93n398/main/fr/videotf1fs.m3u8",
-      "logo": {
-        "type": "image",
-        "value": "https://cdn.jsdelivr.net/gh/imagesloads/images@main/img_39f20f466996df0d.png"
-      },
-      "group": "FR",
-      "isFavorite": false,
-      "isIframe": false
-    },
+  "group": "Généraliste",
+  "isFavorite": false,
+  "isIframe": false
+},
     {
       "name": "France 2",
       "url": "https://raw.githubusercontent.com/schumijo/iptv/refs/heads/main/playlists/francetv/france2.m3u8",
