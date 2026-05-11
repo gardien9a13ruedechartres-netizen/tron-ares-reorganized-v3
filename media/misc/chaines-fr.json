@@ -24,7 +24,40 @@
       "isFavorite": false,
       "isIframe": false
     },
-    {
+    
+
+
+
+
+
+{
+    "name": "TF1",
+    "slug": "tf1",
+    "country": "fr",
+    "group": "Généraliste",
+
+    "logo": {
+      "type": "image",
+      "value": "media/tf1.png"
+    },
+
+    "type": "tv-refresh",
+
+    "url": "https://tv-channel-refresh.victor-salema-53d.workers.dev/?channel=TF1&countries=fr.json"
+  },
+
+
+
+
+
+
+
+
+
+
+
+
+{
       "name": "tf1 séries films",
       "url": "https://raw.githubusercontent.com/mikekaprielian/rtnaodhor93n398/main/fr/videotf1fs.m3u8",
       "logo": {
