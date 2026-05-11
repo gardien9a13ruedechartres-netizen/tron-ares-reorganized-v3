@@ -92,25 +92,59 @@
     }
 
     @keyframes dots {
-      0% {
-        content: "";
-      }
+      0% { content: ""; }
+      25% { content: "."; }
+      50% { content: ".."; }
+      75% { content: "..."; }
+      100% { content: ""; }
+    }
 
-      25% {
-        content: ".";
-      }
+    #bufferingIndicator {
+      position: fixed;
+      left: 50%;
+      bottom: 32px;
+      transform: translateX(-50%);
+      z-index: 40;
 
-      50% {
-        content: "..";
-      }
+      display: flex;
+      align-items: center;
+      gap: 12px;
 
-      75% {
-        content: "...";
-      }
+      padding: 12px 18px;
+      border-radius: 999px;
 
-      100% {
-        content: "";
-      }
+      background: rgba(0, 0, 0, 0.82);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+
+      transition:
+        opacity 0.25s ease,
+        visibility 0.25s ease,
+        transform 0.25s ease;
+    }
+
+    #bufferingIndicator.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transform: translateX(-50%) translateY(10px);
+    }
+
+    .buffer-spinner {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 3px solid rgba(255, 255, 255, 0.18);
+      border-top-color: #3b82f6;
+      animation: spin 0.8s linear infinite;
+    }
+
+    .buffer-text {
+      color: #f3f4f6;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      white-space: nowrap;
     }
 
     #toggleControlPanel {
@@ -194,28 +228,11 @@
       font-weight: bold;
     }
 
-    .start {
-      background: #22c55e;
-    }
-
-    .stop {
-      background: #ef4444;
-      color: white;
-    }
-
-    .reload {
-      background: #3b82f6;
-      color: white;
-    }
-
-    .copy {
-      background: #f59e0b;
-    }
-
-    .play {
-      background: #8b5cf6;
-      color: white;
-    }
+    .start { background: #22c55e; }
+    .stop { background: #ef4444; color: white; }
+    .reload { background: #3b82f6; color: white; }
+    .copy { background: #f59e0b; }
+    .play { background: #8b5cf6; color: white; }
 
     pre {
       background: #020617;
@@ -234,13 +251,8 @@
       line-height: 1.5;
     }
 
-    .success {
-      color: #22c55e;
-    }
-
-    .error {
-      color: #f87171;
-    }
+    .success { color: #22c55e; }
+    .error { color: #f87171; }
 
     .info-box {
       background: #020617;
@@ -279,6 +291,13 @@
     <div class="pro-spinner"></div>
     <div class="loading-text">
       Chargement du flux<span class="dots"></span>
+    </div>
+  </div>
+
+  <div id="bufferingIndicator" class="hidden">
+    <div class="buffer-spinner"></div>
+    <div class="buffer-text">
+      Flux instable wait<span class="dots"></span>
     </div>
   </div>
 
@@ -345,6 +364,7 @@
     let hlsInstance = null;
     let lastPlayedUrl = "";
     let isLoadingJson = false;
+    let bufferingTimeout = null;
 
     const controlPanel = document.getElementById("controlPanel");
     const urlInput = document.getElementById("jsonUrl");
@@ -357,6 +377,7 @@
     const playerUrlInput = document.getElementById("playerUrl");
     const playerStatus = document.getElementById("playerStatus");
     const loadingOverlay = document.getElementById("loadingOverlay");
+    const bufferingIndicator = document.getElementById("bufferingIndicator");
     const lastLoadTime = document.getElementById("lastLoadTime");
     const nextReloadTime = document.getElementById("nextReloadTime");
 
@@ -369,6 +390,23 @@
 
     function hideLoader() {
       loadingOverlay.classList.add("hidden");
+    }
+
+    function showBufferingIndicator() {
+      if (!loadingOverlay.classList.contains("hidden")) {
+        return;
+      }
+
+      clearTimeout(bufferingTimeout);
+
+      bufferingTimeout = setTimeout(function () {
+        bufferingIndicator.classList.remove("hidden");
+      }, 400);
+    }
+
+    function hideBufferingIndicator() {
+      clearTimeout(bufferingTimeout);
+      bufferingIndicator.classList.add("hidden");
     }
 
     function toggleControlPanel() {
@@ -444,7 +482,6 @@
         jsonViewer.textContent = JSON.stringify(data, null, 2);
 
         const foundM3u8 = findM3u8Links(data);
-
         renderM3u8Links(foundM3u8);
 
         if (!foundM3u8.length) {
@@ -460,13 +497,13 @@
         playerUrlInput.value = directUrl;
         updateLoadTimes(minutes);
 
-        if (forceReplay || directUrl !== lastPlayedUrl) {
-          lastPlayedUrl = directUrl;
-          playHls(directUrl);
-          setPlayerStatus("URL M3U8 détectée et lancée automatiquement.", "success");
+        lastPlayedUrl = directUrl;
+        playHls(directUrl);
+
+        if (forceReplay) {
+          setPlayerStatus("Flux relancé automatiquement après recherche.", "success");
         } else {
-          playHls(directUrl);
-          setPlayerStatus("Même URL détectée, flux relancé automatiquement.", "success");
+          setPlayerStatus("URL M3U8 détectée et lancée automatiquement.", "success");
         }
 
         setStatus("Recherche terminée. M3U8 trouvés : " + foundM3u8.length, "success");
@@ -517,7 +554,6 @@
       }
 
       scan(value);
-
       return Array.from(results);
     }
 
@@ -600,6 +636,7 @@
         return;
       }
 
+      hideBufferingIndicator();
       showLoader();
 
       if (hlsInstance) {
@@ -633,6 +670,7 @@
         hlsInstance.on(Hls.Events.ERROR, function (event, data) {
           if (data.fatal) {
             showLoader();
+            showBufferingIndicator();
             setPlayerStatus("Erreur HLS fatale : " + data.type, "error");
           }
         });
@@ -720,11 +758,37 @@
         .replaceAll("\r", "\\r");
     }
 
-    videoPlayer.addEventListener("playing", hideLoader);
-    videoPlayer.addEventListener("canplay", hideLoader);
-    videoPlayer.addEventListener("waiting", showLoader);
-    videoPlayer.addEventListener("stalled", showLoader);
-    videoPlayer.addEventListener("error", showLoader);
+    videoPlayer.addEventListener("playing", function () {
+      hideLoader();
+      hideBufferingIndicator();
+    });
+
+    videoPlayer.addEventListener("canplay", function () {
+      hideLoader();
+      hideBufferingIndicator();
+    });
+
+    videoPlayer.addEventListener("canplaythrough", function () {
+      hideLoader();
+      hideBufferingIndicator();
+    });
+
+    videoPlayer.addEventListener("waiting", function () {
+      showBufferingIndicator();
+    });
+
+    videoPlayer.addEventListener("stalled", function () {
+      showBufferingIndicator();
+    });
+
+    videoPlayer.addEventListener("seeking", function () {
+      showBufferingIndicator();
+    });
+
+    videoPlayer.addEventListener("error", function () {
+      showBufferingIndicator();
+      showLoader();
+    });
 
     window.addEventListener("load", function () {
       showLoader();
