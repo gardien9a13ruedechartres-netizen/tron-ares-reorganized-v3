@@ -233,6 +233,7 @@
       margin-top: 12px;
       color: #d1d5db;
       font-size: 13px;
+      line-height: 1.5;
     }
 
     .success {
@@ -241,6 +242,21 @@
 
     .error {
       color: #f87171;
+    }
+
+    .info-box {
+      background: #020617;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 10px;
+      margin-top: 10px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #dbeafe;
+    }
+
+    .info-box strong {
+      color: #93c5fd;
     }
 
     .m3u8-item {
@@ -289,6 +305,11 @@
       <button class="reload" onclick="loadJson(true)">Recharger maintenant</button>
 
       <div id="status" class="status">Statut : en attente</div>
+
+      <div class="info-box">
+        <div><strong>Dernier flux chargé :</strong> <span id="lastLoadTime">Aucun</span></div>
+        <div><strong>Prochaine recherche :</strong> <span id="nextReloadTime">Non programmée</span></div>
+      </div>
     </section>
 
     <section class="panel">
@@ -338,6 +359,8 @@
     const playerUrlInput = document.getElementById("playerUrl");
     const playerStatus = document.getElementById("playerStatus");
     const loadingOverlay = document.getElementById("loadingOverlay");
+    const lastLoadTime = document.getElementById("lastLoadTime");
+    const nextReloadTime = document.getElementById("nextReloadTime");
 
     videoPlayer.muted = false;
     videoPlayer.volume = 1;
@@ -352,6 +375,25 @@
 
     function toggleControlPanel() {
       controlPanel.classList.toggle("hidden");
+    }
+
+    function formatDateTime(date) {
+      return date.toLocaleString("fr-FR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
+      });
+    }
+
+    function updateLoadTimes(minutes) {
+      const now = new Date();
+      const next = new Date(now.getTime() + minutes * 60 * 1000);
+
+      lastLoadTime.textContent = formatDateTime(now);
+      nextReloadTime.textContent = formatDateTime(next);
     }
 
     function normalizeUrl(url) {
@@ -415,17 +457,17 @@
         }
 
         const directUrl = normalizeUrl(foundM3u8[0]);
+        const minutes = Number(intervalInput.value) || AUTO_RELOAD_MINUTES;
 
         playerUrlInput.value = directUrl;
+        updateLoadTimes(minutes);
 
         if (forceReplay || directUrl !== lastPlayedUrl) {
           lastPlayedUrl = directUrl;
           playHls(directUrl);
-
           setPlayerStatus("URL M3U8 détectée et lancée automatiquement.", "success");
         } else {
           playHls(directUrl);
-
           setPlayerStatus("Même URL détectée, flux relancé automatiquement.", "success");
         }
 
@@ -524,8 +566,11 @@
         return;
       }
 
+      const minutes = Number(intervalInput.value) || AUTO_RELOAD_MINUTES;
+
       playerUrlInput.value = directUrl;
       lastPlayedUrl = directUrl;
+      updateLoadTimes(minutes);
       playHls(directUrl);
 
       setPlayerStatus("URL directe collée et lancée.", "success");
@@ -540,8 +585,11 @@
         return;
       }
 
+      const minutes = Number(intervalInput.value) || AUTO_RELOAD_MINUTES;
+
       playerUrlInput.value = directUrl;
       lastPlayedUrl = directUrl;
+      updateLoadTimes(minutes);
       playHls(directUrl);
     }
 
@@ -617,6 +665,8 @@
 
       intervalInput.value = minutes;
 
+      nextReloadTime.textContent = formatDateTime(new Date(Date.now() + minutes * 60 * 1000));
+
       loadJson(true);
 
       reloadTimer = setInterval(function () {
@@ -632,6 +682,7 @@
         reloadTimer = null;
       }
 
+      nextReloadTime.textContent = "Non programmée";
       setStatus("Auto-refresh arrêté.", "");
     }
 
