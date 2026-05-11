@@ -43,7 +43,7 @@
 
     "type": "tv-refresh",
 
-    "url": "https://tv-channel-refresh.victor-salema-53d.workers.dev/hls.m3u8?channel=TF1&countries=fr.json"
+    "url": "https://tv-channel-refresh.victor-salema-53d.workers.dev/?channel=TF1&countries=fr.json"
   },
 
 
