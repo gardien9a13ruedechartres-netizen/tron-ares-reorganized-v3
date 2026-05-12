@@ -18,7 +18,7 @@
 {
 "id": "cmtv",
 "name": "CMTV",
-"url": "/pages/cm-workers.html",
+"url": "/pages/cmtv-stream.html",
 "logo": { "type": "image", "value": "/media/cmtv.png" },
 "group": "Généraliste",
 "isFavorite": false,
