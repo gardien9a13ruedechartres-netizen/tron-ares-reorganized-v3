@@ -572,8 +572,6 @@
 
     let reloadTimer = null;
     let hlsInstance = null;
-    let pendingHlsInstance = null;
-    let currentStreamUrl = "";
     let isLoadingJson = false;
     let bufferingTimeout = null;
     let startupWatchdog = null;
@@ -934,120 +932,114 @@
     }
 
     function playHls(url) {
-  const directUrl = normalizeUrl(url);
+      const directUrl = normalizeUrl(url);
 
-  if (!directUrl) {
-    setPlayerStatus("URL HLS vide.", "error");
-    return;
-  }
-
-  if (directUrl === currentStreamUrl && hlsInstance) {
-    addMonitorLog("Flux identique ignoré.");
-    return;
-  }
-
-  addMonitorLog("Préchargement du nouveau flux...");
-  setMonitorHlsState("Préchargement", "warn");
-
-  const nextHls = new Hls({
-    enableWorker: true,
-    lowLatencyMode: true,
-    backBufferLength: 30
-  });
-
-  pendingHlsInstance = nextHls;
-
-  nextHls.loadSource(directUrl);
-  nextHls.attachMedia(videoPlayer);
-
-  nextHls.on(Hls.Events.MEDIA_ATTACHED, function () {
-    addMonitorLog("Media attaché.");
-  });
-
-  nextHls.on(Hls.Events.MANIFEST_PARSED, function () {
-
-    addMonitorLog("Nouveau flux prêt.");
-
-    const currentTime = videoPlayer.currentTime || 0;
-    const paused = videoPlayer.paused;
-
-    if (hlsInstance && hlsInstance !== nextHls) {
-      try {
-        hlsInstance.destroy();
-      } catch (e) {}
-    }
-
-    hlsInstance = nextHls;
-    pendingHlsInstance = null;
-    currentStreamUrl = directUrl;
-    addMonitorLog("URL active remplacée : " + directUrl);
-    console.log("[HOT_SWAP_OK]", directUrl);
-    
-    if (!paused) {
-      videoPlayer.play().catch(() => {});
-    }
-
-    hideLoader();
-    hideBufferingIndicator();
-
-    setMonitorHlsState("Lecture active", "ok");
-    setPlayerStatus("Flux actif.", "success");
-
-    markStreamStarted();
-  });
-
-  nextHls.on(Hls.Events.LEVEL_SWITCHED, function (event, data) {
-    const level = nextHls.levels[data.level];
-
-    if (level) {
-      monitorLastBitrate = level.bitrate || 0;
-
-      addMonitorLog(
-        "Qualité : " +
-        (level.width || "?") +
-        "x" +
-        (level.height || "?")
-      );
-    }
-  });
-
-  nextHls.on(Hls.Events.ERROR, function (event, data) {
-
-    if (data.details === "bufferStalledError") {
-      addMonitorLog("Micro-buffer détecté.");
-      return;
-    }
-
-    monitorErrorCount += 1;
-
-    addMonitorLog(
-      "Erreur HLS : " +
-      data.type +
-      " / " +
-      data.details
-    );
-
-    if (data.fatal) {
-
-      setMonitorHlsState("Erreur fatale", "error");
-
-      if (autoRecoveryAttempts < MAX_AUTO_RECOVERY_ATTEMPTS) {
-        autoRecoveryAttempts += 1;
-
-        addMonitorLog("Recherche nouveau flux...");
-
-        loadJson(true);
+      if (!directUrl) {
+        setPlayerStatus("URL HLS vide.", "error");
+        showLoader();
+        return;
       }
-    }
-  });
 
-  if (!videoPlayer.src && !videoPlayer.currentSrc) {
-    showLoader();
+      hideBufferingIndicator();
+      showLoader();
+      startPlaybackWatchdog(directUrl);
+      setMonitorHlsState("Chargement", "warn");
+      addMonitorLog("Chargement HLS lancé.");
+
+      if (hlsInstance) {
+        hlsInstance.destroy();
+        hlsInstance = null;
+      }
+
+      videoPlayer.pause();
+      videoPlayer.removeAttribute("src");
+      videoPlayer.load();
+
+      videoPlayer.muted = false;
+      videoPlayer.volume = 1;
+
+      if (Hls.isSupported()) {
+        hlsInstance = new Hls({
+          enableWorker: true,
+          lowLatencyMode: true,
+          backBufferLength: 30
+        });
+
+        hlsInstance.loadSource(directUrl);
+        hlsInstance.attachMedia(videoPlayer);
+
+        hlsInstance.on(Hls.Events.MEDIA_ATTACHED, function () {
+          setMonitorHlsState("Média attaché", "warn");
+        });
+
+        hlsInstance.on(Hls.Events.MANIFEST_PARSED, function () {
+          setMonitorHlsState("Manifest OK", "ok");
+          addMonitorLog("Manifest HLS analysé.");
+
+          videoPlayer.play().catch(function () {
+            setPlayerStatus("Flux chargé. Clique sur lecture si l’autoplay est bloqué.", "success");
+            addMonitorLog("Autoplay bloqué par le navigateur.");
+          });
+        });
+
+        hlsInstance.on(Hls.Events.LEVEL_SWITCHED, function (event, data) {
+          const level = hlsInstance.levels[data.level];
+
+          if (level) {
+            monitorLastBitrate = level.bitrate || monitorLastBitrate;
+            addMonitorLog("Qualité HLS : " + (level.width || "?") + "x" + (level.height || "?"));
+          }
+        });
+
+        hlsInstance.on(Hls.Events.ERROR, function (event, data) {
+  if (data.details === "bufferStalledError") {
+    addMonitorLog("Buffer temporaire détecté, récupération en cours.");
+    setMonitorHlsState("Buffer temporaire", "warn");
+    return;
   }
-}    
 
+  monitorErrorCount += 1;
 
-     function startAutoReload() {
+  addMonitorLog("Erreur HLS : " + data.type + " / " + data.details);
+
+  if (data.fatal) {
+    showLoader();
+    showBufferingIndicator();
+    setMonitorHlsState("Erreur fatale", "error");
+    setPlayerStatus("Erreur HLS fatale. Nouvelle recherche automatique...", "error");
+
+    if (autoRecoveryAttempts < MAX_AUTO_RECOVERY_ATTEMPTS) {
+      autoRecoveryAttempts += 1;
+      loadJson(true);
+    }
+  } else {
+    setMonitorHlsState("Erreur non fatale", "warn");
+  }
+});
+
+        setPlayerStatus("Chargement du flux HLS...", "");
+        return;
+      }
+
+      if (videoPlayer.canPlayType("application/vnd.apple.mpegurl")) {
+        videoPlayer.src = directUrl;
+
+        videoPlayer.play().catch(function () {
+          setPlayerStatus("Flux chargé. Clique sur lecture si l’autoplay est bloqué.", "success");
+        });
+
+        setMonitorHlsState("HLS natif", "ok");
+        setPlayerStatus("Lecture native HLS activée.", "success");
+        return;
+      }
+
+      clearPlaybackWatchdog();
+      showLoader();
+      setMonitorHlsState("Non supporté", "error");
+      setPlayerStatus("Ce navigateur ne supporte pas HLS.", "error");
+    }
+
+    function startAutoReload() {
       stopAutoReload();
 
       const minutes = Number(intervalInput.value) || AUTO_RELOAD_MINUTES;
