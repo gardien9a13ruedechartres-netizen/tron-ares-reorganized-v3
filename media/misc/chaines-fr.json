@@ -437,7 +437,7 @@
     },
     {
       "name": "CANAL+ Gr. Ecran",
-      "url": "/pages/CANAL-plus-Gr-Ecran.html",
+      "url": "/pages/canal+ge-stream.html",
       "logo": {
         "type": "image",
         "value": "media/image/canal-plus-grand-ecran.webp"
