@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-
   <style>
     * { box-sizing: border-box; }
 
@@ -39,11 +38,10 @@
       position: fixed;
       inset: 0;
       z-index: 10;
-      background: #000;
+      overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
-      flex-direction: column;
       transition: opacity 0.35s ease, visibility 0.35s ease;
     }
 
@@ -51,6 +49,35 @@
       opacity: 0;
       visibility: hidden;
       pointer-events: none;
+    }
+
+    #loaderVideo {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 1;
+      filter: brightness(0.72);
+      transform: scale(1.02);
+    }
+
+    .loader-dark-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      background:
+        radial-gradient(circle at center, rgba(0,0,0,0.12), rgba(0,0,0,0.72)),
+        rgba(0,0,0,0.28);
+    }
+
+    .loader-content {
+      position: relative;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
     }
 
     .pro-spinner {
@@ -68,6 +95,7 @@
       font-size: 18px;
       font-weight: 600;
       color: #e5e7eb;
+      text-shadow: 0 2px 14px rgba(0,0,0,0.85);
     }
 
     .dots::after {
@@ -148,7 +176,7 @@
       max-height: calc(100vh - 90px);
       overflow: auto;
       z-index: 25;
-      background: rgba(31,41,55,0.94);
+      background: rgba(31, 41, 55, 0);
       border: 1px solid rgba(255,255,255,0.15);
       border-radius: 12px;
       padding: 16px;
@@ -159,7 +187,7 @@
     #controlPanel.hidden { display: none; }
 
     .panel {
-      background: rgba(17,24,39,0.8);
+      background: rgba(17,24,39,0.0);
       border: 1px solid #374151;
       border-radius: 10px;
       padding: 14px;
@@ -302,27 +330,30 @@
       border-bottom: 1px solid rgba(148,163,184,0.15);
       padding: 4px 0;
     }
-  .loader-logo {
-  width: 160px;
-  max-width: 45vw;
-  height: auto;
-  object-fit: contain;
-  margin-bottom: 28px;
-  animation: logoPulse 1.6s ease-in-out infinite;
-}
 
-@keyframes logoPulse {
-  0%, 100% {
-    opacity: 0.85;
-    transform: scale(1);
-  }
+    .loader-logo {
+      width: 160px;
+      max-width: 45vw;
+      height: auto;
+      object-fit: contain;
+      margin-bottom: 28px;
+      animation: logoPulse 1.6s ease-in-out infinite;
+      filter: drop-shadow(0 8px 26px rgba(0,0,0,0.9));
+    }
 
-  50% {
-    opacity: 1;
-    transform: scale(1.04);
-  }
-}
+    @keyframes logoPulse {
+      0%, 100% {
+        opacity: 0.85;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 1;
+        transform: scale(1.04);
+      }
+    }
   </style>
+  
 </head>
 
 <body>
