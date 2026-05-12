@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Fullscreen HLS Auto Refresh Player</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+      color: #f9fafb;
+    }
+
+    #playerWrapper {
+      position: fixed;
+      inset: 0;
+      background: #000;
+      z-index: 1;
+    }
+
+    #videoPlayer {
+      width: 100vw;
+      height: 100vh;
+      object-fit: fill;
+      background: #000;
+      display: block;
+    }
+
+    #loadingOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      transition: opacity 0.35s ease, visibility 0.35s ease;
+    }
+
+    #loadingOverlay.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .pro-spinner {
+      width: 66px;
+      height: 66px;
+      border-radius: 50%;
+      border: 5px solid rgba(255,255,255,0.14);
+      border-top-color: #3b82f6;
+      border-right-color: #60a5fa;
+      animation: spin 0.9s linear infinite;
+      margin-bottom: 20px;
+    }
+
+    .loading-text {
+      font-size: 18px;
+      font-weight: 600;
+      color: #e5e7eb;
+    }
+
+    .dots::after {
+      content: "";
+      display: inline-block;
+      width: 24px;
+      animation: dots 1.4s infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @keyframes dots {
+      0% { content: ""; }
+      25% { content: "."; }
+      50% { content: ".."; }
+      75% { content: "..."; }
+      100% { content: ""; }
+    }
+
+    #bufferingIndicator {
+      position: fixed;
+      left: 50%;
+      bottom: 32px;
+      transform: translateX(-50%);
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 18px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.82);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.12);
+      transition: opacity 0.25s ease, visibility 0.25s ease;
+    }
+
+    #bufferingIndicator.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .buffer-spinner {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 3px solid rgba(255,255,255,0.18);
+      border-top-color: #3b82f6;
+      animation: spin 0.8s linear infinite;
+    }
+
+    .buffer-text {
+      color: #f3f4f6;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    #toggleControlPanel {
+      position: fixed;
+      top: -2px;
+      right: 16px;
+      z-index: 30;
+      padding: 10px 14px;
+      border-radius: 8px;
+      background: rgba(17,24,39,0);
+      color: #ffffff36;
+      cursor: pointer;
+      font-weight: bold;
+      border: none;
+    }
+
+    #controlPanel {
+      position: fixed;
+      top: 70px;
+      right: 16px;
+      width: 420px;
+      max-width: calc(100vw - 32px);
+      max-height: calc(100vh - 90px);
+      overflow: auto;
+      z-index: 25;
+      background: rgba(31,41,55,0.94);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 12px;
+      padding: 16px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+
+    #controlPanel.hidden { display: none; }
+
+    .panel {
+      background: rgba(17,24,39,0.8);
+      border: 1px solid #374151;
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+
+    h1, h2 { margin-top: 0; }
+    h1 { font-size: 20px; }
+    h2 { font-size: 16px; }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      color: #d1d5db;
+      font-size: 14px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #4b5563;
+      background: #111827;
+      color: #f9fafb;
+      margin-bottom: 12px;
+    }
+
+    button {
+      padding: 10px 14px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 4px 4px 4px 0;
+      font-weight: bold;
+    }
+
+    .start { background: #22c55e; }
+    .stop { background: #ef4444; color: white; }
+    .reload { background: #3b82f6; color: white; }
+    .copy { background: #f59e0b; color: black; }
+    .play { background: #8b5cf6; color: white; }
+
+    pre {
+      background: #020617;
+      padding: 12px;
+      border-radius: 8px;
+      overflow: auto;
+      max-height: 240px;
+      border: 1px solid #334155;
+      font-size: 12px;
+    }
+
+    .status {
+      margin-top: 12px;
+      color: #d1d5db;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .success { color: #22c55e; }
+    .error { color: #f87171; }
+
+    .info-box {
+      background: #020617;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 10px;
+      margin-top: 10px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #dbeafe;
+    }
+
+    .m3u8-item {
+      padding: 10px 0;
+      border-bottom: 1px solid #374151;
+      word-break: break-all;
+    }
+
+    code {
+      color: #93c5fd;
+      font-size: 12px;
+    }
+
+    .hidden-monitoring {
+      display: none;
+      margin-top: 12px;
+    }
+
+    .hidden-monitoring.open {
+      display: block;
+    }
+
+    .monitor-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .monitor-card {
+      background: #020617;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 10px;
+    }
+
+    .monitor-label {
+      color: #94a3b8;
+      font-size: 11px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .monitor-value {
+      color: #f8fafc;
+      font-size: 14px;
+      font-weight: bold;
+      word-break: break-word;
+    }
+
+    .monitor-ok { color: #22c55e; }
+    .monitor-warn { color: #f59e0b; }
+    .monitor-error { color: #f87171; }
+
+    .monitor-log {
+      margin-top: 10px;
+      max-height: 160px;
+      overflow: auto;
+      background: #020617;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 12px;
+      line-height: 1.5;
+      color: #cbd5e1;
+    }
+
+    .monitor-log div {
+      border-bottom: 1px solid rgba(148,163,184,0.15);
+      padding: 4px 0;
+    }
+  .loader-logo {
+  width: 160px;
+  max-width: 45vw;
+  height: auto;
+  object-fit: contain;
+  margin-bottom: 28px;
+  animation: logoPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes logoPulse {
+  0%, 100% {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+  </style>
+</head>
+
+<body>
+  <div id="playerWrapper">
+    <video id="videoPlayer" controls autoplay playsinline></video>
+  </div>
+
+  <div id="loadingOverlay">
+    <img
+    class="loader-logo"
+    src="https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/sport-tv-1-pt.png"
+    alt="SPTV1"
+  />
+    <div class="pro-spinner"></div>
+    <div class="loading-text">Chargement du flux<span class="dots"></span></div>
+  </div>
+
+  <div id="bufferingIndicator" class="hidden">
+    <div class="buffer-spinner"></div>
+    <div class="buffer-text">Flux instable wait<span class="dots"></span></div>
+  </div>
+
+  <button id="toggleControlPanel" onclick="toggleControlPanel()">☰</button>
+
+  <aside id="controlPanel" class="hidden">
+    <h1>Control Panel</h1>
+
+    <section class="panel">
+      <label>URL JSON dynamique</label>
+      <input id="jsonUrl" type="text" value="https://multi-chaines.victor-salema-53d.workers.dev/?channel=SPORT TV 1 HD&countries=pt.json" />
+
+      <label>Intervalle en minutes</label>
+      <input id="intervalMinutes" type="number" min="1" value="30" />
+
+      <button class="start" onclick="startAutoReload()">Démarrer</button>
+      <button class="stop" onclick="stopAutoReload()">Arrêter</button>
+      <button class="reload" onclick="loadJson(true)">Recharger maintenant</button>
+
+      <div id="status" class="status">Statut : en attente</div>
+
+      <div class="info-box">
+        <div><strong>Dernier flux chargé :</strong> <span id="lastLoadTime">Aucun</span></div>
+        <div><strong>Prochaine recherche :</strong> <span id="nextReloadTime">Non programmée</span></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <button id="monitoringToggleButton" class="reload" onclick="toggleMonitoringPanel()">Monitoring ▾</button>
+      <button class="copy" onclick="copyMonitoringLog()">Copier le log</button>
+
+      <div id="monitoringContent" class="hidden-monitoring">
+        <div class="monitor-grid">
+          <div class="monitor-card">
+            <div class="monitor-label">État vidéo</div>
+            <div id="monitorVideoState" class="monitor-value">En attente</div>
+          </div>
+
+          <div class="monitor-card">
+            <div class="monitor-label">État HLS</div>
+            <div id="monitorHlsState" class="monitor-value">Inactif</div>
+          </div>
+
+          <div class="monitor-card">
+            <div class="monitor-label">Buffer</div>
+            <div id="monitorBuffer" class="monitor-value">0.0 s</div>
+          </div>
+
+          <div class="monitor-card">
+            <div class="monitor-label">Temps lu</div>
+            <div id="monitorCurrentTime" class="monitor-value">00:00</div>
+          </div>
+
+          <div class="monitor-card">
+            <div class="monitor-label">Débit estimé</div>
+            <div id="monitorBitrate" class="monitor-value">N/A</div>
+          </div>
+
+          <div class="monitor-card">
+            <div class="monitor-label">Résolution</div>
+            <div id="monitorResolution" class="monitor-value">N/A</div>
+          </div>
+
+          <div class="monitor-card">
+            <div class="monitor-label">Récupérations</div>
+            <div id="monitorRecovery" class="monitor-value">0 / 3</div>
+          </div>
+
+          <div class="monitor-card">
+            <div class="monitor-label">Erreurs</div>
+            <div id="monitorErrors" class="monitor-value">0</div>
+          </div>
+        </div>
+
+        <div class="monitor-log" id="monitorLog">
+          <div>Aucun événement pour le moment.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Player HLS</h2>
+
+      <label>URL M3U8 directe</label>
+      <input id="playerUrl" type="text" placeholder="Le lien .m3u8 direct sera collé ici automatiquement" />
+
+      <button class="play" onclick="playCurrentUrl()">Lire cette URL directe</button>
+      <button class="copy" onclick="copyText(playerUrlInput.value)">Copier URL du player</button>
+
+      <div id="playerStatus" class="status">Player : en attente</div>
+    </section>
+
+    <section class="panel">
+      <h2>M3U8 trouvés</h2>
+      <div id="m3u8List">Aucun lien trouvé.</div>
+    </section>
+
+    <section class="panel">
+      <h2>JSON reçu</h2>
+      <pre id="jsonViewer">{}</pre>
+    </section>
+  </aside>
+
+  <script>
+    const DEFAULT_DOMAIN = "https://livewatch.top";
+    const AUTO_RELOAD_MINUTES = 30;
+    const STARTUP_WATCHDOG_MS = 12000;
+    const MAX_AUTO_RECOVERY_ATTEMPTS = 3;
+
+    let reloadTimer = null;
+    let hlsInstance = null;
+    let isLoadingJson = false;
+    let bufferingTimeout = null;
+    let startupWatchdog = null;
+    let streamStarted = false;
+    let autoRecoveryAttempts = 0;
+    let monitorTimer = null;
+    let monitorErrorCount = 0;
+    let monitorLastBitrate = 0;
+    let monitorLastHlsState = "Inactif";
+
+    const controlPanel = document.getElementById("controlPanel");
+    const urlInput = document.getElementById("jsonUrl");
+    const intervalInput = document.getElementById("intervalMinutes");
+    const statusBox = document.getElementById("status");
+    const jsonViewer = document.getElementById("jsonViewer");
+    const m3u8List = document.getElementById("m3u8List");
+
+    const videoPlayer = document.getElementById("videoPlayer");
+    const playerUrlInput = document.getElementById("playerUrl");
+    const playerStatus = document.getElementById("playerStatus");
+    const loadingOverlay = document.getElementById("loadingOverlay");
+    const bufferingIndicator = document.getElementById("bufferingIndicator");
+    const lastLoadTime = document.getElementById("lastLoadTime");
+    const nextReloadTime = document.getElementById("nextReloadTime");
+
+    const monitoringContent = document.getElementById("monitoringContent");
+    const monitoringToggleButton = document.getElementById("monitoringToggleButton");
+    const monitorVideoState = document.getElementById("monitorVideoState");
+    const monitorHlsState = document.getElementById("monitorHlsState");
+    const monitorBuffer = document.getElementById("monitorBuffer");
+    const monitorCurrentTime = document.getElementById("monitorCurrentTime");
+    const monitorBitrate = document.getElementById("monitorBitrate");
+    const monitorResolution = document.getElementById("monitorResolution");
+    const monitorRecovery = document.getElementById("monitorRecovery");
+    const monitorErrors = document.getElementById("monitorErrors");
+    const monitorLog = document.getElementById("monitorLog");
+
+    videoPlayer.muted = false;
+    videoPlayer.volume = 1;
+
+    function toggleControlPanel() {
+      controlPanel.classList.toggle("hidden");
+    }
+
+    function toggleMonitoringPanel() {
+      monitoringContent.classList.toggle("open");
+      monitoringToggleButton.textContent = monitoringContent.classList.contains("open")
+        ? "Monitoring ▴"
+        : "Monitoring ▾";
+    }
+
+    async function copyMonitoringLog() {
+      const lines = Array.from(monitorLog.children).map(function (line) {
+        return line.textContent;
+      });
+
+      const text = lines.length ? lines.join("\n") : "Aucun log monitoring.";
+
+      try {
+        await navigator.clipboard.writeText(text);
+        setStatus("Log monitoring copié.", "success");
+      } catch (error) {
+        setStatus("Impossible de copier le log : " + error.message, "error");
+      }
+    }
+
+    function showLoader() {
+      loadingOverlay.classList.remove("hidden");
+    }
+
+    function hideLoader() {
+      loadingOverlay.classList.add("hidden");
+    }
+
+    function showBufferingIndicator() {
+      if (!loadingOverlay.classList.contains("hidden")) return;
+
+      clearTimeout(bufferingTimeout);
+      bufferingTimeout = setTimeout(function () {
+        bufferingIndicator.classList.remove("hidden");
+      }, 400);
+    }
+
+    function hideBufferingIndicator() {
+      clearTimeout(bufferingTimeout);
+      bufferingIndicator.classList.add("hidden");
+    }
+
+    function formatDateTime(date) {
+      return date.toLocaleString("fr-FR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
+      });
+    }
+
+    function formatDuration(seconds) {
+      if (!Number.isFinite(seconds) || seconds < 0) return "00:00";
+
+      const totalSeconds = Math.floor(seconds);
+      const minutes = Math.floor(totalSeconds / 60);
+      const remainingSeconds = totalSeconds % 60;
+
+      return String(minutes).padStart(2, "0") + ":" + String(remainingSeconds).padStart(2, "0");
+    }
+
+    function updateLoadTimes(minutes) {
+      const now = new Date();
+      const next = new Date(now.getTime() + minutes * 60 * 1000);
+
+      lastLoadTime.textContent = formatDateTime(now);
+      nextReloadTime.textContent = formatDateTime(next);
+    }
+
+    function normalizeUrl(url) {
+      let cleanUrl = String(url || "").trim();
+
+      if (!cleanUrl) return "";
+
+      if (cleanUrl.startsWith("//")) {
+        cleanUrl = "https:" + cleanUrl;
+      }
+
+      if (cleanUrl.startsWith("/")) {
+        cleanUrl = DEFAULT_DOMAIN + cleanUrl;
+      }
+
+      return cleanUrl;
+    }
+
+    function startPlaybackWatchdog(url) {
+      clearPlaybackWatchdog();
+
+      streamStarted = false;
+
+      startupWatchdog = setTimeout(function () {
+        if (streamStarted) return;
+
+        autoRecoveryAttempts += 1;
+
+        showLoader();
+        showBufferingIndicator();
+        addMonitorLog("Watchdog : flux bloqué au démarrage.");
+
+        setPlayerStatus(
+          "Flux bloqué au démarrage. Récupération automatique " +
+          autoRecoveryAttempts +
+          "/" +
+          MAX_AUTO_RECOVERY_ATTEMPTS +
+          "...",
+          "error"
+        );
+
+        if (autoRecoveryAttempts <= MAX_AUTO_RECOVERY_ATTEMPTS) {
+          loadJson(true);
+        } else {
+          setPlayerStatus(
+            "Flux toujours bloqué après plusieurs essais. Prochaine tentative au prochain refresh.",
+            "error"
+          );
+        }
+      }, STARTUP_WATCHDOG_MS);
+    }
+
+    function clearPlaybackWatchdog() {
+      if (startupWatchdog) {
+        clearTimeout(startupWatchdog);
+        startupWatchdog = null;
+      }
+    }
+
+    function markStreamStarted() {
+      streamStarted = true;
+      autoRecoveryAttempts = 0;
+      clearPlaybackWatchdog();
+      hideLoader();
+      hideBufferingIndicator();
+      setMonitorHlsState("Lecture active", "ok");
+    }
+
+    async function loadJson(forceReplay) {
+      if (isLoadingJson) return;
+
+      const jsonUrl = normalizeUrl(urlInput.value);
+
+      if (!jsonUrl) {
+        setStatus("Erreur : aucune URL JSON renseignée.", "error");
+        showLoader();
+        return;
+      }
+
+      isLoadingJson = true;
+      setMonitorHlsState("Recherche JSON", "warn");
+      addMonitorLog("Recherche JSON lancée.");
+
+      try {
+        setStatus("Recherche automatique du flux en cours...", "");
+
+        const response = await fetch(jsonUrl, {
+          method: "GET",
+          cache: "no-store"
+        });
+
+        if (!response.ok) {
+          throw new Error("HTTP " + response.status);
+        }
+
+        const data = await response.json();
+
+        jsonViewer.textContent = JSON.stringify(data, null, 2);
+
+        const foundM3u8 = findM3u8Links(data);
+        renderM3u8Links(foundM3u8);
+
+        if (!foundM3u8.length) {
+          showLoader();
+          setStatus("JSON chargé, mais aucun lien .m3u8 trouvé.", "error");
+          setPlayerStatus("Aucune URL .m3u8 trouvée.", "error");
+          setMonitorHlsState("Aucun M3U8", "error");
+          addMonitorLog("Aucun lien M3U8 trouvé dans le JSON.");
+          return;
+        }
+
+        const directUrl = normalizeUrl(foundM3u8[0]);
+        const minutes = Number(intervalInput.value) || AUTO_RELOAD_MINUTES;
+
+        playerUrlInput.value = directUrl;
+        updateLoadTimes(minutes);
+
+        playHls(directUrl);
+
+        if (forceReplay) {
+          setPlayerStatus("Flux relancé automatiquement après recherche.", "success");
+        } else {
+          setPlayerStatus("URL M3U8 détectée et lancée automatiquement.", "success");
+        }
+
+        setStatus("Recherche terminée. M3U8 trouvés : " + foundM3u8.length, "success");
+        addMonitorLog("M3U8 trouvés : " + foundM3u8.length);
+      } catch (error) {
+        monitorErrorCount += 1;
+        showLoader();
+        setStatus("Erreur : " + error.message, "error");
+        setPlayerStatus("Impossible de charger le flux.", "error");
+        setMonitorHlsState("Erreur JSON", "error");
+        addMonitorLog("Erreur JSON : " + error.message);
+      } finally {
+        isLoadingJson = false;
+      }
+    }
+
+    function findM3u8Links(value) {
+      const results = new Set();
+
+      function scan(item) {
+        if (typeof item === "string") {
+          const directMatches = item.match(/https?:\/\/[^"' <>\n\r]+\.m3u8[^"' <>\n\r]*/g);
+          const relativeMatches = item.match(/\/[^"' <>\n\r]+\.m3u8[^"' <>\n\r]*/g);
+
+          if (directMatches) {
+            directMatches.forEach(function (url) {
+              results.add(normalizeUrl(url));
+            });
+          }
+
+          if (relativeMatches) {
+            relativeMatches.forEach(function (url) {
+              results.add(normalizeUrl(url));
+            });
+          }
+
+          if (item.includes(".m3u8") && !directMatches && !relativeMatches) {
+            results.add(normalizeUrl(item));
+          }
+
+          return;
+        }
+
+        if (Array.isArray(item)) {
+          item.forEach(scan);
+          return;
+        }
+
+        if (item && typeof item === "object") {
+          Object.values(item).forEach(scan);
+        }
+      }
+
+      scan(value);
+      return Array.from(results);
+    }
+
+    function renderM3u8Links(links) {
+      if (!links.length) {
+        m3u8List.innerHTML = "Aucun lien .m3u8 trouvé.";
+        return;
+      }
+
+      m3u8List.innerHTML = "";
+
+      links.forEach(function (link, index) {
+        const directLink = normalizeUrl(link);
+
+        const item = document.createElement("div");
+        item.className = "m3u8-item";
+
+        item.innerHTML = `
+          <div><strong>M3U8 #${index + 1}</strong></div>
+          <br>
+          <div><strong>Lien direct lu par le player :</strong></div>
+          <code>${escapeHtml(directLink)}</code>
+          <br><br>
+          <button class="play" onclick="pasteAndPlay('${escapeJs(directLink)}')">Coller et lire</button>
+          <button class="copy" onclick="copyText('${escapeJs(directLink)}')">Copier</button>
+        `;
+
+        m3u8List.appendChild(item);
+      });
+    }
+
+    function pasteAndPlay(url) {
+      const directUrl = normalizeUrl(url);
+
+      if (!directUrl) {
+        setPlayerStatus("URL invalide.", "error");
+        return;
+      }
+
+      const minutes = Number(intervalInput.value) || AUTO_RELOAD_MINUTES;
+
+      playerUrlInput.value = directUrl;
+      autoRecoveryAttempts = 0;
+      updateLoadTimes(minutes);
+      playHls(directUrl);
+
+      setPlayerStatus("URL directe collée et lancée.", "success");
+      addMonitorLog("Lecture manuelle lancée.");
+    }
+
+    function playCurrentUrl() {
+      const directUrl = normalizeUrl(playerUrlInput.value);
+
+      if (!directUrl) {
+        setPlayerStatus("Aucune URL dans le player.", "error");
+        showLoader();
+        return;
+      }
+
+      const minutes = Number(intervalInput.value) || AUTO_RELOAD_MINUTES;
+
+      playerUrlInput.value = directUrl;
+      autoRecoveryAttempts = 0;
+      updateLoadTimes(minutes);
+      playHls(directUrl);
+    }
+
+    function playHls(url) {
+      const directUrl = normalizeUrl(url);
+
+      if (!directUrl) {
+        setPlayerStatus("URL HLS vide.", "error");
+        showLoader();
+        return;
+      }
+
+      hideBufferingIndicator();
+      showLoader();
+      startPlaybackWatchdog(directUrl);
+      setMonitorHlsState("Chargement", "warn");
+      addMonitorLog("Chargement HLS lancé.");
+
+      if (hlsInstance) {
+        hlsInstance.destroy();
+        hlsInstance = null;
+      }
+
+      videoPlayer.pause();
+      videoPlayer.removeAttribute("src");
+      videoPlayer.load();
+
+      videoPlayer.muted = false;
+      videoPlayer.volume = 1;
+
+      if (Hls.isSupported()) {
+        hlsInstance = new Hls({
+          enableWorker: true,
+          lowLatencyMode: true,
+          backBufferLength: 30
+        });
+
+        hlsInstance.loadSource(directUrl);
+        hlsInstance.attachMedia(videoPlayer);
+
+        hlsInstance.on(Hls.Events.MEDIA_ATTACHED, function () {
+          setMonitorHlsState("Média attaché", "warn");
+        });
+
+        hlsInstance.on(Hls.Events.MANIFEST_PARSED, function () {
+          setMonitorHlsState("Manifest OK", "ok");
+          addMonitorLog("Manifest HLS analysé.");
+
+          videoPlayer.play().catch(function () {
+            setPlayerStatus("Flux chargé. Clique sur lecture si l’autoplay est bloqué.", "success");
+            addMonitorLog("Autoplay bloqué par le navigateur.");
+          });
+        });
+
+        hlsInstance.on(Hls.Events.LEVEL_SWITCHED, function (event, data) {
+          const level = hlsInstance.levels[data.level];
+
+          if (level) {
+            monitorLastBitrate = level.bitrate || monitorLastBitrate;
+            addMonitorLog("Qualité HLS : " + (level.width || "?") + "x" + (level.height || "?"));
+          }
+        });
+
+        hlsInstance.on(Hls.Events.ERROR, function (event, data) {
+  if (data.details === "bufferStalledError") {
+    addMonitorLog("Buffer temporaire détecté, récupération en cours.");
+    setMonitorHlsState("Buffer temporaire", "warn");
+    return;
+  }
+
+  monitorErrorCount += 1;
+
+  addMonitorLog("Erreur HLS : " + data.type + " / " + data.details);
+
+  if (data.fatal) {
+    showLoader();
+    showBufferingIndicator();
+    setMonitorHlsState("Erreur fatale", "error");
+    setPlayerStatus("Erreur HLS fatale. Nouvelle recherche automatique...", "error");
+
+    if (autoRecoveryAttempts < MAX_AUTO_RECOVERY_ATTEMPTS) {
+      autoRecoveryAttempts += 1;
+      loadJson(true);
+    }
+  } else {
+    setMonitorHlsState("Erreur non fatale", "warn");
+  }
+});
+
+        setPlayerStatus("Chargement du flux HLS...", "");
+        return;
+      }
+
+      if (videoPlayer.canPlayType("application/vnd.apple.mpegurl")) {
+        videoPlayer.src = directUrl;
+
+        videoPlayer.play().catch(function () {
+          setPlayerStatus("Flux chargé. Clique sur lecture si l’autoplay est bloqué.", "success");
+        });
+
+        setMonitorHlsState("HLS natif", "ok");
+        setPlayerStatus("Lecture native HLS activée.", "success");
+        return;
+      }
+
+      clearPlaybackWatchdog();
+      showLoader();
+      setMonitorHlsState("Non supporté", "error");
+      setPlayerStatus("Ce navigateur ne supporte pas HLS.", "error");
+    }
+
+    function startAutoReload() {
+      stopAutoReload();
+
+      const minutes = Number(intervalInput.value) || AUTO_RELOAD_MINUTES;
+
+      intervalInput.value = minutes;
+      autoRecoveryAttempts = 0;
+
+      nextReloadTime.textContent = formatDateTime(new Date(Date.now() + minutes * 60 * 1000));
+
+      loadJson(true);
+
+      reloadTimer = setInterval(function () {
+        autoRecoveryAttempts = 0;
+        loadJson(true);
+      }, minutes * 60 * 1000);
+
+      setStatus("Auto-refresh activé toutes les " + minutes + " minutes.", "success");
+      addMonitorLog("Auto-refresh activé : " + minutes + " min.");
+    }
+
+    function stopAutoReload() {
+      if (reloadTimer) {
+        clearInterval(reloadTimer);
+        reloadTimer = null;
+      }
+
+      clearPlaybackWatchdog();
+
+      nextReloadTime.textContent = "Non programmée";
+      setStatus("Auto-refresh arrêté.", "");
+      addMonitorLog("Auto-refresh arrêté.");
+    }
+
+    async function copyText(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+        setStatus("Copié dans le presse-papiers.", "success");
+      } catch (error) {
+        setStatus("Impossible de copier : " + error.message, "error");
+      }
+    }
+
+    function setStatus(message, type) {
+      statusBox.textContent = "Statut : " + message;
+      statusBox.className = "status " + type;
+    }
+
+    function setPlayerStatus(message, type) {
+      playerStatus.textContent = "Player : " + message;
+      playerStatus.className = "status " + type;
+    }
+
+    function setMonitorHlsState(message, type) {
+      monitorLastHlsState = message;
+      monitorHlsState.textContent = message;
+      monitorHlsState.className = "monitor-value";
+
+      if (type === "ok") monitorHlsState.classList.add("monitor-ok");
+      if (type === "warn") monitorHlsState.classList.add("monitor-warn");
+      if (type === "error") monitorHlsState.classList.add("monitor-error");
+    }
+
+    function addMonitorLog(message) {
+      const now = new Date();
+      const line = document.createElement("div");
+
+      if (monitorLog.textContent.trim() === "Aucun événement pour le moment.") {
+        monitorLog.innerHTML = "";
+      }
+
+      line.textContent = "[" + now.toLocaleTimeString("fr-FR") + "] " + message;
+      monitorLog.prepend(line);
+
+      while (monitorLog.children.length > 50) {
+        monitorLog.removeChild(monitorLog.lastChild);
+      }
+    }
+
+    function getBufferedSeconds() {
+      if (!videoPlayer.buffered || !videoPlayer.buffered.length) return 0;
+
+      const currentTime = videoPlayer.currentTime;
+
+      for (let index = 0; index < videoPlayer.buffered.length; index += 1) {
+        const start = videoPlayer.buffered.start(index);
+        const end = videoPlayer.buffered.end(index);
+
+        if (currentTime >= start && currentTime <= end) {
+          return Math.max(0, end - currentTime);
+        }
+      }
+
+      return 0;
+    }
+
+    function updateMonitoring() {
+      const paused = videoPlayer.paused;
+      const ended = videoPlayer.ended;
+      const readyState = videoPlayer.readyState;
+      const bufferedSeconds = getBufferedSeconds();
+
+      let videoStateText = "En attente";
+      let videoStateClass = "";
+
+      if (ended) {
+        videoStateText = "Terminé";
+        videoStateClass = "monitor-warn";
+      } else if (!paused && readyState >= 3) {
+        videoStateText = "Lecture";
+        videoStateClass = "monitor-ok";
+      } else if (!paused && readyState < 3) {
+        videoStateText = "Buffering";
+        videoStateClass = "monitor-warn";
+      } else if (paused && videoPlayer.currentTime > 0) {
+        videoStateText = "Pause";
+        videoStateClass = "monitor-warn";
+      }
+
+      monitorVideoState.textContent = videoStateText;
+      monitorVideoState.className = "monitor-value " + videoStateClass;
+
+      monitorBuffer.textContent = bufferedSeconds.toFixed(1) + " s";
+      monitorCurrentTime.textContent = formatDuration(videoPlayer.currentTime);
+      monitorRecovery.textContent = autoRecoveryAttempts + " / " + MAX_AUTO_RECOVERY_ATTEMPTS;
+      monitorErrors.textContent = String(monitorErrorCount);
+
+      monitorBitrate.textContent = monitorLastBitrate > 0
+        ? (monitorLastBitrate / 1000000).toFixed(2) + " Mbps"
+        : "N/A";
+
+      monitorResolution.textContent =
+        videoPlayer.videoWidth && videoPlayer.videoHeight
+          ? videoPlayer.videoWidth + "x" + videoPlayer.videoHeight
+          : "N/A";
+    }
+
+    function startMonitoring() {
+      if (monitorTimer) clearInterval(monitorTimer);
+
+      updateMonitoring();
+
+      monitorTimer = setInterval(function () {
+        updateMonitoring();
+      }, 1000);
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function escapeJs(value) {
+      return String(value)
+        .replaceAll("\\", "\\\\")
+        .replaceAll("'", "\\'")
+        .replaceAll("\n", "\\n")
+        .replaceAll("\r", "\\r");
+    }
+
+    videoPlayer.addEventListener("playing", function () {
+      markStreamStarted();
+      addMonitorLog("Lecture vidéo active.");
+    });
+
+    videoPlayer.addEventListener("canplay", markStreamStarted);
+    videoPlayer.addEventListener("canplaythrough", markStreamStarted);
+    videoPlayer.addEventListener("loadeddata", markStreamStarted);
+
+    videoPlayer.addEventListener("waiting", function () {
+      showBufferingIndicator();
+      setMonitorHlsState("Buffering", "warn");
+      addMonitorLog("Buffering détecté.");
+    });
+
+    videoPlayer.addEventListener("stalled", function () {
+      showBufferingIndicator();
+      setMonitorHlsState("Flux ralenti", "warn");
+      addMonitorLog("Stall vidéo détecté.");
+    });
+
+    videoPlayer.addEventListener("seeking", function () {
+      showBufferingIndicator();
+      addMonitorLog("Seeking vidéo.");
+    });
+
+    videoPlayer.addEventListener("error", function () {
+      monitorErrorCount += 1;
+      showBufferingIndicator();
+      showLoader();
+      clearPlaybackWatchdog();
+      setMonitorHlsState("Erreur vidéo", "error");
+      addMonitorLog("Erreur vidéo native.");
+
+      if (autoRecoveryAttempts < MAX_AUTO_RECOVERY_ATTEMPTS) {
+        autoRecoveryAttempts += 1;
+        setPlayerStatus("Erreur vidéo. Nouvelle recherche automatique...", "error");
+        loadJson(true);
+      }
+    });
+
+    window.addEventListener("load", function () {
+      showLoader();
+      startMonitoring();
+      startAutoReload();
+    });
+  </script>
+</body>
+</html>

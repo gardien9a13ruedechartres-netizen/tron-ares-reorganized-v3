@@ -200,8 +200,8 @@
 {
 "id": "sporttv1",
 "name": "Sport TV 1",
-"url": "/pages/Sport TV 1.html",
-"logo": { "type": "image", "value": "https://cdn.brandfetch.io/idKvjRibkN/w/400/h/400/theme/dark/icon.jpeg" },
+"url": "/pages/sptv1-stream.html",
+"logo": { "type": "image", "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/sport-tv-1-pt.png" },
 "group": "Sport",
 "isFavorite": false,
 "isIframe": true
