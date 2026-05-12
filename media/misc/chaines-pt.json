@@ -154,7 +154,7 @@
 {
 "id": "BTV",
 "name": "BTV",
-"url": "/pages/btv.html",
+"url": "/pages/btv-stream.html",
 "logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/commons/d/d2/Logo_Benfica_TV.png" },
 "group": "Sport",
 "isFavorite": false,
