@@ -90,7 +90,7 @@
 {
 "id": "rtp1",
 "name": "RTP1",
-"url": "/pages/players/rtp1.html",
+"url": "/pages/rtp1-stream.html",
 "logo": { "type": "image", "value": "/media/rtp1.jpg" },
 "group": "Généraliste",
 "isFavorite": false,
