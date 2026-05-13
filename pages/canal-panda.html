@@ -7,351 +7,431 @@
 
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 <style>
-    * { box-sizing: border-box; }
+  * {
+    box-sizing: border-box;
+  }
 
-    html, body {
-      margin: 0;
-      width: 100%;
-      height: 100%;
-      background: #000;
-      overflow: hidden;
-      font-family: Arial, sans-serif;
-      color: #f9fafb;
+  html,
+  body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+    color: #f9fafb;
+  }
+
+  #playerWrapper {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 1;
+  }
+
+  #videoPlayer {
+    width: 100vw;
+    height: 100vh;
+    object-fit: fill;
+    background: #000;
+    display: block;
+  }
+
+  /* =========================
+     LOADER
+  ========================= */
+
+  #loadingOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+    transition: opacity 0.35s ease, visibility 0.35s ease;
+  }
+
+  #loadingOverlay.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .loader-content {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+
+  .loader-logo {
+    width: 160px;
+    max-width: 45vw;
+    height: auto;
+    object-fit: contain;
+    margin-bottom: 28px;
+    animation: logoPulse 1.6s ease-in-out infinite;
+    filter: drop-shadow(0 8px 26px rgba(0, 0, 0, 0.9));
+  }
+
+  .pro-spinner {
+    width: 66px;
+    height: 66px;
+    border-radius: 50%;
+    border: 5px solid rgba(255, 255, 255, 0.14);
+    border-top-color: #3b82f6;
+    border-right-color: #60a5fa;
+    animation: spin 0.9s linear infinite;
+    margin-bottom: 20px;
+  }
+
+  .loading-text {
+    font-size: 18px;
+    font-weight: 600;
+    color: #e5e7eb;
+    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.85);
+  }
+
+  .dots::after {
+    content: "";
+    display: inline-block;
+    width: 24px;
+    animation: dots 1.4s infinite;
+  }
+
+  /* =========================
+     BUFFERING
+  ========================= */
+
+  #bufferingIndicator {
+    position: fixed;
+    left: 50%;
+    bottom: 32px;
+    transform: translateX(-50%);
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 18px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.82);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+  }
+
+  #bufferingIndicator.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .buffer-spinner {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 255, 255, 0.18);
+    border-top-color: #3b82f6;
+    animation: spin 0.8s linear infinite;
+  }
+
+  .buffer-text {
+    color: #f3f4f6;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  /* =========================
+     CONTROL PANEL
+  ========================= */
+
+  #toggleControlPanel {
+    position: fixed;
+    top: -2px;
+    right: 16px;
+    z-index: 30;
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: rgba(17, 24, 39, 0);
+    color: #ffffff36;
+    cursor: pointer;
+    font-weight: bold;
+    border: none;
+  }
+
+  #controlPanel {
+    position: fixed;
+    top: 70px;
+    right: 16px;
+    width: 420px;
+    max-width: calc(100vw - 32px);
+    max-height: calc(100vh - 90px);
+    overflow: auto;
+    z-index: 25;
+    background: rgba(31, 41, 55, 0);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    padding: 16px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  }
+
+  #controlPanel.hidden {
+    display: none;
+  }
+
+  .panel {
+    background: rgba(17, 24, 39, 0);
+    border: 1px solid #374151;
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+
+  h1,
+  h2 {
+    margin-top: 0;
+  }
+
+  h1 {
+    font-size: 20px;
+  }
+
+  h2 {
+    font-size: 16px;
+  }
+
+  label {
+    display: block;
+    margin-bottom: 6px;
+    color: #d1d5db;
+    font-size: 14px;
+  }
+
+  input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #4b5563;
+    background: #111827;
+    color: #f9fafb;
+    margin-bottom: 12px;
+  }
+
+  button {
+    padding: 10px 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    margin: 4px 4px 4px 0;
+    font-weight: bold;
+  }
+
+  .start {
+    background: #22c55e;
+  }
+
+  .stop {
+    background: #ef4444;
+    color: white;
+  }
+
+  .reload {
+    background: #3b82f6;
+    color: white;
+  }
+
+  .copy {
+    background: #f59e0b;
+    color: black;
+  }
+
+  .play {
+    background: #8b5cf6;
+    color: white;
+  }
+
+  pre {
+    background: #020617;
+    padding: 12px;
+    border-radius: 8px;
+    overflow: auto;
+    max-height: 240px;
+    border: 1px solid #334155;
+    font-size: 12px;
+  }
+
+  .status {
+    margin-top: 12px;
+    color: #d1d5db;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .success {
+    color: #22c55e;
+  }
+
+  .error {
+    color: #f87171;
+  }
+
+  .info-box {
+    background: #020617;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 10px;
+    margin-top: 10px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #dbeafe;
+  }
+
+  .m3u8-item {
+    padding: 10px 0;
+    border-bottom: 1px solid #374151;
+    word-break: break-all;
+  }
+
+  code {
+    color: #93c5fd;
+    font-size: 12px;
+  }
+
+  /* =========================
+     MONITORING
+  ========================= */
+
+  .hidden-monitoring {
+    display: none;
+    margin-top: 12px;
+  }
+
+  .hidden-monitoring.open {
+    display: block;
+  }
+
+  .monitor-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .monitor-card {
+    background: #020617;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 10px;
+  }
+
+  .monitor-label {
+    color: #94a3b8;
+    font-size: 11px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .monitor-value {
+    color: #f8fafc;
+    font-size: 14px;
+    font-weight: bold;
+    word-break: break-word;
+  }
+
+  .monitor-ok {
+    color: #22c55e;
+  }
+
+  .monitor-warn {
+    color: #f59e0b;
+  }
+
+  .monitor-error {
+    color: #f87171;
+  }
+
+  .monitor-log {
+    margin-top: 10px;
+    max-height: 160px;
+    overflow: auto;
+    background: #020617;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #cbd5e1;
+  }
+
+  .monitor-log div {
+    border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+    padding: 4px 0;
+  }
+
+  /* =========================
+     ANIMATIONS
+  ========================= */
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
     }
+  }
 
-    #playerWrapper {
-      position: fixed;
-      inset: 0;
-      background: #000;
-      z-index: 1;
-    }
-
-    #videoPlayer {
-      width: 100vw;
-      height: 100vh;
-      object-fit: fill;
-      background: #000;
-      display: block;
-    }
-
-    #loadingOverlay {
-      position: fixed;
-      inset: 0;
-      z-index: 10;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: opacity 0.35s ease, visibility 0.35s ease;
-    }
-
-    #loadingOverlay.hidden {
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-    }
-
-    #loaderVideo {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      z-index: 1;
-      filter: brightness(0.72);
-      transform: scale(1.02);
-    }
-
-    .loader-dark-layer {
-      position: absolute;
-      inset: 0;
-      z-index: 2;
-      background:
-        radial-gradient(circle at center, rgba(0,0,0,0.12), rgba(0,0,0,0.72)),
-        rgba(0,0,0,0.28);
-    }
-
-    .loader-content {
-      position: relative;
-      z-index: 3;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-    }
-
-    .pro-spinner {
-      width: 66px;
-      height: 66px;
-      border-radius: 50%;
-      border: 5px solid rgba(255,255,255,0.14);
-      border-top-color: #3b82f6;
-      border-right-color: #60a5fa;
-      animation: spin 0.9s linear infinite;
-      margin-bottom: 20px;
-    }
-
-    .loading-text {
-      font-size: 18px;
-      font-weight: 600;
-      color: #e5e7eb;
-      text-shadow: 0 2px 14px rgba(0,0,0,0.85);
-    }
-
-    .dots::after {
+  @keyframes dots {
+    0% {
       content: "";
-      display: inline-block;
-      width: 24px;
-      animation: dots 1.4s infinite;
     }
 
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    @keyframes dots {
-      0% { content: ""; }
-      25% { content: "."; }
-      50% { content: ".."; }
-      75% { content: "..."; }
-      100% { content: ""; }
+    25% {
+      content: ".";
     }
 
-    #bufferingIndicator {
-      position: fixed;
-      left: 50%;
-      bottom: 32px;
-      transform: translateX(-50%);
-      z-index: 40;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 18px;
-      border-radius: 999px;
-      background: rgba(0,0,0,0.82);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255,255,255,0.12);
-      transition: opacity 0.25s ease, visibility 0.25s ease;
+    50% {
+      content: "..";
     }
 
-    #bufferingIndicator.hidden {
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
+    75% {
+      content: "...";
     }
 
-    .buffer-spinner {
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      border: 3px solid rgba(255,255,255,0.18);
-      border-top-color: #3b82f6;
-      animation: spin 0.8s linear infinite;
+    100% {
+      content: "";
+    }
+  }
+
+  @keyframes logoPulse {
+    0%,
+    100% {
+      opacity: 0.85;
+      transform: scale(1);
     }
 
-    .buffer-text {
-      color: #f3f4f6;
-      font-size: 14px;
-      font-weight: 600;
+    50% {
+      opacity: 1;
+      transform: scale(1.04);
     }
+  }
+.loader-content{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+}
 
-    #toggleControlPanel {
-      position: fixed;
-      top: -2px;
-      right: 16px;
-      z-index: 30;
-      padding: 10px 14px;
-      border-radius: 8px;
-      background: rgba(17,24,39,0);
-      color: #ffffff36;
-      cursor: pointer;
-      font-weight: bold;
-      border: none;
-    }
-
-    #controlPanel {
-      position: fixed;
-      top: 70px;
-      right: 16px;
-      width: 420px;
-      max-width: calc(100vw - 32px);
-      max-height: calc(100vh - 90px);
-      overflow: auto;
-      z-index: 25;
-      background: rgba(31, 41, 55, 0);
-      border: 1px solid rgba(255,255,255,0.15);
-      border-radius: 12px;
-      padding: 16px;
-      backdrop-filter: blur(12px);
-      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-    }
-
-    #controlPanel.hidden { display: none; }
-
-    .panel {
-      background: rgba(17,24,39,0.0);
-      border: 1px solid #374151;
-      border-radius: 10px;
-      padding: 14px;
-      margin-bottom: 14px;
-    }
-
-    h1, h2 { margin-top: 0; }
-    h1 { font-size: 20px; }
-    h2 { font-size: 16px; }
-
-    label {
-      display: block;
-      margin-bottom: 6px;
-      color: #d1d5db;
-      font-size: 14px;
-    }
-
-    input {
-      width: 100%;
-      padding: 10px;
-      border-radius: 6px;
-      border: 1px solid #4b5563;
-      background: #111827;
-      color: #f9fafb;
-      margin-bottom: 12px;
-    }
-
-    button {
-      padding: 10px 14px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      margin: 4px 4px 4px 0;
-      font-weight: bold;
-    }
-
-    .start { background: #22c55e; }
-    .stop { background: #ef4444; color: white; }
-    .reload { background: #3b82f6; color: white; }
-    .copy { background: #f59e0b; color: black; }
-    .play { background: #8b5cf6; color: white; }
-
-    pre {
-      background: #020617;
-      padding: 12px;
-      border-radius: 8px;
-      overflow: auto;
-      max-height: 240px;
-      border: 1px solid #334155;
-      font-size: 12px;
-    }
-
-    .status {
-      margin-top: 12px;
-      color: #d1d5db;
-      font-size: 13px;
-      line-height: 1.5;
-    }
-
-    .success { color: #22c55e; }
-    .error { color: #f87171; }
-
-    .info-box {
-      background: #020617;
-      border: 1px solid #334155;
-      border-radius: 8px;
-      padding: 10px;
-      margin-top: 10px;
-      font-size: 13px;
-      line-height: 1.6;
-      color: #dbeafe;
-    }
-
-    .m3u8-item {
-      padding: 10px 0;
-      border-bottom: 1px solid #374151;
-      word-break: break-all;
-    }
-
-    code {
-      color: #93c5fd;
-      font-size: 12px;
-    }
-
-    .hidden-monitoring {
-      display: none;
-      margin-top: 12px;
-    }
-
-    .hidden-monitoring.open {
-      display: block;
-    }
-
-    .monitor-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-top: 12px;
-    }
-
-    .monitor-card {
-      background: #020617;
-      border: 1px solid #334155;
-      border-radius: 8px;
-      padding: 10px;
-    }
-
-    .monitor-label {
-      color: #94a3b8;
-      font-size: 11px;
-      text-transform: uppercase;
-      margin-bottom: 6px;
-    }
-
-    .monitor-value {
-      color: #f8fafc;
-      font-size: 14px;
-      font-weight: bold;
-      word-break: break-word;
-    }
-
-    .monitor-ok { color: #22c55e; }
-    .monitor-warn { color: #f59e0b; }
-    .monitor-error { color: #f87171; }
-
-    .monitor-log {
-      margin-top: 10px;
-      max-height: 160px;
-      overflow: auto;
-      background: #020617;
-      border: 1px solid #334155;
-      border-radius: 8px;
-      padding: 10px;
-      font-size: 12px;
-      line-height: 1.5;
-      color: #cbd5e1;
-    }
-
-    .monitor-log div {
-      border-bottom: 1px solid rgba(148,163,184,0.15);
-      padding: 4px 0;
-    }
-
-    .loader-logo {
-      width: 160px;
-      max-width: 45vw;
-      height: auto;
-      object-fit: contain;
-      margin-bottom: 28px;
-      animation: logoPulse 1.6s ease-in-out infinite;
-      filter: drop-shadow(0 8px 26px rgba(0,0,0,0.9));
-    }
-
-    @keyframes logoPulse {
-      0%, 100% {
-        opacity: 0.85;
-        transform: scale(1);
-      }
-
-      50% {
-        opacity: 1;
-        transform: scale(1.04);
-      }
-    }
+.loader-logo{
+  display:block;
+  width:170px;
+  height:auto;
+  margin-bottom:28px;
+  object-fit:contain;
+  animation:logoPulse 1.8s ease-in-out infinite;
+}
   </style>
   
 </head>
@@ -362,14 +442,22 @@
   </div>
 
   <div id="loadingOverlay">
+  <div class="loader-content">
+
     <img
-    class="loader-logo"
-    src="https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/canal-panda-pt.png"
-    alt="CMTV"
-  />
+      class="loader-logo"
+      src="https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/canal-panda-pt.png"
+      alt="CMTV"
+    />
+
     <div class="pro-spinner"></div>
-    <div class="loading-text">Chargement du flux<span class="dots"></span></div>
+
+    <div class="loading-text">
+      Chargement du flux<span class="dots"></span>
+    </div>
+
   </div>
+</div>
 
   <div id="bufferingIndicator" class="hidden">
     <div class="buffer-spinner"></div>
@@ -383,7 +471,7 @@
 
     <section class="panel">
       <label>URL JSON dynamique</label>
-      <input id="jsonUrl" type="text" value="https://multi-chaines.victor-salema-53d.workers.dev/?channel=CANAL%20PANDA&countries=pt.json" />
+      <input id="jsonUrl" type="text"https://multi-chaines.victor-salema-53d.workers.dev/?channel=CANAL%20PANDA&countries=pt.json" />
 
       <label>Intervalle en minutes</label>
       <input id="intervalMinutes" type="number" min="1" value="30" />
@@ -484,6 +572,8 @@
 
     let reloadTimer = null;
     let hlsInstance = null;
+    let pendingHlsInstance = null;
+    let currentStreamUrl = "";
     let isLoadingJson = false;
     let bufferingTimeout = null;
     let startupWatchdog = null;
@@ -844,114 +934,120 @@
     }
 
     function playHls(url) {
-      const directUrl = normalizeUrl(url);
+  const directUrl = normalizeUrl(url);
 
-      if (!directUrl) {
-        setPlayerStatus("URL HLS vide.", "error");
-        showLoader();
-        return;
-      }
-
-      hideBufferingIndicator();
-      showLoader();
-      startPlaybackWatchdog(directUrl);
-      setMonitorHlsState("Chargement", "warn");
-      addMonitorLog("Chargement HLS lancé.");
-
-      if (hlsInstance) {
-        hlsInstance.destroy();
-        hlsInstance = null;
-      }
-
-      videoPlayer.pause();
-      videoPlayer.removeAttribute("src");
-      videoPlayer.load();
-
-      videoPlayer.muted = false;
-      videoPlayer.volume = 1;
-
-      if (Hls.isSupported()) {
-        hlsInstance = new Hls({
-          enableWorker: true,
-          lowLatencyMode: true,
-          backBufferLength: 30
-        });
-
-        hlsInstance.loadSource(directUrl);
-        hlsInstance.attachMedia(videoPlayer);
-
-        hlsInstance.on(Hls.Events.MEDIA_ATTACHED, function () {
-          setMonitorHlsState("Média attaché", "warn");
-        });
-
-        hlsInstance.on(Hls.Events.MANIFEST_PARSED, function () {
-          setMonitorHlsState("Manifest OK", "ok");
-          addMonitorLog("Manifest HLS analysé.");
-
-          videoPlayer.play().catch(function () {
-            setPlayerStatus("Flux chargé. Clique sur lecture si l’autoplay est bloqué.", "success");
-            addMonitorLog("Autoplay bloqué par le navigateur.");
-          });
-        });
-
-        hlsInstance.on(Hls.Events.LEVEL_SWITCHED, function (event, data) {
-          const level = hlsInstance.levels[data.level];
-
-          if (level) {
-            monitorLastBitrate = level.bitrate || monitorLastBitrate;
-            addMonitorLog("Qualité HLS : " + (level.width || "?") + "x" + (level.height || "?"));
-          }
-        });
-
-        hlsInstance.on(Hls.Events.ERROR, function (event, data) {
-  if (data.details === "bufferStalledError") {
-    addMonitorLog("Buffer temporaire détecté, récupération en cours.");
-    setMonitorHlsState("Buffer temporaire", "warn");
+  if (!directUrl) {
+    setPlayerStatus("URL HLS vide.", "error");
     return;
   }
 
-  monitorErrorCount += 1;
-
-  addMonitorLog("Erreur HLS : " + data.type + " / " + data.details);
-
-  if (data.fatal) {
-    showLoader();
-    showBufferingIndicator();
-    setMonitorHlsState("Erreur fatale", "error");
-    setPlayerStatus("Erreur HLS fatale. Nouvelle recherche automatique...", "error");
-
-    if (autoRecoveryAttempts < MAX_AUTO_RECOVERY_ATTEMPTS) {
-      autoRecoveryAttempts += 1;
-      loadJson(true);
-    }
-  } else {
-    setMonitorHlsState("Erreur non fatale", "warn");
+  if (directUrl === currentStreamUrl && hlsInstance) {
+    addMonitorLog("Flux identique ignoré.");
+    return;
   }
-});
 
-        setPlayerStatus("Chargement du flux HLS...", "");
-        return;
-      }
+  addMonitorLog("Préchargement du nouveau flux...");
+  setMonitorHlsState("Préchargement", "warn");
 
-      if (videoPlayer.canPlayType("application/vnd.apple.mpegurl")) {
-        videoPlayer.src = directUrl;
+  const nextHls = new Hls({
+    enableWorker: true,
+    lowLatencyMode: true,
+    backBufferLength: 30
+  });
 
-        videoPlayer.play().catch(function () {
-          setPlayerStatus("Flux chargé. Clique sur lecture si l’autoplay est bloqué.", "success");
-        });
+  pendingHlsInstance = nextHls;
 
-        setMonitorHlsState("HLS natif", "ok");
-        setPlayerStatus("Lecture native HLS activée.", "success");
-        return;
-      }
+  nextHls.loadSource(directUrl);
+  nextHls.attachMedia(videoPlayer);
 
-      clearPlaybackWatchdog();
-      showLoader();
-      setMonitorHlsState("Non supporté", "error");
-      setPlayerStatus("Ce navigateur ne supporte pas HLS.", "error");
+  nextHls.on(Hls.Events.MEDIA_ATTACHED, function () {
+    addMonitorLog("Media attaché.");
+  });
+
+  nextHls.on(Hls.Events.MANIFEST_PARSED, function () {
+
+    addMonitorLog("Nouveau flux prêt.");
+
+    const currentTime = videoPlayer.currentTime || 0;
+    const paused = videoPlayer.paused;
+
+    if (hlsInstance && hlsInstance !== nextHls) {
+      try {
+        hlsInstance.destroy();
+      } catch (e) {}
     }
 
-    function startAutoReload() {
+    hlsInstance = nextHls;
+    pendingHlsInstance = null;
+    currentStreamUrl = directUrl;
+    addMonitorLog("URL active remplacée : " + directUrl);
+    console.log("[HOT_SWAP_OK]", directUrl);
+    
+    if (!paused) {
+      videoPlayer.play().catch(() => {});
+    }
+
+    hideLoader();
+    hideBufferingIndicator();
+
+    setMonitorHlsState("Lecture active", "ok");
+    setPlayerStatus("Flux actif.", "success");
+
+    markStreamStarted();
+  });
+
+  nextHls.on(Hls.Events.LEVEL_SWITCHED, function (event, data) {
+    const level = nextHls.levels[data.level];
+
+    if (level) {
+      monitorLastBitrate = level.bitrate || 0;
+
+      addMonitorLog(
+        "Qualité : " +
+        (level.width || "?") +
+        "x" +
+        (level.height || "?")
+      );
+    }
+  });
+
+  nextHls.on(Hls.Events.ERROR, function (event, data) {
+
+    if (data.details === "bufferStalledError") {
+      addMonitorLog("Micro-buffer détecté.");
+      return;
+    }
+
+    monitorErrorCount += 1;
+
+    addMonitorLog(
+      "Erreur HLS : " +
+      data.type +
+      " / " +
+      data.details
+    );
+
+    if (data.fatal) {
+
+      setMonitorHlsState("Erreur fatale", "error");
+
+      if (autoRecoveryAttempts < MAX_AUTO_RECOVERY_ATTEMPTS) {
+        autoRecoveryAttempts += 1;
+
+        addMonitorLog("Recherche nouveau flux...");
+
+        loadJson(true);
+      }
+    }
+  });
+
+  if (!videoPlayer.src && !videoPlayer.currentSrc) {
+    showLoader();
+  }
+}    
+
+
+     function startAutoReload() {
       stopAutoReload();
 
       const minutes = Number(intervalInput.value) || AUTO_RELOAD_MINUTES;
