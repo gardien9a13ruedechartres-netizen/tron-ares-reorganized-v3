@@ -610,7 +610,7 @@
     const monitorRecovery = document.getElementById("monitorRecovery");
     const monitorErrors = document.getElementById("monitorErrors");
     const monitorLog = document.getElementById("monitorLog");
-    const SESSION_STREAM_KEY = "last-stream-cmtv";
+
     videoPlayer.muted = false;
     videoPlayer.volume = 1;
 
@@ -804,7 +804,6 @@
         const minutes = Number(intervalInput.value) || AUTO_RELOAD_MINUTES;
 
         playerUrlInput.value = directUrl;
-        sessionStorage.setItem(SESSION_STREAM_KEY, directUrl);
         updateLoadTimes(minutes);
 
         playHls(directUrl);
@@ -1285,23 +1284,10 @@ if (isExpiredFragment) {
     });
 
     window.addEventListener("load", function () {
-  showLoader();
-  startMonitoring();
-
-  const savedStreamUrl = sessionStorage.getItem(SESSION_STREAM_KEY);
-
-  if (savedStreamUrl) {
-    addMonitorLog("Flux session retrouvé, démarrage rapide.");
-    playerUrlInput.value = savedStreamUrl;
-    playHls(savedStreamUrl);
-
-    setTimeout(function () {
+      showLoader();
+      startMonitoring();
       startAutoReload();
-    }, 2000);
-  } else {
-    startAutoReload();
-  }
-});  
-</script>
+    });
+  </script>
 </body>
 </html>
