@@ -1012,7 +1012,36 @@
   });
 
   nextHls.on(Hls.Events.ERROR, function (event, data) {
+const status =
+  data?.response?.code ||
+  data?.response?.status ||
+  data?.networkDetails?.status ||
+  data?.networkDetails?.response?.status ||
+  0;
 
+const isExpiredFragment =
+  data &&
+  data.type === Hls.ErrorTypes.NETWORK_ERROR &&
+  data.details === "fragLoadError" &&
+  (
+    status === 410 ||
+    status === 403 ||
+    status === 404 ||
+    status === 0
+  );
+
+if (isExpiredFragment) {
+  addMonitorLog("Fragment expiré détecté : status=" + status);
+  setMonitorHlsState("Fragment expiré", "error");
+  showBufferingIndicator();
+
+  if (autoRecoveryAttempts < MAX_AUTO_RECOVERY_ATTEMPTS) {
+    autoRecoveryAttempts += 1;
+    loadJson(true);
+  }
+
+  return;
+}
     if (data.details === "bufferStalledError") {
       addMonitorLog("Micro-buffer détecté.");
       return;
