@@ -800,7 +800,7 @@
           return;
         }
 
-        const directUrl = normalizeUrl(foundM3u8[0]);
+        const directUrl = forceHlsThroughWorker(foundM3u8[0]);
         const minutes = Number(intervalInput.value) || AUTO_RELOAD_MINUTES;
 
         playerUrlInput.value = directUrl;
@@ -898,7 +898,7 @@
     }
 
     function pasteAndPlay(url) {
-      const directUrl = normalizeUrl(url);
+      const directUrl = forceHlsThroughWorker(url);
 
       if (!directUrl) {
         setPlayerStatus("URL invalide.", "error");
@@ -917,7 +917,7 @@
     }
 
     function playCurrentUrl() {
-      const directUrl = normalizeUrl(playerUrlInput.value);
+      const directUrl = forceHlsThroughWorker(playerUrlInput.value);
 
       if (!directUrl) {
         setPlayerStatus("Aucune URL dans le player.", "error");
@@ -1257,6 +1257,23 @@
       startMonitoring();
       startAutoReload();
     });
+  function forceHlsThroughWorker(url) {
+  const directUrl = normalizeUrl(url);
+
+  if (!directUrl) return "";
+
+  const workerOrigin = new URL(urlInput.value).origin;
+
+  if (directUrl.startsWith(workerOrigin + "/hls?url=")) {
+    return directUrl;
+  }
+
+  if (directUrl.includes(".m3u8") || directUrl.includes("livewatch.top/api/proxy")) {
+    return workerOrigin + "/hls?url=" + encodeURIComponent(directUrl);
+  }
+
+  return directUrl;
+}
   </script>
 </body>
 </html>
