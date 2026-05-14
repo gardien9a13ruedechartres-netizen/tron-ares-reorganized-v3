@@ -599,7 +599,9 @@
   let monitorErrorCount = 0;
   let monitorLastBitrate = 0;
   let monitorLastHlsState = "Inactif";
-
+  let fallbackAttemptCount = 0;
+  const MAX_FALLBACK_ATTEMPTS = 4;
+  
   let streamStartTimestamp = 0;
   let fragmentErrorCount = 0;
   let fragmentLoadHistory = [];
@@ -1254,7 +1256,8 @@ function extractHlsTargetUrl(url) {
 
     nextHls.on(Hls.Events.MANIFEST_PARSED, function () {
       addMonitorLog("Nouveau flux prêt.");
-
+      fallbackAttemptCount = 0;
+      
       streamStartTimestamp = Date.now();
       fragmentErrorCount = 0;
       fragmentLoadHistory = [];
@@ -1355,22 +1358,35 @@ function extractHlsTargetUrl(url) {
         data.details === "manifestLoadError" ||
         data.details === "manifestLoadTimeOut"
       ) {
-        const currentUrl = nextHls.url || directUrl;
-        const nextWorker = getNextWorker();
-        const fallbackUrl = replaceWorkerOrigin(currentUrl, nextWorker);
+        fallbackAttemptCount += 1;
 
-        addMonitorLog("Fallback worker : " + nextWorker);
-        console.warn("Fallback worker activé :", fallbackUrl);
+if (fallbackAttemptCount > MAX_FALLBACK_ATTEMPTS) {
+  addMonitorLog("Fallback épuisé. Nouvelle recherche JSON.");
+  nextHls.destroy();
+  loadJson(true);
+  return;
+}
 
-        nextHls.stopLoad();
+const currentUrl = nextHls.url || directUrl;
+const cleanTarget = extractHlsTargetUrl(currentUrl);
+const nextWorker = getNextWorker();
 
-        setTimeout(function () {
-          nextHls.loadSource(fallbackUrl);
-          nextHls.startLoad();
-        }, 300);
+const fallbackUrl =
+  nextWorker + "/hls?url=" + encodeURIComponent(cleanTarget);
 
-        return;
-      }
+addMonitorLog("Fallback worker : " + nextWorker);
+console.warn("Fallback worker activé :", fallbackUrl);
+
+nextHls.stopLoad();
+
+setTimeout(function () {
+  nextHls.loadSource(fallbackUrl);
+  nextHls.startLoad();
+}, 500);
+
+return;      
+
+}
 
       if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
         nextHls.recoverMediaError();
