@@ -587,15 +587,6 @@
 "group": "Sport",
 "isFavorite": false,
 "isIframe": true
-},
-{
-"id": "cmtv",
-"name": "CMTV",
-"url": "/pages/cm-workers.html",
-"logo": { "type": "image", "value": "/media/cmtv.png" },
-"group": "Généraliste",
-"isFavorite": false,
-"isIframe": true
 }
 ]
 }
