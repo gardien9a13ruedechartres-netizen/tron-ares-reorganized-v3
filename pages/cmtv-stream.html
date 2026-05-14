@@ -489,71 +489,105 @@
     </section>
 
     <section class="panel">
-      <button id="monitoringToggleButton" class="reload" onclick="toggleMonitoringPanel()">Monitoring ▾</button>
-      <button class="copy" onclick="copyMonitoringLog()">Copier le log</button>
+  <button id="monitoringToggleButton" class="reload" onclick="toggleMonitoringPanel()">Monitoring ▾</button>
+  <button class="copy" onclick="copyMonitoringLog()">Copier le log</button>
 
-      <div id="monitoringContent" class="hidden-monitoring">
-        <div class="monitor-grid">
-          <div class="monitor-card">
-            <div class="monitor-label">État vidéo</div>
-            <div id="monitorVideoState" class="monitor-value">En attente</div>
-          </div>
+  <div id="monitoringContent" class="hidden-monitoring">
+    <div class="monitor-grid">
 
-          <div class="monitor-card">
-            <div class="monitor-label">État HLS</div>
-            <div id="monitorHlsState" class="monitor-value">Inactif</div>
-          </div>
-
-          <div class="monitor-card">
-            <div class="monitor-label">Buffer</div>
-            <div id="monitorBuffer" class="monitor-value">0.0 s</div>
-          </div>
-
-          <div class="monitor-card">
-            <div class="monitor-label">Temps lu</div>
-            <div id="monitorCurrentTime" class="monitor-value">00:00</div>
-          </div>
-
-          <div class="monitor-card">
-            <div class="monitor-label">Débit estimé</div>
-            <div id="monitorBitrate" class="monitor-value">N/A</div>
-          </div>
-
-          <div class="monitor-card">
-            <div class="monitor-label">Résolution</div>
-            <div id="monitorResolution" class="monitor-value">N/A</div>
-          </div>
-
-          <div class="monitor-card">
-            <div class="monitor-label">Récupérations</div>
-            <div id="monitorRecovery" class="monitor-value">0 / 3</div>
-          </div>
-
-          <div class="monitor-card">
-            <div class="monitor-label">Erreurs</div>
-            <div id="monitorErrors" class="monitor-value">0</div>
-          </div>
-        </div>
-
-        <div class="monitor-log" id="monitorLog">
-          <div>Aucun événement pour le moment.</div>
-        </div>
+      <div class="monitor-card">
+        <div class="monitor-label">État vidéo</div>
+        <div id="monitorVideoState" class="monitor-value">En attente</div>
       </div>
-    </section>
 
-    <section class="panel">
-      <h2>Player HLS</h2>
+      <div class="monitor-card">
+        <div class="monitor-label">État HLS</div>
+        <div id="monitorHlsState" class="monitor-value">Inactif</div>
+      </div>
 
-      <label>URL M3U8 directe</label>
-      <input id="playerUrl" type="text" placeholder="Le lien .m3u8 direct sera collé ici automatiquement" />
+      <div class="monitor-card">
+        <div class="monitor-label">Buffer</div>
+        <div id="monitorBuffer" class="monitor-value">0.0 s</div>
+      </div>
 
-      <button class="play" onclick="playCurrentUrl()">Lire cette URL directe</button>
-      <button class="copy" onclick="copyText(playerUrlInput.value)">Copier URL du player</button>
+      <div class="monitor-card">
+        <div class="monitor-label">Temps lu</div>
+        <div id="monitorCurrentTime" class="monitor-value">00:00</div>
+      </div>
 
-      <div id="playerStatus" class="status">Player : en attente</div>
-    </section>
+      <div class="monitor-card">
+        <div class="monitor-label">Débit estimé</div>
+        <div id="monitorBitrate" class="monitor-value">N/A</div>
+      </div>
 
-    <section class="panel">
+      <div class="monitor-card">
+        <div class="monitor-label">Résolution</div>
+        <div id="monitorResolution" class="monitor-value">N/A</div>
+      </div>
+
+      <div class="monitor-card">
+        <div class="monitor-label">Récupérations</div>
+        <div id="monitorRecovery" class="monitor-value">0 / 3</div>
+      </div>
+
+      <div class="monitor-card">
+        <div class="monitor-label">Erreurs</div>
+        <div id="monitorErrors" class="monitor-value">0</div>
+      </div>
+
+      <!-- AJOUT -->
+
+      <div class="monitor-card">
+        <div class="monitor-label">Temps changement URL</div>
+        <div id="monitorUrlChangeTime" class="monitor-value">N/A</div>
+      </div>
+
+      <div class="monitor-card">
+        <div class="monitor-label">Changements URL</div>
+        <div id="monitorUrlChangeCount" class="monitor-value">0</div>
+      </div>
+
+      <div class="monitor-card">
+        <div class="monitor-label">URL actuelle</div>
+        <div id="monitorCurrentUrl" class="monitor-value">Aucune</div>
+      </div>
+
+      <div class="monitor-card">
+        <div class="monitor-label">Dernière nouvelle URL</div>
+        <div id="monitorLastNewUrl" class="monitor-value">Aucune</div>
+      </div>
+
+    </div>
+
+    <div class="monitor-log" id="monitorLog">
+      <div>Aucun événement pour le moment.</div>
+    </div>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Player HLS</h2>
+
+  <label>URL M3U8 directe</label>
+
+  <input
+    id="playerUrl"
+    type="text"
+    placeholder="Le lien .m3u8 direct sera collé ici automatiquement"
+  />
+
+  <button class="play" onclick="playCurrentUrl()">
+    Lire cette URL directe
+  </button>
+
+  <button class="copy" onclick="copyText(playerUrlInput.value)">
+    Copier URL du player
+  </button>
+
+  <div id="playerStatus" class="status">
+    Player : en attente
+  </div>
+</section>    <section class="panel">
       <h2>M3U8 trouvés</h2>
       <div id="m3u8List">Aucun lien trouvé.</div>
     </section>
@@ -583,6 +617,10 @@
     let monitorErrorCount = 0;
     let monitorLastBitrate = 0;
     let monitorLastHlsState = "Inactif";
+    let urlChangeSearchStartMs = 0;
+    let lastUrlChangeDurationMs = null;
+    let urlChangeCount = 0;
+    
 
     const controlPanel = document.getElementById("controlPanel");
     const urlInput = document.getElementById("jsonUrl");
@@ -610,7 +648,9 @@
     const monitorRecovery = document.getElementById("monitorRecovery");
     const monitorErrors = document.getElementById("monitorErrors");
     const monitorLog = document.getElementById("monitorLog");
-
+    const monitorUrlChangeTime = document.getElementById("monitorUrlChangeTime");
+    const monitorUrlChangeCount = document.getElementById("monitorUrlChangeCount");
+    
     videoPlayer.muted = false;
     videoPlayer.volume = 1;
 
@@ -769,6 +809,8 @@
       }
 
       isLoadingJson = true;
+      urlChangeSearchStartMs = performance.now();
+      const previousStreamUrl = currentStreamUrl;
       setMonitorHlsState("Recherche JSON", "warn");
       addMonitorLog("Recherche JSON lancée.");
 
@@ -801,6 +843,18 @@
         }
 
         const directUrl = normalizeUrl(foundM3u8[0]);
+        if (previousStreamUrl && directUrl !== previousStreamUrl) {
+        lastUrlChangeDurationMs = performance.now() - urlChangeSearchStartMs;
+        urlChangeCount += 1;
+
+        addMonitorLog(
+        "Nouvelle URL différente détectée en " +
+        (lastUrlChangeDurationMs / 1000).toFixed(2) +
+        " s."
+        );
+        } else if (previousStreamUrl && directUrl === previousStreamUrl) {
+        addMonitorLog("URL dynamique inchangée après recherche.");
+        }
         const minutes = Number(intervalInput.value) || AUTO_RELOAD_MINUTES;
 
         playerUrlInput.value = directUrl;
@@ -1144,46 +1198,72 @@
     }
 
     function updateMonitoring() {
-      const paused = videoPlayer.paused;
-      const ended = videoPlayer.ended;
-      const readyState = videoPlayer.readyState;
-      const bufferedSeconds = getBufferedSeconds();
+  const paused = videoPlayer.paused;
+  const ended = videoPlayer.ended;
+  const readyState = videoPlayer.readyState;
+  const bufferedSeconds = getBufferedSeconds();
 
-      let videoStateText = "En attente";
-      let videoStateClass = "";
+  let videoStateText = "En attente";
+  let videoStateClass = "";
 
-      if (ended) {
-        videoStateText = "Terminé";
-        videoStateClass = "monitor-warn";
-      } else if (!paused && readyState >= 3) {
-        videoStateText = "Lecture";
-        videoStateClass = "monitor-ok";
-      } else if (!paused && readyState < 3) {
-        videoStateText = "Buffering";
-        videoStateClass = "monitor-warn";
-      } else if (paused && videoPlayer.currentTime > 0) {
-        videoStateText = "Pause";
-        videoStateClass = "monitor-warn";
-      }
+  if (ended) {
+    videoStateText = "Terminé";
+    videoStateClass = "monitor-warn";
+  } else if (!paused && readyState >= 3) {
+    videoStateText = "Lecture";
+    videoStateClass = "monitor-ok";
+  } else if (!paused && readyState < 3) {
+    videoStateText = "Buffering";
+    videoStateClass = "monitor-warn";
+  } else if (paused && videoPlayer.currentTime > 0) {
+    videoStateText = "Pause";
+    videoStateClass = "monitor-warn";
+  }
 
-      monitorVideoState.textContent = videoStateText;
-      monitorVideoState.className = "monitor-value " + videoStateClass;
+  monitorVideoState.textContent = videoStateText;
+  monitorVideoState.className = "monitor-value " + videoStateClass;
 
-      monitorBuffer.textContent = bufferedSeconds.toFixed(1) + " s";
-      monitorCurrentTime.textContent = formatDuration(videoPlayer.currentTime);
-      monitorRecovery.textContent = autoRecoveryAttempts + " / " + MAX_AUTO_RECOVERY_ATTEMPTS;
-      monitorErrors.textContent = String(monitorErrorCount);
+  monitorBuffer.textContent = bufferedSeconds.toFixed(1) + " s";
 
-      monitorBitrate.textContent = monitorLastBitrate > 0
-        ? (monitorLastBitrate / 1000000).toFixed(2) + " Mbps"
-        : "N/A";
+  monitorCurrentTime.textContent =
+    formatDuration(videoPlayer.currentTime);
 
-      monitorResolution.textContent =
-        videoPlayer.videoWidth && videoPlayer.videoHeight
-          ? videoPlayer.videoWidth + "x" + videoPlayer.videoHeight
-          : "N/A";
-    }
+  monitorRecovery.textContent =
+    autoRecoveryAttempts +
+    " / " +
+    MAX_AUTO_RECOVERY_ATTEMPTS;
 
+  monitorErrors.textContent =
+    String(monitorErrorCount);
+
+  monitorBitrate.textContent =
+    monitorLastBitrate > 0
+      ? (monitorLastBitrate / 1000000).toFixed(2) + " Mbps"
+      : "N/A";
+
+  monitorResolution.textContent =
+    videoPlayer.videoWidth && videoPlayer.videoHeight
+      ? videoPlayer.videoWidth + "x" + videoPlayer.videoHeight
+      : "N/A";
+
+  /* =========================
+     TEMPS CHANGEMENT URL
+  ========================= */
+
+  monitorUrlChangeTime.textContent =
+    lastUrlChangeDurationMs !== null
+      ? (lastUrlChangeDurationMs / 1000).toFixed(2) + " s"
+      : "N/A";
+
+  monitorUrlChangeCount.textContent =
+    String(urlChangeCount);
+
+  monitorCurrentUrl.textContent =
+    currentStreamUrl || "Aucune";
+
+  monitorLastNewUrl.textContent =
+    playerUrlInput.value || "Aucune";
+}
     function startMonitoring() {
       if (monitorTimer) clearInterval(monitorTimer);
 
