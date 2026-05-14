@@ -6,434 +6,400 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-<style>
-  * {
-    box-sizing: border-box;
-  }
 
-  html,
-  body {
-    margin: 0;
-    width: 100%;
-    height: 100%;
-    background: #000;
-    overflow: hidden;
-    font-family: Arial, sans-serif;
-    color: #f9fafb;
-  }
-
-  #playerWrapper {
-    position: fixed;
-    inset: 0;
-    background: #000;
-    z-index: 1;
-  }
-
-  #videoPlayer {
-    width: 100vw;
-    height: 100vh;
-    object-fit: fill;
-    background: #000;
-    display: block;
-  }
-
-  /* =========================
-     LOADER
-  ========================= */
-
-  #loadingOverlay {
-    position: fixed;
-    inset: 0;
-    z-index: 10;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #000;
-    transition: opacity 0.35s ease, visibility 0.35s ease;
-  }
-
-  #loadingOverlay.hidden {
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-  }
-
-  .loader-content {
-    position: relative;
-    z-index: 3;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-  }
-
-  .loader-logo {
-    width: 160px;
-    max-width: 45vw;
-    height: auto;
-    object-fit: contain;
-    margin-bottom: 28px;
-    animation: logoPulse 1.6s ease-in-out infinite;
-    filter: drop-shadow(0 8px 26px rgba(0, 0, 0, 0.9));
-  }
-
-  .pro-spinner {
-    width: 66px;
-    height: 66px;
-    border-radius: 50%;
-    border: 5px solid rgba(255, 255, 255, 0.14);
-    border-top-color: #3b82f6;
-    border-right-color: #60a5fa;
-    animation: spin 0.9s linear infinite;
-    margin-bottom: 20px;
-  }
-
-  .loading-text {
-    font-size: 18px;
-    font-weight: 600;
-    color: #e5e7eb;
-    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.85);
-  }
-
-  .dots::after {
-    content: "";
-    display: inline-block;
-    width: 24px;
-    animation: dots 1.4s infinite;
-  }
-
-  /* =========================
-     BUFFERING
-  ========================= */
-
-  #bufferingIndicator {
-    position: fixed;
-    left: 50%;
-    bottom: 32px;
-    transform: translateX(-50%);
-    z-index: 40;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 18px;
-    border-radius: 999px;
-    background: rgba(0, 0, 0, 0.82);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    transition: opacity 0.25s ease, visibility 0.25s ease;
-  }
-
-  #bufferingIndicator.hidden {
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-  }
-
-  .buffer-spinner {
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    border: 3px solid rgba(255, 255, 255, 0.18);
-    border-top-color: #3b82f6;
-    animation: spin 0.8s linear infinite;
-  }
-
-  .buffer-text {
-    color: #f3f4f6;
-    font-size: 14px;
-    font-weight: 600;
-  }
-
-  /* =========================
-     CONTROL PANEL
-  ========================= */
-
-  #toggleControlPanel {
-    position: fixed;
-    top: -2px;
-    right: 16px;
-    z-index: 30;
-    padding: 10px 14px;
-    border-radius: 8px;
-    background: rgba(17, 24, 39, 0);
-    color: #ffffff36;
-    cursor: pointer;
-    font-weight: bold;
-    border: none;
-  }
-
-  #controlPanel {
-    position: fixed;
-    top: 70px;
-    right: 16px;
-    width: 420px;
-    max-width: calc(100vw - 32px);
-    max-height: calc(100vh - 90px);
-    overflow: auto;
-    z-index: 25;
-    background: rgba(31, 41, 55, 0);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 12px;
-    padding: 16px;
-    backdrop-filter: blur(12px);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-  }
-
-  #controlPanel.hidden {
-    display: none;
-  }
-
-  .panel {
-    background: rgba(17, 24, 39, 0);
-    border: 1px solid #374151;
-    border-radius: 10px;
-    padding: 14px;
-    margin-bottom: 14px;
-  }
-
-  h1,
-  h2 {
-    margin-top: 0;
-  }
-
-  h1 {
-    font-size: 20px;
-  }
-
-  h2 {
-    font-size: 16px;
-  }
-
-  label {
-    display: block;
-    margin-bottom: 6px;
-    color: #d1d5db;
-    font-size: 14px;
-  }
-
-  input {
-    width: 100%;
-    padding: 10px;
-    border-radius: 6px;
-    border: 1px solid #4b5563;
-    background: #111827;
-    color: #f9fafb;
-    margin-bottom: 12px;
-  }
-
-  button {
-    padding: 10px 14px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    margin: 4px 4px 4px 0;
-    font-weight: bold;
-  }
-
-  .start {
-    background: #22c55e;
-  }
-
-  .stop {
-    background: #ef4444;
-    color: white;
-  }
-
-  .reload {
-    background: #3b82f6;
-    color: white;
-  }
-
-  .copy {
-    background: #f59e0b;
-    color: black;
-  }
-
-  .play {
-    background: #8b5cf6;
-    color: white;
-  }
-
-  pre {
-    background: #020617;
-    padding: 12px;
-    border-radius: 8px;
-    overflow: auto;
-    max-height: 240px;
-    border: 1px solid #334155;
-    font-size: 12px;
-  }
-
-  .status {
-    margin-top: 12px;
-    color: #d1d5db;
-    font-size: 13px;
-    line-height: 1.5;
-  }
-
-  .success {
-    color: #22c55e;
-  }
-
-  .error {
-    color: #f87171;
-  }
-
-  .info-box {
-    background: #020617;
-    border: 1px solid #334155;
-    border-radius: 8px;
-    padding: 10px;
-    margin-top: 10px;
-    font-size: 13px;
-    line-height: 1.6;
-    color: #dbeafe;
-  }
-
-  .m3u8-item {
-    padding: 10px 0;
-    border-bottom: 1px solid #374151;
-    word-break: break-all;
-  }
-
-  code {
-    color: #93c5fd;
-    font-size: 12px;
-  }
-
-  /* =========================
-     MONITORING
-  ========================= */
-
-  .hidden-monitoring {
-    display: none;
-    margin-top: 12px;
-  }
-
-  .hidden-monitoring.open {
-    display: block;
-  }
-
-  .monitor-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin-top: 12px;
-  }
-
-  .monitor-card {
-    background: #020617;
-    border: 1px solid #334155;
-    border-radius: 8px;
-    padding: 10px;
-  }
-
-  .monitor-label {
-    color: #94a3b8;
-    font-size: 11px;
-    text-transform: uppercase;
-    margin-bottom: 6px;
-  }
-
-  .monitor-value {
-    color: #f8fafc;
-    font-size: 14px;
-    font-weight: bold;
-    word-break: break-word;
-  }
-
-  .monitor-ok {
-    color: #22c55e;
-  }
-
-  .monitor-warn {
-    color: #f59e0b;
-  }
-
-  .monitor-error {
-    color: #f87171;
-  }
-
-  .monitor-log {
-    margin-top: 10px;
-    max-height: 160px;
-    overflow: auto;
-    background: #020617;
-    border: 1px solid #334155;
-    border-radius: 8px;
-    padding: 10px;
-    font-size: 12px;
-    line-height: 1.5;
-    color: #cbd5e1;
-  }
-
-  .monitor-log div {
-    border-bottom: 1px solid rgba(148, 163, 184, 0.15);
-    padding: 4px 0;
-  }
-
-  /* =========================
-     ANIMATIONS
-  ========================= */
-
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
+  <style>
+    * {
+      box-sizing: border-box;
     }
-  }
 
-  @keyframes dots {
-    0% {
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+      color: #f9fafb;
+    }
+
+    #playerWrapper {
+      position: fixed;
+      inset: 0;
+      background: #000;
+      z-index: 1;
+    }
+
+    #videoPlayer {
+      width: 100vw;
+      height: 100vh;
+      object-fit: fill;
+      background: #000;
+      display: block;
+    }
+
+    #loadingOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      transition: opacity 0.35s ease, visibility 0.35s ease;
+    }
+
+    #loadingOverlay.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .loader-content {
+      position: relative;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+
+    .loader-logo {
+      display: block;
+      width: 170px;
+      max-width: 45vw;
+      height: auto;
+      object-fit: contain;
+      margin-bottom: 28px;
+      animation: logoPulse 1.8s ease-in-out infinite;
+      filter: drop-shadow(0 8px 26px rgba(0, 0, 0, 0.9));
+    }
+
+    .pro-spinner {
+      width: 66px;
+      height: 66px;
+      border-radius: 50%;
+      border: 5px solid rgba(255, 255, 255, 0.14);
+      border-top-color: #3b82f6;
+      border-right-color: #60a5fa;
+      animation: spin 0.9s linear infinite;
+      margin-bottom: 20px;
+    }
+
+    .loading-text {
+      font-size: 18px;
+      font-weight: 600;
+      color: #e5e7eb;
+      text-shadow: 0 2px 14px rgba(0, 0, 0, 0.85);
+    }
+
+    .dots::after {
       content: "";
+      display: inline-block;
+      width: 24px;
+      animation: dots 1.4s infinite;
     }
 
-    25% {
-      content: ".";
+    #bufferingIndicator {
+      position: fixed;
+      left: 50%;
+      bottom: 32px;
+      transform: translateX(-50%);
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 18px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.82);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      transition: opacity 0.25s ease, visibility 0.25s ease;
     }
 
-    50% {
-      content: "..";
+    #bufferingIndicator.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
     }
 
-    75% {
-      content: "...";
+    .buffer-spinner {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 3px solid rgba(255, 255, 255, 0.18);
+      border-top-color: #3b82f6;
+      animation: spin 0.8s linear infinite;
     }
 
-    100% {
-      content: "";
-    }
-  }
-
-  @keyframes logoPulse {
-    0%,
-    100% {
-      opacity: 0.85;
-      transform: scale(1);
+    .buffer-text {
+      color: #f3f4f6;
+      font-size: 14px;
+      font-weight: 600;
     }
 
-    50% {
-      opacity: 1;
-      transform: scale(1.04);
+    #toggleControlPanel {
+      position: fixed;
+      top: -2px;
+      right: 16px;
+      z-index: 30;
+      padding: 10px 14px;
+      border-radius: 8px;
+      background: rgba(17, 24, 39, 0);
+      color: #ffffff36;
+      cursor: pointer;
+      font-weight: bold;
+      border: none;
     }
-  }
-.loader-content{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-}
 
-.loader-logo{
-  display:block;
-  width:170px;
-  height:auto;
-  margin-bottom:28px;
-  object-fit:contain;
-  animation:logoPulse 1.8s ease-in-out infinite;
-}
+    #controlPanel {
+      position: fixed;
+      top: 70px;
+      right: 16px;
+      width: 420px;
+      max-width: calc(100vw - 32px);
+      max-height: calc(100vh - 90px);
+      overflow: auto;
+      z-index: 25;
+      background: rgba(31, 41, 55, 0);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      padding: 16px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    #controlPanel.hidden {
+      display: none;
+    }
+
+    .panel {
+      background: rgba(17, 24, 39, 0);
+      border: 1px solid #374151;
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+
+    h1,
+    h2 {
+      margin-top: 0;
+    }
+
+    h1 {
+      font-size: 20px;
+    }
+
+    h2 {
+      font-size: 16px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      color: #d1d5db;
+      font-size: 14px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #4b5563;
+      background: #111827;
+      color: #f9fafb;
+      margin-bottom: 12px;
+    }
+
+    button {
+      padding: 10px 14px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 4px 4px 4px 0;
+      font-weight: bold;
+    }
+
+    .start {
+      background: #22c55e;
+    }
+
+    .stop {
+      background: #ef4444;
+      color: white;
+    }
+
+    .reload {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .copy {
+      background: #f59e0b;
+      color: black;
+    }
+
+    .play {
+      background: #8b5cf6;
+      color: white;
+    }
+
+    pre {
+      background: #020617;
+      padding: 12px;
+      border-radius: 8px;
+      overflow: auto;
+      max-height: 240px;
+      border: 1px solid #334155;
+      font-size: 12px;
+    }
+
+    .status {
+      margin-top: 12px;
+      color: #d1d5db;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .success {
+      color: #22c55e;
+    }
+
+    .error {
+      color: #f87171;
+    }
+
+    .info-box {
+      background: #020617;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 10px;
+      margin-top: 10px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #dbeafe;
+    }
+
+    .m3u8-item {
+      padding: 10px 0;
+      border-bottom: 1px solid #374151;
+      word-break: break-all;
+    }
+
+    code {
+      color: #93c5fd;
+      font-size: 12px;
+    }
+
+    .hidden-monitoring {
+      display: none;
+      margin-top: 12px;
+    }
+
+    .hidden-monitoring.open {
+      display: block;
+    }
+
+    .monitor-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .monitor-card {
+      background: #020617;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 10px;
+    }
+
+    .monitor-label {
+      color: #94a3b8;
+      font-size: 11px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .monitor-value {
+      color: #f8fafc;
+      font-size: 14px;
+      font-weight: bold;
+      word-break: break-word;
+    }
+
+    .monitor-ok {
+      color: #22c55e;
+    }
+
+    .monitor-warn {
+      color: #f59e0b;
+    }
+
+    .monitor-error {
+      color: #f87171;
+    }
+
+    .monitor-log {
+      margin-top: 10px;
+      max-height: 160px;
+      overflow: auto;
+      background: #020617;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 12px;
+      line-height: 1.5;
+      color: #cbd5e1;
+    }
+
+    .monitor-log div {
+      border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+      padding: 4px 0;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes dots {
+      0% {
+        content: "";
+      }
+
+      25% {
+        content: ".";
+      }
+
+      50% {
+        content: "..";
+      }
+
+      75% {
+        content: "...";
+      }
+
+      100% {
+        content: "";
+      }
+    }
+
+    @keyframes logoPulse {
+      0%,
+      100% {
+        opacity: 0.85;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 1;
+        transform: scale(1.04);
+      }
+    }
   </style>
-  
 </head>
 
 <body>
@@ -442,22 +408,20 @@
   </div>
 
   <div id="loadingOverlay">
-  <div class="loader-content">
+    <div class="loader-content">
+      <img
+        class="loader-logo"
+        src="https://player-engine.com/media/cmtv.png"
+        alt="CMTV"
+      />
 
-    <img
-      class="loader-logo"
-      src="https://player-engine.com/media/cmtv.png"
-      alt="CMTV"
-    />
+      <div class="pro-spinner"></div>
 
-    <div class="pro-spinner"></div>
-
-    <div class="loading-text">
-      Chargement du flux<span class="dots"></span>
+      <div class="loading-text">
+        Chargement du flux<span class="dots"></span>
+      </div>
     </div>
-
   </div>
-</div>
 
   <div id="bufferingIndicator" class="hidden">
     <div class="buffer-spinner"></div>
@@ -471,7 +435,11 @@
 
     <section class="panel">
       <label>URL JSON dynamique</label>
-      <input id="jsonUrl" type="text" value="https://multi-chaines.victor-salema-53d.workers.dev/?channel=CM%20TV&countries=pt.json" />
+      <input
+        id="jsonUrl"
+        type="text"
+        value="https://multi-chaines.victor-salema-53d.workers.dev/?channel=CM%20TV&countries=pt.json"
+      />
 
       <label>Intervalle en minutes</label>
       <input id="intervalMinutes" type="number" min="1" value="30" />
@@ -489,105 +457,95 @@
     </section>
 
     <section class="panel">
-  <button id="monitoringToggleButton" class="reload" onclick="toggleMonitoringPanel()">Monitoring ▾</button>
-  <button class="copy" onclick="copyMonitoringLog()">Copier le log</button>
+      <button id="monitoringToggleButton" class="reload" onclick="toggleMonitoringPanel()">Monitoring ▾</button>
+      <button class="copy" onclick="copyMonitoringLog()">Copier le log</button>
 
-  <div id="monitoringContent" class="hidden-monitoring">
-    <div class="monitor-grid">
+      <div id="monitoringContent" class="hidden-monitoring">
+        <div class="monitor-grid">
+          <div class="monitor-card">
+            <div class="monitor-label">État vidéo</div>
+            <div id="monitorVideoState" class="monitor-value">En attente</div>
+          </div>
 
-      <div class="monitor-card">
-        <div class="monitor-label">État vidéo</div>
-        <div id="monitorVideoState" class="monitor-value">En attente</div>
+          <div class="monitor-card">
+            <div class="monitor-label">État HLS</div>
+            <div id="monitorHlsState" class="monitor-value">Inactif</div>
+          </div>
+
+          <div class="monitor-card">
+            <div class="monitor-label">Buffer</div>
+            <div id="monitorBuffer" class="monitor-value">0.0 s</div>
+          </div>
+
+          <div class="monitor-card">
+            <div class="monitor-label">Temps lu</div>
+            <div id="monitorCurrentTime" class="monitor-value">00:00</div>
+          </div>
+
+          <div class="monitor-card">
+            <div class="monitor-label">Débit estimé</div>
+            <div id="monitorBitrate" class="monitor-value">N/A</div>
+          </div>
+
+          <div class="monitor-card">
+            <div class="monitor-label">Résolution</div>
+            <div id="monitorResolution" class="monitor-value">N/A</div>
+          </div>
+
+          <div class="monitor-card">
+            <div class="monitor-label">Récupérations</div>
+            <div id="monitorRecovery" class="monitor-value">0 / 3</div>
+          </div>
+
+          <div class="monitor-card">
+            <div class="monitor-label">Erreurs</div>
+            <div id="monitorErrors" class="monitor-value">0</div>
+          </div>
+
+          <div class="monitor-card">
+            <div class="monitor-label">Temps changement URL</div>
+            <div id="monitorUrlChangeTime" class="monitor-value">N/A</div>
+          </div>
+
+          <div class="monitor-card">
+            <div class="monitor-label">Changements URL</div>
+            <div id="monitorUrlChangeCount" class="monitor-value">0</div>
+          </div>
+
+          <div class="monitor-card">
+            <div class="monitor-label">URL actuelle</div>
+            <div id="monitorCurrentUrl" class="monitor-value">Aucune</div>
+          </div>
+
+          <div class="monitor-card">
+            <div class="monitor-label">Dernière nouvelle URL</div>
+            <div id="monitorLastNewUrl" class="monitor-value">Aucune</div>
+          </div>
+        </div>
+
+        <div class="monitor-log" id="monitorLog">
+          <div>Aucun événement pour le moment.</div>
+        </div>
       </div>
+    </section>
 
-      <div class="monitor-card">
-        <div class="monitor-label">État HLS</div>
-        <div id="monitorHlsState" class="monitor-value">Inactif</div>
-      </div>
+    <section class="panel">
+      <h2>Player HLS</h2>
 
-      <div class="monitor-card">
-        <div class="monitor-label">Buffer</div>
-        <div id="monitorBuffer" class="monitor-value">0.0 s</div>
-      </div>
+      <label>URL M3U8 directe</label>
+      <input
+        id="playerUrl"
+        type="text"
+        placeholder="Le lien .m3u8 direct sera collé ici automatiquement"
+      />
 
-      <div class="monitor-card">
-        <div class="monitor-label">Temps lu</div>
-        <div id="monitorCurrentTime" class="monitor-value">00:00</div>
-      </div>
+      <button class="play" onclick="playCurrentUrl()">Lire cette URL directe</button>
+      <button class="copy" onclick="copyText(playerUrlInput.value)">Copier URL du player</button>
 
-      <div class="monitor-card">
-        <div class="monitor-label">Débit estimé</div>
-        <div id="monitorBitrate" class="monitor-value">N/A</div>
-      </div>
+      <div id="playerStatus" class="status">Player : en attente</div>
+    </section>
 
-      <div class="monitor-card">
-        <div class="monitor-label">Résolution</div>
-        <div id="monitorResolution" class="monitor-value">N/A</div>
-      </div>
-
-      <div class="monitor-card">
-        <div class="monitor-label">Récupérations</div>
-        <div id="monitorRecovery" class="monitor-value">0 / 3</div>
-      </div>
-
-      <div class="monitor-card">
-        <div class="monitor-label">Erreurs</div>
-        <div id="monitorErrors" class="monitor-value">0</div>
-      </div>
-
-      <!-- AJOUT -->
-
-      <div class="monitor-card">
-        <div class="monitor-label">Temps changement URL</div>
-        <div id="monitorUrlChangeTime" class="monitor-value">N/A</div>
-      </div>
-
-      <div class="monitor-card">
-        <div class="monitor-label">Changements URL</div>
-        <div id="monitorUrlChangeCount" class="monitor-value">0</div>
-      </div>
-
-      <div class="monitor-card">
-        <div class="monitor-label">URL actuelle</div>
-        <div id="monitorCurrentUrl" class="monitor-value">Aucune</div>
-      </div>
-
-      <div class="monitor-card">
-        <div class="monitor-label">Dernière nouvelle URL</div>
-        <div id="monitorLastNewUrl" class="monitor-value">Aucune</div>
-      </div>
-
-    </div>
-
-    <div class="monitor-log" id="monitorLog">
-      <div>Aucun événement pour le moment.</div>
-    </div>
-  </div>
-</section>
-
-<section class="panel">
-  <h2>Player HLS</h2>
-
-  <label>URL M3U8 directe</label>
-
-  <input
-    id="playerUrl"
-    type="text"
-    placeholder="Le lien .m3u8 direct sera collé ici automatiquement"
-  />
-
-  <button class="play" onclick="playCurrentUrl()">
-    Lire cette URL directe
-  </button>
-
-  <button class="copy" onclick="copyText(playerUrlInput.value)">
-    Copier URL du player
-  </button>
-
-  <div id="playerStatus" class="status">
-    Player : en attente
-  </div>
-</section>    <section class="panel">
+    <section class="panel">
       <h2>M3U8 trouvés</h2>
       <div id="m3u8List">Aucun lien trouvé.</div>
     </section>
@@ -603,6 +561,9 @@
     const AUTO_RELOAD_MINUTES = 30;
     const STARTUP_WATCHDOG_MS = 12000;
     const MAX_AUTO_RECOVERY_ATTEMPTS = 3;
+    const URL_CHANGE_HISTORY_LIMIT = 10;
+    const AUTO_REFRESH_SECURITY_MARGIN_MINUTES = 3;
+    const MIN_AUTO_REFRESH_MINUTES = 1;
 
     let reloadTimer = null;
     let hlsInstance = null;
@@ -617,10 +578,13 @@
     let monitorErrorCount = 0;
     let monitorLastBitrate = 0;
     let monitorLastHlsState = "Inactif";
+
     let urlChangeSearchStartMs = 0;
     let lastUrlChangeDurationMs = null;
     let urlChangeCount = 0;
-    
+    let lastDetectedNewUrl = "";
+    let urlChangeIntervalsMs = [];
+    let lastUrlChangeDetectedAtMs = 0;
 
     const controlPanel = document.getElementById("controlPanel");
     const urlInput = document.getElementById("jsonUrl");
@@ -650,7 +614,9 @@
     const monitorLog = document.getElementById("monitorLog");
     const monitorUrlChangeTime = document.getElementById("monitorUrlChangeTime");
     const monitorUrlChangeCount = document.getElementById("monitorUrlChangeCount");
-    
+    const monitorCurrentUrl = document.getElementById("monitorCurrentUrl");
+    const monitorLastNewUrl = document.getElementById("monitorLastNewUrl");
+
     videoPlayer.muted = false;
     videoPlayer.volume = 1;
 
@@ -810,7 +776,9 @@
 
       isLoadingJson = true;
       urlChangeSearchStartMs = performance.now();
+
       const previousStreamUrl = currentStreamUrl;
+
       setMonitorHlsState("Recherche JSON", "warn");
       addMonitorLog("Recherche JSON lancée.");
 
@@ -843,18 +811,37 @@
         }
 
         const directUrl = normalizeUrl(foundM3u8[0]);
-        if (previousStreamUrl && directUrl !== previousStreamUrl) {
-        lastUrlChangeDurationMs = performance.now() - urlChangeSearchStartMs;
-        urlChangeCount += 1;
 
-        addMonitorLog(
-        "Nouvelle URL différente détectée en " +
-        (lastUrlChangeDurationMs / 1000).toFixed(2) +
-        " s."
-        );
+        if (previousStreamUrl && directUrl !== previousStreamUrl) {
+          const nowMs = Date.now();
+
+          lastUrlChangeDurationMs = performance.now() - urlChangeSearchStartMs;
+          urlChangeCount += 1;
+          lastDetectedNewUrl = directUrl;
+
+          if (lastUrlChangeDetectedAtMs > 0) {
+            const intervalMs = nowMs - lastUrlChangeDetectedAtMs;
+
+            urlChangeIntervalsMs.push(intervalMs);
+
+            if (urlChangeIntervalsMs.length > URL_CHANGE_HISTORY_LIMIT) {
+              urlChangeIntervalsMs.shift();
+            }
+
+            updateAdaptiveRefreshInterval();
+          }
+
+          lastUrlChangeDetectedAtMs = nowMs;
+
+          addMonitorLog(
+            "Nouvelle URL différente détectée en " +
+            (lastUrlChangeDurationMs / 1000).toFixed(2) +
+            " s."
+          );
         } else if (previousStreamUrl && directUrl === previousStreamUrl) {
-        addMonitorLog("URL dynamique inchangée après recherche.");
+          addMonitorLog("URL dynamique inchangée après recherche.");
         }
+
         const minutes = Number(intervalInput.value) || AUTO_RELOAD_MINUTES;
 
         playerUrlInput.value = directUrl;
@@ -988,120 +975,114 @@
     }
 
     function playHls(url) {
-  const directUrl = normalizeUrl(url);
+      const directUrl = normalizeUrl(url);
 
-  if (!directUrl) {
-    setPlayerStatus("URL HLS vide.", "error");
-    return;
-  }
+      if (!directUrl) {
+        setPlayerStatus("URL HLS vide.", "error");
+        return;
+      }
 
-  if (directUrl === currentStreamUrl && hlsInstance) {
-    addMonitorLog("Flux identique ignoré.");
-    return;
-  }
+      if (directUrl === currentStreamUrl && hlsInstance) {
+        addMonitorLog("Flux identique ignoré.");
+        return;
+      }
 
-  addMonitorLog("Préchargement du nouveau flux...");
-  setMonitorHlsState("Préchargement", "warn");
+      addMonitorLog("Préchargement du nouveau flux...");
+      setMonitorHlsState("Préchargement", "warn");
 
-  const nextHls = new Hls({
-    enableWorker: true,
-    lowLatencyMode: true,
-    backBufferLength: 30
-  });
+      const nextHls = new Hls({
+        enableWorker: true,
+        lowLatencyMode: true,
+        backBufferLength: 30
+      });
 
-  pendingHlsInstance = nextHls;
+      pendingHlsInstance = nextHls;
 
-  nextHls.loadSource(directUrl);
-  nextHls.attachMedia(videoPlayer);
+      nextHls.loadSource(directUrl);
+      nextHls.attachMedia(videoPlayer);
 
-  nextHls.on(Hls.Events.MEDIA_ATTACHED, function () {
-    addMonitorLog("Media attaché.");
-  });
+      nextHls.on(Hls.Events.MEDIA_ATTACHED, function () {
+        addMonitorLog("Media attaché.");
+      });
 
-  nextHls.on(Hls.Events.MANIFEST_PARSED, function () {
+      nextHls.on(Hls.Events.MANIFEST_PARSED, function () {
+        addMonitorLog("Nouveau flux prêt.");
 
-    addMonitorLog("Nouveau flux prêt.");
+        const paused = videoPlayer.paused;
 
-    const currentTime = videoPlayer.currentTime || 0;
-    const paused = videoPlayer.paused;
+        if (hlsInstance && hlsInstance !== nextHls) {
+          try {
+            hlsInstance.destroy();
+          } catch (error) {}
+        }
 
-    if (hlsInstance && hlsInstance !== nextHls) {
-      try {
-        hlsInstance.destroy();
-      } catch (e) {}
-    }
+        hlsInstance = nextHls;
+        pendingHlsInstance = null;
+        currentStreamUrl = directUrl;
 
-    hlsInstance = nextHls;
-    pendingHlsInstance = null;
-    currentStreamUrl = directUrl;
-    addMonitorLog("URL active remplacée : " + directUrl);
-    console.log("[HOT_SWAP_OK]", directUrl);
-    
-    if (!paused) {
-      videoPlayer.play().catch(() => {});
-    }
+        addMonitorLog("URL active remplacée : " + directUrl);
+        console.log("[HOT_SWAP_OK]", directUrl);
 
-    hideLoader();
-    hideBufferingIndicator();
+        if (!paused) {
+          videoPlayer.play().catch(function () {});
+        }
 
-    setMonitorHlsState("Lecture active", "ok");
-    setPlayerStatus("Flux actif.", "success");
+        hideLoader();
+        hideBufferingIndicator();
 
-    markStreamStarted();
-  });
+        setMonitorHlsState("Lecture active", "ok");
+        setPlayerStatus("Flux actif.", "success");
 
-  nextHls.on(Hls.Events.LEVEL_SWITCHED, function (event, data) {
-    const level = nextHls.levels[data.level];
+        markStreamStarted();
+      });
 
-    if (level) {
-      monitorLastBitrate = level.bitrate || 0;
+      nextHls.on(Hls.Events.LEVEL_SWITCHED, function (event, data) {
+        const level = nextHls.levels[data.level];
 
-      addMonitorLog(
-        "Qualité : " +
-        (level.width || "?") +
-        "x" +
-        (level.height || "?")
-      );
-    }
-  });
+        if (level) {
+          monitorLastBitrate = level.bitrate || 0;
 
-  nextHls.on(Hls.Events.ERROR, function (event, data) {
+          addMonitorLog(
+            "Qualité : " +
+            (level.width || "?") +
+            "x" +
+            (level.height || "?")
+          );
+        }
+      });
 
-    if (data.details === "bufferStalledError") {
-      addMonitorLog("Micro-buffer détecté.");
-      return;
-    }
+      nextHls.on(Hls.Events.ERROR, function (event, data) {
+        if (data.details === "bufferStalledError") {
+          addMonitorLog("Micro-buffer détecté.");
+          return;
+        }
 
-    monitorErrorCount += 1;
+        monitorErrorCount += 1;
 
-    addMonitorLog(
-      "Erreur HLS : " +
-      data.type +
-      " / " +
-      data.details
-    );
+        addMonitorLog(
+          "Erreur HLS : " +
+          data.type +
+          " / " +
+          data.details
+        );
 
-    if (data.fatal) {
+        if (data.fatal) {
+          setMonitorHlsState("Erreur fatale", "error");
 
-      setMonitorHlsState("Erreur fatale", "error");
+          if (autoRecoveryAttempts < MAX_AUTO_RECOVERY_ATTEMPTS) {
+            autoRecoveryAttempts += 1;
+            addMonitorLog("Recherche nouveau flux...");
+            loadJson(true);
+          }
+        }
+      });
 
-      if (autoRecoveryAttempts < MAX_AUTO_RECOVERY_ATTEMPTS) {
-        autoRecoveryAttempts += 1;
-
-        addMonitorLog("Recherche nouveau flux...");
-
-        loadJson(true);
+      if (!videoPlayer.src && !videoPlayer.currentSrc) {
+        showLoader();
       }
     }
-  });
 
-  if (!videoPlayer.src && !videoPlayer.currentSrc) {
-    showLoader();
-  }
-}    
-
-
-     function startAutoReload() {
+    function startAutoReload() {
       stopAutoReload();
 
       const minutes = Number(intervalInput.value) || AUTO_RELOAD_MINUTES;
@@ -1198,72 +1179,56 @@
     }
 
     function updateMonitoring() {
-  const paused = videoPlayer.paused;
-  const ended = videoPlayer.ended;
-  const readyState = videoPlayer.readyState;
-  const bufferedSeconds = getBufferedSeconds();
+      const paused = videoPlayer.paused;
+      const ended = videoPlayer.ended;
+      const readyState = videoPlayer.readyState;
+      const bufferedSeconds = getBufferedSeconds();
 
-  let videoStateText = "En attente";
-  let videoStateClass = "";
+      let videoStateText = "En attente";
+      let videoStateClass = "";
 
-  if (ended) {
-    videoStateText = "Terminé";
-    videoStateClass = "monitor-warn";
-  } else if (!paused && readyState >= 3) {
-    videoStateText = "Lecture";
-    videoStateClass = "monitor-ok";
-  } else if (!paused && readyState < 3) {
-    videoStateText = "Buffering";
-    videoStateClass = "monitor-warn";
-  } else if (paused && videoPlayer.currentTime > 0) {
-    videoStateText = "Pause";
-    videoStateClass = "monitor-warn";
-  }
+      if (ended) {
+        videoStateText = "Terminé";
+        videoStateClass = "monitor-warn";
+      } else if (!paused && readyState >= 3) {
+        videoStateText = "Lecture";
+        videoStateClass = "monitor-ok";
+      } else if (!paused && readyState < 3) {
+        videoStateText = "Buffering";
+        videoStateClass = "monitor-warn";
+      } else if (paused && videoPlayer.currentTime > 0) {
+        videoStateText = "Pause";
+        videoStateClass = "monitor-warn";
+      }
 
-  monitorVideoState.textContent = videoStateText;
-  monitorVideoState.className = "monitor-value " + videoStateClass;
+      monitorVideoState.textContent = videoStateText;
+      monitorVideoState.className = "monitor-value " + videoStateClass;
 
-  monitorBuffer.textContent = bufferedSeconds.toFixed(1) + " s";
+      monitorBuffer.textContent = bufferedSeconds.toFixed(1) + " s";
+      monitorCurrentTime.textContent = formatDuration(videoPlayer.currentTime);
+      monitorRecovery.textContent = autoRecoveryAttempts + " / " + MAX_AUTO_RECOVERY_ATTEMPTS;
+      monitorErrors.textContent = String(monitorErrorCount);
 
-  monitorCurrentTime.textContent =
-    formatDuration(videoPlayer.currentTime);
+      monitorBitrate.textContent =
+        monitorLastBitrate > 0
+          ? (monitorLastBitrate / 1000000).toFixed(2) + " Mbps"
+          : "N/A";
 
-  monitorRecovery.textContent =
-    autoRecoveryAttempts +
-    " / " +
-    MAX_AUTO_RECOVERY_ATTEMPTS;
+      monitorResolution.textContent =
+        videoPlayer.videoWidth && videoPlayer.videoHeight
+          ? videoPlayer.videoWidth + "x" + videoPlayer.videoHeight
+          : "N/A";
 
-  monitorErrors.textContent =
-    String(monitorErrorCount);
+      monitorUrlChangeTime.textContent =
+        lastUrlChangeDurationMs !== null
+          ? (lastUrlChangeDurationMs / 1000).toFixed(2) + " s"
+          : "N/A";
 
-  monitorBitrate.textContent =
-    monitorLastBitrate > 0
-      ? (monitorLastBitrate / 1000000).toFixed(2) + " Mbps"
-      : "N/A";
+      monitorUrlChangeCount.textContent = String(urlChangeCount);
+      monitorCurrentUrl.textContent = currentStreamUrl || "Aucune";
+      monitorLastNewUrl.textContent = lastDetectedNewUrl || "Aucune";
+    }
 
-  monitorResolution.textContent =
-    videoPlayer.videoWidth && videoPlayer.videoHeight
-      ? videoPlayer.videoWidth + "x" + videoPlayer.videoHeight
-      : "N/A";
-
-  /* =========================
-     TEMPS CHANGEMENT URL
-  ========================= */
-
-  monitorUrlChangeTime.textContent =
-    lastUrlChangeDurationMs !== null
-      ? (lastUrlChangeDurationMs / 1000).toFixed(2) + " s"
-      : "N/A";
-
-  monitorUrlChangeCount.textContent =
-    String(urlChangeCount);
-
-  monitorCurrentUrl.textContent =
-    currentStreamUrl || "Aucune";
-
-  monitorLastNewUrl.textContent =
-    playerUrlInput.value || "Aucune";
-}
     function startMonitoring() {
       if (monitorTimer) clearInterval(monitorTimer);
 
@@ -1272,6 +1237,53 @@
       monitorTimer = setInterval(function () {
         updateMonitoring();
       }, 1000);
+    }
+
+    function updateAdaptiveRefreshInterval() {
+      if (!urlChangeIntervalsMs.length) return;
+
+      const totalMs = urlChangeIntervalsMs.reduce(function (sum, value) {
+        return sum + value;
+      }, 0);
+
+      const averageMs = totalMs / urlChangeIntervalsMs.length;
+      const minMs = Math.min.apply(null, urlChangeIntervalsMs);
+      const maxMs = Math.max.apply(null, urlChangeIntervalsMs);
+
+      const safeIntervalMs =
+        averageMs - AUTO_REFRESH_SECURITY_MARGIN_MINUTES * 60 * 1000;
+
+      const safeIntervalMinutes = Math.max(
+        MIN_AUTO_REFRESH_MINUTES,
+        Math.floor(safeIntervalMs / 60000)
+      );
+
+      intervalInput.value = safeIntervalMinutes;
+
+      if (reloadTimer) {
+        clearInterval(reloadTimer);
+
+        reloadTimer = setInterval(function () {
+          autoRecoveryAttempts = 0;
+          loadJson(true);
+        }, safeIntervalMinutes * 60 * 1000);
+      }
+
+      nextReloadTime.textContent = formatDateTime(
+        new Date(Date.now() + safeIntervalMinutes * 60 * 1000)
+      );
+
+      addMonitorLog(
+        "Auto-refresh ajusté : " +
+        safeIntervalMinutes +
+        " min | moyenne " +
+        (averageMs / 60000).toFixed(2) +
+        " min | min " +
+        (minMs / 60000).toFixed(2) +
+        " min | max " +
+        (maxMs / 60000).toFixed(2) +
+        " min."
+      );
     }
 
     function escapeHtml(value) {
