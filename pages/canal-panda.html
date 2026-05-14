@@ -611,6 +611,8 @@
   let preloadHlsInstance = null;
   let preloadedStreamUrl = "";
   let preloadReady = false;
+  let forceNextReplay = false;
+  let hlsFatalRecoveryInProgress = false;
   
   const controlPanel = document.getElementById("controlPanel");
   const urlInput = document.getElementById("jsonUrl");
@@ -781,21 +783,45 @@
   }
 
   function triggerProactiveReload(reason) {
-    if (proactiveReloadCooldown) return;
+  if (proactiveReloadCooldown || hlsFatalRecoveryInProgress) return;
 
-    proactiveReloadCooldown = true;
+  proactiveReloadCooldown = true;
+  hlsFatalRecoveryInProgress = true;
+  forceNextReplay = true;
 
-    addMonitorLog("Reload proactif déclenché : " + reason);
-    setMonitorHlsState("Refresh proactif", "warn");
-    showBufferingIndicator();
+  addMonitorLog("Reload proactif déclenché : " + reason);
+  setMonitorHlsState("Refresh proactif", "warn");
+  showBufferingIndicator();
 
-    autoRecoveryAttempts = 0;
-    loadJson(true);
+  try {
+    if (pendingHlsInstance) {
+      pendingHlsInstance.destroy();
+      pendingHlsInstance = null;
+    }
 
-    setTimeout(function () {
-      proactiveReloadCooldown = false;
-    }, PROACTIVE_RELOAD_COOLDOWN_MS);
-  }
+    if (preloadHlsInstance) {
+      preloadHlsInstance.destroy();
+      preloadHlsInstance = null;
+    }
+
+    if (hlsInstance) {
+      hlsInstance.destroy();
+      hlsInstance = null;
+    }
+  } catch (error) {}
+
+  currentStreamUrl = "";
+  autoRecoveryAttempts = 0;
+  fallbackAttemptCount = 0;
+  fragmentErrorCount = 0;
+
+  loadJson(true);
+
+  setTimeout(function () {
+    proactiveReloadCooldown = false;
+    hlsFatalRecoveryInProgress = false;
+  }, PROACTIVE_RELOAD_COOLDOWN_MS);
+}
 
   async function preloadNextStream(url) {
 
@@ -1231,10 +1257,12 @@ function extractHlsTargetUrl(url) {
       return;
     }
 
-    if (directUrl === currentStreamUrl && hlsInstance) {
-      addMonitorLog("Flux identique ignoré.");
-      return;
-    }
+    if (directUrl === currentStreamUrl && hlsInstance && !forceNextReplay) {
+  addMonitorLog("Flux identique ignoré.");
+  return;
+}
+
+forceNextReplay = false;
 
     addMonitorLog("Préchargement du nouveau flux...");
     setMonitorHlsState("Préchargement", "warn");
@@ -1358,12 +1386,22 @@ function extractHlsTargetUrl(url) {
         data.details === "manifestLoadError" ||
         data.details === "manifestLoadTimeOut"
       ) {
+        
         fallbackAttemptCount += 1;
 
 if (fallbackAttemptCount > MAX_FALLBACK_ATTEMPTS) {
   addMonitorLog("Fallback épuisé. Nouvelle recherche JSON.");
-  nextHls.destroy();
+
+  forceNextReplay = true;
+
+  try {
+    nextHls.destroy();
+  } catch (error) {}
+
+  currentStreamUrl = "";
+  pendingHlsInstance = null;
   loadJson(true);
+
   return;
 }
 
@@ -1375,7 +1413,6 @@ const fallbackUrl =
   nextWorker + "/hls?url=" + encodeURIComponent(cleanTarget);
 
 addMonitorLog("Fallback worker : " + nextWorker);
-console.warn("Fallback worker activé :", fallbackUrl);
 
 nextHls.stopLoad();
 
