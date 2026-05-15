@@ -632,6 +632,9 @@
   let currentComparableStreamUrl = "";
   let currentStreamKey = "";
   let lastJsonSignature = "";
+  let cachedJsonData = null;
+  let cachedJsonTimestamp = 0;
+  let cachedJsonUrl = "";
   let isLoadingJson = false;
   let bufferingTimeout = null;
   let startupWatchdog = null;
@@ -891,10 +894,29 @@
 
     try {
       setStatus("Recherche automatique du flux en cours...", "");
-      const response = await fetch(jsonUrl, { method: "GET", cache: "no-store" });
-      if (!response.ok) throw new Error("HTTP " + response.status);
 
-      const data = await response.json();
+      let data;
+      const now = Date.now();
+      const bypassJsonCache = reason === true;
+      const canUseJsonCache =
+        !bypassJsonCache &&
+        cachedJsonData &&
+        cachedJsonUrl === jsonUrl &&
+        now - cachedJsonTimestamp < JSON_CACHE_MS;
+
+      if (canUseJsonCache) {
+        data = cachedJsonData;
+        addMonitorLog("JSON servi depuis cache mémoire (" + Math.round((now - cachedJsonTimestamp) / 1000) + " s).");
+      } else {
+        const response = await fetch(jsonUrl, { method: "GET", cache: "no-store" });
+        if (!response.ok) throw new Error("HTTP " + response.status);
+
+        data = await response.json();
+        cachedJsonData = data;
+        cachedJsonTimestamp = Date.now();
+        cachedJsonUrl = jsonUrl;
+      }
+
       const jsonSignature = JSON.stringify(data);
 
       if (jsonSignature !== lastJsonSignature) {
