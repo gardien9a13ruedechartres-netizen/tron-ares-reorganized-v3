@@ -1275,6 +1275,16 @@ forceNextReplay = false;
 
     pendingHlsInstance = nextHls;
 
+    function resetVideoElementForNewStream() {
+    try {
+    videoPlayer.pause();
+    videoPlayer.removeAttribute("src");
+    videoPlayer.load();
+    } catch (error) {}
+     }
+
+    resetVideoElementForNewStream();
+
     nextHls.loadSource(directUrl);
     nextHls.attachMedia(videoPlayer);
 
@@ -1426,10 +1436,22 @@ return;
 }
 
       if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
-        nextHls.recoverMediaError();
-        return;
-      }
+  addMonitorLog("Erreur média. Nettoyage buffer et reload JSON.");
 
+  forceNextReplay = true;
+
+  try {
+    nextHls.destroy();
+  } catch (error) {}
+
+  pendingHlsInstance = null;
+  currentStreamUrl = "";
+
+  resetVideoElementForNewStream();
+  loadJson(true);
+
+  return;
+}
       nextHls.destroy();
     });
 
