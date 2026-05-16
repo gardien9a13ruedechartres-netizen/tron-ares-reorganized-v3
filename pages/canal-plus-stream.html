@@ -151,7 +151,6 @@
     backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.12);
     transition: opacity 0.25s ease, visibility 0.25s ease;
-    visibility: hidden;
   }
 
   #bufferingIndicator.hidden {
@@ -687,6 +686,7 @@
   let videoFrameWatchdog = null;
   let videoFrameRecoveryCount = 0;
   let loaderProgressTimer = null;
+  let recoveryProgressTimer = null;
   let lastLoaderProgress = 0;
   let lastFoundM3u8Links = [];
   let currentCandidateIndex = 0;
@@ -904,6 +904,8 @@
 
   function startLoaderProgress(label) {
     clearInterval(loaderProgressTimer);
+    clearInterval(recoveryProgressTimer);
+    recoveryProgressTimer = null;
     lastLoaderProgress = 0;
     setLoadingProgress(4, label || "Initialisation");
 
@@ -918,6 +920,8 @@
   function stopLoaderProgress() {
     clearInterval(loaderProgressTimer);
     loaderProgressTimer = null;
+    clearInterval(recoveryProgressTimer);
+    recoveryProgressTimer = null;
   }
 
   function showLoader(label) {
@@ -933,7 +937,40 @@
     }, 180);
   }
 
+
+  function startBufferingProgress(label) {
+    if (!streamStarted) return;
+
+    clearInterval(loaderProgressTimer);
+    clearInterval(recoveryProgressTimer);
+
+    loadingOverlay.classList.remove("hidden");
+    lastLoaderProgress = Math.min(Math.max(lastLoaderProgress, 35), 55);
+    setLoadingProgress(lastLoaderProgress, label || "Reconnexion du flux");
+
+    recoveryProgressTimer = setInterval(function () {
+      if (loadingOverlay.classList.contains("hidden")) return;
+      if (lastLoaderProgress < 95) {
+        const step = lastLoaderProgress < 75 ? 3 : 1;
+        setLoadingProgress(lastLoaderProgress + step, "Presque prêt");
+      }
+    }, 520);
+  }
+
+  function finishBufferingProgress() {
+    if (loadingOverlay.classList.contains("hidden")) return;
+    setLoadingProgress(100, "Flux actif");
+    stopLoaderProgress();
+    setTimeout(function () {
+      loadingOverlay.classList.add("hidden");
+    }, 220);
+  }
+
   function showBufferingIndicator() {
+    if (streamStarted) {
+      startBufferingProgress("Reconnexion du flux");
+    }
+
     if (!loadingOverlay.classList.contains("hidden")) return;
     clearTimeout(bufferingTimeout);
     bufferingTimeout = setTimeout(function () { bufferingIndicator.classList.remove("hidden"); }, 500);
@@ -1369,7 +1406,8 @@
         data.details === "bufferSeekOverHole"
       ) {
         showBufferingIndicator();
-        addMonitorLog("Micro-buffer ignoré : " + data.details);
+        startBufferingProgress("Reconnexion du flux");
+        addMonitorLog("Micro-buffer ignoré : " + data.details + ", progression affichée.");
         return;
       }
 
@@ -1498,7 +1536,13 @@
       return;
     }
 
-    if (streamStarted) return;
+    if (streamStarted) {
+      finishBufferingProgress();
+      hideBufferingIndicator();
+      setMonitorHlsState("Lecture active", "ok");
+      return;
+    }
+
     streamStarted = true;
     autoRecoveryAttempts = 0;
     videoFrameRecoveryCount = 0;
@@ -1660,8 +1704,19 @@
     }
   });
   videoPlayer.addEventListener("resize", markStreamStarted);
-  videoPlayer.addEventListener("waiting", function () { showBufferingIndicator(); setMonitorHlsState("Buffering", "warn"); });
-  videoPlayer.addEventListener("stalled", function () { showBufferingIndicator(); setMonitorHlsState("Flux ralenti", "warn"); addMonitorLog("Stall vidéo détecté."); });
+  videoPlayer.addEventListener("waiting", function () {
+    showBufferingIndicator();
+    startBufferingProgress("Reconnexion du flux");
+    setMonitorHlsState("Buffering", "warn");
+    addMonitorLog("Buffering détecté, progression de reconnexion affichée.");
+  });
+
+  videoPlayer.addEventListener("stalled", function () {
+    showBufferingIndicator();
+    startBufferingProgress("Flux ralenti");
+    setMonitorHlsState("Flux ralenti", "warn");
+    addMonitorLog("Stall vidéo détecté, progression de reconnexion affichée.");
+  });
   videoPlayer.addEventListener("error", function () {
     monitorErrorCount += 1;
     showBufferingIndicator();
