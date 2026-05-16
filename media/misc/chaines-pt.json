@@ -154,11 +154,11 @@
 {
 "id": "BTV",
 "name": "BTV",
-"url": "https://qmaalhy7acgxwhm.ngolpdkyoctjcddxshli469r.org/sunshine/8hpsZKuHLsI2Uynb63PHirIHh4-d706ZdniAz1qmp0w5D-xHVqFBcCGG7yW0u9FDqC2EQLOCaEHzFYiDZcfZRhR9kyLuyXydS05JNPtZ093b6xJh2cCPAtirQpM3erRYetl5LBOvzwPt6Q3lCzUxccUhkcwWuDuQMZbJHOPSaAdKH3YRng89-a5q5zUVbukuWfzlio99bLadjavFeFfn8kH88rFBaF9_QkmyGnuzlnr_ju7QY30V3qK508xREzkuUFmsOefzwsTg9yqkWmC8sQ/hls/index.m3u8",
+"url": "/pages/btv-stream.html",
 "logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/commons/d/d2/Logo_Benfica_TV.png" },
 "group": "Sport",
 "isFavorite": false,
-"isIframe": false
+"isIframe": true
 },
 {
 "id": "SCP",
@@ -290,7 +290,7 @@
 {
 "id": "turkey",
 "name": "turkey",
-"url": "https://qmaalhy7acgxwhm.ngolpdkyoctjcddxshli469r.org/sunshine/epV-eLD-jzGdrXg5TCdhJmiPi8v2UVMv9jDIZ1SJsp15tjKa7A02U3Tp5ctbp5ZR5ZIMkI4UxiRtzGFDgaBlCVvOO8QGWi668nKXffvfEdOrRazouk_Pv_IasOO6bVx3HEwcujoiB4Isxo6U6Xp7y_xIKhqkcVN1peCMAPjOqDugCakvIBX0HMaLPsjIIS9vMFpb6H7qI7aa19q8otC1pCXgrtq2cLhPdhumcI5psBw7jf8Z2lZ-uvhXa7jnU4awkkma4MkKpsizUyARyUeZwu0Mecx9kqyvK67lJ4NbV7o/hls/index.m3u8",
+"url": "",
 "logo": { "type": "image", "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/sports-tv-tr.png" },
 "group": "Sport",
 "isFavorite": false,
