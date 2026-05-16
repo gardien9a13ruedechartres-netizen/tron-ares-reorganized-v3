@@ -86,36 +86,7 @@
     border-top-color: #3b82f6;
     border-right-color: #60a5fa;
     animation: spin 0.9s linear infinite;
-    margin-bottom: 18px;
-  }
-
-  .loader-progress-wrap {
-    width: 260px;
-    max-width: 72vw;
-    height: 8px;
-    overflow: hidden;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.14);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
-    margin-bottom: 10px;
-  }
-
-  .loader-progress-fill {
-    width: 0%;
-    height: 100%;
-    border-radius: inherit;
-    background: linear-gradient(90deg, #2563eb, #60a5fa, #93c5fd);
-    box-shadow: 0 0 18px rgba(59, 130, 246, 0.75);
-    transition: width 0.35s ease;
-  }
-
-  .loader-progress-text {
-    min-height: 18px;
-    margin-bottom: 14px;
-    color: #bfdbfe;
-    font-size: 13px;
-    font-weight: 700;
-    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.85);
+    margin-bottom: 20px;
   }
 
   .loading-text {
@@ -151,6 +122,7 @@
     backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.12);
     transition: opacity 0.25s ease, visibility 0.25s ease;
+    visibility: hidden;
   }
 
   #bufferingIndicator.hidden {
@@ -506,12 +478,6 @@
 
     <div class="pro-spinner"></div>
 
-    <div class="loader-progress-wrap" aria-hidden="true">
-      <div id="loadingProgressFill" class="loader-progress-fill"></div>
-    </div>
-
-    <div id="loadingProgressText" class="loader-progress-text">Initialisation... 0%</div>
-
     <div class="loading-text">
       Chargement du flux<span class="dots"></span>
     </div>
@@ -658,7 +624,6 @@
   const MAX_FRAGMENT_ERRORS = 12;
   const PROACTIVE_RELOAD_COOLDOWN_MS = 30000;
   const VIDEO_FRAME_TIMEOUT_MS = 30000;
-  const JSON_CACHE_MS = 15000;
 
   let workerIndex = 0;
   let reloadTimer = null;
@@ -685,8 +650,6 @@
   let proactiveReloadCooldown = false;
   let videoFrameWatchdog = null;
   let videoFrameRecoveryCount = 0;
-  let loaderProgressTimer = null;
-  let lastLoaderProgress = 0;
   let lastFoundM3u8Links = [];
   let currentCandidateIndex = 0;
   let badStreamKeys = new Set();
@@ -701,8 +664,6 @@
   const playerUrlInput = document.getElementById("playerUrl");
   const playerStatus = document.getElementById("playerStatus");
   const loadingOverlay = document.getElementById("loadingOverlay");
-  const loadingProgressFill = document.getElementById("loadingProgressFill");
-  const loadingProgressText = document.getElementById("loadingProgressText");
   const bufferingIndicator = document.getElementById("bufferingIndicator");
   const lastLoadTime = document.getElementById("lastLoadTime");
   const nextReloadTime = document.getElementById("nextReloadTime");
@@ -887,50 +848,8 @@
     }
   }
 
-  function setLoadingProgress(value, label) {
-    const safeValue = Math.max(0, Math.min(100, Math.round(Number(value) || 0)));
-    lastLoaderProgress = Math.max(lastLoaderProgress, safeValue);
-
-    if (loadingProgressFill) {
-      loadingProgressFill.style.width = lastLoaderProgress + "%";
-    }
-
-    if (loadingProgressText) {
-      const text = label || "Chargement du flux";
-      loadingProgressText.textContent = text + "... " + lastLoaderProgress + "%";
-    }
-  }
-
-  function startLoaderProgress(label) {
-    clearInterval(loaderProgressTimer);
-    lastLoaderProgress = 0;
-    setLoadingProgress(4, label || "Initialisation");
-
-    loaderProgressTimer = setInterval(function () {
-      if (loadingOverlay.classList.contains("hidden")) return;
-      if (lastLoaderProgress < 72) {
-        setLoadingProgress(lastLoaderProgress + 1, "Chargement du flux");
-      }
-    }, 420);
-  }
-
-  function stopLoaderProgress() {
-    clearInterval(loaderProgressTimer);
-    loaderProgressTimer = null;
-  }
-
-  function showLoader(label) {
-    loadingOverlay.classList.remove("hidden");
-    startLoaderProgress(label || "Initialisation");
-  }
-
-  function hideLoader() {
-    setLoadingProgress(100, "Flux prêt");
-    stopLoaderProgress();
-    setTimeout(function () {
-      loadingOverlay.classList.add("hidden");
-    }, 180);
-  }
+  function showLoader() { loadingOverlay.classList.remove("hidden"); }
+  function hideLoader() { loadingOverlay.classList.add("hidden"); }
 
   function showBufferingIndicator() {
     if (!loadingOverlay.classList.contains("hidden")) return;
@@ -971,7 +890,6 @@
     }
 
     isLoadingJson = true;
-    setLoadingProgress(8, "Recherche du flux");
     setMonitorHlsState("Recherche JSON", "warn");
     addMonitorLog("Recherche JSON lancée" + (reason ? " : " + reason : "."));
 
@@ -988,16 +906,13 @@
         now - cachedJsonTimestamp < JSON_CACHE_MS;
 
       if (canUseJsonCache) {
-        setLoadingProgress(24, "JSON en cache");
         data = cachedJsonData;
         addMonitorLog("JSON servi depuis cache mémoire (" + Math.round((now - cachedJsonTimestamp) / 1000) + " s).");
       } else {
-        setLoadingProgress(16, "Appel JSON");
         const response = await fetch(jsonUrl, { method: "GET", cache: "no-store" });
         if (!response.ok) throw new Error("HTTP " + response.status);
 
         data = await response.json();
-        setLoadingProgress(28, "JSON reçu");
         cachedJsonData = data;
         cachedJsonTimestamp = Date.now();
         cachedJsonUrl = jsonUrl;
@@ -1011,7 +926,6 @@
 
       jsonViewer.textContent = JSON.stringify(data, null, 2);
 
-      setLoadingProgress(34, "Analyse du flux");
       const foundM3u8 = findM3u8Links(data);
       lastFoundM3u8Links = foundM3u8.slice();
       currentCandidateIndex = 0;
@@ -1053,7 +967,6 @@
       }
 
       lastJsonSignature = jsonSignature;
-      setLoadingProgress(42, "URL HLS trouvée");
       await playHls(directUrl, (reason || "nouvelle URL JSON") + " / M3U8 #" + (firstCandidate.index + 1));
       setStatus("Recherche terminée. M3U8 trouvés : " + foundM3u8.length, "success");
     } catch (error) {
@@ -1166,7 +1079,6 @@
     playerUrlInput.value = directUrl;
 
     addMonitorLog("Activation flux : " + reason);
-    setLoadingProgress(48, "Connexion HLS");
     setMonitorHlsState("Connexion HLS", "warn");
 
     if (!videoPlayer.currentTime) showLoader(); else showBufferingIndicator();
@@ -1337,12 +1249,10 @@
   function bindHlsEvents(hls, loadedUrl) {
     hls.on(Hls.Events.MEDIA_ATTACHED, function () {
       addMonitorLog("Media attaché. Chargement source HLS.");
-      setLoadingProgress(58, "Média attaché");
       hls.loadSource(loadedUrl);
     });
     hls.on(Hls.Events.MANIFEST_PARSED, function () {
       streamStartTimestamp = Date.now();
-      setLoadingProgress(76, "Manifest chargé");
       selectBestVisibleLevel(hls);
       setPlayerStatus("Manifest chargé. Démarrage vidéo...", "success");
       setMonitorHlsState("Démarrage vidéo", "warn");
@@ -1356,10 +1266,7 @@
         addMonitorLog("Qualité : " + (level.width || "?") + "x" + (level.height || "?") + (level.videoCodec ? " / " + level.videoCodec : ""));
       }
     });
-    hls.on(Hls.Events.FRAG_LOADED, function () {
-      fragmentErrorCount = 0;
-      setLoadingProgress(88, "Segments vidéo reçus");
-    });
+    hls.on(Hls.Events.FRAG_LOADED, function () { fragmentErrorCount = 0; });
     hls.on(Hls.Events.ERROR, function (event, data) {
       if (!data) return;
       if (
@@ -1503,7 +1410,6 @@
     videoFrameRecoveryCount = 0;
     clearPlaybackWatchdog();
     clearVideoFrameWatchdog();
-    setLoadingProgress(100, "Flux prêt");
     hideLoader();
     hideBufferingIndicator();
     setMonitorHlsState("Lecture active", "ok");
@@ -1653,10 +1559,7 @@
   videoPlayer.addEventListener("playing", markStreamStarted);
   videoPlayer.addEventListener("loadedmetadata", function () {
     addMonitorLog("Métadonnées vidéo : " + (videoPlayer.videoWidth || "?") + "x" + (videoPlayer.videoHeight || "?"));
-    if (hasVisibleVideoFrame()) {
-      setLoadingProgress(95, "Presque prêt");
-      markStreamStarted();
-    }
+    if (hasVisibleVideoFrame()) markStreamStarted();
   });
   videoPlayer.addEventListener("resize", markStreamStarted);
   videoPlayer.addEventListener("waiting", function () { showBufferingIndicator(); setMonitorHlsState("Buffering", "warn"); });
