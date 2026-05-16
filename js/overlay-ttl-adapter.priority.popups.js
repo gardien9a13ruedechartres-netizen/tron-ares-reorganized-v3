@@ -113,6 +113,9 @@
         path === "/pages/cmlive1.html" ||
         path === "/pages/cmlive2.html" ||
         path === "/pages/CANAL-plus-Gr-Ecran.html" ||
+        path === "/pages/cmtv-stream2.html" ||
+        path === "/pages/canal-panda.html" ||
+        path === "/pages/canal-plus-stream.html" ||
         path === "/pages/CM-vavoo.html"
     );
     } catch {
