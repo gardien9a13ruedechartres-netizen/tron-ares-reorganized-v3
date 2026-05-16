@@ -2,10 +2,10 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Fullscreen HLS Auto Refresh Player</title>
+  <title>Fullscreen HLS Auto Refresh Player - Clean</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
- <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.8/dist/hls.min.js"></script>
+ <script src="https://cdn.jsdelivr.net/npm/hls.js@1.6.16/dist/hls.min.js"></script>
 <style>
   * {
     box-sizing: border-box;
@@ -471,21 +471,6 @@
       transform: scale(1.04);
     }
   }
-.loader-content{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-}
-
-.loader-logo{
-  display:block;
-  width:170px;
-  height:auto;
-  margin-bottom:28px;
-  object-fit:contain;
-  animation:logoPulse 1.8s ease-in-out infinite;
-}
   </style>
   
 </head>
@@ -639,6 +624,7 @@
     </section>
   </aside>
 <script>
+  /* Version nettoyée : suppression des fonctions inutilisées et du doublon CSS loader. */
   const DEFAULT_DOMAIN = "https://livewatch.top";
   const WORKERS = [
     "https://multi-chaines1.victor-salema-53d.workers.dev",
@@ -648,7 +634,7 @@
   ];
 
   const AUTO_RELOAD_MINUTES = 30;
-  const STARTUP_WATCHDOG_MS = 30000;
+  const STARTUP_WATCHDOG_MS = 45000;
   const MAX_AUTO_RECOVERY_ATTEMPTS = 3;
   const MAX_FALLBACK_ATTEMPTS = 4;
   const ADAPTIVE_CHECK_INTERVAL_MS = 1000;
@@ -657,13 +643,9 @@
   const LOW_BUFFER_MAX_COUNT = 25;
   const MAX_FRAGMENT_ERRORS = 12;
   const PROACTIVE_RELOAD_COOLDOWN_MS = 30000;
-  const VIDEO_FRAME_TIMEOUT_MS = 30000;
+  const VIDEO_FRAME_TIMEOUT_MS = 45000;
   const JSON_CACHE_MS = 15000;
-  const PLAYBACK_STALL_PROGRESS_MS = 5500;
-  const PLAYBACK_STALL_REFRESH_MS = 14000;
-  const PLAYBACK_STALL_BURST_LIMIT = 3;
-  const PLAYBACK_STALL_BURST_WINDOW_MS = 60000;
-  const PLAYBACK_STALL_REFRESH_COOLDOWN_MS = 22000;
+  const PLAYBACK_STALL_PROGRESS_MS = 4500;
   const PLAYBACK_PROGRESS_EPSILON = 0.25;
   const EXPIRED_URL_FRAGMENT_ERROR_LIMIT = 3;
   const EXPIRED_URL_FRAGMENT_ERROR_WINDOW_MS = 30000;
@@ -703,9 +685,6 @@
   let lastPlaybackProgressTime = Date.now();
   let lastPlaybackTimeSnapshot = 0;
   let lastPlaybackBlockedLogTime = 0;
-  let playbackStallBurstCount = 0;
-  let playbackStallWindowStart = 0;
-  let lastPlaybackStallRefreshTime = 0;
   let lastFoundM3u8Links = [];
   let currentCandidateIndex = 0;
   let badStreamKeys = new Set();
@@ -873,8 +852,6 @@
     fragmentErrorCount = 0;
     fragmentFailureBurstCount = 0;
     fragmentFailureWindowStart = 0;
-    playbackStallBurstCount = 0;
-    playbackStallWindowStart = 0;
     lowBufferCount = 0;
     streamStartTimestamp = 0;
     videoFrameRecoveryCount = 0;
@@ -882,22 +859,6 @@
     clearVideoFrameWatchdog();
     clearExpiryRecheck();
     expiryRecheckCount = 0;
-  }
-
-  function clearActiveHls() {
-    clearPlaybackWatchdog();
-    clearVideoFrameWatchdog();
-
-    try {
-      if (hlsInstance) {
-        hlsInstance.destroy();
-        hlsInstance = null;
-      }
-
-      videoPlayer.pause();
-      videoPlayer.removeAttribute("src");
-      videoPlayer.load();
-    } catch (error) {}
   }
 
   function rememberBadStream(url, reason) {
@@ -1074,42 +1035,6 @@
     playbackProgressOverlayActive = false;
   }
 
-  function notePlaybackStallAndMaybeRefresh(noPlaybackProgressFor) {
-    const now = Date.now();
-
-    if (!playbackStallWindowStart || now - playbackStallWindowStart > PLAYBACK_STALL_BURST_WINDOW_MS) {
-      playbackStallWindowStart = now;
-      playbackStallBurstCount = 0;
-    }
-
-    playbackStallBurstCount += 1;
-
-    const persistentStall = noPlaybackProgressFor >= PLAYBACK_STALL_REFRESH_MS;
-    const repeatedStall = playbackStallBurstCount >= PLAYBACK_STALL_BURST_LIMIT;
-
-    if (!persistentStall && !repeatedStall) {
-      return false;
-    }
-
-    if (now - lastPlaybackStallRefreshTime < PLAYBACK_STALL_REFRESH_COOLDOWN_MS) {
-      return false;
-    }
-
-    lastPlaybackStallRefreshTime = now;
-    playbackStallBurstCount = 0;
-    playbackStallWindowStart = 0;
-
-    addMonitorLog(
-      "Lecture bloquée persistante : contrôle JSON frais immédiat."
-    );
-    setPlayerStatus("Lecture bloquée. Contrôle d'une nouvelle URL...", "error");
-    setMonitorHlsState("Recherche URL fraîche", "warn");
-    setLoadingProgress(18, "Recherche nouvelle URL");
-
-    loadJson("force url expirée lecture bloquée");
-    return true;
-  }
-
   function checkPlaybackProgressForOverlay(bufferedSeconds) {
     if (!streamStarted || videoPlayer.paused || videoPlayer.ended) {
       resetPlaybackProgressTracking();
@@ -1123,8 +1048,6 @@
     if (advanced) {
       lastPlaybackTimeSnapshot = currentTime;
       lastPlaybackProgressTime = now;
-      playbackStallBurstCount = 0;
-      playbackStallWindowStart = 0;
 
       if (playbackProgressOverlayActive) {
         playbackProgressOverlayActive = false;
@@ -1142,13 +1065,11 @@
         playbackProgressOverlayActive = true;
         startBufferingProgress("Reconnexion du flux");
 
-        if (now - lastPlaybackBlockedLogTime > 15000) {
+        if (now - lastPlaybackBlockedLogTime > 8000) {
           addMonitorLog("Lecture réellement bloquée : aucun segment lisible depuis " + Math.round(noPlaybackProgressFor / 1000) + " s.");
           lastPlaybackBlockedLogTime = now;
         }
       }
-
-      notePlaybackStallAndMaybeRefresh(noPlaybackProgressFor);
     }
   }
 
@@ -1436,7 +1357,8 @@
         fragLoadingTimeOut: 25000,
         startLevel: -1,
         capLevelToPlayerSize: false,
-        testBandwidth: true
+        testBandwidth: true,
+        progressive: false
       });
       hlsInstance = hls;
       bindHlsEvents(hls, directUrl);
@@ -1458,23 +1380,6 @@
     return videoPlayer.videoWidth > 0 && videoPlayer.videoHeight > 0;
   }
 
-  function isLikelyVideoLevel(level) {
-    if (!level) return false;
-
-    const codecText = String(
-      level.videoCodec ||
-      level.codecSet ||
-      level.codecs ||
-      level.attrs?.CODECS ||
-      ""
-    ).toLowerCase();
-
-    if (level.width > 0 && level.height > 0) return true;
-    if (codecText.includes("avc") || codecText.includes("h264") || codecText.includes("hvc") || codecText.includes("hev")) return true;
-
-    return true;
-  }
-
   function codecLooksPlayable(level) {
     const videoCodec = String(level.videoCodec || level.codecSet || level.codecs || level.attrs?.CODECS || "").toLowerCase();
     if (!videoCodec) return true;
@@ -1489,42 +1394,20 @@
   function selectBestVisibleLevel(hls) {
     if (!hls || !Array.isArray(hls.levels) || !hls.levels.length) return;
 
-    const levels = hls.levels.map(function (level, index) {
-      return { level: level, index: index };
-    });
+    hls.currentLevel = -1;
+    hls.nextLevel = -1;
+    hls.loadLevel = -1;
 
-    const levelsWithDimensions = levels.filter(function (item) {
-      return item.level && item.level.width > 0 && item.level.height > 0;
+    const levelsWithDimensions = hls.levels.filter(function (level) {
+      return level && level.width > 0 && level.height > 0;
     });
 
     if (!levelsWithDimensions.length) {
-      hls.currentLevel = -1;
-      hls.nextLevel = -1;
-      hls.loadLevel = -1;
-      addMonitorLog("Manifest vidéo sans dimensions déclarées : mode auto conservé.");
+      addMonitorLog("Manifest sans dimensions déclarées : mode HLS automatique conservé.");
       return;
     }
 
-    const playableLevels = levelsWithDimensions.filter(function (item) {
-      return codecLooksPlayable(item.level);
-    });
-
-    const candidates = playableLevels.length ? playableLevels : levelsWithDimensions;
-    const selected = candidates.sort(function (a, b) {
-      return (b.level.bitrate || 0) - (a.level.bitrate || 0);
-    })[0];
-
-    hls.currentLevel = selected.index;
-    hls.nextLevel = selected.index;
-    hls.loadLevel = selected.index;
-
-    addMonitorLog(
-      "Niveau vidéo forcé : " +
-        (selected.level.width || "?") +
-        "x" +
-        (selected.level.height || "?") +
-        (selected.level.videoCodec ? " / " + selected.level.videoCodec : "")
-    );
+    addMonitorLog("Manifest vidéo détecté : mode HLS automatique conservé.");
   }
 
   function clearVideoFrameWatchdog() {
@@ -1543,32 +1426,21 @@
         return;
       }
 
-      if (!hlsInstance) return;
+      const hasMediaActivity =
+        videoPlayer.readyState >= 2 ||
+        videoPlayer.currentTime > 0 ||
+        getBufferedSeconds() > 0;
 
-      videoFrameRecoveryCount += 1;
-
-      addMonitorLog("Image non confirmée après attente. Lecture conservée, correction douce " + videoFrameRecoveryCount + "/2.");
-      setMonitorHlsState("Image en attente", "warn");
-      setPlayerStatus("Flux actif, attente confirmation image vidéo...", "success");
-
-      if (videoFrameRecoveryCount <= 2) {
-        try {
-          hlsInstance.currentLevel = -1;
-          hlsInstance.nextLevel = -1;
-          hlsInstance.loadLevel = -1;
-          if (videoFrameRecoveryCount === 1) {
-            hlsInstance.recoverMediaError();
-          }
-          hlsInstance.startLoad(-1);
-        } catch (error) {}
-
-        startVideoFrameWatchdog(sourceUrl);
+      if (hasMediaActivity) {
+        addMonitorLog("Média actif, dimensions vidéo non confirmées : lecture conservée sans correction forcée.");
+        markStreamStarted(true);
         return;
       }
 
-      addMonitorLog("Image toujours non confirmée, aucune bascule automatique pour préserver le buffer.");
-      setMonitorHlsState("Lecture conservée", "warn");
-      setPlayerStatus("Lecture conservée. Utilise le bouton reload si l’image disparaît.", "success");
+      addMonitorLog("Image non confirmée et aucun média actif après attente. Surveillance conservatrice.");
+      setMonitorHlsState("Attente média", "warn");
+      setPlayerStatus("Manifest chargé, attente des premiers paquets média...", "success");
+      startVideoFrameWatchdog(sourceUrl);
     }, VIDEO_FRAME_TIMEOUT_MS);
   }
 
@@ -1757,9 +1629,9 @@
       const hasPlaybackProgress = videoPlayer.currentTime > 0 || getBufferedSeconds() > 0 || videoPlayer.readyState >= 2;
 
       if (hasPlaybackProgress) {
-        addMonitorLog("Watchdog : flux en cours, attente prolongée sans reload.");
-        setPlayerStatus("Flux en cours, attente confirmation image...", "success");
-        startPlaybackWatchdog(url);
+        addMonitorLog("Watchdog : média actif, démarrage validé sans attendre les dimensions vidéo.");
+        setPlayerStatus("Flux média actif.", "success");
+        markStreamStarted(true);
         return;
       }
 
@@ -1788,8 +1660,15 @@
     }
   }
 
-  function markStreamStarted() {
-    if (!hasVisibleVideoFrame()) {
+  function markStreamStarted(allowUnknownDimensions) {
+    const hasFrame = hasVisibleVideoFrame();
+    const hasMediaActivity =
+      videoPlayer.readyState >= 2 ||
+      videoPlayer.currentTime > 0 ||
+      getBufferedSeconds() > 0 ||
+      allowUnknownDimensions === true;
+
+    if (!hasFrame && !hasMediaActivity) {
       startVideoFrameWatchdog(currentStreamUrl || playerUrlInput.value);
       return;
     }
@@ -1811,7 +1690,12 @@
     hideLoader();
     hideBufferingIndicator();
     setMonitorHlsState("Lecture active", "ok");
-    addMonitorLog("Image vidéo active : " + videoPlayer.videoWidth + "x" + videoPlayer.videoHeight + ".");
+
+    if (hasFrame) {
+      addMonitorLog("Image vidéo active : " + videoPlayer.videoWidth + "x" + videoPlayer.videoHeight + ".");
+    } else {
+      addMonitorLog("Lecture média active, dimensions vidéo non confirmées par le navigateur.");
+    }
   }
 
   async function reloadPlayer() {
@@ -1956,15 +1840,28 @@
     return String(value).replaceAll("\\", "\\\\").replaceAll("'", "\\'").replaceAll("\n", "\\n").replaceAll("\r", "\\r");
   }
 
-  videoPlayer.addEventListener("playing", markStreamStarted);
-  videoPlayer.addEventListener("loadedmetadata", function () {
-    addMonitorLog("Métadonnées vidéo : " + (videoPlayer.videoWidth || "?") + "x" + (videoPlayer.videoHeight || "?"));
-    if (hasVisibleVideoFrame()) {
-      setLoadingProgress(95, "Presque prêt");
-      markStreamStarted();
+  videoPlayer.addEventListener("playing", function () {
+    markStreamStarted(true);
+  });
+  videoPlayer.addEventListener("canplay", function () {
+    markStreamStarted(true);
+  });
+  videoPlayer.addEventListener("loadeddata", function () {
+    markStreamStarted(true);
+  });
+  videoPlayer.addEventListener("timeupdate", function () {
+    if (!streamStarted && videoPlayer.currentTime > 0) {
+      markStreamStarted(true);
     }
   });
-  videoPlayer.addEventListener("resize", markStreamStarted);
+  videoPlayer.addEventListener("loadedmetadata", function () {
+    addMonitorLog("Métadonnées vidéo : " + (videoPlayer.videoWidth || "?") + "x" + (videoPlayer.videoHeight || "?"));
+    setLoadingProgress(95, "Presque prêt");
+    markStreamStarted(true);
+  });
+  videoPlayer.addEventListener("resize", function () {
+    markStreamStarted(true);
+  });
   videoPlayer.addEventListener("waiting", function () {
     showBufferingIndicator();
     setMonitorHlsState("Buffering", "warn");
