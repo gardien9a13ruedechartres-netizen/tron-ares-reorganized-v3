@@ -288,10 +288,10 @@
 "isIframe": true
 },
 {
-"id": "test",
-"name": "test",
+"id": "turkey",
+"name": "turkey",
 "url": "/pages/cmtop5.html",
-"logo": { "type": "image", "value": "" },
+"logo": { "type": "image", "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/sports-tv-tr.png" },
 "group": "Sport",
 "isFavorite": false,
 "isIframe": true
