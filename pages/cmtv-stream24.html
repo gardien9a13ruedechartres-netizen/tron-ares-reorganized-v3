@@ -661,11 +661,9 @@
   const JSON_CACHE_MS = 15000;
   const PLAYBACK_STALL_PROGRESS_MS = 4500;
   const PLAYBACK_PROGRESS_EPSILON = 0.25;
-  const EXPIRED_URL_FRAGMENT_ERROR_LIMIT = 3;
-  const EXPIRED_URL_FRAGMENT_ERROR_WINDOW_MS = 30000;
-  const EXPIRED_URL_REFRESH_COOLDOWN_MS = 20000;
-  const EXPIRED_URL_RECHECK_MS = 10000;
-  const EXPIRED_URL_MAX_RECHECKS = 6;
+  const EXPIRED_URL_FRAGMENT_ERROR_LIMIT = 4;
+  const EXPIRED_URL_FRAGMENT_ERROR_WINDOW_MS = 45000;
+  const EXPIRED_URL_REFRESH_COOLDOWN_MS = 60000;
 
   let workerIndex = 0;
   let reloadTimer = null;
@@ -705,8 +703,6 @@
   let fragmentFailureBurstCount = 0;
   let fragmentFailureWindowStart = 0;
   let lastExpiredUrlRefreshTime = 0;
-  let expiryRecheckTimer = null;
-  let expiryRecheckCount = 0;
 
   const controlPanel = document.getElementById("controlPanel");
   const urlInput = document.getElementById("jsonUrl");
@@ -777,84 +773,15 @@
     return current;
   }
 
-  function unwrapLivewatchProxyUrl(url) {
+  function getStreamKey(url) {
     const target = extractHlsTargetUrl(url);
-
-    try {
-      const parsed = new URL(target);
-      const nested = parsed.searchParams.get("url");
-
-      if (
-        parsed.hostname === "livewatch.top" &&
-        parsed.pathname === "/api/proxy" &&
-        nested
-      ) {
-        return normalizeUrl(nested);
-      }
-
-      return parsed.toString();
-    } catch (error) {
-      return target;
-    }
-  }
-
-  function getComparableStreamUrl(url) {
-    const target = unwrapLivewatchProxyUrl(url);
-
     try {
       const parsed = new URL(target);
       parsed.hash = "";
       return parsed.toString();
     } catch (error) {
-      return String(target || "").trim();
+      return target;
     }
-  }
-
-  function getStreamKey(url) {
-    return getComparableStreamUrl(url);
-  }
-
-  function isExpiredUrlReason(reason) {
-    const text = String(reason || "").toLowerCase();
-    return (
-      text.includes("expir") ||
-      text.includes("fragment") ||
-      text.includes("segment") ||
-      text.includes("url fraîche")
-    );
-  }
-
-  function clearExpiryRecheck() {
-    if (expiryRecheckTimer) {
-      clearTimeout(expiryRecheckTimer);
-      expiryRecheckTimer = null;
-    }
-  }
-
-  function scheduleExpiryRecheck(reason) {
-    if (expiryRecheckTimer) return;
-
-    if (expiryRecheckCount >= EXPIRED_URL_MAX_RECHECKS) {
-      addMonitorLog("URL expirée suspectée, mais aucune nouvelle URL après plusieurs contrôles. Lecture conservée.");
-      expiryRecheckCount = 0;
-      return;
-    }
-
-    expiryRecheckCount += 1;
-    addMonitorLog(
-      "URL encore identique après suspicion d'expiration. Nouveau contrôle JSON dans " +
-        Math.round(EXPIRED_URL_RECHECK_MS / 1000) +
-        " s (" +
-        expiryRecheckCount +
-        "/" +
-        EXPIRED_URL_MAX_RECHECKS +
-        ")."
-    );
-
-    expiryRecheckTimer = setTimeout(function () {
-      expiryRecheckTimer = null;
-      loadJson("force url expirée recheck " + (reason || ""));
-    }, EXPIRED_URL_RECHECK_MS);
   }
 
   function resetActiveStreamIdentity() {
@@ -871,8 +798,6 @@
     videoFrameRecoveryCount = 0;
     resetPlaybackProgressTracking();
     clearVideoFrameWatchdog();
-    clearExpiryRecheck();
-    expiryRecheckCount = 0;
   }
 
   function clearActiveHls() {
@@ -1152,11 +1077,12 @@
       let data;
       const now = Date.now();
       const reasonText = String(reason || "").toLowerCase();
-      const expiredUrlReason = isExpiredUrlReason(reason);
       const bypassJsonCache =
         reason === true ||
         reasonText.includes("force") ||
-        expiredUrlReason;
+        reasonText.includes("expir") ||
+        reasonText.includes("fragment") ||
+        reasonText.includes("segment");
       const canUseJsonCache =
         !bypassJsonCache &&
         cachedJsonData &&
@@ -1221,16 +1147,6 @@
 
       if (comparableUrl === currentComparableStreamUrl && hlsInstance && streamStarted) {
         lastJsonSignature = jsonSignature;
-
-        if (expiredUrlReason) {
-          setStatus("URL encore identique après contrôle expiration : lecture conservée.", "success");
-          setPlayerStatus("Ancienne URL toujours renvoyée. Attente courte d'une nouvelle URL.", "success");
-          setMonitorHlsState("Attente URL fraîche", "warn");
-          addMonitorLog("Contrôle expiration : URL source encore identique, aucun remplacement HLS.");
-          scheduleExpiryRecheck(reason);
-          return;
-        }
-
         setStatus("Recherche terminée. URL identique : lecture conservée.", "success");
         setPlayerStatus("URL identique détectée, aucun remplacement du player.", "success");
         setMonitorHlsState("Lecture conservée", "ok");
@@ -1238,11 +1154,8 @@
         return;
       }
 
-      clearExpiryRecheck();
-      expiryRecheckCount = 0;
       lastJsonSignature = jsonSignature;
-      setLoadingProgress(42, "URL HLS différente trouvée");
-      addMonitorLog("Nouvelle URL source détectée : remplacement HLS autorisé.");
+      setLoadingProgress(42, "URL HLS trouvée");
       await playHls(directUrl, (reason || "nouvelle URL JSON") + " / M3U8 #" + (firstCandidate.index + 1));
       setStatus("Recherche terminée. M3U8 trouvés : " + foundM3u8.length, "success");
     } catch (error) {
@@ -1555,8 +1468,8 @@
     fragmentFailureBurstCount = 0;
     fragmentFailureWindowStart = 0;
 
-    addMonitorLog("URL probablement expirée : contrôle JSON frais immédiat.");
-    setPlayerStatus("Segments indisponibles. Contrôle d'une nouvelle URL...", "error");
+    addMonitorLog("URL probablement expirée : recherche JSON fraîche immédiate.");
+    setPlayerStatus("Segments indisponibles. Recherche d'une nouvelle URL...", "error");
     setMonitorHlsState("Recherche URL fraîche", "warn");
     setLoadingProgress(18, "Recherche nouvelle URL");
 
@@ -1648,7 +1561,7 @@
           const target = extractHlsTargetUrl(loadedUrl);
           const fallbackUrl = forceHlsThroughWorker(target, getNextWorker());
           currentStreamUrl = fallbackUrl;
-          currentComparableStreamUrl = getComparableStreamUrl(fallbackUrl);
+          currentComparableStreamUrl = getStreamKey(fallbackUrl);
           currentStreamKey = currentComparableStreamUrl;
           playerUrlInput.value = fallbackUrl;
           addMonitorLog("Fallback worker " + fallbackAttemptCount + "/" + MAX_FALLBACK_ATTEMPTS);
