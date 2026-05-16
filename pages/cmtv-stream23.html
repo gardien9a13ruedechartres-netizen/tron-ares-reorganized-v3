@@ -151,6 +151,7 @@
     backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.12);
     transition: opacity 0.25s ease, visibility 0.25s ease;
+    visibility: hidden;
   }
 
   #bufferingIndicator.hidden {
@@ -659,11 +660,6 @@
   const PROACTIVE_RELOAD_COOLDOWN_MS = 30000;
   const VIDEO_FRAME_TIMEOUT_MS = 30000;
   const JSON_CACHE_MS = 15000;
-  const PLAYBACK_STALL_PROGRESS_MS = 4500;
-  const PLAYBACK_PROGRESS_EPSILON = 0.25;
-  const EXPIRED_URL_FRAGMENT_ERROR_LIMIT = 4;
-  const EXPIRED_URL_FRAGMENT_ERROR_WINDOW_MS = 45000;
-  const EXPIRED_URL_REFRESH_COOLDOWN_MS = 60000;
 
   let workerIndex = 0;
   let reloadTimer = null;
@@ -691,18 +687,10 @@
   let videoFrameWatchdog = null;
   let videoFrameRecoveryCount = 0;
   let loaderProgressTimer = null;
-  let recoveryProgressTimer = null;
   let lastLoaderProgress = 0;
-  let playbackProgressOverlayActive = false;
-  let lastPlaybackProgressTime = Date.now();
-  let lastPlaybackTimeSnapshot = 0;
-  let lastPlaybackBlockedLogTime = 0;
   let lastFoundM3u8Links = [];
   let currentCandidateIndex = 0;
   let badStreamKeys = new Set();
-  let fragmentFailureBurstCount = 0;
-  let fragmentFailureWindowStart = 0;
-  let lastExpiredUrlRefreshTime = 0;
 
   const controlPanel = document.getElementById("controlPanel");
   const urlInput = document.getElementById("jsonUrl");
@@ -791,12 +779,9 @@
     streamStarted = false;
     fallbackAttemptCount = 0;
     fragmentErrorCount = 0;
-    fragmentFailureBurstCount = 0;
-    fragmentFailureWindowStart = 0;
     lowBufferCount = 0;
     streamStartTimestamp = 0;
     videoFrameRecoveryCount = 0;
-    resetPlaybackProgressTracking();
     clearVideoFrameWatchdog();
   }
 
@@ -919,8 +904,6 @@
 
   function startLoaderProgress(label) {
     clearInterval(loaderProgressTimer);
-    clearInterval(recoveryProgressTimer);
-    recoveryProgressTimer = null;
     lastLoaderProgress = 0;
     setLoadingProgress(4, label || "Initialisation");
 
@@ -935,8 +918,6 @@
   function stopLoaderProgress() {
     clearInterval(loaderProgressTimer);
     loaderProgressTimer = null;
-    clearInterval(recoveryProgressTimer);
-    recoveryProgressTimer = null;
   }
 
   function showLoader(label) {
@@ -950,82 +931,6 @@
     setTimeout(function () {
       loadingOverlay.classList.add("hidden");
     }, 180);
-  }
-
-
-  function startBufferingProgress(label) {
-    if (!streamStarted) return;
-
-    playbackProgressOverlayActive = true;
-    clearInterval(loaderProgressTimer);
-    clearInterval(recoveryProgressTimer);
-
-    loadingOverlay.classList.remove("hidden");
-    lastLoaderProgress = Math.min(Math.max(lastLoaderProgress, 35), 55);
-    setLoadingProgress(lastLoaderProgress, label || "Reconnexion du flux");
-
-    recoveryProgressTimer = setInterval(function () {
-      if (loadingOverlay.classList.contains("hidden")) return;
-      if (lastLoaderProgress < 95) {
-        const step = lastLoaderProgress < 75 ? 3 : 1;
-        setLoadingProgress(lastLoaderProgress + step, "Presque prêt");
-      }
-    }, 520);
-  }
-
-  function finishBufferingProgress() {
-    playbackProgressOverlayActive = false;
-    if (loadingOverlay.classList.contains("hidden")) return;
-    setLoadingProgress(100, "Flux actif");
-    stopLoaderProgress();
-    setTimeout(function () {
-      loadingOverlay.classList.add("hidden");
-    }, 220);
-  }
-
-  function resetPlaybackProgressTracking() {
-    lastPlaybackTimeSnapshot = Number(videoPlayer.currentTime) || 0;
-    lastPlaybackProgressTime = Date.now();
-    lastPlaybackBlockedLogTime = 0;
-    playbackProgressOverlayActive = false;
-  }
-
-  function checkPlaybackProgressForOverlay(bufferedSeconds) {
-    if (!streamStarted || videoPlayer.paused || videoPlayer.ended) {
-      resetPlaybackProgressTracking();
-      return;
-    }
-
-    const now = Date.now();
-    const currentTime = Number(videoPlayer.currentTime) || 0;
-    const advanced = currentTime > lastPlaybackTimeSnapshot + PLAYBACK_PROGRESS_EPSILON;
-
-    if (advanced) {
-      lastPlaybackTimeSnapshot = currentTime;
-      lastPlaybackProgressTime = now;
-
-      if (playbackProgressOverlayActive) {
-        playbackProgressOverlayActive = false;
-        finishBufferingProgress();
-      }
-
-      return;
-    }
-
-    const noPlaybackProgressFor = now - lastPlaybackProgressTime;
-    const noReadableBuffer = bufferedSeconds <= 0.35 || videoPlayer.readyState < 3;
-
-    if (noPlaybackProgressFor >= PLAYBACK_STALL_PROGRESS_MS && noReadableBuffer) {
-      if (!playbackProgressOverlayActive) {
-        playbackProgressOverlayActive = true;
-        startBufferingProgress("Reconnexion du flux");
-
-        if (now - lastPlaybackBlockedLogTime > 8000) {
-          addMonitorLog("Lecture réellement bloquée : aucun segment lisible depuis " + Math.round(noPlaybackProgressFor / 1000) + " s.");
-          lastPlaybackBlockedLogTime = now;
-        }
-      }
-    }
   }
 
   function showBufferingIndicator() {
@@ -1069,20 +974,14 @@
     isLoadingJson = true;
     setLoadingProgress(8, "Recherche du flux");
     setMonitorHlsState("Recherche JSON", "warn");
-    addMonitorLog("Recherche JSON lancée" + (reason ? " : " + String(reason) : "."));
+    addMonitorLog("Recherche JSON lancée" + (reason ? " : " + reason : "."));
 
     try {
       setStatus("Recherche automatique du flux en cours...", "");
 
       let data;
       const now = Date.now();
-      const reasonText = String(reason || "").toLowerCase();
-      const bypassJsonCache =
-        reason === true ||
-        reasonText.includes("force") ||
-        reasonText.includes("expir") ||
-        reasonText.includes("fragment") ||
-        reasonText.includes("segment");
+      const bypassJsonCache = reason === true;
       const canUseJsonCache =
         !bypassJsonCache &&
         cachedJsonData &&
@@ -1436,47 +1335,6 @@
     }, VIDEO_FRAME_TIMEOUT_MS);
   }
 
-  function noteFragmentFailureAndMaybeRefresh(details) {
-    const now = Date.now();
-
-    if (!fragmentFailureWindowStart || now - fragmentFailureWindowStart > EXPIRED_URL_FRAGMENT_ERROR_WINDOW_MS) {
-      fragmentFailureWindowStart = now;
-      fragmentFailureBurstCount = 0;
-    }
-
-    fragmentFailureBurstCount += 1;
-
-    addMonitorLog(
-      "Échec segment " +
-        fragmentFailureBurstCount +
-        "/" +
-        EXPIRED_URL_FRAGMENT_ERROR_LIMIT +
-        " : " +
-        details
-    );
-
-    if (fragmentFailureBurstCount < EXPIRED_URL_FRAGMENT_ERROR_LIMIT) {
-      return false;
-    }
-
-    if (now - lastExpiredUrlRefreshTime < EXPIRED_URL_REFRESH_COOLDOWN_MS) {
-      addMonitorLog("Recherche URL fraîche déjà demandée récemment, attente conservatrice.");
-      return false;
-    }
-
-    lastExpiredUrlRefreshTime = now;
-    fragmentFailureBurstCount = 0;
-    fragmentFailureWindowStart = 0;
-
-    addMonitorLog("URL probablement expirée : recherche JSON fraîche immédiate.");
-    setPlayerStatus("Segments indisponibles. Recherche d'une nouvelle URL...", "error");
-    setMonitorHlsState("Recherche URL fraîche", "warn");
-    setLoadingProgress(18, "Recherche nouvelle URL");
-
-    loadJson("force url expirée segments");
-    return true;
-  }
-
   function bindHlsEvents(hls, loadedUrl) {
     hls.on(Hls.Events.MEDIA_ATTACHED, function () {
       addMonitorLog("Media attaché. Chargement source HLS.");
@@ -1501,8 +1359,6 @@
     });
     hls.on(Hls.Events.FRAG_LOADED, function () {
       fragmentErrorCount = 0;
-      fragmentFailureBurstCount = 0;
-      fragmentFailureWindowStart = 0;
       setLoadingProgress(88, "Segments vidéo reçus");
     });
     hls.on(Hls.Events.ERROR, function (event, data) {
@@ -1513,7 +1369,7 @@
         data.details === "bufferSeekOverHole"
       ) {
         showBufferingIndicator();
-        addMonitorLog("Micro-buffer ignoré : " + data.details + ".");
+        addMonitorLog("Micro-buffer ignoré : " + data.details);
         return;
       }
 
@@ -1528,11 +1384,6 @@
         ) {
           monitorErrorCount += 1;
           fragmentErrorCount += 1;
-
-          if (noteFragmentFailureAndMaybeRefresh(data.details)) {
-            return;
-          }
-
           if (fragmentErrorCount >= MAX_FRAGMENT_ERRORS) {
             addMonitorLog("Erreurs fragments répétées, mais lecture conservée pour préserver le buffer.");
             fragmentErrorCount = 0;
@@ -1545,17 +1396,6 @@
       fragmentErrorCount += 1;
 
       if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-        if (
-          data.details === "fragLoadError" ||
-          data.details === "fragLoadTimeOut" ||
-          data.details === "levelLoadError" ||
-          data.details === "levelLoadTimeOut"
-        ) {
-          if (noteFragmentFailureAndMaybeRefresh(data.details + " fatal")) {
-            return;
-          }
-        }
-
         fallbackAttemptCount += 1;
         if (fallbackAttemptCount <= MAX_FALLBACK_ATTEMPTS) {
           const target = extractHlsTargetUrl(loadedUrl);
@@ -1658,16 +1498,9 @@
       return;
     }
 
-    if (streamStarted) {
-      finishBufferingProgress();
-      hideBufferingIndicator();
-      setMonitorHlsState("Lecture active", "ok");
-      return;
-    }
-
+    if (streamStarted) return;
     streamStarted = true;
     autoRecoveryAttempts = 0;
-    resetPlaybackProgressTracking();
     videoFrameRecoveryCount = 0;
     clearPlaybackWatchdog();
     clearVideoFrameWatchdog();
@@ -1789,8 +1622,6 @@
     monitorBitrate.textContent = monitorLastBitrate > 0 ? (monitorLastBitrate / 1000000).toFixed(2) + " Mbps" : "N/A";
     monitorResolution.textContent = videoPlayer.videoWidth && videoPlayer.videoHeight ? videoPlayer.videoWidth + "x" + videoPlayer.videoHeight : "N/A";
 
-    checkPlaybackProgressForOverlay(bufferedSeconds);
-
     if (streamStartTimestamp && Date.now() - streamStartTimestamp > STREAM_MAX_AGE_MS) {
       addMonitorLog("Âge du flux élevé, lecture conservée. Reload manuel disponible.");
       streamStartTimestamp = Date.now();
@@ -1829,17 +1660,8 @@
     }
   });
   videoPlayer.addEventListener("resize", markStreamStarted);
-  videoPlayer.addEventListener("waiting", function () {
-    showBufferingIndicator();
-    setMonitorHlsState("Buffering", "warn");
-    addMonitorLog("Buffering détecté. Progression affichée seulement si la lecture se bloque vraiment.");
-  });
-
-  videoPlayer.addEventListener("stalled", function () {
-    showBufferingIndicator();
-    setMonitorHlsState("Flux ralenti", "warn");
-    addMonitorLog("Stall vidéo détecté. Progression affichée seulement si aucun segment ne repart.");
-  });
+  videoPlayer.addEventListener("waiting", function () { showBufferingIndicator(); setMonitorHlsState("Buffering", "warn"); });
+  videoPlayer.addEventListener("stalled", function () { showBufferingIndicator(); setMonitorHlsState("Flux ralenti", "warn"); addMonitorLog("Stall vidéo détecté."); });
   videoPlayer.addEventListener("error", function () {
     monitorErrorCount += 1;
     showBufferingIndicator();
