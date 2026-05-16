@@ -286,6 +286,15 @@
 "group": "Sport",
 "isFavorite": false,
 "isIframe": true
+},
+{
+"id": "test",
+"name": "test",
+"url": "/pages/cmtop5.html",
+"logo": { "type": "image", "value": "" },
+"group": "Sport",
+"isFavorite": false,
+"isIframe": true
 }
 ]
 }

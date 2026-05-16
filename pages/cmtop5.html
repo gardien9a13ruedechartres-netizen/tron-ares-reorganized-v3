@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<title>Dual Iframe Overlay Player</title>
+
+<style>
+    *{
+        margin:0;
+        padding:0;
+        box-sizing:border-box;
+    }
+
+    html,
+    body{
+        width:100%;
+        height:100%;
+        overflow:hidden;
+        background:#000;
+        font-family:Arial, sans-serif;
+    }
+
+    .overlay-player{
+        position:fixed;
+        inset:0;
+        width:100%;
+        height:100%;
+        background:#000;
+        overflow:hidden;
+    }
+
+    .iframe-container{
+        position:relative;
+        width:100%;
+        height:100%;
+    }
+
+    iframe{
+        position:absolute;
+        inset:0;
+        width:100%;
+        height:100%;
+        border:none;
+        background:#000;
+        object-fit:fill;
+    }
+
+    #iframe1{
+        z-index:1;
+    }
+
+    #iframe2{
+        z-index:2;
+        display:none;
+    }
+
+    .controls{
+        position:absolute;
+        top:5%;
+        left:16px;
+        transform:translateY(-50%);
+        z-index:20;
+        display:flex;
+        flex-direction:column;
+        gap:12px;
+    }
+
+    .btn{
+        width:56px;
+        height:56px;
+        border:none;
+        border-radius:16px;
+        background:rgba(20,20,20,0.72);
+        backdrop-filter:blur(8px);
+        color:#fff;
+        font-size:22px;
+        cursor:pointer;
+        transition:0.2s ease;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+    }
+
+    .btn:hover{
+        background:rgba(255,255,255,0.16);
+        transform:scale(1.05);
+    }
+
+    .btn:active{
+        transform:scale(0.95);
+    }
+
+    @media (max-width:768px){
+
+        .controls{
+            left:10px;
+        }
+
+        .btn{
+            width:48px;
+            height:48px;
+            font-size:18px;
+        }
+    }
+</style>
+</head>
+
+<body>
+
+<div class="overlay-player">
+
+    <div class="controls">
+        <button class="btn" id="toggleIframe">
+            ⇄
+        </button>
+    </div>
+
+    <div class="iframe-container">
+
+        <!-- IFRAME 1 -->
+        <iframe
+            id="iframe1"
+            src="/pages/cmtv-stream2.html"
+            allow="autoplay; fullscreen"
+            allowfullscreen
+        ></iframe>
+
+        <!-- IFRAME 2 -->
+        <iframe
+            id="iframe2"
+            src="/pages/cmtv2.html"
+            allow="autoplay; fullscreen"
+            allowfullscreen
+        ></iframe>
+
+    </div>
+
+</div>
+
+<script>
+
+const iframe1 = document.getElementById('iframe1');
+const iframe2 = document.getElementById('iframe2');
+
+const toggleBtn = document.getElementById('toggleIframe');
+
+let activeIframe = 1;
+
+/*
+|--------------------------------------------------------------------------
+| Fonction mute/unmute
+|--------------------------------------------------------------------------
+| IMPORTANT :
+| Fonctionne uniquement si les pages dans les iframes acceptent postMessage
+| (YouTube, Vimeo, players custom compatibles etc.)
+|--------------------------------------------------------------------------
+*/
+
+function muteIframe(iframe){
+
+    iframe.contentWindow.postMessage(
+        JSON.stringify({
+            event: 'command',
+            func: 'mute',
+            args: []
+        }),
+        '*'
+    );
+
+}
+
+function unmuteIframe(iframe){
+
+    iframe.contentWindow.postMessage(
+        JSON.stringify({
+            event: 'command',
+            func: 'unMute',
+            args: []
+        }),
+        '*'
+    );
+
+}
+
+/*
+|--------------------------------------------------------------------------
+| Etat initial
+|--------------------------------------------------------------------------
+*/
+
+iframe2.style.display = 'none';
+
+muteIframe(iframe2);
+unmuteIframe(iframe1);
+
+/*
+|--------------------------------------------------------------------------
+| Switch iframe
+|--------------------------------------------------------------------------
+*/
+
+toggleBtn.addEventListener('click', () => {
+
+    if(activeIframe === 1){
+
+        iframe2.style.display = 'block';
+
+        muteIframe(iframe1);
+        unmuteIframe(iframe2);
+
+        activeIframe = 2;
+
+    } else {
+
+        iframe2.style.display = 'none';
+
+        muteIframe(iframe2);
+        unmuteIframe(iframe1);
+
+        activeIframe = 1;
+    }
+
+});
+
+</script>
+
+</body>
+</html>
