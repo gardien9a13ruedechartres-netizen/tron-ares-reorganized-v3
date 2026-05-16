@@ -42,24 +42,6 @@
       object-position: center center !important;
     }
 
-    #unmute-button {
-      position: fixed;
-      top: 10px;
-      left: 10px;
-      z-index: 600;
-      background: #d60000;
-      color: #fff;
-      border: 0;
-      padding: 10px 12px;
-      cursor: pointer;
-      border-radius: 5px;
-      font: 14px Arial, sans-serif;
-    }
-
-    #unmute-button:hover {
-      background: rgba(0, 0, 0, 0.8);
-    }
-
     .media-control[data-media-control] .media-control-layer[data-controls] button.media-control-button svg path,
     .media-control[data-media-control] .media-control-layer[data-controls] .drawer-container[data-volume] .drawer-icon-container[data-volume] .drawer-icon[data-volume] svg path,
     .player-poster[data-poster] .play-wrapper[data-poster] svg path {
@@ -78,24 +60,30 @@
     .spinner-three-bounce[data-spinner] > div {
       background-color: #006aff;
     }
+  .media-control.live[data-media-control] .media-control-layer[data-controls] .bar-container[data-seekbar] .bar-background[data-seekbar] .bar-fill-2[data-seekbar] {
+  background-color: #0adcf1;
+}
+  
+  
+  .media-control[data-media-control] .media-control-layer[data-controls] .drawer-container[data-volume] .bar-container[data-volume] .segmented-bar-element[data-volume], .media-control[data-media-control] .media-control-layer[data-controls] .drawer-container[data-volume] .bar-container[data-volume] .segmented-bar-element[data-volume].fill {
+  box-shadow: inset 2px 0 0 #0adcf1;
+}
+  .media-control[data-media-control] .media-control-layer[data-controls] button.media-control-button svg path, .media-control[data-media-control] .media-control-layer[data-controls] .drawer-container[data-volume] .drawer-icon-container[data-volume] .drawer-icon[data-volume] svg path, .player-poster[data-poster] .play-wrapper[data-poster] svg path {
+  fill: #0adcf1;
+}
+  
+  
   </style>
 </head>
 
 <body>
   <div class="player_div" id="player_div"></div>
 
-  
-
   <script>
     const ea = "muc001.myturn1.top";
     const playerElement = document.getElementById("player_div");
-    const unmuteButton = document.getElementById("unmute-button");
 
     let player = null;
-
-    function isMobile() {
-      return /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    }
 
     function forceObjectFitFill() {
       const video = playerElement.querySelector("video");
@@ -110,7 +98,12 @@
 
     function setupVideo() {
       const pk = "55e0c5e758904f24491a24dcf7b039654e47682f5cc8226acfec0X22aa069037adf2c2df3d185c8f3a0b5bf5b4f7f5d20712ec6116f58fc6266371b830a1bcf5d";
-      const hlsUrl = "https://" + ea + ":8088/live/agrrrrr/playlist.m3u8?id=121119&pk=" + enableVideo(pk);
+
+      const hlsUrl =
+        "https://" +
+        ea +
+        ":8088/live/agrrrrr/playlist.m3u8?id=121119&pk=" +
+        enableVideo(pk);
 
       player = new Clappr.Player({
         source: hlsUrl,
@@ -124,9 +117,11 @@
           onReady: function () {
             forceObjectFitFill();
           },
+
           onPlay: function () {
             forceObjectFitFill();
           },
+
           onError: function () {
             setTimeout(function () {
               if (player) {
@@ -140,30 +135,6 @@
 
       setTimeout(forceObjectFitFill, 500);
       setTimeout(forceObjectFitFill, 1500);
-
-      if (isMobile()) {
-        if (unmuteButton) {
-          unmuteButton.remove();
-        }
-        return;
-      }
-
-      if (unmuteButton) {
-        unmuteButton.addEventListener("click", function () {
-          if (player && typeof player.setVolume === "function") {
-            player.setVolume(100);
-            unmuteButton.remove();
-          }
-        });
-      }
-
-      if (player && typeof player.on === "function") {
-        player.on("volumechange", function () {
-          if (unmuteButton && unmuteButton.isConnected) {
-            unmuteButton.remove();
-          }
-        });
-      }
     }
 
     setupVideo();
