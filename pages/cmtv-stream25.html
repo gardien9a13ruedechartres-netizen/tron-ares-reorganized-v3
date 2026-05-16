@@ -659,11 +659,7 @@
   const PROACTIVE_RELOAD_COOLDOWN_MS = 30000;
   const VIDEO_FRAME_TIMEOUT_MS = 30000;
   const JSON_CACHE_MS = 15000;
-  const PLAYBACK_STALL_PROGRESS_MS = 5500;
-  const PLAYBACK_STALL_REFRESH_MS = 14000;
-  const PLAYBACK_STALL_BURST_LIMIT = 3;
-  const PLAYBACK_STALL_BURST_WINDOW_MS = 60000;
-  const PLAYBACK_STALL_REFRESH_COOLDOWN_MS = 22000;
+  const PLAYBACK_STALL_PROGRESS_MS = 4500;
   const PLAYBACK_PROGRESS_EPSILON = 0.25;
   const EXPIRED_URL_FRAGMENT_ERROR_LIMIT = 3;
   const EXPIRED_URL_FRAGMENT_ERROR_WINDOW_MS = 30000;
@@ -703,9 +699,6 @@
   let lastPlaybackProgressTime = Date.now();
   let lastPlaybackTimeSnapshot = 0;
   let lastPlaybackBlockedLogTime = 0;
-  let playbackStallBurstCount = 0;
-  let playbackStallWindowStart = 0;
-  let lastPlaybackStallRefreshTime = 0;
   let lastFoundM3u8Links = [];
   let currentCandidateIndex = 0;
   let badStreamKeys = new Set();
@@ -873,8 +866,6 @@
     fragmentErrorCount = 0;
     fragmentFailureBurstCount = 0;
     fragmentFailureWindowStart = 0;
-    playbackStallBurstCount = 0;
-    playbackStallWindowStart = 0;
     lowBufferCount = 0;
     streamStartTimestamp = 0;
     videoFrameRecoveryCount = 0;
@@ -1074,42 +1065,6 @@
     playbackProgressOverlayActive = false;
   }
 
-  function notePlaybackStallAndMaybeRefresh(noPlaybackProgressFor) {
-    const now = Date.now();
-
-    if (!playbackStallWindowStart || now - playbackStallWindowStart > PLAYBACK_STALL_BURST_WINDOW_MS) {
-      playbackStallWindowStart = now;
-      playbackStallBurstCount = 0;
-    }
-
-    playbackStallBurstCount += 1;
-
-    const persistentStall = noPlaybackProgressFor >= PLAYBACK_STALL_REFRESH_MS;
-    const repeatedStall = playbackStallBurstCount >= PLAYBACK_STALL_BURST_LIMIT;
-
-    if (!persistentStall && !repeatedStall) {
-      return false;
-    }
-
-    if (now - lastPlaybackStallRefreshTime < PLAYBACK_STALL_REFRESH_COOLDOWN_MS) {
-      return false;
-    }
-
-    lastPlaybackStallRefreshTime = now;
-    playbackStallBurstCount = 0;
-    playbackStallWindowStart = 0;
-
-    addMonitorLog(
-      "Lecture bloquée persistante : contrôle JSON frais immédiat."
-    );
-    setPlayerStatus("Lecture bloquée. Contrôle d'une nouvelle URL...", "error");
-    setMonitorHlsState("Recherche URL fraîche", "warn");
-    setLoadingProgress(18, "Recherche nouvelle URL");
-
-    loadJson("force url expirée lecture bloquée");
-    return true;
-  }
-
   function checkPlaybackProgressForOverlay(bufferedSeconds) {
     if (!streamStarted || videoPlayer.paused || videoPlayer.ended) {
       resetPlaybackProgressTracking();
@@ -1123,8 +1078,6 @@
     if (advanced) {
       lastPlaybackTimeSnapshot = currentTime;
       lastPlaybackProgressTime = now;
-      playbackStallBurstCount = 0;
-      playbackStallWindowStart = 0;
 
       if (playbackProgressOverlayActive) {
         playbackProgressOverlayActive = false;
@@ -1142,13 +1095,11 @@
         playbackProgressOverlayActive = true;
         startBufferingProgress("Reconnexion du flux");
 
-        if (now - lastPlaybackBlockedLogTime > 15000) {
+        if (now - lastPlaybackBlockedLogTime > 8000) {
           addMonitorLog("Lecture réellement bloquée : aucun segment lisible depuis " + Math.round(noPlaybackProgressFor / 1000) + " s.");
           lastPlaybackBlockedLogTime = now;
         }
       }
-
-      notePlaybackStallAndMaybeRefresh(noPlaybackProgressFor);
     }
   }
 
