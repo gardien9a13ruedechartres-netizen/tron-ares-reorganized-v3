@@ -6,11 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.6.16/dist/hls.min.js"></script>
-<link rel="preconnect" href="https://multi-chaines1.victor-salema-53d.workers.dev" crossorigin>
-<link rel="preconnect" href="https://multi-chaines2.victor-salema-53d.workers.dev" crossorigin>
-<link rel="preconnect" href="https://multi-chaines3.victor-salema-53d.workers.dev" crossorigin>
-<link rel="preconnect" href="https://multi-chaines4.victor-salema-53d.workers.dev" crossorigin>
-<link rel="preconnect" href="https://livewatch.top" crossorigin>
 <style>
   * {
     box-sizing: border-box;
@@ -517,7 +512,7 @@
   <button id="toggleControlPanel" onclick="toggleControlPanel()">☰</button>
 
   <aside id="controlPanel" class="hidden">
-    <h1>Control Panel V:fast-start-skip-active-json</h1>
+    <h1>Control Panel</h1>
 
     <section class="panel">
       <label>URL JSON dynamique</label>
@@ -698,7 +693,6 @@
   let lastExpiredUrlRefreshTime = 0;
   let expiryRecheckTimer = null;
   let expiryRecheckCount = 0;
-  let lastAutoRefreshSkipLogTime = 0;
 
   const controlPanel = document.getElementById("controlPanel");
   const urlInput = document.getElementById("jsonUrl");
@@ -865,22 +859,6 @@
     clearVideoFrameWatchdog();
     clearExpiryRecheck();
     expiryRecheckCount = 0;
-  }
-
-  function clearActiveHls() {
-    clearPlaybackWatchdog();
-    clearVideoFrameWatchdog();
-
-    try {
-      if (hlsInstance) {
-        hlsInstance.destroy();
-        hlsInstance = null;
-      }
-
-      videoPlayer.pause();
-      videoPlayer.removeAttribute("src");
-      videoPlayer.load();
-    } catch (error) {}
   }
 
   function rememberBadStream(url, reason) {
@@ -1124,40 +1102,6 @@
     nextReloadTime.textContent = formatDateTime(new Date(now.getTime() + minutes * 60 * 1000));
   }
 
-  function updateNextReloadTime(minutes) {
-    const now = new Date();
-    nextReloadTime.textContent = formatDateTime(new Date(now.getTime() + minutes * 60 * 1000));
-  }
-
-  function isPlaybackReallyActive() {
-    if (!streamStarted || videoPlayer.paused || videoPlayer.ended) return false;
-
-    const bufferedSeconds = getBufferedSeconds();
-    const recentPlaybackProgress = Date.now() - lastPlaybackProgressTime < 7000;
-    const mediaReady = videoPlayer.readyState >= 3 || bufferedSeconds > 0.35;
-
-    return recentPlaybackProgress && mediaReady;
-  }
-
-  function runScheduledAutoRefresh(minutes) {
-    if (isPlaybackReallyActive()) {
-      updateNextReloadTime(minutes);
-      setStatus("Refresh programmé ignoré : lecture active conservée.", "success");
-      setPlayerStatus("Flux actif : aucune recherche JSON inutile.", "success");
-      setMonitorHlsState("Lecture conservée", "ok");
-
-      const now = Date.now();
-      if (now - lastAutoRefreshSkipLogTime > 60000) {
-        addMonitorLog("Refresh programmé ignoré : le flux joue réellement, aucune requête JSON envoyée.");
-        lastAutoRefreshSkipLogTime = now;
-      }
-
-      return;
-    }
-
-    loadJson("refresh programmé");
-  }
-
   async function loadJson(reason) {
     if (isLoadingJson) return;
     const jsonUrl = normalizeUrl(urlInput.value);
@@ -1195,8 +1139,7 @@
         addMonitorLog("JSON servi depuis cache mémoire (" + Math.round((now - cachedJsonTimestamp) / 1000) + " s).");
       } else {
         setLoadingProgress(16, "Appel JSON");
-        const fetchCacheMode = bypassJsonCache ? "no-store" : "no-cache";
-        const response = await fetch(jsonUrl, { method: "GET", cache: fetchCacheMode });
+        const response = await fetch(jsonUrl, { method: "GET", cache: "no-store" });
         if (!response.ok) throw new Error("HTTP " + response.status);
 
         data = await response.json();
@@ -1206,23 +1149,19 @@
         cachedJsonUrl = jsonUrl;
       }
 
-      setLoadingProgress(34, "Analyse rapide du flux");
-      const foundM3u8 = findM3u8Links(data);
-      lastFoundM3u8Links = foundM3u8.slice();
-      currentCandidateIndex = 0;
-
       const jsonSignature = JSON.stringify(data);
 
       if (jsonSignature !== lastJsonSignature) {
         badStreamKeys.clear();
       }
 
-      setTimeout(function () {
-        try {
-          jsonViewer.textContent = JSON.stringify(data, null, 2);
-          renderM3u8Links(foundM3u8);
-        } catch (error) {}
-      }, 0);
+      jsonViewer.textContent = JSON.stringify(data, null, 2);
+
+      setLoadingProgress(34, "Analyse du flux");
+      const foundM3u8 = findM3u8Links(data);
+      lastFoundM3u8Links = foundM3u8.slice();
+      currentCandidateIndex = 0;
+      renderM3u8Links(foundM3u8);
 
       const minutes = Number(intervalInput.value) || AUTO_RELOAD_MINUTES;
       updateLoadTimes(minutes);
@@ -1308,87 +1247,20 @@
     }
   }
 
-  function addM3u8FromString(value, results) {
-    const text = String(value || "").trim();
-    if (!text || !text.includes(".m3u8")) return;
-
-    const directMatches = text.match(/https?:\/\/[^"' <>\n\r]+\.m3u8[^"' <>\n\r]*/g);
-    const relativeMatches = text.match(/\/[^"' <>\n\r]+\.m3u8[^"' <>\n\r]*/g);
-
-    if (directMatches) {
-      directMatches.forEach(function (url) {
-        results.add(normalizeUrl(url));
-      });
-    }
-
-    if (relativeMatches) {
-      relativeMatches.forEach(function (url) {
-        results.add(normalizeUrl(url));
-      });
-    }
-
-    if (!directMatches && !relativeMatches) {
-      results.add(normalizeUrl(text));
-    }
-  }
-
-  function collectPriorityM3u8Links(value, results) {
-    if (!value || typeof value !== "object") return;
-
-    const priorityKeys = [
-      "url",
-      "stream",
-      "streamUrl",
-      "stream_url",
-      "hls",
-      "hlsUrl",
-      "hls_url",
-      "m3u8",
-      "src",
-      "source",
-      "link"
-    ];
-
-    priorityKeys.forEach(function (key) {
-      if (Object.prototype.hasOwnProperty.call(value, key)) {
-        const item = value[key];
-        if (typeof item === "string") addM3u8FromString(item, results);
-        if (Array.isArray(item)) {
-          item.forEach(function (entry) {
-            if (typeof entry === "string") addM3u8FromString(entry, results);
-            else collectPriorityM3u8Links(entry, results);
-          });
-        }
-        if (item && typeof item === "object") collectPriorityM3u8Links(item, results);
-      }
-    });
-
-    if (Array.isArray(value)) {
-      value.forEach(function (entry) {
-        collectPriorityM3u8Links(entry, results);
-      });
-    }
-  }
-
   function findM3u8Links(value) {
     const results = new Set();
-
-    collectPriorityM3u8Links(value, results);
-
     function scan(item) {
       if (typeof item === "string") {
-        addM3u8FromString(item, results);
+        const directMatches = item.match(/https?:\/\/[^"' <>\n\r]+\.m3u8[^"' <>\n\r]*/g);
+        const relativeMatches = item.match(/\/[^"' <>\n\r]+\.m3u8[^"' <>\n\r]*/g);
+        if (directMatches) directMatches.forEach(function (url) { results.add(normalizeUrl(url)); });
+        if (relativeMatches) relativeMatches.forEach(function (url) { results.add(normalizeUrl(url)); });
+        if (item.includes(".m3u8") && !directMatches && !relativeMatches) results.add(normalizeUrl(item));
         return;
       }
-      if (Array.isArray(item)) {
-        item.forEach(scan);
-        return;
-      }
-      if (item && typeof item === "object") {
-        Object.values(item).forEach(scan);
-      }
+      if (Array.isArray(item)) { item.forEach(scan); return; }
+      if (item && typeof item === "object") Object.values(item).forEach(scan);
     }
-
     scan(value);
     return Array.from(results);
   }
@@ -1453,10 +1325,10 @@
     playerUrlInput.value = directUrl;
 
     addMonitorLog("Activation flux : " + reason);
+    setLoadingProgress(48, "Connexion HLS");
     setMonitorHlsState("Connexion HLS", "warn");
 
-    if (!videoPlayer.currentTime) showLoader("Connexion HLS"); else showBufferingIndicator();
-    setLoadingProgress(48, "Connexion HLS");
+    if (!videoPlayer.currentTime) showLoader(); else showBufferingIndicator();
     clearPlaybackWatchdog();
     startPlaybackWatchdog(directUrl);
 
@@ -1855,7 +1727,7 @@
     autoRecoveryAttempts = 0;
     updateLoadTimes(minutes);
     loadJson("démarrage");
-    reloadTimer = setInterval(function () { runScheduledAutoRefresh(minutes); }, minutes * 60 * 1000);
+    reloadTimer = setInterval(function () { loadJson("refresh programmé"); }, minutes * 60 * 1000);
     setStatus("Auto-refresh activé toutes les " + minutes + " minutes.", "success");
     addMonitorLog("Auto-refresh activé : " + minutes + " min.");
   }
