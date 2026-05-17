@@ -18,6 +18,15 @@
 {
 "id": "cmtv",
 "name": "CMTV",
+"url": "/pages/cmtv2.html",
+"logo": { "type": "image", "value": "https://raw.githubusercontent.com/gardien9a13ruedechartres-netizen/cmtv/refs/heads/main/newcm.png" },
+"group": "Généraliste",
+"isFavorite": false,
+"isIframe": true
+},
+{
+"id": "cmtv",
+"name": "CMTV",
 "url": "/pages/cmtv-stream2.html",
 "logo": { "type": "image", "value": "/media/cmtv.png" },
 "group": "Généraliste",
