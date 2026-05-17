@@ -25,8 +25,8 @@
 "isIframe": true
 },
 {
-"id": "cmtv",
-"name": "CMTV",
+"id": "cm",
+"name": "CM",
 "url": "/pages/cmtv2.html",
 "logo": { "type": "image", "value": "https://raw.githubusercontent.com/gardien9a13ruedechartres-netizen/cmtv/refs/heads/main/newcm.png" },
 "group": "Généraliste",
