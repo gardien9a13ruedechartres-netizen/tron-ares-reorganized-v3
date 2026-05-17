@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "updatedAt": "2026-05-17T00:00:00.000Z",
+  "streams": [
+    {
+      "id": "exemple-1",
+      "title": "Exemple 1",
+      "language": "fr",
+      "quality": "1080p",
+      "poster": "",
+      "video": "https://",
+      "audio": "https://",
+      "expiresAt": "",
+      "tags": ["exemple", "hls"],
+      "notes": "Remplace les URLs par tes liens .m3u8."
+    },
+    {
+      "id": "exemple-2",
+      "title": "Exemple 2",
+      "language": "fr",
+      "quality": "720p",
+      "poster": "",
+      "video": "https://",
+      "audio": "https://",
+      "expiresAt": "",
+      "tags": ["test", "vod"],
+      "notes": "Deuxième profil exemple."
+    }
+  ]
+}

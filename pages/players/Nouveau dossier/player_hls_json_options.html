@@ -1,0 +1,648 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Player HLS JSON — Audio + Vidéo synchronisés</title>
+  <style>
+    :root{
+      --bg:#ffffff;
+      --fg:#111111;
+      --muted:#555555;
+      --border:#dddddd;
+      --soft:#f7f7f7;
+      --accent:#111111;
+      --danger:#9b1c1c;
+      --ok:#146c2e;
+    }
+    *{box-sizing:border-box}
+    body{font-family:system-ui,Arial,sans-serif;margin:20px;line-height:1.4;background:var(--bg);color:var(--fg)}
+    h2{margin:0 0 14px}
+    h3{margin:18px 0 8px}
+    .panel{border:1px solid var(--border);border-radius:12px;padding:14px;max-width:1080px;margin-bottom:14px;background:#fff}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:10px 0}
+    label{font-weight:600}
+    input[type="text"], input[type="url"], input[type="datetime-local"], select, textarea{
+      padding:10px;min-width:260px;flex:1;border:1px solid #ccc;border-radius:8px;font:inherit;
+    }
+    textarea{width:100%;min-height:180px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;resize:vertical}
+    button{padding:10px 14px;cursor:pointer;border:1px solid #bbb;border-radius:8px;background:#f9f9f9;font:inherit}
+    button:disabled{opacity:.5;cursor:not-allowed}
+    video{width:min(1080px,100%);background:#000;border-radius:12px}
+    .small{color:var(--muted);font-size:14px}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    input[type="range"]{width:min(1080px,100%)}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+    .card{border:1px solid var(--border);border-radius:10px;padding:10px;background:var(--soft)}
+    .ok{color:var(--ok)}
+    .danger{color:var(--danger)}
+    .hidden{display:none!important}
+    .pill{display:inline-block;border:1px solid var(--border);border-radius:999px;padding:3px 8px;background:#fff;margin:2px;font-size:12px;color:#444}
+    .history-list{max-height:220px;overflow:auto;border:1px solid var(--border);border-radius:8px;background:#fff;padding:8px}
+    .history-item{border-bottom:1px solid #eee;padding:8px 0}
+    .history-item:last-child{border-bottom:0}
+    @media (max-width:760px){.grid,.grid3{grid-template-columns:1fr} input[type="text"],input[type="url"],select{min-width:100%}}
+  </style>
+</head>
+<body>
+  <h2>Player HLS JSON — Audio + Vidéo synchronisés</h2>
+
+  <div class="panel">
+    <h3>Bibliothèque JSON</h3>
+    <div class="row">
+      <label for="profileSelect">Profil</label>
+      <select id="profileSelect"></select>
+      <button id="loadProfileBtn">Charger le profil</button>
+      <button id="deleteProfileBtn">Supprimer</button>
+    </div>
+
+    <div class="row">
+      <button id="newProfileBtn">Nouveau profil</button>
+      <button id="saveProfileBtn">Enregistrer / mettre à jour</button>
+      <button id="exportJsonBtn">Exporter JSON</button>
+      <button id="importJsonBtn">Importer JSON</button>
+      <input id="importFile" class="hidden" type="file" accept="application/json,.json" />
+    </div>
+
+    <div class="grid3">
+      <div>
+        <label for="titleInput">Titre</label>
+        <input id="titleInput" type="text" placeholder="Ex: Film 1" />
+      </div>
+      <div>
+        <label for="languageInput">Langue</label>
+        <input id="languageInput" type="text" placeholder="Ex: fr" />
+      </div>
+      <div>
+        <label for="qualityInput">Qualité</label>
+        <input id="qualityInput" type="text" placeholder="Ex: 1080p" />
+      </div>
+    </div>
+
+    <div class="row">
+      <label for="posterInput">Poster</label>
+      <input id="posterInput" type="url" placeholder="https://image.jpg" />
+    </div>
+
+    <div class="grid">
+      <div>
+        <label for="expiresInput">Expiration optionnelle</label>
+        <input id="expiresInput" type="datetime-local" />
+      </div>
+      <div>
+        <label for="tagsInput">Tags</label>
+        <input id="tagsInput" type="text" placeholder="test, hls, vod" />
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>URLs du player</h3>
+    <div class="row">
+      <label for="videoUrl">URL vidéo (.m3u8)</label>
+      <input id="videoUrl" type="url" placeholder="https://.../video.m3u8" />
+    </div>
+    <div class="row">
+      <label for="audioUrl">URL audio (.m3u8)</label>
+      <input id="audioUrl" type="url" placeholder="https://.../audio.m3u8" />
+    </div>
+
+    <div class="row">
+      <button id="loadBtn">Charger</button>
+      <button id="playBtn" disabled>▶︎ Play</button>
+      <button id="pauseBtn" disabled>⏸ Pause</button>
+      <button id="stopBtn" disabled>⏹ Stop</button>
+      <label class="small"><input id="audioMaster" type="checkbox" checked /> Audio = référence</label>
+      <label class="small"><input id="muteVideo" type="checkbox" checked /> Couper le son vidéo</label>
+    </div>
+
+    <video id="video" playsinline></video>
+    <audio id="audio"></audio>
+
+    <div class="row">
+      <input id="seek" type="range" min="0" max="1000" value="0" disabled />
+    </div>
+
+    <div class="row small">
+      <div>État: <span id="state" class="mono">—</span></div>
+      <div>Drift: <span id="drift" class="mono">—</span></div>
+      <div>Durée(master): <span id="dur" class="mono">—</span></div>
+      <div>Profil actif: <span id="activeProfile" class="mono">—</span></div>
+    </div>
+
+    <div id="metaBox" class="card small"></div>
+  </div>
+
+  <div class="panel">
+    <h3>JSON actuel</h3>
+    <div class="row">
+      <button id="copyJsonBtn">Copier JSON</button>
+      <button id="applyJsonBtn">Appliquer le JSON modifié</button>
+      <button id="resetLibraryBtn">Réinitialiser exemples</button>
+    </div>
+    <textarea id="jsonEditor" spellcheck="false"></textarea>
+  </div>
+
+  <div class="panel">
+    <h3>Historique local</h3>
+    <div class="row">
+      <button id="clearHistoryBtn">Vider l’historique</button>
+    </div>
+    <div id="historyList" class="history-list small"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.6.15/dist/hls.min.js"></script>
+
+  <script>
+    const STORAGE_LIBRARY = 'hls_json_player_library_v1';
+    const STORAGE_LAST = 'hls_json_player_last_v1';
+    const STORAGE_HISTORY = 'hls_json_player_history_v1';
+
+    const DEFAULT_LIBRARY = {
+      version: 1,
+      updatedAt: new Date().toISOString(),
+      streams: [
+        {
+          id: 'exemple-1',
+          title: 'Exemple 1',
+          language: 'fr',
+          quality: '1080p',
+          poster: '',
+          video: 'https://',
+          audio: 'https://',
+          expiresAt: '',
+          tags: ['exemple', 'hls'],
+          notes: 'Remplace les URLs par tes liens .m3u8.'
+        }
+      ]
+    };
+
+    const video = document.getElementById('video');
+    const audio = document.getElementById('audio');
+    const videoUrl = document.getElementById('videoUrl');
+    const audioUrl = document.getElementById('audioUrl');
+    const loadBtn  = document.getElementById('loadBtn');
+    const playBtn  = document.getElementById('playBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const stopBtn  = document.getElementById('stopBtn');
+    const audioMaster = document.getElementById('audioMaster');
+    const muteVideo = document.getElementById('muteVideo');
+    const seek = document.getElementById('seek');
+    const stateEl = document.getElementById('state');
+    const driftEl = document.getElementById('drift');
+    const durEl = document.getElementById('dur');
+    const profileSelect = document.getElementById('profileSelect');
+    const loadProfileBtn = document.getElementById('loadProfileBtn');
+    const deleteProfileBtn = document.getElementById('deleteProfileBtn');
+    const newProfileBtn = document.getElementById('newProfileBtn');
+    const saveProfileBtn = document.getElementById('saveProfileBtn');
+    const exportJsonBtn = document.getElementById('exportJsonBtn');
+    const importJsonBtn = document.getElementById('importJsonBtn');
+    const importFile = document.getElementById('importFile');
+    const titleInput = document.getElementById('titleInput');
+    const languageInput = document.getElementById('languageInput');
+    const qualityInput = document.getElementById('qualityInput');
+    const posterInput = document.getElementById('posterInput');
+    const expiresInput = document.getElementById('expiresInput');
+    const tagsInput = document.getElementById('tagsInput');
+    const jsonEditor = document.getElementById('jsonEditor');
+    const copyJsonBtn = document.getElementById('copyJsonBtn');
+    const applyJsonBtn = document.getElementById('applyJsonBtn');
+    const resetLibraryBtn = document.getElementById('resetLibraryBtn');
+    const activeProfile = document.getElementById('activeProfile');
+    const metaBox = document.getElementById('metaBox');
+    const historyList = document.getElementById('historyList');
+    const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+
+    let hlsVideo = null;
+    let hlsAudio = null;
+    let syncRAF = null;
+    let uiTimer = null;
+    let isSeeking = false;
+    let library = loadLibrary();
+    let currentProfileId = null;
+
+    function uid(){ return 'stream-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,8); }
+    function clone(obj){ return JSON.parse(JSON.stringify(obj)); }
+    function setState(s){ stateEl.textContent = s; }
+    function enableControls(on){ playBtn.disabled = !on; pauseBtn.disabled = !on; stopBtn.disabled = !on; }
+
+    function loadLibrary(){
+      try {
+        const raw = localStorage.getItem(STORAGE_LIBRARY);
+        if (!raw) return clone(DEFAULT_LIBRARY);
+        const parsed = JSON.parse(raw);
+        if (!parsed || !Array.isArray(parsed.streams)) return clone(DEFAULT_LIBRARY);
+        return parsed;
+      } catch {
+        return clone(DEFAULT_LIBRARY);
+      }
+    }
+
+    function saveLibrary(){
+      library.updatedAt = new Date().toISOString();
+      localStorage.setItem(STORAGE_LIBRARY, JSON.stringify(library, null, 2));
+      refreshProfiles();
+      refreshJsonEditor();
+    }
+
+    function refreshProfiles(){
+      profileSelect.innerHTML = '';
+      library.streams.forEach((stream) => {
+        const option = document.createElement('option');
+        option.value = stream.id;
+        option.textContent = `${stream.title || 'Sans titre'}${stream.quality ? ' — ' + stream.quality : ''}${stream.language ? ' — ' + stream.language : ''}`;
+        profileSelect.appendChild(option);
+      });
+      if (currentProfileId) profileSelect.value = currentProfileId;
+    }
+
+    function refreshJsonEditor(){
+      jsonEditor.value = JSON.stringify(library, null, 2);
+    }
+
+    function normalizeLibrary(input){
+      if (Array.isArray(input)) input = { version: 1, updatedAt: new Date().toISOString(), streams: input };
+      if (!input || !Array.isArray(input.streams)) throw new Error('Format JSON invalide: propriété streams manquante.');
+      input.streams = input.streams.map((s, index) => ({
+        id: s.id || uid(),
+        title: s.title || s.name || `Stream ${index + 1}`,
+        language: s.language || '',
+        quality: s.quality || '',
+        poster: s.poster || '',
+        video: s.video || s.videoUrl || '',
+        audio: s.audio || s.audioUrl || '',
+        expiresAt: s.expiresAt || '',
+        tags: Array.isArray(s.tags) ? s.tags : String(s.tags || '').split(',').map(t => t.trim()).filter(Boolean),
+        notes: s.notes || ''
+      }));
+      input.version = input.version || 1;
+      input.updatedAt = input.updatedAt || new Date().toISOString();
+      return input;
+    }
+
+    function selectedStream(){
+      return library.streams.find(s => s.id === profileSelect.value) || library.streams[0] || null;
+    }
+
+    function fillForm(stream){
+      if (!stream) return;
+      currentProfileId = stream.id;
+      profileSelect.value = stream.id;
+      titleInput.value = stream.title || '';
+      languageInput.value = stream.language || '';
+      qualityInput.value = stream.quality || '';
+      posterInput.value = stream.poster || '';
+      videoUrl.value = stream.video || '';
+      audioUrl.value = stream.audio || '';
+      tagsInput.value = Array.isArray(stream.tags) ? stream.tags.join(', ') : '';
+      expiresInput.value = stream.expiresAt ? toDatetimeLocal(stream.expiresAt) : '';
+      activeProfile.textContent = stream.title || stream.id;
+      renderMeta(stream);
+      saveLast(stream);
+    }
+
+    function readForm(){
+      return {
+        id: currentProfileId || uid(),
+        title: titleInput.value.trim() || 'Sans titre',
+        language: languageInput.value.trim(),
+        quality: qualityInput.value.trim(),
+        poster: posterInput.value.trim(),
+        video: videoUrl.value.trim(),
+        audio: audioUrl.value.trim(),
+        expiresAt: expiresInput.value ? new Date(expiresInput.value).toISOString() : '',
+        tags: tagsInput.value.split(',').map(t => t.trim()).filter(Boolean),
+        notes: ''
+      };
+    }
+
+    function toDatetimeLocal(value){
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return '';
+      const pad = n => String(n).padStart(2, '0');
+      return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    }
+
+    function renderMeta(stream){
+      const expired = stream.expiresAt && new Date(stream.expiresAt).getTime() < Date.now();
+      const tags = Array.isArray(stream.tags) ? stream.tags.map(t => `<span class="pill">${escapeHtml(t)}</span>`).join('') : '';
+      metaBox.innerHTML = `
+        <div><b>${escapeHtml(stream.title || 'Sans titre')}</b></div>
+        <div>Langue: <span class="mono">${escapeHtml(stream.language || '—')}</span> · Qualité: <span class="mono">${escapeHtml(stream.quality || '—')}</span></div>
+        <div>Expiration: <span class="mono ${expired ? 'danger' : ''}">${stream.expiresAt ? escapeHtml(new Date(stream.expiresAt).toLocaleString()) : '—'}</span></div>
+        <div>${tags || '<span class="small">Aucun tag</span>'}</div>
+      `;
+    }
+
+    function escapeHtml(s){
+      return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    }
+
+    function saveLast(stream){
+      localStorage.setItem(STORAGE_LAST, JSON.stringify({ profileId: stream.id, video: stream.video, audio: stream.audio, at: new Date().toISOString() }));
+    }
+
+    function addHistory(stream){
+      const history = getHistory();
+      history.unshift({
+        at: new Date().toISOString(),
+        title: stream.title || 'Sans titre',
+        video: stream.video || '',
+        audio: stream.audio || '',
+        language: stream.language || '',
+        quality: stream.quality || ''
+      });
+      localStorage.setItem(STORAGE_HISTORY, JSON.stringify(history.slice(0, 50), null, 2));
+      renderHistory();
+    }
+
+    function getHistory(){
+      try { return JSON.parse(localStorage.getItem(STORAGE_HISTORY) || '[]'); } catch { return []; }
+    }
+
+    function renderHistory(){
+      const history = getHistory();
+      if (!history.length) { historyList.innerHTML = 'Aucun historique.'; return; }
+      historyList.innerHTML = history.map((item, index) => `
+        <div class="history-item">
+          <div><b>${escapeHtml(item.title)}</b> · <span class="mono">${escapeHtml(new Date(item.at).toLocaleString())}</span></div>
+          <div>Vidéo: <span class="mono">${escapeHtml(item.video)}</span></div>
+          <div>Audio: <span class="mono">${escapeHtml(item.audio)}</span></div>
+          <button type="button" data-history-index="${index}">Réutiliser</button>
+        </div>
+      `).join('');
+      historyList.querySelectorAll('[data-history-index]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const item = history[Number(btn.dataset.historyIndex)];
+          currentProfileId = uid();
+          titleInput.value = item.title || 'Historique';
+          languageInput.value = item.language || '';
+          qualityInput.value = item.quality || '';
+          posterInput.value = '';
+          videoUrl.value = item.video || '';
+          audioUrl.value = item.audio || '';
+          expiresInput.value = '';
+          tagsInput.value = 'historique';
+          activeProfile.textContent = 'Historique non enregistré';
+          setState('Historique chargé. Tu peux charger ou enregistrer ce profil.');
+        });
+      });
+    }
+
+    const waitEvent = (el, okEvt, errEvt='error') => new Promise((resolve, reject) => {
+      const ok = () => { cleanup(); resolve(); };
+      const ko = () => { cleanup(); reject(new Error(errEvt)); };
+      const cleanup = () => { el.removeEventListener(okEvt, ok); el.removeEventListener(errEvt, ko); };
+      el.addEventListener(okEvt, ok, { once: true });
+      el.addEventListener(errEvt, ko, { once: true });
+    });
+
+    function destroyHls(){
+      if (hlsVideo){ hlsVideo.destroy(); hlsVideo = null; }
+      if (hlsAudio){ hlsAudio.destroy(); hlsAudio = null; }
+    }
+
+    function stopLoops(){
+      if (syncRAF) cancelAnimationFrame(syncRAF);
+      syncRAF = null;
+      if (uiTimer) clearInterval(uiTimer);
+      uiTimer = null;
+    }
+
+    async function attachHlsTo(mediaEl, url, kind){
+      if (mediaEl.canPlayType && mediaEl.canPlayType('application/vnd.apple.mpegurl')) {
+        mediaEl.src = url;
+        await waitEvent(mediaEl, 'loadedmetadata');
+        return null;
+      }
+      if (window.Hls && Hls.isSupported()) {
+        const hls = new Hls({ lowLatencyMode: false });
+        await new Promise((resolve, reject) => {
+          hls.on(Hls.Events.ERROR, function(_, data){ if (data && data.fatal) reject(new Error(kind + ' fatal: ' + data.type)); });
+          hls.on(Hls.Events.MANIFEST_PARSED, () => resolve());
+          hls.loadSource(url);
+          hls.attachMedia(mediaEl);
+        });
+        return hls;
+      }
+      throw new Error('HLS non supporté sur ce navigateur.');
+    }
+
+    function masterSlave(){
+      const master = audioMaster.checked ? audio : video;
+      const slave  = audioMaster.checked ? video : audio;
+      return { master, slave };
+    }
+
+    async function safePlay(el){
+      try { await el.play(); return true; } catch { return false; }
+    }
+
+    function startSync(){
+      stopLoops();
+      const hard = 0.25;
+      const soft = 0.06;
+      const loop = () => {
+        const { master, slave } = masterSlave();
+        if (!master.paused && !slave.paused) {
+          const d = (slave.currentTime - master.currentTime);
+          driftEl.textContent = (d>=0?'+':'') + d.toFixed(3) + 's';
+          if (Number.isFinite(d) && Math.abs(d) > hard) {
+            try { slave.currentTime = master.currentTime; } catch {}
+            if (slave.playbackRate !== 1) slave.playbackRate = 1;
+          } else if (Number.isFinite(d) && Math.abs(d) > soft) {
+            const rate = d > 0 ? 0.96 : 1.04;
+            if (Math.abs(slave.playbackRate - rate) > 0.001) slave.playbackRate = rate;
+          } else if (slave.playbackRate !== 1) {
+            slave.playbackRate = 1;
+          }
+        } else {
+          driftEl.textContent = '—';
+        }
+        syncRAF = requestAnimationFrame(loop);
+      };
+      syncRAF = requestAnimationFrame(loop);
+      uiTimer = setInterval(() => {
+        const { master } = masterSlave();
+        const dur = master.duration;
+        if (Number.isFinite(dur) && dur > 0) {
+          durEl.textContent = dur.toFixed(2) + 's';
+          seek.disabled = false;
+          if (!isSeeking) seek.value = String(Math.max(0, Math.min(1000, Math.round((master.currentTime / dur) * 1000))));
+        } else {
+          durEl.textContent = 'LIVE/∞';
+          seek.disabled = true;
+        }
+      }, 250);
+    }
+
+    function downloadText(filename, text){
+      const blob = new Blob([text], { type: 'application/json;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    loadBtn.addEventListener('click', async () => {
+      stopLoops();
+      destroyHls();
+      enableControls(false);
+      seek.disabled = true;
+      setState('Chargement…');
+      const stream = readForm();
+      if (!stream.video || !stream.audio) { setState('⚠️ Mets les 2 URLs .m3u8'); return; }
+      video.muted = muteVideo.checked;
+      try {
+        video.removeAttribute('src'); video.load();
+        audio.removeAttribute('src'); audio.load();
+        hlsVideo = await attachHlsTo(video, stream.video, 'video');
+        hlsAudio = await attachHlsTo(audio, stream.audio, 'audio');
+        try { video.currentTime = 0; } catch {}
+        try { audio.currentTime = 0; } catch {}
+        enableControls(true);
+        setState('✅ Prêt. Clique Play.');
+        renderMeta(stream);
+        addHistory(stream);
+        saveLast(stream);
+        startSync();
+      } catch (e) {
+        console.error(e);
+        setState('❌ Erreur de chargement. Vérifie les URLs, les tokens, les playlists, les segments, les codecs ou les droits d’accès.');
+        enableControls(false);
+      }
+    });
+
+    loadProfileBtn.addEventListener('click', () => fillForm(selectedStream()));
+    profileSelect.addEventListener('change', () => fillForm(selectedStream()));
+
+    newProfileBtn.addEventListener('click', () => {
+      currentProfileId = uid();
+      titleInput.value = 'Nouveau stream';
+      languageInput.value = 'fr';
+      qualityInput.value = '';
+      posterInput.value = '';
+      videoUrl.value = 'https://';
+      audioUrl.value = 'https://';
+      expiresInput.value = '';
+      tagsInput.value = '';
+      activeProfile.textContent = 'Nouveau profil non enregistré';
+      setState('Nouveau profil préparé.');
+    });
+
+    saveProfileBtn.addEventListener('click', () => {
+      const stream = readForm();
+      const index = library.streams.findIndex(s => s.id === stream.id);
+      if (index >= 0) library.streams[index] = stream;
+      else library.streams.push(stream);
+      currentProfileId = stream.id;
+      saveLibrary();
+      fillForm(stream);
+      setState('✅ Profil enregistré dans le JSON local.');
+    });
+
+    deleteProfileBtn.addEventListener('click', () => {
+      const stream = selectedStream();
+      if (!stream) return;
+      library.streams = library.streams.filter(s => s.id !== stream.id);
+      currentProfileId = library.streams[0]?.id || null;
+      saveLibrary();
+      fillForm(selectedStream());
+      setState('Profil supprimé.');
+    });
+
+    exportJsonBtn.addEventListener('click', () => downloadText('streams.json', JSON.stringify(library, null, 2)));
+    importJsonBtn.addEventListener('click', () => importFile.click());
+    importFile.addEventListener('change', async () => {
+      const file = importFile.files && importFile.files[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        library = normalizeLibrary(JSON.parse(text));
+        currentProfileId = library.streams[0]?.id || null;
+        saveLibrary();
+        fillForm(selectedStream());
+        setState('✅ JSON importé.');
+      } catch (e) {
+        setState('❌ Import impossible: ' + e.message);
+      } finally {
+        importFile.value = '';
+      }
+    });
+
+    copyJsonBtn.addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(jsonEditor.value); setState('JSON copié.'); }
+      catch { setState('Copie impossible automatiquement. Sélectionne le JSON manuellement.'); }
+    });
+
+    applyJsonBtn.addEventListener('click', () => {
+      try {
+        library = normalizeLibrary(JSON.parse(jsonEditor.value));
+        currentProfileId = library.streams[0]?.id || null;
+        saveLibrary();
+        fillForm(selectedStream());
+        setState('✅ JSON appliqué.');
+      } catch (e) {
+        setState('❌ JSON invalide: ' + e.message);
+      }
+    });
+
+    resetLibraryBtn.addEventListener('click', () => {
+      library = clone(DEFAULT_LIBRARY);
+      currentProfileId = library.streams[0]?.id || null;
+      saveLibrary();
+      fillForm(selectedStream());
+      setState('Exemples réinitialisés.');
+    });
+
+    clearHistoryBtn.addEventListener('click', () => {
+      localStorage.removeItem(STORAGE_HISTORY);
+      renderHistory();
+      setState('Historique vidé.');
+    });
+
+    muteVideo.addEventListener('change', () => { video.muted = muteVideo.checked; });
+
+    playBtn.addEventListener('click', async () => {
+      const { master, slave } = masterSlave();
+      setState('Lecture…');
+      const ok1 = await safePlay(master);
+      const ok2 = await safePlay(slave);
+      if (!ok1 || !ok2) { setState('⚠️ Lecture bloquée : clique dans la page puis réessaie.'); return; }
+      try { slave.currentTime = master.currentTime; } catch {}
+    });
+
+    pauseBtn.addEventListener('click', () => { video.pause(); audio.pause(); setState('Pause.'); });
+    stopBtn.addEventListener('click', () => { video.pause(); audio.pause(); try { video.currentTime = 0; } catch {} try { audio.currentTime = 0; } catch {} setState('Stop.'); });
+    seek.addEventListener('input', () => { isSeeking = true; });
+    seek.addEventListener('change', () => {
+      const { master, slave } = masterSlave();
+      const dur = master.duration;
+      if (!(Number.isFinite(dur) && dur > 0)) { isSeeking = false; return; }
+      const t = (Number(seek.value) / 1000) * dur;
+      try { master.currentTime = t; } catch {}
+      try { slave.currentTime = t; } catch {}
+      isSeeking = false;
+    });
+
+    function init(){
+      library = normalizeLibrary(library);
+      refreshProfiles();
+      refreshJsonEditor();
+      renderHistory();
+      const last = (() => { try { return JSON.parse(localStorage.getItem(STORAGE_LAST) || 'null'); } catch { return null; } })();
+      const stream = library.streams.find(s => s.id === last?.profileId) || library.streams[0];
+      if (stream) fillForm(stream);
+      setState('Choisis un profil JSON, colle tes URLs, puis clique Charger.');
+    }
+
+    init();
+  </script>
+</body>
+</html>

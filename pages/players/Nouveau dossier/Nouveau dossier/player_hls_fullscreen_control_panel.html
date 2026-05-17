@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Player HLS plein écran</title>
+  <style>
+    *{box-sizing:border-box}
+    html,body{width:100%;height:100%;margin:0;background:#000;font-family:system-ui,Arial,sans-serif;overflow:hidden}
+    body{color:#fff}
+
+    .player-shell{position:fixed;inset:0;background:#000;overflow:hidden}
+    video{position:absolute;inset:0;width:100%;height:100%;background:#000;object-fit:fill}
+    audio{display:none}
+
+    .panel-toggle{
+      position:fixed;top:12px;right:12px;z-index:30;width:38px;height:38px;border:0;border-radius:999px;
+      background:rgba(0,0,0,.58);color:#fff;font-size:18px;line-height:1;cursor:pointer;
+      backdrop-filter:blur(8px);box-shadow:0 4px 16px rgba(0,0,0,.35)
+    }
+    .panel-toggle:hover{background:rgba(255,255,255,.18)}
+
+    .control-panel{
+      position:fixed;top:58px;right:12px;z-index:25;width:min(390px,calc(100vw - 24px));max-height:calc(100vh - 78px);
+      overflow:auto;border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:14px;background:rgba(10,10,10,.82);
+      color:#fff;backdrop-filter:blur(14px);box-shadow:0 12px 40px rgba(0,0,0,.45);
+      transform-origin:top right;transition:opacity .18s ease,transform .18s ease;opacity:0;transform:scale(.96);pointer-events:none
+    }
+    .control-panel.open{opacity:1;transform:scale(1);pointer-events:auto}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:10px 0}
+    label{font-weight:600;font-size:14px}
+    input[type="text"]{width:100%;padding:10px;border:1px solid rgba(255,255,255,.25);border-radius:10px;background:rgba(255,255,255,.1);color:#fff;outline:none}
+    input[type="text"]::placeholder{color:rgba(255,255,255,.55)}
+    button{padding:10px 13px;border:0;border-radius:10px;background:#fff;color:#111;font-weight:700;cursor:pointer}
+    button:disabled{opacity:.45;cursor:not-allowed}
+    input[type="range"]{width:100%}
+    .small{color:rgba(255,255,255,.78);font-size:13px;font-weight:400}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .status-line{display:grid;gap:5px;margin-top:8px}
+    .hint{margin-top:8px;color:rgba(255,255,255,.68);font-size:12px}
+
+    .center-play{
+      position:fixed;left:50%;top:50%;z-index:20;transform:translate(-50%,-50%);border:0;border-radius:999px;
+      width:86px;height:86px;background:rgba(255,255,255,.88);color:#111;font-size:34px;box-shadow:0 8px 32px rgba(0,0,0,.45)
+    }
+    .center-play.hidden{display:none}
+  </style>
+</head>
+<body>
+  <main id="playerShell" class="player-shell">
+    <video id="video" playsinline autoplay muted></video>
+    <audio id="audio" autoplay></audio>
+  </main>
+
+  <button id="panelToggle" class="panel-toggle" title="Ouvrir le panneau">☰</button>
+  <button id="centerPlay" class="center-play hidden" title="Lire">▶</button>
+
+  <section id="controlPanel" class="control-panel" aria-label="Panneau de contrôle">
+    <div class="row">
+      <label for="videoUrl">URL vidéo (.m3u8)</label>
+      <input id="videoUrl" type="text" autocomplete="off" />
+    </div>
+
+    <div class="row">
+      <label for="audioUrl">URL audio (.m3u8)</label>
+      <input id="audioUrl" type="text" autocomplete="off" />
+    </div>
+
+    <div class="row">
+      <button id="loadBtn">Charger</button>
+      <button id="playBtn" disabled>▶︎ Play</button>
+      <button id="pauseBtn" disabled>⏸ Pause</button>
+      <button id="stopBtn" disabled>⏹ Stop</button>
+    </div>
+
+    <div class="row">
+      <label class="small"><input id="audioMaster" type="checkbox" checked /> Audio = référence</label>
+      <label class="small"><input id="muteVideo" type="checkbox" checked /> Couper le son vidéo</label>
+      <label class="small"><input id="autoFullscreen" type="checkbox" checked /> Plein écran au chargement</label>
+      <label class="small"><input id="autoPlayAfterLoad" type="checkbox" checked /> Autoplay</label>
+    </div>
+
+    <div class="row">
+      <input id="seek" type="range" min="0" max="1000" value="0" disabled />
+    </div>
+
+    <div class="status-line small">
+      <div>État : <span id="state" class="mono">—</span></div>
+      <div>Drift : <span id="drift" class="mono">—</span></div>
+      <div>Durée(master) : <span id="dur" class="mono">—</span></div>
+    </div>
+
+    <div class="hint">Le panneau reste caché par défaut. Utilise le petit bouton ☰ en haut à droite pour l’ouvrir.</div>
+  </section>
+
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.6.15/dist/hls.min.js"></script>
+
+  <script>
+    const DEFAULT_AUDIO_M3U8 = `https://`;
+    const DEFAULT_VIDEO_M3U8 = `https://`;
+
+    const playerShell = document.getElementById('playerShell');
+    const video = document.getElementById('video');
+    const audio = document.getElementById('audio');
+
+    const videoUrl = document.getElementById('videoUrl');
+    const audioUrl = document.getElementById('audioUrl');
+
+    const loadBtn  = document.getElementById('loadBtn');
+    const playBtn  = document.getElementById('playBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const stopBtn  = document.getElementById('stopBtn');
+    const centerPlay = document.getElementById('centerPlay');
+
+    const panelToggle = document.getElementById('panelToggle');
+    const controlPanel = document.getElementById('controlPanel');
+
+    const audioMaster = document.getElementById('audioMaster');
+    const muteVideo = document.getElementById('muteVideo');
+    const autoFullscreen = document.getElementById('autoFullscreen');
+    const autoPlayAfterLoad = document.getElementById('autoPlayAfterLoad');
+
+    const seek = document.getElementById('seek');
+    const stateEl = document.getElementById('state');
+    const driftEl = document.getElementById('drift');
+    const durEl = document.getElementById('dur');
+
+    let hlsVideo = null;
+    let hlsAudio = null;
+    let syncRAF = null;
+    let uiTimer = null;
+    let isSeeking = false;
+    let loadedOnce = false;
+
+    function setState(s){ stateEl.textContent = s; }
+
+    function enableControls(on){
+      playBtn.disabled = !on;
+      pauseBtn.disabled = !on;
+      stopBtn.disabled = !on;
+    }
+
+    function setPanel(open){
+      controlPanel.classList.toggle('open', open);
+      panelToggle.textContent = open ? '×' : '☰';
+      panelToggle.title = open ? 'Fermer le panneau' : 'Ouvrir le panneau';
+    }
+
+    function showCenterPlay(show){
+      centerPlay.classList.toggle('hidden', !show);
+    }
+
+    function requestFullscreenIfPossible(){
+      if (!autoFullscreen.checked || document.fullscreenElement) return;
+      const fn = playerShell.requestFullscreen || playerShell.webkitRequestFullscreen || playerShell.msRequestFullscreen;
+      if (fn) {
+        try { fn.call(playerShell); } catch {}
+      }
+    }
+
+    const waitEvent = (el, okEvt, errEvt='error') => new Promise((resolve, reject) => {
+      const ok = () => { cleanup(); resolve(); };
+      const ko = () => { cleanup(); reject(new Error(errEvt)); };
+      const cleanup = () => {
+        el.removeEventListener(okEvt, ok);
+        el.removeEventListener(errEvt, ko);
+      };
+      el.addEventListener(okEvt, ok, { once: true });
+      el.addEventListener(errEvt, ko, { once: true });
+    });
+
+    function destroyHls(){
+      if (hlsVideo){ hlsVideo.destroy(); hlsVideo = null; }
+      if (hlsAudio){ hlsAudio.destroy(); hlsAudio = null; }
+    }
+
+    function stopLoops(){
+      if (syncRAF) cancelAnimationFrame(syncRAF);
+      syncRAF = null;
+      if (uiTimer) clearInterval(uiTimer);
+      uiTimer = null;
+    }
+
+    async function attachHlsTo(mediaEl, url, kind){
+      if (mediaEl.canPlayType && mediaEl.canPlayType('application/vnd.apple.mpegurl')) {
+        mediaEl.src = url;
+        await waitEvent(mediaEl, 'loadedmetadata');
+        return null;
+      }
+
+      if (window.Hls && Hls.isSupported()) {
+        const hls = new Hls({ lowLatencyMode: false });
+
+        await new Promise((resolve, reject) => {
+          hls.on(Hls.Events.ERROR, function(_, data){
+            if (data && data.fatal) reject(new Error(kind + ' fatal: ' + data.type));
+          });
+          hls.on(Hls.Events.MANIFEST_PARSED, () => resolve());
+          hls.loadSource(url);
+          hls.attachMedia(mediaEl);
+        });
+
+        return hls;
+      }
+
+      throw new Error('HLS non supporté sur ce navigateur.');
+    }
+
+    function masterSlave(){
+      const master = audioMaster.checked ? audio : video;
+      const slave  = audioMaster.checked ? video : audio;
+      return { master, slave };
+    }
+
+    async function safePlay(el){
+      try { await el.play(); return true; } catch { return false; }
+    }
+
+    async function playBoth(){
+      const { master, slave } = masterSlave();
+      setState('Lecture…');
+
+      const ok1 = await safePlay(master);
+      const ok2 = await safePlay(slave);
+
+      if (!ok1 || !ok2) {
+        showCenterPlay(true);
+        setState('⚠️ Autoplay bloqué : clique sur ▶.');
+        return false;
+      }
+
+      try { slave.currentTime = master.currentTime; } catch {}
+      showCenterPlay(false);
+      return true;
+    }
+
+    function startSync(){
+      stopLoops();
+
+      const hard = 0.25;
+      const soft = 0.06;
+
+      const loop = () => {
+        const { master, slave } = masterSlave();
+
+        if (!master.paused && !slave.paused) {
+          const d = (slave.currentTime - master.currentTime);
+          driftEl.textContent = (d>=0?'+':'') + d.toFixed(3) + 's';
+
+          if (Number.isFinite(d) && Math.abs(d) > hard) {
+            try { slave.currentTime = master.currentTime; } catch {}
+            if (slave.playbackRate !== 1) slave.playbackRate = 1;
+          } else if (Number.isFinite(d) && Math.abs(d) > soft) {
+            const rate = d > 0 ? 0.96 : 1.04;
+            if (Math.abs(slave.playbackRate - rate) > 0.001) slave.playbackRate = rate;
+          } else {
+            if (slave.playbackRate !== 1) slave.playbackRate = 1;
+          }
+        } else {
+          driftEl.textContent = '—';
+        }
+
+        syncRAF = requestAnimationFrame(loop);
+      };
+
+      syncRAF = requestAnimationFrame(loop);
+
+      uiTimer = setInterval(() => {
+        const { master } = masterSlave();
+        const dur = master.duration;
+
+        if (Number.isFinite(dur) && dur > 0) {
+          durEl.textContent = dur.toFixed(2) + 's';
+          seek.disabled = false;
+          if (!isSeeking) {
+            const v = Math.max(0, Math.min(1000, Math.round((master.currentTime / dur) * 1000)));
+            seek.value = String(v);
+          }
+        } else {
+          durEl.textContent = 'LIVE/∞';
+          seek.disabled = true;
+        }
+      }, 250);
+    }
+
+    async function loadStreams(shouldAskFullscreen){
+      stopLoops();
+      destroyHls();
+      enableControls(false);
+      showCenterPlay(false);
+      seek.disabled = true;
+      setState('Chargement…');
+
+      const vUrl = videoUrl.value.trim();
+      const aUrl = audioUrl.value.trim();
+      if (!vUrl || !aUrl || vUrl === 'https://' || aUrl === 'https://') {
+        setPanel(true);
+        setState('⚠️ Mets les 2 URLs .m3u8');
+        return;
+      }
+
+      video.muted = muteVideo.checked;
+      video.autoplay = true;
+      audio.autoplay = true;
+
+      try {
+        video.removeAttribute('src'); video.load();
+        audio.removeAttribute('src'); audio.load();
+
+        hlsVideo = await attachHlsTo(video, vUrl, 'video');
+        hlsAudio = await attachHlsTo(audio, aUrl, 'audio');
+
+        try { video.currentTime = 0; } catch {}
+        try { audio.currentTime = 0; } catch {}
+
+        loadedOnce = true;
+        enableControls(true);
+        startSync();
+        setState('✅ Prêt.');
+
+        if (shouldAskFullscreen) requestFullscreenIfPossible();
+        if (autoPlayAfterLoad.checked) await playBoth();
+      } catch (e) {
+        console.error(e);
+        setState('❌ Erreur de chargement. Vérifie URLs, tokens, codecs ou droits d’accès.');
+        enableControls(false);
+      }
+    }
+
+    panelToggle.addEventListener('click', () => {
+      setPanel(!controlPanel.classList.contains('open'));
+    });
+
+    loadBtn.addEventListener('click', () => loadStreams(true));
+    muteVideo.addEventListener('change', () => { video.muted = muteVideo.checked; });
+    playBtn.addEventListener('click', async () => { requestFullscreenIfPossible(); await playBoth(); });
+    centerPlay.addEventListener('click', async () => { requestFullscreenIfPossible(); await playBoth(); });
+
+    pauseBtn.addEventListener('click', () => {
+      video.pause(); audio.pause();
+      showCenterPlay(true);
+      setState('Pause.');
+    });
+
+    stopBtn.addEventListener('click', () => {
+      video.pause(); audio.pause();
+      try { video.currentTime = 0; } catch {}
+      try { audio.currentTime = 0; } catch {}
+      showCenterPlay(true);
+      setState('Stop.');
+    });
+
+    seek.addEventListener('input', () => { isSeeking = true; });
+    seek.addEventListener('change', () => {
+      const { master, slave } = masterSlave();
+      const dur = master.duration;
+      if (!(Number.isFinite(dur) && dur > 0)) { isSeeking = false; return; }
+
+      const t = (Number(seek.value) / 1000) * dur;
+      try { master.currentTime = t; } catch {}
+      try { slave.currentTime = t; } catch {}
+      isSeeking = false;
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') setPanel(false);
+      if (event.key.toLowerCase() === 'c') setPanel(!controlPanel.classList.contains('open'));
+      if (event.code === 'Space') {
+        event.preventDefault();
+        if (!loadedOnce) return;
+        if (video.paused || audio.paused) playBoth(); else { video.pause(); audio.pause(); showCenterPlay(true); }
+      }
+    });
+
+    videoUrl.value = DEFAULT_VIDEO_M3U8;
+    audioUrl.value = DEFAULT_AUDIO_M3U8;
+    setPanel(true);
+    setState('Colle tes URLs puis clique Charger.');
+  </script>
+</body>
+</html>

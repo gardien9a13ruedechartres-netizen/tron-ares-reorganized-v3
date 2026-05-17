@@ -11,3 +11,13 @@ https://qmaalhy7acgxwhm.ngolpdkyoctjcddxshli469r.org/sunshine/5e8kKn0h8eL1NK8i0m
 
 patrouilha pata
 https://qmaalhy7acgxwhm.ngolpdkyoctjcddxshli469r.org/sunshine/1rbb-IsSLzw8nEAgEBDdu_cIci6PiMaCykhzS_mMS-FXWQ5KnisYOe3qVCojo5_5OLA3IbbB8VpgNPS2Q7haEnY3P6ATiV4Vuj8BLCZWyhvzCQCB-gXp_xWC7yKaVfc_6SdV8HgICt50o6WMaJIRVvH1jVvj-vAOK1uCj1YRzoMi6sYJYmVFBlYW593jX2v1SFkW6GS4qmWu90BRv2G-U_ZWXhRQmkFnWv12GP_rqFcAj-EGygyUIvBuqFznd5aDdX7ZtjYGTch4QkdcONjxCA/hls/index.m3u8
+
+
+https://multi-chaines2.victor-salema-53d.workers.dev/hls?url=https%3A%2F%2Flivewatch.top%2Fapi%2Fproxy%3Furl%3Dhttp%253A%252F%252F45.143.222.113%253A8008%252Fsunshine%252FsSlq8ZX3VvyiqOuNdyzVIffZVjXmKKffaKGT80esZ-YJ7B5oYubLFRo79fwrft5vf2MtviTlUXbILU6OwAE7Q3YtHPjw-vCsAyPhUmthZGWw3dz8JZX8-uALXiRYcWXO5I6yGauAzN1Cx4MtcQu-QLwnrHSkB04onZv12HyjfMA_QsbOYF-KtKgUPLL9A1ru4nFfkG7HX8nfq3sRC6V_mcWhZ51MMH6Lx2lU-R6ps5LqFoln-NR6EGq7ZIspGGVcypPIGBmq106Gakm9Zs7Ybw%252Fhls%252Findex.m3u8
+
+
+ce player a trop de chose dedans créer un nouveau player plus simple avec ces logiques /sunshine/..., reconstruit l’URL avec qmaalhy..., puis remplace uniquement quand cette partie change. et on va ouvrir directement le json 
+
+
+
+
