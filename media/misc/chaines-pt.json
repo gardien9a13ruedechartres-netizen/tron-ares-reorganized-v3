@@ -90,7 +90,7 @@
 {
 "id": "rtp1",
 "name": "RTP1",
-"url": "/pages/rtp1-stream.html",
+"url": "/pages/rtp1.html",
 "logo": { "type": "image", "value": "/media/rtp1.jpg" },
 "group": "Généraliste",
 "isFavorite": false,
@@ -154,7 +154,7 @@
 {
 "id": "BTV",
 "name": "BTV",
-"url": "/pages/btv-stream.html",
+"url": "/pages/btv.html",
 "logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/commons/d/d2/Logo_Benfica_TV.png" },
 "group": "Sport",
 "isFavorite": false,
@@ -200,8 +200,8 @@
 {
 "id": "sporttv1",
 "name": "Sport TV 1",
-"url": "/pages/sptv1-stream.html",
-"logo": { "type": "image", "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/sport-tv-1-pt.png" },
+"url": "/pages/Sport TV 1.html",
+"logo": { "type": "image", "value": "https://cdn.brandfetch.io/idKvjRibkN/w/400/h/400/theme/dark/icon.jpeg" },
 "group": "Sport",
 "isFavorite": false,
 "isIframe": true
