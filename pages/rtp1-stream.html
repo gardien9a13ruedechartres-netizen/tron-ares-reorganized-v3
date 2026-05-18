@@ -213,6 +213,8 @@
     const MAX_FATAL_ERRORS_BEFORE_SERVER_SWITCH = 1;
     const PRIMARY_RETRY_INTERVAL_MS = 60000;
     const SERVER_TEST_TIMEOUT_MS = 7000;
+    const REJECTED_PATH_COOLDOWN_MS = 60000;
+    const JSON_RELOAD_AFTER_REJECT_COOLDOWN_MS = 12000;
 
     let hlsInstance = null;
     let refreshTimer = null;
@@ -222,6 +224,8 @@
     let isLoadingJson = false;
     let hlsFatalErrorCount = 0;
     let lastPrimaryRetryMs = 0;
+    let lastRejectedJsonReloadMs = 0;
+    const rejectedPathUntil = new Map();
 
     const videoPlayer = document.getElementById("videoPlayer");
     const loader = document.getElementById("loader");
@@ -325,6 +329,56 @@
       return STREAM_SERVERS[serverIndex].origin + sunshinePath;
     }
 
+    function getRejectedKey(serverIndex, sunshinePath) {
+      return String(serverIndex) + "|" + String(sunshinePath || "");
+    }
+
+    function isPathTemporarilyRejected(serverIndex, sunshinePath) {
+      const until = rejectedPathUntil.get(getRejectedKey(serverIndex, sunshinePath)) || 0;
+      if (!until) return false;
+      if (Date.now() > until) {
+        rejectedPathUntil.delete(getRejectedKey(serverIndex, sunshinePath));
+        return false;
+      }
+      return true;
+    }
+
+    function markPathRejected(serverIndex, sunshinePath, status) {
+      if (!sunshinePath) return;
+      rejectedPathUntil.set(
+        getRejectedKey(serverIndex, sunshinePath),
+        Date.now() + REJECTED_PATH_COOLDOWN_MS
+      );
+      addLog(
+        "Chemin refusé temporairement sur " +
+          STREAM_SERVERS[serverIndex].label +
+          " (HTTP " +
+          status +
+          ")."
+      );
+    }
+
+    function bothServersRejected(sunshinePath) {
+      return STREAM_SERVERS.every(function (_, index) {
+        return isPathTemporarilyRejected(index, sunshinePath);
+      });
+    }
+
+    function requestFreshJsonAfterRejectedPath(reason) {
+      const now = Date.now();
+      if (now - lastRejectedJsonReloadMs < JSON_RELOAD_AFTER_REJECT_COOLDOWN_MS) {
+        addLog("JSON frais déjà demandé récemment, boucle 403 évitée.");
+        return;
+      }
+
+      lastRejectedJsonReloadMs = now;
+      currentSunshinePath = "";
+      currentFinalUrl = "";
+      setStatus("Chemin refusé, recherche d'une nouvelle URL...");
+      addLog("Recherche JSON fraîche après refus 403" + (reason ? " : " + reason : "") + ".");
+      loadJsonAndMaybeSwitch("refus 403 nouvelle URL");
+    }
+
     function findFirstM3u8Value(data) {
       const priorityKeys = [
         "streamUrl",
@@ -393,6 +447,11 @@
     }
 
     async function testServerForPath(serverIndex, sunshinePath) {
+      if (isPathTemporarilyRejected(serverIndex, sunshinePath)) {
+        addLog("Test ignoré : chemin encore en cooldown sur " + STREAM_SERVERS[serverIndex].label + ".");
+        return false;
+      }
+
       const finalUrl = buildDirectUrl(serverIndex, sunshinePath);
       const controller = new AbortController();
       const timeout = setTimeout(function () {
@@ -406,11 +465,24 @@
           signal: controller.signal
         });
 
-        if (!response.ok) return false;
+        if (!response.ok) {
+          if (response.status === 401 || response.status === 403 || response.status === 404 || response.status === 410) {
+            markPathRejected(serverIndex, sunshinePath, response.status);
+          }
+          return false;
+        }
 
         const text = await response.text();
-        return text.trim().startsWith("#EXTM3U");
+        if (!text.trim().startsWith("#EXTM3U")) {
+          addLog("Réponse serveur non M3U8 sur " + STREAM_SERVERS[serverIndex].label + ".");
+          return false;
+        }
+
+        return true;
       } catch (error) {
+        if (error && error.name === "AbortError") {
+          addLog("Test serveur timeout : " + STREAM_SERVERS[serverIndex].label + ".");
+        }
         return false;
       } finally {
         clearTimeout(timeout);
@@ -445,6 +517,12 @@
       if (backupOk) {
         addLog("Serveur secours disponible.");
         return 1;
+      }
+
+      if (bothServersRejected(sunshinePath)) {
+        addLog("Les deux serveurs refusent ce chemin. Nouvelle URL JSON nécessaire.");
+        requestFreshJsonAfterRejectedPath("deux serveurs refusés");
+        return -1;
       }
 
       addLog("Aucun serveur valide détecté. Principal conservé par défaut.");
@@ -493,6 +571,12 @@
           newPath,
           reason && reason.includes("intervalle") ? "interval" : reason
         );
+
+        if (selectedServerIndex < 0) {
+          setStatus("Chemin refusé par les serveurs, attente d'une nouvelle URL JSON");
+          addLog("Remplacement annulé : chemin actuel refusé par tous les serveurs.");
+          return;
+        }
 
         const newFinalUrl = buildDirectUrl(selectedServerIndex, newPath);
 
@@ -641,6 +725,12 @@
           currentSunshinePath,
           otherServerIndex
         );
+        return;
+      }
+
+      if (bothServersRejected(currentSunshinePath)) {
+        addLog("Serveur alternatif aussi refusé. Boucle 403 stoppée.");
+        requestFreshJsonAfterRejectedPath(reason);
         return;
       }
 
