@@ -550,7 +550,11 @@
       addLog("Auto-refresh arrêté.");
     }
 
-    async function copyCurrentUrl() {
+    function copyCurrentUrl() {
+  navigator.clipboard.writeText(currentFinalUrl || "");
+}
+
+   async function copyCurrentUrl() {
       try {
         await navigator.clipboard.writeText(currentFinalUrl || finalUrlBox.textContent || "");
         setStatus("URL finale copiée");
