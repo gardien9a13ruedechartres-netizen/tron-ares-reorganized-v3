@@ -380,7 +380,8 @@
       addLog("Recherche JSON" + (reason ? " : " + reason : "") + ".");
 
       try {
-        const response = await fetch(jsonUrl, {
+      addLog("JSON appelé : https://cm-tv-refresh.victor-salema-53d.workers.dev/");   
+      const response = await fetch(jsonUrl, {
           method: "GET",
           cache: "no-store"
         });
