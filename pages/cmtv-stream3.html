@@ -580,14 +580,14 @@
       startAutoRefresh();
     });
   async function copyLog() {
-  const logBox = document.getElementById("logBox") || document.getElementById("monitorLog");
+  const box = document.getElementById("log");
 
-  if (!logBox) {
+  if (!box) {
     alert("Log introuvable.");
     return;
   }
 
-  const text = Array.from(logBox.children)
+  const text = Array.from(box.children)
     .map(function (line) {
       return line.textContent;
     })
@@ -597,10 +597,21 @@
     await navigator.clipboard.writeText(text || "Aucun log.");
     addLog("Log copié dans le presse-papiers.");
   } catch (error) {
-    alert("Impossible de copier le log : " + error.message);
+    const textarea = document.createElement("textarea");
+    textarea.value = text || "Aucun log.";
+    document.body.appendChild(textarea);
+    textarea.select();
+
+    try {
+      document.execCommand("copy");
+      addLog("Log copié dans le presse-papiers.");
+    } catch (fallbackError) {
+      alert("Impossible de copier le log.");
+    }
+
+    document.body.removeChild(textarea);
   }
 }
-
 </script>
 </body>
 </html>
