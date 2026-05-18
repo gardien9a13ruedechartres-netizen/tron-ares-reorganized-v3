@@ -165,7 +165,9 @@
 
     <label>Intervalle refresh JSON en secondes</label>
     <input id="refreshSeconds" type="number" min="10" value="30" />
-    <button class="yellow" type="button" onclick="copyLog(event)">Copier le log</button>
+    <button type="button" onclick="copyLog(event)">
+  Copier le log
+</button>
     <button class="green" onclick="startAutoRefresh()">Démarrer</button>
     <button class="red" onclick="stopAutoRefresh()">Arrêter</button>
     <button class="blue" onclick="loadJsonAndMaybeSwitch('manuel')">Recharger JSON</button>
@@ -199,8 +201,6 @@
     let currentFinalUrl = "";
     let isLoadingJson = false;
     let hlsErrorCount = 0;
-    let blockedSunshinePath = "";
-    let fatalRecoveryInProgress = false;
 
     const videoPlayer = document.getElementById("videoPlayer");
     const loader = document.getElementById("loader");
@@ -382,7 +382,7 @@
       addLog("Recherche JSON" + (reason ? " : " + reason : "") + ".");
 
       try {
-      addLog("JSON appelé : " + jsonUrl);   
+      addLog("JSON appelé : https://cm-tv-refresh.victor-salema-53d.workers.dev/");   
       const response = await fetch(jsonUrl, {
           method: "GET",
           cache: "no-store"
@@ -408,18 +408,6 @@
 
         activePathBox.textContent = newPath;
         finalUrlBox.textContent = newFinalUrl;
-
-        if (blockedSunshinePath && newPath === blockedSunshinePath) {
-          setStatus("Même URL encore en erreur : attente d'un nouveau token");
-          addLog("Même /sunshine/ encore renvoyé après erreur fatale. Aucun reload direct.");
-          return;
-        }
-
-        if (blockedSunshinePath && newPath !== blockedSunshinePath) {
-          addLog("Nouveau /sunshine/ différent reçu. Déblocage et remplacement autorisé.");
-          blockedSunshinePath = "";
-          fatalRecoveryInProgress = false;
-        }
 
         if (newPath === currentSunshinePath && hlsInstance) {
           setStatus("Même /sunshine/ : lecture conservée");
@@ -473,8 +461,8 @@
             maxMaxBufferLength: 45,
             manifestLoadingTimeOut: 12000,
             fragLoadingTimeOut: 25000,
-            manifestLoadingMaxRetry: 1,
-            fragLoadingMaxRetry: 2
+            manifestLoadingMaxRetry: 2,
+            fragLoadingMaxRetry: 3
           });
 
           hlsInstance = hls;
@@ -487,8 +475,6 @@
           hls.on(Hls.Events.MANIFEST_PARSED, function () {
             addLog("Manifest chargé. Lecture démarrée.");
             setStatus("Lecture active");
-            blockedSunshinePath = "";
-            fatalRecoveryInProgress = false;
             videoPlayer.play().catch(function () {});
           });
 
@@ -514,27 +500,15 @@
               } catch (error) {}
             }
 
-            if (fatalRecoveryInProgress) {
-              addLog("Erreur fatale déjà traitée. Attente d'une nouvelle URL JSON.");
+            if (hlsErrorCount >= MAX_ERROR_BEFORE_JSON_REFRESH) {
+              addLog("Erreurs fatales répétées. Recherche d'une nouvelle URL JSON.");
+              currentSunshinePath = "";
+              loadJsonAndMaybeSwitch("erreurs HLS répétées");
               return;
             }
 
-            fatalRecoveryInProgress = true;
-            blockedSunshinePath = currentSunshinePath;
-
-            addLog("Erreur fatale sur le flux actuel. Même /sunshine/ bloqué, attente d'un nouveau token JSON.");
-            setStatus("Flux direct inaccessible. Attente nouvelle URL JSON...");
-
-            try {
-              hls.destroy();
-            } catch (error) {}
-
-            if (hlsInstance === hls) {
-              hlsInstance = null;
-            }
-
-            resetVideoElement();
-            loadJsonAndMaybeSwitch("erreur fatale attendre nouvelle URL");
+            addLog("Reload direct du même flux après erreur fatale.");
+            playFinalUrl(currentFinalUrl, currentSunshinePath);
           });
 
           hls.attachMedia(videoPlayer);
@@ -576,7 +550,11 @@
       addLog("Auto-refresh arrêté.");
     }
 
-    async function copyCurrentUrl() {
+    function copyCurrentUrl() {
+  navigator.clipboard.writeText(currentFinalUrl || "");
+}
+
+   async function copyCurrentUrl() {
       try {
         await navigator.clipboard.writeText(currentFinalUrl || finalUrlBox.textContent || "");
         setStatus("URL finale copiée");
@@ -607,45 +585,39 @@
       showLoader("Initialisation...");
       startAutoRefresh();
     });
-  async function copyLog(event) {
-    if (event) {
-      event.preventDefault();
-      event.stopPropagation();
-    }
+  async function copyLog() {
+  const box = document.getElementById("log");
 
-    const box = document.getElementById("log");
-
-    if (!box) {
-      alert("Log introuvable.");
-      return;
-    }
-
-    const text = box.innerText.trim() || "Aucun log.";
-
-    try {
-      await navigator.clipboard.writeText(text);
-      addLog("Log copié dans le presse-papiers.");
-    } catch (error) {
-      const textarea = document.createElement("textarea");
-      textarea.value = text;
-      textarea.style.position = "fixed";
-      textarea.style.left = "-9999px";
-      document.body.appendChild(textarea);
-      textarea.focus();
-      textarea.select();
-
-      try {
-        document.execCommand("copy");
-        addLog("Log copié dans le presse-papiers.");
-      } catch (fallbackError) {
-        alert("Impossible de copier le log.");
-      }
-
-      document.body.removeChild(textarea);
-    }
+  if (!box) {
+    alert("Log introuvable.");
+    return;
   }
 
+  const text = Array.from(box.children)
+    .map(function (line) {
+      return line.textContent;
+    })
+    .join("\n");
 
+  try {
+    await navigator.clipboard.writeText(text || "Aucun log.");
+    addLog("Log copié dans le presse-papiers.");
+  } catch (error) {
+    const textarea = document.createElement("textarea");
+    textarea.value = text || "Aucun log.";
+    document.body.appendChild(textarea);
+    textarea.select();
+
+    try {
+      document.execCommand("copy");
+      addLog("Log copié dans le presse-papiers.");
+    } catch (fallbackError) {
+      alert("Impossible de copier le log.");
+    }
+
+    document.body.removeChild(textarea);
+  }
+}
 </script>
 </body>
 </html>

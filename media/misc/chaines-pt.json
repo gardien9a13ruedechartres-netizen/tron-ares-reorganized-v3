@@ -18,16 +18,6 @@
 {
 "id": "cmtv",
 "name": "CMTV",
-"url": "/pages/cmtv-stream4.html",
-"logo": { "type": "image", "value": "/media/cmtv.png" },
-"group": "Généraliste",
-"isFavorite": false,
-"isIframe": true
-},
-
-{
-"id": "cmtv",
-"name": "CMTV",
 "url": "/pages/cmtv-stream3.html",
 "logo": { "type": "image", "value": "/media/cmtv.png" },
 "group": "Généraliste",
