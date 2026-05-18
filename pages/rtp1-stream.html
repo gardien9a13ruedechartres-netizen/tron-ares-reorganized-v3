@@ -189,7 +189,7 @@
 
   <script>
     const JSON_ENDPOINT = "https://multi-work.victor-salema-53d.workers.dev/?channel=RTP%201%20HD&countries=pt";
-    const FIXED_STREAM_ORIGIN = "https://qmaalhy7acgxwhm.ngolpdkyoctjcddxshli469r.org";
+    const HLS_PROXY_ORIGIN = "https://multi-work.victor-salema-53d.workers.dev";
     const DEFAULT_REFRESH_SECONDS = 30;
     const MAX_ERROR_BEFORE_JSON_REFRESH = 3;
 
@@ -300,24 +300,12 @@
     }
 
     function buildFinalSunshineUrl(value) {
-      const path = extractSunshinePath(value);
-      if (!path) return "";
-      return FIXED_STREAM_ORIGIN + path;
-    }
+  const path = extractSunshinePath(value);
 
-    function findFirstM3u8Value(data) {
-      const priorityKeys = [
-        "streamUrl",
-        "hlsUrl",
-        "hls_url",
-        "m3u8",
-        "url",
-        "stream",
-        "source",
-        "src",
-        "link"
-      ];
+  if (!path) return "";
 
+  return HLS_PROXY_ORIGIN + "/hls?path=" + encodeURIComponent(path);
+}
       function scanPriority(node) {
         if (!node || typeof node !== "object") return "";
 
