@@ -141,7 +141,15 @@
 "isFavorite": false,
 "isIframe": true
 },
-
+{
+"id": "canal-panda",
+"name": "DISNEY PIXAR",
+"url": "/pages/disney-pixar-work.html",
+"logo": { "type": "image", "value": "https://raw.githubusercontent.com/gardien9a13ruedechartres-netizen/cmtv/refs/heads/main/disney-pixar.png" },
+"group": "Généraliste",
+"isFavorite": false,
+"isIframe": true
+},
 {
 "id": "fifaplus",
 "name": "FIFA+",
