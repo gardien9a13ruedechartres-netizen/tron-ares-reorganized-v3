@@ -215,6 +215,8 @@
     const SERVER_TEST_TIMEOUT_MS = 7000;
     const REJECTED_PATH_COOLDOWN_MS = 60000;
     const JSON_RELOAD_AFTER_REJECT_COOLDOWN_MS = 12000;
+    const ACTIVE_REFRESH_SKIP_MIN_BUFFER_SECONDS = 0.5;
+    const ACTIVE_REFRESH_SKIP_LOG_INTERVAL_MS = 30000;
 
     let hlsInstance = null;
     let refreshTimer = null;
@@ -225,6 +227,7 @@
     let hlsFatalErrorCount = 0;
     let lastPrimaryRetryMs = 0;
     let lastRejectedJsonReloadMs = 0;
+    let lastSkippedActiveRefreshLogMs = 0;
     const rejectedPathUntil = new Map();
 
     const videoPlayer = document.getElementById("videoPlayer");
@@ -529,7 +532,55 @@
       return 0;
     }
 
+    function getBufferedSeconds() {
+      if (!videoPlayer.buffered || !videoPlayer.buffered.length) return 0;
+      const currentTime = Number(videoPlayer.currentTime) || 0;
+
+      for (let index = 0; index < videoPlayer.buffered.length; index += 1) {
+        const start = videoPlayer.buffered.start(index);
+        const end = videoPlayer.buffered.end(index);
+
+        if (currentTime >= start && currentTime <= end) {
+          return Math.max(0, end - currentTime);
+        }
+      }
+
+      return 0;
+    }
+
+    function isIntervalReason(reason) {
+      return String(reason || "").toLowerCase().includes("intervalle");
+    }
+
+    function isPlaybackReallyActive() {
+      if (!hlsInstance || !currentSunshinePath) return false;
+      if (videoPlayer.paused || videoPlayer.ended) return false;
+
+      return (
+        videoPlayer.readyState >= 2 ||
+        getBufferedSeconds() > ACTIVE_REFRESH_SKIP_MIN_BUFFER_SECONDS ||
+        videoPlayer.currentTime > 0
+      );
+    }
+
+    function shouldSkipJsonRefresh(reason) {
+      if (!isIntervalReason(reason)) return false;
+      return isPlaybackReallyActive();
+    }
+
     async function loadJsonAndMaybeSwitch(reason) {
+      if (shouldSkipJsonRefresh(reason)) {
+        const now = Date.now();
+        setStatus("Lecture active : refresh JSON ignoré");
+
+        if (now - lastSkippedActiveRefreshLogMs > ACTIVE_REFRESH_SKIP_LOG_INTERVAL_MS) {
+          lastSkippedActiveRefreshLogMs = now;
+          addLog("Refresh JSON ignoré : le flux joue réellement, aucune requête inutile.");
+        }
+
+        return;
+      }
+
       if (isLoadingJson) return;
 
       const jsonUrl = normalizeUrl(jsonUrlInput.value || JSON_ENDPOINT);
@@ -565,6 +616,19 @@
 
         if (!rawM3u8 || !newPath) {
           throw new Error("Aucune URL /sunshine/ .m3u8 trouvée dans le JSON");
+        }
+
+        if (
+          newPath === currentSunshinePath &&
+          hlsInstance &&
+          isPlaybackReallyActive()
+        ) {
+          activePathBox.textContent = newPath;
+          finalUrlBox.textContent = currentFinalUrl || buildDirectUrl(currentServerIndex, newPath);
+          activeServerBox.textContent = STREAM_SERVERS[currentServerIndex].label;
+          setStatus("Même /sunshine/ actif : lecture conservée");
+          addLog("Même chemin /sunshine/ déjà actif : test serveur et remplacement ignorés.");
+          return;
         }
 
         const selectedServerIndex = await chooseServerForPath(
