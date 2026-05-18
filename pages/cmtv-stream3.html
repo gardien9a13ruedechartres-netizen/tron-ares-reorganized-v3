@@ -165,7 +165,9 @@
 
     <label>Intervalle refresh JSON en secondes</label>
     <input id="refreshSeconds" type="number" min="10" value="30" />
-    <button class="copy" onclick="copyLog()">Copier le log</button>
+    <button type="button" onclick="copyLog(event)">
+  Copier le log
+</button>
     <button class="green" onclick="startAutoRefresh()">Démarrer</button>
     <button class="red" onclick="stopAutoRefresh()">Arrêter</button>
     <button class="blue" onclick="loadJsonAndMaybeSwitch('manuel')">Recharger JSON</button>
