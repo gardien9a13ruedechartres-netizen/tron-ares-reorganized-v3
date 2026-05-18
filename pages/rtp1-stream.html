@@ -1,8 +1,15 @@
+ 
+    
+https://multi-work.victor-salema-53d.workers.dev/?channel=RTP%201%20HD&countries=pt
+
+
+
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>CMTV Simple Sunshine Player</title>
+  <title>Sunshine Auto Fallback Player</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.jsdelivr.net/npm/hls.js@1.6.16/dist/hls.min.js"></script>
   <style>
@@ -69,8 +76,8 @@
       border: none;
       border-radius: 8px;
       padding: 9px 12px;
-      color: rgba(255,255,255,0.6);
-      background: rgba(15,23,42,0.45);
+      color: rgba(255,255,255,0.75);
+      background: rgba(15,23,42,0.55);
       cursor: pointer;
       font-weight: 800;
     }
@@ -79,13 +86,13 @@
       top: 52px;
       right: 12px;
       z-index: 25;
-      width: 390px;
+      width: 420px;
       max-width: calc(100vw - 24px);
       max-height: calc(100vh - 70px);
       overflow: auto;
       padding: 14px;
       border-radius: 12px;
-      background: rgba(15,23,42,0.85);
+      background: rgba(15,23,42,0.88);
       border: 1px solid rgba(148,163,184,0.35);
       backdrop-filter: blur(12px);
     }
@@ -127,7 +134,7 @@
       word-break: break-word;
     }
     #log {
-      max-height: 180px;
+      max-height: 210px;
       overflow: auto;
       color: #cbd5e1;
     }
@@ -144,6 +151,10 @@
     }
     code { color: #93c5fd; }
     @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes logoPulse {
+      0%, 100% { opacity: 0.85; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.04); }
+    }
   </style>
 </head>
 <body>
@@ -158,21 +169,23 @@
   <button id="panelToggle" onclick="togglePanel()">☰</button>
 
   <aside id="panel" class="hidden">
-    <strong>CMTV Simple Player</strong>
+    <strong>Sunshine Auto Fallback Player</strong>
 
-    <label>URL JSON</label>
+    <label>URL JSON Worker</label>
     <input id="jsonUrl" type="text" value="https://multi-work.victor-salema-53d.workers.dev/?channel=RTP%201%20HD&countries=pt" />
 
     <label>Intervalle refresh JSON en secondes</label>
     <input id="refreshSeconds" type="number" min="10" value="30" />
+
     <button class="yellow" type="button" onclick="copyLog(event)">Copier le log</button>
-    <button class="green" onclick="startAutoRefresh()">Démarrer</button>
-    <button class="red" onclick="stopAutoRefresh()">Arrêter</button>
-    <button class="blue" onclick="loadJsonAndMaybeSwitch('manuel')">Recharger JSON</button>
-    <button class="yellow" onclick="copyCurrentUrl()">Copier URL finale</button>
+    <button class="green" type="button" onclick="startAutoRefresh()">Démarrer</button>
+    <button class="red" type="button" onclick="stopAutoRefresh()">Arrêter</button>
+    <button class="blue" type="button" onclick="loadJsonAndMaybeSwitch('manuel')">Recharger JSON</button>
+    <button class="yellow" type="button" onclick="copyCurrentUrl()">Copier URL finale</button>
 
     <div class="box">
       <div><strong>État :</strong> <span id="status">En attente</span></div>
+      <div><strong>Serveur actif :</strong> <code id="activeServer">Aucun</code></div>
       <div><strong>Chemin actif :</strong> <code id="activePath">Aucun</code></div>
       <div><strong>URL finale :</strong> <code id="finalUrl">Aucune</code></div>
     </div>
@@ -189,18 +202,33 @@
 
   <script>
     const JSON_ENDPOINT = "https://multi-work.victor-salema-53d.workers.dev/?channel=RTP%201%20HD&countries=pt";
-    const HLS_PROXY_ORIGIN = "https://multi-work.victor-salema-53d.workers.dev";
+
+    const STREAM_SERVERS = [
+      {
+        id: "principal",
+        label: "Principal qmaalhy7",
+        origin: "https://shouurvki7jtfax.ngolpdkyoctjcddxshli469r.org"
+      },
+      {
+        id: "secours",
+        label: "Secours shouurvki7",
+        origin: "https://qmaalhy7acgxwhm.ngolpdkyoctjcddxshli469r.org"
+      }
+    ];
+
     const DEFAULT_REFRESH_SECONDS = 30;
-    const MAX_ERROR_BEFORE_JSON_REFRESH = 3;
+    const MAX_FATAL_ERRORS_BEFORE_SERVER_SWITCH = 1;
+    const PRIMARY_RETRY_INTERVAL_MS = 60000;
+    const SERVER_TEST_TIMEOUT_MS = 7000;
 
     let hlsInstance = null;
     let refreshTimer = null;
     let currentSunshinePath = "";
     let currentFinalUrl = "";
+    let currentServerIndex = 0;
     let isLoadingJson = false;
-    let hlsErrorCount = 0;
-    let blockedSunshinePath = "";
-    let fatalRecoveryInProgress = false;
+    let hlsFatalErrorCount = 0;
+    let lastPrimaryRetryMs = 0;
 
     const videoPlayer = document.getElementById("videoPlayer");
     const loader = document.getElementById("loader");
@@ -209,6 +237,7 @@
     const jsonUrlInput = document.getElementById("jsonUrl");
     const refreshSecondsInput = document.getElementById("refreshSeconds");
     const statusBox = document.getElementById("status");
+    const activeServerBox = document.getElementById("activeServer");
     const activePathBox = document.getElementById("activePath");
     const finalUrlBox = document.getElementById("finalUrl");
     const jsonViewer = document.getElementById("jsonViewer");
@@ -243,7 +272,7 @@
       line.textContent = "[" + new Date().toLocaleTimeString("fr-FR") + "] " + message;
       logBox.prepend(line);
 
-      while (logBox.children.length > 60) {
+      while (logBox.children.length > 80) {
         logBox.removeChild(logBox.lastChild);
       }
     }
@@ -299,20 +328,34 @@
       return "";
     }
 
-    function buildFinalSunshineUrl(value) {
-  const path = extractSunshinePath(value);
+    function buildDirectUrl(serverIndex, sunshinePath) {
+      return STREAM_SERVERS[serverIndex].origin + sunshinePath;
+    }
 
-  if (!path) return "";
+    function findFirstM3u8Value(data) {
+      const priorityKeys = [
+        "streamUrl",
+        "hlsUrl",
+        "hls_url",
+        "m3u8",
+        "url",
+        "stream",
+        "source",
+        "src",
+        "link"
+      ];
 
-  return HLS_PROXY_ORIGIN + "/hls?path=" + encodeURIComponent(path);
-}
       function scanPriority(node) {
         if (!node || typeof node !== "object") return "";
 
         for (const key of priorityKeys) {
           if (Object.prototype.hasOwnProperty.call(node, key)) {
             const value = node[key];
-            if (typeof value === "string" && value.includes(".m3u8")) return value;
+
+            if (typeof value === "string" && value.includes(".m3u8")) {
+              return value;
+            }
+
             if (Array.isArray(value) || (value && typeof value === "object")) {
               const found = scanPriority(value);
               if (found) return found;
@@ -356,6 +399,65 @@
       return scanPriority(data) || scanAny(data);
     }
 
+    async function testServerForPath(serverIndex, sunshinePath) {
+      const finalUrl = buildDirectUrl(serverIndex, sunshinePath);
+      const controller = new AbortController();
+      const timeout = setTimeout(function () {
+        controller.abort();
+      }, SERVER_TEST_TIMEOUT_MS);
+
+      try {
+        const response = await fetch(finalUrl, {
+          method: "GET",
+          cache: "no-store",
+          signal: controller.signal
+        });
+
+        if (!response.ok) return false;
+
+        const text = await response.text();
+        return text.trim().startsWith("#EXTM3U");
+      } catch (error) {
+        return false;
+      } finally {
+        clearTimeout(timeout);
+      }
+    }
+
+    async function chooseServerForPath(sunshinePath, reason) {
+      if (!sunshinePath) return currentServerIndex;
+
+      if (currentServerIndex !== 0) {
+        const now = Date.now();
+        if (reason === "interval" && now - lastPrimaryRetryMs >= PRIMARY_RETRY_INTERVAL_MS) {
+          lastPrimaryRetryMs = now;
+          addLog("Test retour serveur principal...");
+          const primaryOk = await testServerForPath(0, sunshinePath);
+          if (primaryOk) {
+            addLog("Serveur principal de nouveau disponible.");
+            return 0;
+          }
+          addLog("Serveur principal encore indisponible. Secours conservé.");
+        }
+
+        return currentServerIndex;
+      }
+
+      const primaryOk = await testServerForPath(0, sunshinePath);
+      if (primaryOk) return 0;
+
+      addLog("Serveur principal indisponible. Test serveur secours...");
+
+      const backupOk = await testServerForPath(1, sunshinePath);
+      if (backupOk) {
+        addLog("Serveur secours disponible.");
+        return 1;
+      }
+
+      addLog("Aucun serveur valide détecté. Principal conservé par défaut.");
+      return 0;
+    }
+
     async function loadJsonAndMaybeSwitch(reason) {
       if (isLoadingJson) return;
 
@@ -370,8 +472,9 @@
       addLog("Recherche JSON" + (reason ? " : " + reason : "") + ".");
 
       try {
-      addLog("JSON appelé : " + jsonUrl);   
-      const response = await fetch(jsonUrl, {
+        addLog("JSON appelé : " + jsonUrl);
+
+        const response = await fetch(jsonUrl, {
           method: "GET",
           cache: "no-store"
         });
@@ -388,35 +491,39 @@
 
         const rawM3u8 = findFirstM3u8Value(data);
         const newPath = extractSunshinePath(rawM3u8);
-        const newFinalUrl = FIXED_STREAM_ORIGIN + newPath;
 
         if (!rawM3u8 || !newPath) {
           throw new Error("Aucune URL /sunshine/ .m3u8 trouvée dans le JSON");
         }
 
+        const selectedServerIndex = await chooseServerForPath(
+          newPath,
+          reason && reason.includes("intervalle") ? "interval" : reason
+        );
+
+        const newFinalUrl = buildDirectUrl(selectedServerIndex, newPath);
+
         activePathBox.textContent = newPath;
         finalUrlBox.textContent = newFinalUrl;
+        activeServerBox.textContent = STREAM_SERVERS[selectedServerIndex].label;
 
-        if (blockedSunshinePath && newPath === blockedSunshinePath) {
-          setStatus("Même URL encore en erreur : attente d'un nouveau token");
-          addLog("Même /sunshine/ encore renvoyé après erreur fatale. Aucun reload direct.");
-          return;
-        }
-
-        if (blockedSunshinePath && newPath !== blockedSunshinePath) {
-          addLog("Nouveau /sunshine/ différent reçu. Déblocage et remplacement autorisé.");
-          blockedSunshinePath = "";
-          fatalRecoveryInProgress = false;
-        }
-
-        if (newPath === currentSunshinePath && hlsInstance) {
-          setStatus("Même /sunshine/ : lecture conservée");
+        if (
+          newPath === currentSunshinePath &&
+          selectedServerIndex === currentServerIndex &&
+          hlsInstance
+        ) {
+          setStatus("Même /sunshine/ et même serveur : lecture conservée");
           addLog("Même chemin /sunshine/ : aucun remplacement.");
           return;
         }
 
-        addLog("Nouveau chemin /sunshine/ détecté. Remplacement du flux.");
-        await playFinalUrl(newFinalUrl, newPath);
+        addLog(
+          "Flux sélectionné : " +
+          STREAM_SERVERS[selectedServerIndex].label +
+          ". Remplacement du flux."
+        );
+
+        await playFinalUrl(newFinalUrl, newPath, selectedServerIndex);
       } catch (error) {
         setStatus("Erreur JSON : " + error.message);
         addLog("Erreur JSON : " + error.message);
@@ -433,16 +540,18 @@
       } catch (error) {}
     }
 
-    async function playFinalUrl(finalUrl, sunshinePath) {
+    async function playFinalUrl(finalUrl, sunshinePath, serverIndex) {
       if (!finalUrl || !sunshinePath) return;
 
       showLoader("Connexion au flux...");
       setStatus("Connexion HLS...");
-      hlsErrorCount = 0;
+      hlsFatalErrorCount = 0;
       currentSunshinePath = sunshinePath;
       currentFinalUrl = finalUrl;
+      currentServerIndex = serverIndex;
       activePathBox.textContent = sunshinePath;
       finalUrlBox.textContent = finalUrl;
+      activeServerBox.textContent = STREAM_SERVERS[serverIndex].label;
 
       try {
         if (hlsInstance) {
@@ -475,8 +584,6 @@
           hls.on(Hls.Events.MANIFEST_PARSED, function () {
             addLog("Manifest chargé. Lecture démarrée.");
             setStatus("Lecture active");
-            blockedSunshinePath = "";
-            fatalRecoveryInProgress = false;
             videoPlayer.play().catch(function () {});
           });
 
@@ -492,7 +599,7 @@
 
             if (!data.fatal) return;
 
-            hlsErrorCount += 1;
+            hlsFatalErrorCount += 1;
 
             if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
               try {
@@ -502,27 +609,10 @@
               } catch (error) {}
             }
 
-            if (fatalRecoveryInProgress) {
-              addLog("Erreur fatale déjà traitée. Attente d'une nouvelle URL JSON.");
-              return;
+            if (hlsFatalErrorCount >= MAX_FATAL_ERRORS_BEFORE_SERVER_SWITCH) {
+              addLog("Erreur fatale. Bascule serveur ou nouveau JSON.");
+              switchServerOrReloadJson("erreur HLS fatale");
             }
-
-            fatalRecoveryInProgress = true;
-            blockedSunshinePath = currentSunshinePath;
-
-            addLog("Erreur fatale sur le flux actuel. Même /sunshine/ bloqué, attente d'un nouveau token JSON.");
-            setStatus("Flux direct inaccessible. Attente nouvelle URL JSON...");
-
-            try {
-              hls.destroy();
-            } catch (error) {}
-
-            if (hlsInstance === hls) {
-              hlsInstance = null;
-            }
-
-            resetVideoElement();
-            loadJsonAndMaybeSwitch("erreur fatale attendre nouvelle URL");
           });
 
           hls.attachMedia(videoPlayer);
@@ -540,6 +630,30 @@
         setStatus("Erreur player : " + error.message);
         addLog("Erreur player : " + error.message);
       }
+    }
+
+    async function switchServerOrReloadJson(reason) {
+      if (!currentSunshinePath) {
+        loadJsonAndMaybeSwitch(reason);
+        return;
+      }
+
+      const otherServerIndex = currentServerIndex === 0 ? 1 : 0;
+      const otherOk = await testServerForPath(otherServerIndex, currentSunshinePath);
+
+      if (otherOk) {
+        addLog("Bascule vers " + STREAM_SERVERS[otherServerIndex].label + ".");
+        await playFinalUrl(
+          buildDirectUrl(otherServerIndex, currentSunshinePath),
+          currentSunshinePath,
+          otherServerIndex
+        );
+        return;
+      }
+
+      addLog("Serveur alternatif indisponible. Recherche nouveau JSON.");
+      currentSunshinePath = "";
+      loadJsonAndMaybeSwitch(reason);
     }
 
     function startAutoRefresh() {
@@ -573,6 +687,37 @@
       }
     }
 
+    async function copyLog(event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+
+      const text = logBox.innerText.trim() || "Aucun log.";
+
+      try {
+        await navigator.clipboard.writeText(text);
+        addLog("Log copié dans le presse-papiers.");
+      } catch (error) {
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.style.position = "fixed";
+        textarea.style.left = "-9999px";
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+
+        try {
+          document.execCommand("copy");
+          addLog("Log copié dans le presse-papiers.");
+        } catch (fallbackError) {
+          alert("Impossible de copier le log.");
+        }
+
+        document.body.removeChild(textarea);
+      }
+    }
+
     videoPlayer.addEventListener("playing", function () {
       hideLoader();
       setStatus("Lecture active");
@@ -585,9 +730,8 @@
     });
 
     videoPlayer.addEventListener("error", function () {
-      addLog("Erreur vidéo native. Contrôle JSON.");
-      currentSunshinePath = "";
-      loadJsonAndMaybeSwitch("erreur vidéo native");
+      addLog("Erreur vidéo native. Bascule serveur ou JSON.");
+      switchServerOrReloadJson("erreur vidéo native");
     });
 
     window.addEventListener("load", function () {
@@ -595,45 +739,6 @@
       showLoader("Initialisation...");
       startAutoRefresh();
     });
-  async function copyLog(event) {
-    if (event) {
-      event.preventDefault();
-      event.stopPropagation();
-    }
-
-    const box = document.getElementById("log");
-
-    if (!box) {
-      alert("Log introuvable.");
-      return;
-    }
-
-    const text = box.innerText.trim() || "Aucun log.";
-
-    try {
-      await navigator.clipboard.writeText(text);
-      addLog("Log copié dans le presse-papiers.");
-    } catch (error) {
-      const textarea = document.createElement("textarea");
-      textarea.value = text;
-      textarea.style.position = "fixed";
-      textarea.style.left = "-9999px";
-      document.body.appendChild(textarea);
-      textarea.focus();
-      textarea.select();
-
-      try {
-        document.execCommand("copy");
-        addLog("Log copié dans le presse-papiers.");
-      } catch (fallbackError) {
-        alert("Impossible de copier le log.");
-      }
-
-      document.body.removeChild(textarea);
-    }
-  }
-
-
-</script>
+  </script>
 </body>
 </html>
