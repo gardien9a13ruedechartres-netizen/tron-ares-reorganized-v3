@@ -165,7 +165,7 @@
 
     <label>Intervalle refresh JSON en secondes</label>
     <input id="refreshSeconds" type="number" min="10" value="30" />
-
+    <button class="copy" onclick="copyLog()">Copier le log</button>
     <button class="green" onclick="startAutoRefresh()">Démarrer</button>
     <button class="red" onclick="stopAutoRefresh()">Arrêter</button>
     <button class="blue" onclick="loadJsonAndMaybeSwitch('manuel')">Recharger JSON</button>
@@ -579,6 +579,28 @@
       showLoader("Initialisation...");
       startAutoRefresh();
     });
-  </script>
+  async function copyLog() {
+  const logBox = document.getElementById("logBox") || document.getElementById("monitorLog");
+
+  if (!logBox) {
+    alert("Log introuvable.");
+    return;
+  }
+
+  const text = Array.from(logBox.children)
+    .map(function (line) {
+      return line.textContent;
+    })
+    .join("\n");
+
+  try {
+    await navigator.clipboard.writeText(text || "Aucun log.");
+    addLog("Log copié dans le presse-papiers.");
+  } catch (error) {
+    alert("Impossible de copier le log : " + error.message);
+  }
+}
+
+</script>
 </body>
 </html>
