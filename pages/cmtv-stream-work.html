@@ -289,6 +289,7 @@
     const PROGRESS_CIRCLE_LENGTH = 188.5;
     let loaderProgress = 0;
     let loaderProgressTimer = null;
+    let videoHasStarted = false;
 
     function setLoaderProgress(value) {
       loaderProgress = Math.max(0, Math.min(100, Math.round(Number(value) || 0)));
@@ -328,9 +329,12 @@
       statusBox.textContent = message;
     }
 
-    function showLoader(message, progressStart, progressTarget) {
+    function showLoader(message, progressStart, progressTarget, forceDisplay) {
       loaderText.textContent = message || "Chargement du flux...";
-      loader.classList.remove("hidden");
+
+      if (!videoHasStarted || forceDisplay === true) {
+        loader.classList.remove("hidden");
+      }
 
       if (typeof progressStart === "number" || typeof progressTarget === "number") {
         startLoaderProgress(
@@ -553,7 +557,7 @@
       }
 
       isLoadingJson = true;
-      showLoader("Recherche du flux...", 8, 35);
+      showLoader("Recherche du flux...", 8, 35, false);
       setStatus("Recherche JSON...");
       addLog("Recherche JSON" + (reason ? " : " + reason : "") + ".");
 
@@ -635,7 +639,7 @@
     async function playFinalUrl(finalUrl, sunshinePath, serverIndex) {
       if (!finalUrl || !sunshinePath) return;
 
-      showLoader("Connexion au flux...", 62, 88);
+      showLoader("Connexion au flux...", 62, 88, true);
       setStatus("Connexion HLS...");
       hlsFatalErrorCount = 0;
       currentSunshinePath = sunshinePath;
@@ -822,6 +826,7 @@
     }
 
     videoPlayer.addEventListener("playing", function () {
+      videoHasStarted = true;
       hideLoader();
       setStatus("Lecture active");
       addLog("Lecture vidéo active.");
@@ -839,7 +844,7 @@
 
     window.addEventListener("load", function () {
       jsonUrlInput.value = JSON_ENDPOINT;
-      showLoader("Initialisation...", 0, 18);
+      showLoader("Initialisation...", 0, 18, true);
       startAutoRefresh();
     });
   </script>
