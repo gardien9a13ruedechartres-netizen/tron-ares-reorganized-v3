@@ -47,51 +47,13 @@
       animation: logoPulse 1.6s ease-in-out infinite;
       filter: drop-shadow(0 8px 26px rgba(0, 0, 0, 0.9));
     }
-    .progressSpinner {
-      position: relative;
-      width: 72px;
-      height: 72px;
-      display: grid;
-      place-items: center;
-    }
-    .progressSpinner svg {
-      width: 72px;
-      height: 72px;
-      transform: rotate(-90deg);
-      filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.24));
-    }
-    .progressSpinner .track {
-      fill: none;
-      stroke: rgba(255,255,255,0.14);
-      stroke-width: 6;
-    }
-    .progressSpinner .bar {
-      fill: none;
-      stroke: #3b82f6;
-      stroke-width: 6;
-      stroke-linecap: round;
-      stroke-dasharray: 188.5;
-      stroke-dashoffset: 188.5;
-      transition: stroke-dashoffset 0.18s linear;
-    }
-    .progressSpinner .shine {
-      fill: none;
-      stroke: rgba(255,255,255,0.16);
-      stroke-width: 2;
-      stroke-linecap: round;
-      stroke-dasharray: 18 170;
-      animation: spinDash 1s linear infinite;
-      transform-origin: 36px 36px;
-    }
-    #loaderPercent {
-      position: absolute;
-      inset: 0;
-      display: grid;
-      place-items: center;
-      font-size: 15px;
-      font-weight: 800;
-      color: #bfdbfe;
-      text-shadow: 0 0 12px rgba(59,130,246,0.45);
+    .spinner {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      border: 5px solid rgba(255,255,255,0.16);
+      border-top-color: #3b82f6;
+      animation: spin 0.9s linear infinite;
     }
     #loaderText {
       font-size: 17px;
@@ -181,7 +143,7 @@
       border-bottom: 1px solid rgba(148,163,184,0.18);
     }
     code { color: #93c5fd; }
-    @keyframes spinDash { to { transform: rotate(360deg); } }
+    @keyframes spin { to { transform: rotate(360deg); } }
     @keyframes logoPulse {
       0%, 100% { opacity: 0.85; transform: scale(1); }
       50% { opacity: 1; transform: scale(1.04); }
@@ -193,14 +155,7 @@
 
   <div id="loader">
     <img class="logo" src="https://player-engine.com/media/cmtv.png" alt="CM TV" />
-    <div class="progressSpinner" aria-label="Progression du chargement">
-      <svg viewBox="0 0 72 72" role="img">
-        <circle class="track" cx="36" cy="36" r="30"></circle>
-        <circle id="loaderProgressBar" class="bar" cx="36" cy="36" r="30"></circle>
-        <circle class="shine" cx="36" cy="36" r="30"></circle>
-      </svg>
-      <div id="loaderPercent">0%</div>
-    </div>
+    <div class="spinner"></div>
     <div id="loaderText">Chargement du flux...</div>
   </div>
 
@@ -271,8 +226,6 @@
     const videoPlayer = document.getElementById("videoPlayer");
     const loader = document.getElementById("loader");
     const loaderText = document.getElementById("loaderText");
-    const loaderPercent = document.getElementById("loaderPercent");
-    const loaderProgressBar = document.getElementById("loaderProgressBar");
     const panel = document.getElementById("panel");
     const jsonUrlInput = document.getElementById("jsonUrl");
     const refreshSecondsInput = document.getElementById("refreshSeconds");
@@ -286,41 +239,6 @@
     videoPlayer.muted = false;
     videoPlayer.volume = 1;
 
-    const PROGRESS_CIRCLE_LENGTH = 188.5;
-    let loaderProgress = 0;
-    let loaderProgressTimer = null;
-    let videoHasStarted = false;
-
-    function setLoaderProgress(value) {
-      loaderProgress = Math.max(0, Math.min(100, Math.round(Number(value) || 0)));
-
-      if (loaderPercent) {
-        loaderPercent.textContent = loaderProgress + "%";
-      }
-
-      if (loaderProgressBar) {
-        const offset = PROGRESS_CIRCLE_LENGTH - (PROGRESS_CIRCLE_LENGTH * loaderProgress / 100);
-        loaderProgressBar.style.strokeDashoffset = String(offset);
-      }
-    }
-
-    function startLoaderProgress(startValue, targetValue) {
-      clearInterval(loaderProgressTimer);
-      setLoaderProgress(startValue);
-
-      loaderProgressTimer = setInterval(function () {
-        if (loaderProgress < targetValue) {
-          setLoaderProgress(loaderProgress + 1);
-        }
-      }, 180);
-    }
-
-    function finishLoaderProgress() {
-      clearInterval(loaderProgressTimer);
-      loaderProgressTimer = null;
-      setLoaderProgress(100);
-    }
-
     function togglePanel() {
       panel.classList.toggle("hidden");
     }
@@ -329,27 +247,13 @@
       statusBox.textContent = message;
     }
 
-    function showLoader(message, progressStart, progressTarget, forceDisplay) {
+    function showLoader(message) {
       loaderText.textContent = message || "Chargement du flux...";
-
-      if (!videoHasStarted || forceDisplay === true) {
-        loader.classList.remove("hidden");
-      }
-
-      if (typeof progressStart === "number" || typeof progressTarget === "number") {
-        startLoaderProgress(
-          typeof progressStart === "number" ? progressStart : loaderProgress,
-          typeof progressTarget === "number" ? progressTarget : 95
-        );
-      }
+      loader.classList.remove("hidden");
     }
 
     function hideLoader() {
-      finishLoaderProgress();
-
-      setTimeout(function () {
-        loader.classList.add("hidden");
-      }, 180);
+      loader.classList.add("hidden");
     }
 
     function addLog(message) {
@@ -557,7 +461,6 @@
       }
 
       isLoadingJson = true;
-      showLoader("Recherche du flux...", 8, 35, false);
       setStatus("Recherche JSON...");
       addLog("Recherche JSON" + (reason ? " : " + reason : "") + ".");
 
@@ -568,8 +471,6 @@
           method: "GET",
           cache: "no-store"
         });
-
-        setLoaderProgress(38);
 
         if (!response.ok) {
           throw new Error("HTTP " + response.status);
@@ -588,14 +489,10 @@
           throw new Error("Aucune URL /sunshine/ .m3u8 trouvée dans le JSON");
         }
 
-        setLoaderProgress(48);
-
         const selectedServerIndex = await chooseServerForPath(
           newPath,
           reason && reason.includes("intervalle") ? "interval" : reason
         );
-
-        setLoaderProgress(62);
 
         const newFinalUrl = buildDirectUrl(selectedServerIndex, newPath);
 
@@ -639,7 +536,7 @@
     async function playFinalUrl(finalUrl, sunshinePath, serverIndex) {
       if (!finalUrl || !sunshinePath) return;
 
-      showLoader("Connexion au flux...", 62, 88, true);
+      showLoader("Connexion au flux...");
       setStatus("Connexion HLS...");
       hlsFatalErrorCount = 0;
       currentSunshinePath = sunshinePath;
@@ -673,24 +570,14 @@
           hlsInstance = hls;
 
           hls.on(Hls.Events.MEDIA_ATTACHED, function () {
-            setLoaderProgress(68);
             addLog("Media attaché. Chargement direct : " + finalUrl);
             hls.loadSource(finalUrl);
           });
 
           hls.on(Hls.Events.MANIFEST_PARSED, function () {
-            setLoaderProgress(92);
             addLog("Manifest chargé. Lecture démarrée.");
             setStatus("Lecture active");
             videoPlayer.play().catch(function () {});
-          });
-
-          hls.on(Hls.Events.LEVEL_LOADED, function () {
-            setLoaderProgress(Math.max(loaderProgress, 96));
-          });
-
-          hls.on(Hls.Events.FRAG_BUFFERED, function () {
-            setLoaderProgress(Math.max(loaderProgress, 98));
           });
 
           hls.on(Hls.Events.ERROR, function (event, data) {
@@ -726,7 +613,6 @@
         }
 
         if (videoPlayer.canPlayType("application/vnd.apple.mpegurl")) {
-          setLoaderProgress(88);
           videoPlayer.src = finalUrl;
           videoPlayer.play().catch(function () {});
           return;
@@ -826,7 +712,6 @@
     }
 
     videoPlayer.addEventListener("playing", function () {
-      videoHasStarted = true;
       hideLoader();
       setStatus("Lecture active");
       addLog("Lecture vidéo active.");
@@ -844,7 +729,7 @@
 
     window.addEventListener("load", function () {
       jsonUrlInput.value = JSON_ENDPOINT;
-      showLoader("Initialisation...", 0, 18, true);
+      showLoader("Initialisation...");
       startAutoRefresh();
     });
   </script>
