@@ -240,8 +240,8 @@
 
   <img
     class="logo"
-    src="https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/france/canal-plus-grand-ecran-fr.png"
-    alt="canal-plus-grand-ecran"
+    src="https://player-engine.com/media/cmtv.png"
+    alt="Logo"
   />
 
   <div class="progressSpinner">
@@ -287,10 +287,10 @@
   <button id="panelToggle" onclick="togglePanel()">☰</button>
 
   <aside id="panel" class="hidden">
-    <strong>Sunshine Player via Worker sécurisé</strong>
+    <strong>Sunshine Auto Fallback Player</strong>
 
     <label>URL JSON Worker</label>
-    <input id="jsonUrl" type="text" value="https://multi-work.victor-salema-53d.workers.dev/?channel=vavoo_CANAL%252B%2520GRAND%2520ECRAN%2520FHD%7Cgroup%3Afr"/>
+    <input id="jsonUrl" type="text" value="https://multi-work.victor-salema-53d.workers.dev/?channel=vavoo_CM%2520TV%7Cgroup%3Apt&countries=Portugal"/>
 
     <label>Intervalle refresh JSON en secondes</label>
     <input id="refreshSeconds" type="number" min="10" value="30" />
@@ -305,7 +305,7 @@
       <div><strong>État :</strong> <span id="status">En attente</span></div>
       <div><strong>Serveur actif :</strong> <code id="activeServer">Aucun</code></div>
       <div><strong>Chemin actif :</strong> <code id="activePath">Aucun</code></div>
-      <div><strong>URL proxy finale :</strong> <code id="finalUrl">Aucune</code></div>
+      <div><strong>URL finale :</strong> <code id="finalUrl">Aucune</code></div>
     </div>
 
     <div class="box">
@@ -319,22 +319,18 @@
   </aside>
 
   <script>
-    const JSON_ENDPOINT = "https://multi-work.victor-salema-53d.workers.dev/?channel=vavoo_CANAL%252B%2520GRAND%2520ECRAN%2520FHD%7Cgroup%3Afr";
-
-    // Worker sécurisé : le navigateur ne voit plus le domaine source.
-    // Il voit seulement /api/proxy?path=/sunshine/...
-    const SECURE_PROXY_ENDPOINT = "https://index-prox.victor-salema-53d.workers.dev/api/proxy";
+    const JSON_ENDPOINT = "https://multi-work.victor-salema-53d.workers.dev/?channel=vavoo_CM%2520TV%7Cgroup%3Apt&countries=Portugal";
 
     const STREAM_SERVERS = [
       {
-        id: "worker",
-        label: "Worker sécurisé",
-        origin: SECURE_PROXY_ENDPOINT
+        id: "principal",
+        label: "Principal qmaalhy7",
+        origin: "https://shouurvki7jtfax.ngolpdkyoctjcddxshli469r.org"
       },
       {
-        id: "worker_retry",
-        label: "Worker sécurisé retry",
-        origin: SECURE_PROXY_ENDPOINT
+        id: "secours",
+        label: "Secours shouurvki7",
+        origin: "https://qmaalhy7acgxwhm.ngolpdkyoctjcddxshli469r.org"
       }
     ];
 
@@ -458,7 +454,7 @@
     }
 
     function buildDirectUrl(serverIndex, sunshinePath) {
-      return STREAM_SERVERS[serverIndex].origin + "?path=" + encodeURIComponent(sunshinePath);
+      return STREAM_SERVERS[serverIndex].origin + sunshinePath;
     }
 
     function getRejectedKey(serverIndex, sunshinePath) {

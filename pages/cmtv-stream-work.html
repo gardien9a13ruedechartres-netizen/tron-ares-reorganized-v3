@@ -287,7 +287,7 @@
   <button id="panelToggle" onclick="togglePanel()">☰</button>
 
   <aside id="panel" class="hidden">
-    <strong>Sunshine Auto Fallback Player</strong>
+    <strong>Sunshine Player via Worker sécurisé</strong>
 
     <label>URL JSON Worker</label>
     <input id="jsonUrl" type="text" value="https://multi-work.victor-salema-53d.workers.dev/?channel=vavoo_CM%2520TV%7Cgroup%3Apt&countries=Portugal"/>
@@ -305,7 +305,7 @@
       <div><strong>État :</strong> <span id="status">En attente</span></div>
       <div><strong>Serveur actif :</strong> <code id="activeServer">Aucun</code></div>
       <div><strong>Chemin actif :</strong> <code id="activePath">Aucun</code></div>
-      <div><strong>URL finale :</strong> <code id="finalUrl">Aucune</code></div>
+      <div><strong>URL proxy finale :</strong> <code id="finalUrl">Aucune</code></div>
     </div>
 
     <div class="box">
@@ -321,16 +321,20 @@
   <script>
     const JSON_ENDPOINT = "https://multi-work.victor-salema-53d.workers.dev/?channel=vavoo_CM%2520TV%7Cgroup%3Apt&countries=Portugal";
 
+    // Worker sécurisé : le navigateur ne voit plus le domaine source.
+    // Il voit seulement /api/proxy?path=/sunshine/...
+    const SECURE_PROXY_ENDPOINT = "https://index-prox.victor-salema-53d.workers.dev/api/proxy";
+
     const STREAM_SERVERS = [
       {
-        id: "principal",
-        label: "Principal qmaalhy7",
-        origin: "https://shouurvki7jtfax.ngolpdkyoctjcddxshli469r.org"
+        id: "worker",
+        label: "Worker sécurisé",
+        origin: SECURE_PROXY_ENDPOINT
       },
       {
-        id: "secours",
-        label: "Secours shouurvki7",
-        origin: "https://qmaalhy7acgxwhm.ngolpdkyoctjcddxshli469r.org"
+        id: "worker_retry",
+        label: "Worker sécurisé retry",
+        origin: SECURE_PROXY_ENDPOINT
       }
     ];
 
@@ -454,7 +458,7 @@
     }
 
     function buildDirectUrl(serverIndex, sunshinePath) {
-      return STREAM_SERVERS[serverIndex].origin + sunshinePath;
+      return STREAM_SERVERS[serverIndex].origin + "?path=" + encodeURIComponent(sunshinePath);
     }
 
     function getRejectedKey(serverIndex, sunshinePath) {
