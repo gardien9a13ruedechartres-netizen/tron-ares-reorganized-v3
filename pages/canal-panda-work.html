@@ -148,8 +148,7 @@
       0%, 100% { opacity: 0.85; transform: scale(1); }
       50% { opacity: 1; transform: scale(1.04); }
     }
-  
-.progressSpinner{
+  .progressSpinner{
     position:relative;
     width:72px;
     height:72px;
@@ -238,12 +237,13 @@
 <body>
   <video id="videoPlayer" controls autoplay playsinline></video>
 
-  <div id="loader">
+
+<div id="loader">
 
   <img
     class="logo"
     src="https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/canal-panda-pt.png"
-    alt="Logo"
+    alt="canal-panda"
   />
 
   <div class="progressSpinner">
@@ -285,7 +285,6 @@
   </div>
 
 </div>
-
   <button id="panelToggle" onclick="togglePanel()">☰</button>
 
   <aside id="panel" class="hidden">
@@ -384,6 +383,7 @@
     function showLoader(message) {
       loaderText.textContent = message || "Chargement du flux...";
       loader.classList.remove("hidden");
+      startLoaderProgress();
     }
 
     function hideLoader() {
@@ -993,11 +993,18 @@
     }
 
     videoPlayer.addEventListener("playing", function () {
-      hideLoader();
-      setStatus("Lecture active");
-      addLog("Lecture vidéo active.");
-    });
 
+  finishLoaderProgress();
+
+  setStatus(
+    "Lecture active"
+  );
+
+  addLog(
+    "Lecture vidéo active."
+  );
+
+});
     videoPlayer.addEventListener("waiting", function () {
       setStatus("Buffering...");
       addLog("Buffering détecté.");
@@ -1028,9 +1035,10 @@ document.getElementById(
 const CIRCLE =
 188.5;
 
-function setProgress(
-percent
-){
+let progressValue = 0;
+let progressTimer = null;
+
+function setProgress(percent){
 
 percent =
 Math.max(
@@ -1041,57 +1049,85 @@ Number(percent)
 )
 );
 
+progressValue = percent;
+
 loaderPercent.textContent =
-percent + "%";
+Math.round(percent) + "%";
 
 const offset =
 CIRCLE -
 (
-CIRCLE
-*
-percent
-/
+CIRCLE *
+percent /
 100
 );
 
-loaderProgressBar.style
+loaderProgressBar
+.style
 .strokeDashoffset =
 offset;
 
 }
 
-/*
-EXEMPLES
-*/
+function startLoaderProgress(){
 
-setProgress(10);
+stopLoaderProgress();
 
-setTimeout(
-()=>{
-setProgress(30);
-},
-1000
+progressValue = 0;
+
+setProgress(0);
+
+progressTimer =
+setInterval(()=>{
+
+if(progressValue >= 90){
+
+clearInterval(
+progressTimer
 );
 
-setTimeout(
-()=>{
-setProgress(60);
-},
-2500
+return;
+
+}
+
+progressValue += 2;
+
+setProgress(
+progressValue
 );
 
-setTimeout(
-()=>{
-setProgress(85);
-},
-4000
-);
+},300);
 
-setTimeout(
-()=>{
+}
+
+function finishLoaderProgress(){
+
+stopLoaderProgress();
+
 setProgress(100);
-},
-5500);
+
+setTimeout(()=>{
+
+hideLoader();
+
+},250);
+
+}
+
+function stopLoaderProgress(){
+
+if(progressTimer){
+
+clearInterval(
+progressTimer
+);
+
+progressTimer =
+null;
+
+}
+
+}
 </script>
 </body>
 </html>
