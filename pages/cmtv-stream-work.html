@@ -148,16 +148,141 @@
       0%, 100% { opacity: 0.85; transform: scale(1); }
       50% { opacity: 1; transform: scale(1.04); }
     }
-  </style>
+  .progressSpinner{
+    position:relative;
+    width:72px;
+    height:72px;
+    display:grid;
+    place-items:center;
+}
+
+.progressSpinner svg{
+    width:72px;
+    height:72px;
+    transform:rotate(-90deg);
+}
+
+.track{
+    fill:none;
+    stroke:rgba(255,255,255,.15);
+    stroke-width:6;
+}
+
+.bar{
+    fill:none;
+    stroke:#3b82f6;
+    stroke-width:6;
+    stroke-linecap:round;
+
+    stroke-dasharray:188.5;
+    stroke-dashoffset:188.5;
+
+    transition:
+        stroke-dashoffset .18s linear;
+}
+
+.shine{
+    fill:none;
+
+    stroke:
+        rgba(255,255,255,.15);
+
+    stroke-width:2;
+
+    stroke-dasharray:
+        18 170;
+
+    animation:
+        spinnerRotate 1s linear infinite;
+
+    transform-origin:
+        center;
+}
+
+#loaderPercent{
+
+    position:absolute;
+
+    inset:0;
+
+    display:grid;
+
+    place-items:center;
+
+    color:#bfdbfe;
+
+    font-size:15px;
+
+    font-weight:800;
+
+    text-shadow:
+        0 0 12px
+        rgba(59,130,246,.4);
+
+}
+
+@keyframes spinnerRotate{
+
+    to{
+
+        transform:
+            rotate(360deg);
+
+    }
+
+}
+</style>
 </head>
 <body>
   <video id="videoPlayer" controls autoplay playsinline></video>
 
-  <div id="loader">
-    <img class="logo" src="https://player-engine.com/media/cmtv.png" alt="CMTV" />
-    <div class="spinner"></div>
-    <div id="loaderText">Chargement du flux...</div>
+ <div id="loader">
+
+  <img
+    class="logo"
+    src="https://player-engine.com/media/cmtv.png"
+    alt="Logo"
+  />
+
+  <div class="progressSpinner">
+
+    <svg viewBox="0 0 72 72">
+
+      <circle
+        class="track"
+        cx="36"
+        cy="36"
+        r="30">
+      </circle>
+
+      <circle
+        id="loaderProgressBar"
+        class="bar"
+        cx="36"
+        cy="36"
+        r="30">
+      </circle>
+
+      <circle
+        class="shine"
+        cx="36"
+        cy="36"
+        r="30">
+      </circle>
+
+    </svg>
+
+    <div id="loaderPercent">
+      0%
+    </div>
+
   </div>
+
+  <div id="loaderText">
+    Chargement...
+  </div>
+
+</div>
 
   <button id="panelToggle" onclick="togglePanel()">☰</button>
 
@@ -887,5 +1012,86 @@
       startAutoRefresh();
     });
   </script>
+<script>
+
+const loaderPercent =
+document.getElementById(
+"loaderPercent"
+);
+
+const loaderProgressBar =
+document.getElementById(
+"loaderProgressBar"
+);
+
+const CIRCLE =
+188.5;
+
+function setProgress(
+percent
+){
+
+percent =
+Math.max(
+0,
+Math.min(
+100,
+Number(percent)
+)
+);
+
+loaderPercent.textContent =
+percent + "%";
+
+const offset =
+CIRCLE -
+(
+CIRCLE
+*
+percent
+/
+100
+);
+
+loaderProgressBar.style
+.strokeDashoffset =
+offset;
+
+}
+
+/*
+EXEMPLES
+*/
+
+setProgress(10);
+
+setTimeout(
+()=>{
+setProgress(30);
+},
+1000
+);
+
+setTimeout(
+()=>{
+setProgress(60);
+},
+2500
+);
+
+setTimeout(
+()=>{
+setProgress(85);
+},
+4000
+);
+
+setTimeout(
+()=>{
+setProgress(100);
+},
+5500);
+
+</script>
 </body>
 </html>
