@@ -1,0 +1,292 @@
+export default {
+  async fetch(request, env) {
+    const reqUrl = new URL(request.url);
+
+    if (reqUrl.pathname !== "/api/proxy") {
+      return new Response("Not found", { status: 404 });
+    }
+
+    if (request.method === "OPTIONS") {
+      return makeCorsResponse(null, 204);
+    }
+
+    if (request.method !== "GET" && request.method !== "HEAD") {
+      return makeCorsResponse("Method not allowed", 405);
+    }
+
+    const path = reqUrl.searchParams.get("path");
+
+    if (!path) {
+      return makeCorsResponse("Missing path", 400);
+    }
+
+    const cleanPath = validateAndCleanPath(path, env.ALLOWED_PREFIX || "/sunshine/");
+    if (!cleanPath.ok) {
+      return makeCorsResponse(cleanPath.message, cleanPath.status);
+    }
+
+    const origins = [
+      {
+        id: "primary",
+        label: "SOURCE_ORIGIN",
+        origin: env.SOURCE_ORIGIN
+      },
+      {
+        id: "backup",
+        label: "SOURCE_BACKUP",
+        origin: env.SOURCE_BACKUP
+      }
+    ].filter((item) => item.origin);
+
+    if (!origins.length) {
+      return makeCorsResponse("Missing SOURCE_ORIGIN", 500);
+    }
+
+    let lastErrorText = "";
+    let lastStatus = 502;
+
+    for (const source of origins) {
+      const result = await fetchFromSource(request, source, cleanPath.path);
+
+      if (result.ok) {
+        return result.response;
+      }
+
+      lastStatus = result.status || 502;
+      lastErrorText = result.message || "Upstream error";
+
+      if (!shouldTryBackup(result.status)) {
+        break;
+      }
+    }
+
+    return makeCorsResponse(
+      "Proxy upstream failed: " + lastErrorText,
+      lastStatus
+    );
+  }
+};
+
+async function fetchFromSource(request, source, path) {
+  const targetUrl = new URL(path, ensureTrailingSlash(source.origin));
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12000);
+
+  try {
+    const upstreamResponse = await fetch(targetUrl.toString(), {
+      method: request.method,
+      signal: controller.signal,
+      headers: buildUpstreamHeaders(request, source.origin)
+    });
+
+    if (!upstreamResponse.ok) {
+      return {
+        ok: false,
+        status: upstreamResponse.status,
+        message: source.label + " HTTP " + upstreamResponse.status
+      };
+    }
+
+    const contentType = upstreamResponse.headers.get("content-type") || "";
+    const isM3u8 =
+      path.endsWith(".m3u8") ||
+      contentType.includes("mpegurl") ||
+      contentType.includes("application/vnd.apple.mpegurl") ||
+      contentType.includes("audio/mpegurl");
+
+    if (isM3u8) {
+      let text = await upstreamResponse.text();
+      text = rewriteM3U8(text, path);
+
+      return {
+        ok: true,
+        response: makeCorsResponse(text, 200, {
+          "Content-Type": "application/vnd.apple.mpegurl; charset=utf-8",
+          "Cache-Control": "no-store",
+          "X-Proxy-Source": source.id
+        })
+      };
+    }
+
+    const headers = makeBaseHeaders({
+      "Cache-Control": "public, max-age=30",
+      "X-Proxy-Source": source.id
+    });
+
+    const upstreamType = upstreamResponse.headers.get("content-type");
+    const upstreamLength = upstreamResponse.headers.get("content-length");
+
+    if (upstreamType) headers.set("Content-Type", upstreamType);
+    if (upstreamLength) headers.set("Content-Length", upstreamLength);
+
+    return {
+      ok: true,
+      response: new Response(upstreamResponse.body, {
+        status: upstreamResponse.status,
+        headers
+      })
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      status: 504,
+      message:
+        source.label +
+        " " +
+        (error && error.name === "AbortError"
+          ? "timeout"
+          : "fetch failed")
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function validateAndCleanPath(path, allowedPrefix) {
+  let cleanPath;
+
+  try {
+    cleanPath = decodeURIComponent(String(path || "").trim());
+  } catch {
+    cleanPath = String(path || "").trim();
+  }
+
+  if (!cleanPath) {
+    return { ok: false, status: 400, message: "Empty path" };
+  }
+
+  if (
+    cleanPath.includes("://") ||
+    cleanPath.includes("\\") ||
+    cleanPath.includes("\0") ||
+    cleanPath.includes("..")
+  ) {
+    return { ok: false, status: 403, message: "Forbidden path" };
+  }
+
+  if (!cleanPath.startsWith("/")) {
+    cleanPath = "/" + cleanPath;
+  }
+
+  if (!cleanPath.startsWith(allowedPrefix)) {
+    return { ok: false, status: 403, message: "Forbidden prefix" };
+  }
+
+  return { ok: true, path: cleanPath };
+}
+
+function buildUpstreamHeaders(request, origin) {
+  const headers = new Headers();
+
+  headers.set(
+    "User-Agent",
+    request.headers.get("User-Agent") ||
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+  );
+
+  headers.set("Accept", request.headers.get("Accept") || "*/*");
+  headers.set("Accept-Language", request.headers.get("Accept-Language") || "fr-FR,fr;q=0.9,en;q=0.8");
+  headers.set("Referer", ensureTrailingSlash(origin));
+  headers.set("Origin", removeTrailingSlash(origin));
+
+  const range = request.headers.get("Range");
+  if (range) {
+    headers.set("Range", range);
+  }
+
+  return headers;
+}
+
+function rewriteM3U8(text, currentPath) {
+  const basePath = currentPath.substring(0, currentPath.lastIndexOf("/") + 1);
+
+  return String(text)
+    .split("\n")
+    .map((line) => {
+      const trimmed = line.trim();
+
+      if (!trimmed) {
+        return line;
+      }
+
+      if (trimmed.startsWith("#EXT-X-KEY") && trimmed.includes("URI=")) {
+        return trimmed.replace(/URI="([^"]+)"/g, function (_, uri) {
+          return 'URI="' + proxifyUrl(uri, basePath) + '"';
+        });
+      }
+
+      if (trimmed.startsWith("#EXT-X-MAP") && trimmed.includes("URI=")) {
+        return trimmed.replace(/URI="([^"]+)"/g, function (_, uri) {
+          return 'URI="' + proxifyUrl(uri, basePath) + '"';
+        });
+      }
+
+      if (trimmed.startsWith("#")) {
+        return line;
+      }
+
+      return proxifyUrl(trimmed, basePath);
+    })
+    .join("\n");
+}
+
+function proxifyUrl(uri, basePath) {
+  let nextPath;
+
+  if (uri.startsWith("http://") || uri.startsWith("https://")) {
+    const parsed = new URL(uri);
+    nextPath = parsed.pathname + parsed.search;
+  } else if (uri.startsWith("/")) {
+    nextPath = uri;
+  } else {
+    nextPath = normalizePath(basePath + uri);
+  }
+
+  return "/api/proxy?path=" + encodeURIComponent(nextPath);
+}
+
+function normalizePath(path) {
+  const url = new URL(path, "https://local.invalid");
+  return url.pathname + url.search;
+}
+
+function shouldTryBackup(status) {
+  return (
+    status === 401 ||
+    status === 403 ||
+    status === 404 ||
+    status === 410 ||
+    status === 429 ||
+    status === 500 ||
+    status === 502 ||
+    status === 503 ||
+    status === 504
+  );
+}
+
+function ensureTrailingSlash(value) {
+  return String(value || "").replace(/\/+$/, "") + "/";
+}
+
+function removeTrailingSlash(value) {
+  return String(value || "").replace(/\/+$/, "");
+}
+
+function makeBaseHeaders(extraHeaders = {}) {
+  const headers = new Headers(extraHeaders);
+
+  headers.set("Access-Control-Allow-Origin", "*");
+  headers.set("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
+  headers.set("Access-Control-Allow-Headers", "*");
+  headers.set("Access-Control-Expose-Headers", "X-Proxy-Source, Content-Length, Content-Type");
+
+  return headers;
+}
+
+function makeCorsResponse(body, status = 200, extraHeaders = {}) {
+  return new Response(body, {
+    status,
+    headers: makeBaseHeaders(extraHeaders)
+  });
+}
