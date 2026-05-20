@@ -231,19 +231,17 @@
     }
 
 }
-
 </style>
 </head>
 <body>
   <video id="videoPlayer" controls autoplay playsinline></video>
 
-
-<div id="loader">
+ <div id="loader">
 
   <img
     class="logo"
     src="https://upload.wikimedia.org/wikipedia/commons/f/f9/RTP2_logo_2016.svg"
-    alt="RTP2"
+    alt="rtp2"
   />
 
   <div class="progressSpinner">
@@ -285,13 +283,14 @@
   </div>
 
 </div>
+
   <button id="panelToggle" onclick="togglePanel()">☰</button>
 
   <aside id="panel" class="hidden">
-    <strong>Sunshine Auto Fallback Player</strong>
+    <strong>Sunshine Player via Worker sécurisé</strong>
 
     <label>URL JSON Worker</label>
-    <input id="jsonUrl" type="text" value="https://multi-work.victor-salema-53d.workers.dev/?channel=RTP%202&countries=pt" />
+    <input id="jsonUrl" type="text" value="https://multi-work.victor-salema-53d.workers.dev/?channel=vavoo_RTP%25202%7Cgroup%3Apt"/>
 
     <label>Intervalle refresh JSON en secondes</label>
     <input id="refreshSeconds" type="number" min="10" value="30" />
@@ -306,7 +305,7 @@
       <div><strong>État :</strong> <span id="status">En attente</span></div>
       <div><strong>Serveur actif :</strong> <code id="activeServer">Aucun</code></div>
       <div><strong>Chemin actif :</strong> <code id="activePath">Aucun</code></div>
-      <div><strong>URL finale :</strong> <code id="finalUrl">Aucune</code></div>
+      <div><strong>URL proxy finale :</strong> <code id="finalUrl">Aucune</code></div>
     </div>
 
     <div class="box">
@@ -320,18 +319,22 @@
   </aside>
 
   <script>
-    const JSON_ENDPOINT = "https://multi-work.victor-salema-53d.workers.dev/?channel=RTP%202&countries=pt";
+    const JSON_ENDPOINT = "https://multi-work.victor-salema-53d.workers.dev/?channel=vavoo_RTP%25202%7Cgroup%3Apt";
+
+    // Worker sécurisé : le navigateur ne voit plus le domaine source.
+    // Il voit seulement /api/proxy?path=/sunshine/...
+    const SECURE_PROXY_ENDPOINT = "https://index-prox.victor-salema-53d.workers.dev/api/proxy";
 
     const STREAM_SERVERS = [
       {
-        id: "principal",
-        label: "Principal qmaalhy7",
-        origin: "https://shouurvki7jtfax.ngolpdkyoctjcddxshli469r.org"
+        id: "worker",
+        label: "Worker sécurisé",
+        origin: SECURE_PROXY_ENDPOINT
       },
       {
-        id: "secours",
-        label: "Secours shouurvki7",
-        origin: "https://qmaalhy7acgxwhm.ngolpdkyoctjcddxshli469r.org"
+        id: "worker_retry",
+        label: "Worker sécurisé retry",
+        origin: SECURE_PROXY_ENDPOINT
       }
     ];
 
@@ -383,7 +386,6 @@
     function showLoader(message) {
       loaderText.textContent = message || "Chargement du flux...";
       loader.classList.remove("hidden");
-      startLoaderProgress();
     }
 
     function hideLoader() {
@@ -456,7 +458,7 @@
     }
 
     function buildDirectUrl(serverIndex, sunshinePath) {
-      return STREAM_SERVERS[serverIndex].origin + sunshinePath;
+      return STREAM_SERVERS[serverIndex].origin + "?path=" + encodeURIComponent(sunshinePath);
     }
 
     function getRejectedKey(serverIndex, sunshinePath) {
@@ -993,18 +995,11 @@
     }
 
     videoPlayer.addEventListener("playing", function () {
+      hideLoader();
+      setStatus("Lecture active");
+      addLog("Lecture vidéo active.");
+    });
 
-  finishLoaderProgress();
-
-  setStatus(
-    "Lecture active"
-  );
-
-  addLog(
-    "Lecture vidéo active."
-  );
-
-});
     videoPlayer.addEventListener("waiting", function () {
       setStatus("Buffering...");
       addLog("Buffering détecté.");
@@ -1022,6 +1017,7 @@
     });
   </script>
 <script>
+
 const loaderPercent =
 document.getElementById(
 "loaderPercent"
@@ -1035,10 +1031,9 @@ document.getElementById(
 const CIRCLE =
 188.5;
 
-let progressValue = 0;
-let progressTimer = null;
-
-function setProgress(percent){
+function setProgress(
+percent
+){
 
 percent =
 Math.max(
@@ -1049,85 +1044,68 @@ Number(percent)
 )
 );
 
-progressValue = percent;
-
 loaderPercent.textContent =
-Math.round(percent) + "%";
+percent + "%";
 
 const offset =
 CIRCLE -
 (
-CIRCLE *
-percent /
+CIRCLE
+*
+percent
+/
 100
 );
 
-loaderProgressBar
-.style
+loaderProgressBar.style
 .strokeDashoffset =
 offset;
 
 }
 
-function startLoaderProgress(){
+/*
+EXEMPLES
+*/
 
-stopLoaderProgress();
+setProgress(10);
 
-progressValue = 0;
-
-setProgress(0);
-
-progressTimer =
-setInterval(()=>{
-
-if(progressValue >= 90){
-
-clearInterval(
-progressTimer
+setTimeout(
+()=>{
+setProgress(30);
+},
+1000
 );
 
-return;
-
-}
-
-progressValue += 2;
-
-setProgress(
-progressValue
+setTimeout(
+()=>{
+setProgress(60);
+},
+2500
 );
 
-},300);
+setTimeout(
+()=>{
+setProgress(85);
+},
+4000
+);
 
-}
-
-function finishLoaderProgress(){
-
-stopLoaderProgress();
-
+setTimeout(
+()=>{
 setProgress(100);
+},
+5500);
 
-setTimeout(()=>{
-
-hideLoader();
-
-},250);
-
-}
-
-function stopLoaderProgress(){
-
-if(progressTimer){
-
-clearInterval(
-progressTimer
-);
-
-progressTimer =
-null;
-
-}
-
-}
 </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
