@@ -48,10 +48,10 @@
     },
     {
       "name": "CANAL+",
-      "url": "https://lovetier.bz/player/CANALPLFR",
+      "url": "/pages/canal-plus-4k.html",
       "logo": {
         "type": "image",
-        "value": "https://witv.team/images/logo/canal-plus-logo.png"
+        "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/poland/canal-plus-4k-ultra-hd-pl.png"
       },
       "group": "Généraliste",
       "isFavorite": false,
