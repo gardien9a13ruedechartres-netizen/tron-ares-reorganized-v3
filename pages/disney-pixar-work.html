@@ -293,7 +293,7 @@
     <input id="jsonUrl" type="text" value="https://multi-work.victor-salema-53d.workers.dev/?channel=DISNEY PIXAR&countries=PT"/>
 
     <label>Intervalle refresh JSON en secondes</label>
-    <input id="refreshSeconds" type="number" min="10" value="60" />
+    <input id="refreshSeconds" type="number" min="10" value="30" />
 
     <button class="yellow" type="button" onclick="copyLog(event)">Copier le log</button>
     <button class="green" type="button" onclick="startAutoRefresh()">Démarrer</button>
@@ -330,14 +330,18 @@
         id: "worker",
         label: "Worker sécurisé",
         origin: SECURE_PROXY_ENDPOINT
+      },
+      {
+        id: "worker_retry",
+        label: "Worker sécurisé retry",
+        origin: SECURE_PROXY_ENDPOINT
       }
     ];
 
-    const DEFAULT_REFRESH_SECONDS = 60;
+    const DEFAULT_REFRESH_SECONDS = 30;
     const MAX_FATAL_ERRORS_BEFORE_SERVER_SWITCH = 1;
     const PRIMARY_RETRY_INTERVAL_MS = 60000;
     const SERVER_TEST_TIMEOUT_MS = 7000;
-    const JSON_FETCH_TIMEOUT_MS = 5000;
     const REJECTED_PATH_COOLDOWN_MS = 60000;
     const JSON_RELOAD_AFTER_REJECT_COOLDOWN_MS = 12000;
     const ACTIVE_REFRESH_SKIP_MIN_BUFFER_SECONDS = 0.5;
@@ -353,10 +357,6 @@
     let lastPrimaryRetryMs = 0;
     let lastRejectedJsonReloadMs = 0;
     let lastSkippedActiveRefreshLogMs = 0;
-    let lastPlaybackActivityMs = 0;
-    let lastKnownVideoTime = 0;
-    let lastKnownVideoTimeMs = 0;
-    const PLAYBACK_ACTIVITY_GRACE_MS = 45000;
     const rejectedPathUntil = new Map();
 
     const videoPlayer = document.getElementById("videoPlayer");
@@ -681,52 +681,20 @@
       return String(reason || "").toLowerCase().includes("intervalle");
     }
 
-    function markPlaybackActivity() {
-      lastPlaybackActivityMs = Date.now();
-
-      const currentTime = Number(videoPlayer.currentTime) || 0;
-      if (currentTime !== lastKnownVideoTime) {
-        lastKnownVideoTime = currentTime;
-        lastKnownVideoTimeMs = Date.now();
-      }
-    }
-
     function isPlaybackReallyActive() {
       if (!hlsInstance || !currentSunshinePath) return false;
-      if (videoPlayer.ended) return false;
+      if (videoPlayer.paused || videoPlayer.ended) return false;
 
-      const now = Date.now();
-      const recentlyActive = now - lastPlaybackActivityMs < PLAYBACK_ACTIVITY_GRACE_MS;
-      const recentlyMoved = now - lastKnownVideoTimeMs < PLAYBACK_ACTIVITY_GRACE_MS;
-      const hasBuffer = getBufferedSeconds() > ACTIVE_REFRESH_SKIP_MIN_BUFFER_SECONDS;
-      const hasMediaReady = videoPlayer.readyState >= 2;
-      const hasStarted = Number(videoPlayer.currentTime) > 0;
-
-      return recentlyActive || recentlyMoved || hasBuffer || hasMediaReady || hasStarted;
+      return (
+        videoPlayer.readyState >= 2 ||
+        getBufferedSeconds() > ACTIVE_REFRESH_SKIP_MIN_BUFFER_SECONDS ||
+        videoPlayer.currentTime > 0
+      );
     }
 
     function shouldSkipJsonRefresh(reason) {
       if (!isIntervalReason(reason)) return false;
       return isPlaybackReallyActive();
-    }
-
-    async function fetchJsonFast(jsonUrl) {
-      const controller = new AbortController();
-      const timeout = setTimeout(function () {
-        controller.abort();
-      }, JSON_FETCH_TIMEOUT_MS);
-
-      try {
-        return await fetch(jsonUrl, {
-          method: "GET",
-          cache: "no-store",
-          priority: "high",
-          keepalive: true,
-          signal: controller.signal
-        });
-      } finally {
-        clearTimeout(timeout);
-      }
     }
 
     async function loadJsonAndMaybeSwitch(reason) {
@@ -757,7 +725,10 @@
       try {
         addLog("JSON appelé : " + jsonUrl);
 
-        const response = await fetchJsonFast(jsonUrl);
+        const response = await fetch(jsonUrl, {
+          method: "GET",
+          cache: "no-store"
+        });
 
         if (!response.ok) {
           throw new Error("HTTP " + response.status);
@@ -776,12 +747,6 @@
           throw new Error("Aucune URL /sunshine/ .m3u8 trouvée dans le JSON");
         }
 
-        if (isIntervalReason(reason) && hlsInstance && currentSunshinePath && isPlaybackReallyActive()) {
-          setStatus("Lecture active : nouveau JSON ignoré");
-          addLog("Lecture active confirmée après JSON : remplacement du flux évité.");
-          return;
-        }
-
         if (
           newPath === currentSunshinePath &&
           hlsInstance &&
@@ -795,7 +760,10 @@
           return;
         }
 
-        const selectedServerIndex = 0;
+        const selectedServerIndex = await chooseServerForPath(
+          newPath,
+          reason && reason.includes("intervalle") ? "interval" : reason
+        );
 
         if (selectedServerIndex < 0) {
           setStatus("Chemin refusé par les serveurs, attente d'une nouvelle URL JSON");
@@ -831,26 +799,6 @@
         addLog("Erreur JSON : " + error.message);
       } finally {
         isLoadingJson = false;
-      }
-    }
-
-    async function safePlayVideo() {
-      try {
-        await videoPlayer.play();
-        return true;
-      } catch (error) {
-        addLog("Lecture automatique bloquée. Tentative en muet...");
-
-        try {
-          videoPlayer.muted = true;
-          await videoPlayer.play();
-          addLog("Lecture relancée en muet.");
-          return true;
-        } catch (secondError) {
-          addLog("Lecture bloquée par le navigateur : interaction utilisateur nécessaire.");
-          setStatus("Clique sur lecture pour reprendre");
-          return false;
-        }
       }
     }
 
@@ -904,10 +852,9 @@
           });
 
           hls.on(Hls.Events.MANIFEST_PARSED, function () {
-            markPlaybackActivity();
             addLog("Manifest chargé. Lecture démarrée.");
             setStatus("Lecture active");
-            safePlayVideo();
+            videoPlayer.play().catch(function () {});
           });
 
           hls.on(Hls.Events.ERROR, function (event, data) {
@@ -944,7 +891,7 @@
 
         if (videoPlayer.canPlayType("application/vnd.apple.mpegurl")) {
           videoPlayer.src = finalUrl;
-          safePlayVideo();
+          videoPlayer.play().catch(function () {});
           return;
         }
 
@@ -961,9 +908,27 @@
         return;
       }
 
-      addLog("Erreur détectée. Le fallback principal/secours est géré par le Worker. Recherche nouveau JSON.");
+      const otherServerIndex = currentServerIndex === 0 ? 1 : 0;
+      const otherOk = await testServerForPath(otherServerIndex, currentSunshinePath);
+
+      if (otherOk) {
+        addLog("Bascule vers " + STREAM_SERVERS[otherServerIndex].label + ".");
+        await playFinalUrl(
+          buildDirectUrl(otherServerIndex, currentSunshinePath),
+          currentSunshinePath,
+          otherServerIndex
+        );
+        return;
+      }
+
+      if (bothServersRejected(currentSunshinePath)) {
+        addLog("Serveur alternatif aussi refusé. Boucle 403 stoppée.");
+        requestFreshJsonAfterRejectedPath(reason);
+        return;
+      }
+
+      addLog("Serveur alternatif indisponible. Recherche nouveau JSON.");
       currentSunshinePath = "";
-      currentFinalUrl = "";
       loadJsonAndMaybeSwitch(reason);
     }
 
@@ -1030,26 +995,9 @@
     }
 
     videoPlayer.addEventListener("playing", function () {
-      markPlaybackActivity();
       hideLoader();
       setStatus("Lecture active");
       addLog("Lecture vidéo active.");
-
-      setTimeout(function () {
-        loadJsonAndMaybeSwitch("preload");
-      }, 5000);
-    });
-
-    videoPlayer.addEventListener("timeupdate", function () {
-      markPlaybackActivity();
-    });
-
-    videoPlayer.addEventListener("progress", function () {
-      markPlaybackActivity();
-    });
-
-    videoPlayer.addEventListener("canplay", function () {
-      markPlaybackActivity();
     });
 
     videoPlayer.addEventListener("waiting", function () {
