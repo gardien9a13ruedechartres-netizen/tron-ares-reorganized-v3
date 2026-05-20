@@ -153,7 +153,7 @@
 {
 "id": "SYFY",
 "name": "SYFY",
-"url": "/pages/SYFY-stream.html.html",
+"url": "/pages/SYFY-stream.html",
 "logo": { "type": "image", "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/argentina/syfy-ar.png" },
 "group": "Généraliste",
 "isFavorite": false,
