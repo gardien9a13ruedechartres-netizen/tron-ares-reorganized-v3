@@ -290,7 +290,7 @@
     <strong>Sunshine Player via Worker sécurisé</strong>
 
     <label>URL JSON Worker</label>
-    <input id="jsonUrl" type="text" value="AUTO - SPORT TV 1 : mémoire + test réel"/>
+    <input id="jsonUrl" type="text" value="https://multi-work.victor-salema-53d.workers.dev/?channel=vavoo_SPORT%2520TV%25201%2520HD%2520(BACKUP)%7Cgroup%3Apt"/>
 
     <label>Intervalle refresh JSON en secondes</label>
     <input id="refreshSeconds" type="number" min="10" value="30" />
@@ -319,30 +319,7 @@
   </aside>
 
   <script>
-    const JSON_ENDPOINT = "";
-    const BEST_JSON_CACHE_KEY = "best-json-sport-tv-1-v1";
-
-    const JSON_CANDIDATES = [
-      {
-        label: "SPORT TV 1 HD",
-        url: "https://multi-work.victor-salema-53d.workers.dev/?channel=vavoo_SPORT%2520TV%25201%2520HD%7Cgroup%3Apt"
-      },
-      {
-        label: "SPORT TV 1",
-        url: "https://multi-work.victor-salema-53d.workers.dev/?channel=vavoo_SPORT%2520TV%25201%7Cgroup%3Apt"
-      },
-      {
-        label: "SPORT TV 1 BACKUP",
-        url: "https://multi-work.victor-salema-53d.workers.dev/?channel=vavoo_SPORT%2520TV%25201%2520(BACKUP)%7Cgroup%3Apt"
-      },
-      {
-        label: "SPORT TV 1 HD BACKUP",
-        url: "https://multi-work.victor-salema-53d.workers.dev/?channel=vavoo_SPORT%2520TV%25201%2520HD%2520(BACKUP)%7Cgroup%3Apt"
-      }
-    ];
-
-    const JSON_CANDIDATE_TIMEOUT_MS = 6000;
-    const MANIFEST_TEST_TIMEOUT_MS = 8000;
+    const JSON_ENDPOINT = "https://multi-work.victor-salema-53d.workers.dev/?channel=vavoo_SPORT%2520TV%25201%2520HD%2520(BACKUP)%7Cgroup%3Apt";
 
     // Worker sécurisé : le navigateur ne voit plus le domaine source.
     // Il voit seulement /api/proxy?path=/sunshine/...
@@ -352,6 +329,11 @@
       {
         id: "worker",
         label: "Worker sécurisé",
+        origin: SECURE_PROXY_ENDPOINT
+      },
+      {
+        id: "worker_retry",
+        label: "Worker sécurisé retry",
         origin: SECURE_PROXY_ENDPOINT
       }
     ];
@@ -477,153 +459,6 @@
 
     function buildDirectUrl(serverIndex, sunshinePath) {
       return STREAM_SERVERS[serverIndex].origin + "?path=" + encodeURIComponent(sunshinePath);
-    }
-
-    function getCachedBestJsonCandidate() {
-      try {
-        const cached = JSON.parse(localStorage.getItem(BEST_JSON_CACHE_KEY) || "null");
-        if (!cached || !cached.url || !cached.label) return null;
-        return cached;
-      } catch (error) {
-        return null;
-      }
-    }
-
-    function saveCachedBestJsonCandidate(candidate) {
-      try {
-        localStorage.setItem(
-          BEST_JSON_CACHE_KEY,
-          JSON.stringify({
-            label: candidate.label,
-            url: candidate.url,
-            savedAt: Date.now()
-          })
-        );
-      } catch (error) {}
-    }
-
-    function clearCachedBestJsonCandidate() {
-      try {
-        localStorage.removeItem(BEST_JSON_CACHE_KEY);
-      } catch (error) {}
-    }
-
-    async function fetchWithTimeout(url, options, timeoutMs) {
-      const controller = new AbortController();
-      const timeout = setTimeout(function () {
-        controller.abort();
-      }, timeoutMs);
-
-      try {
-        return await fetch(url, {
-          ...(options || {}),
-          signal: controller.signal
-        });
-      } finally {
-        clearTimeout(timeout);
-      }
-    }
-
-    async function testManifestViaWorker(sunshinePath) {
-      if (!sunshinePath) return false;
-
-      const proxyUrl = buildDirectUrl(0, sunshinePath);
-
-      try {
-        const response = await fetchWithTimeout(
-          proxyUrl,
-          {
-            method: "GET",
-            cache: "no-store"
-          },
-          MANIFEST_TEST_TIMEOUT_MS
-        );
-
-        if (!response.ok) {
-          addLog("Manifest refusé HTTP " + response.status + ".");
-          return false;
-        }
-
-        const text = await response.text();
-
-        if (!text.trim().startsWith("#EXTM3U")) {
-          addLog("Manifest invalide : réponse non #EXTM3U.");
-          return false;
-        }
-
-        return true;
-      } catch (error) {
-        addLog("Manifest timeout ou erreur.");
-        return false;
-      }
-    }
-
-    async function fetchCandidateAndValidate(candidate, fromCache) {
-      addLog((fromCache ? "Test JSON mémorisé : " : "Test JSON candidat : ") + candidate.label);
-
-      const response = await fetchWithTimeout(
-        candidate.url,
-        {
-          method: "GET",
-          cache: "no-store",
-          priority: "high"
-        },
-        JSON_CANDIDATE_TIMEOUT_MS
-      );
-
-      if (!response.ok) {
-        throw new Error("JSON HTTP " + response.status);
-      }
-
-      const data = await response.json();
-      const rawM3u8 = findFirstM3u8Value(data);
-      const sunshinePath = extractSunshinePath(rawM3u8);
-
-      if (!rawM3u8 || !sunshinePath) {
-        throw new Error("JSON sans /sunshine/ .m3u8");
-      }
-
-      const manifestOk = await testManifestViaWorker(sunshinePath);
-
-      if (!manifestOk) {
-        throw new Error("manifest non valide");
-      }
-
-      return {
-        label: candidate.label,
-        url: candidate.url,
-        data,
-        rawM3u8,
-        sunshinePath
-      };
-    }
-
-    async function findBestJsonCandidate() {
-      const cached = getCachedBestJsonCandidate();
-
-      if (cached) {
-        try {
-          const selectedFromCache = await fetchCandidateAndValidate(cached, true);
-          addLog("JSON mémorisé conservé : " + selectedFromCache.label);
-          return selectedFromCache;
-        } catch (error) {
-          addLog("JSON mémorisé invalide, tri complet relancé.");
-          clearCachedBestJsonCandidate();
-        }
-      }
-
-      for (const candidate of JSON_CANDIDATES) {
-        try {
-          const selected = await fetchCandidateAndValidate(candidate, false);
-          saveCachedBestJsonCandidate(candidate);
-          addLog("JSON retenu et mémorisé : " + candidate.label);
-          return selected;
-        } catch (error) {
-          addLog("Candidat rejeté " + candidate.label + " : " + error.message);
-        }
-      }
-
-      throw new Error("Aucun JSON candidat ne donne un manifest #EXTM3U valide");
     }
 
     function getRejectedKey(serverIndex, sunshinePath) {
@@ -877,35 +712,39 @@
 
       if (isLoadingJson) return;
 
+      const jsonUrl = normalizeUrl(jsonUrlInput.value || JSON_ENDPOINT);
+      if (!jsonUrl) {
+        setStatus("URL JSON vide");
+        return;
+      }
+
       isLoadingJson = true;
-      setStatus("Recherche du meilleur JSON...");
-      addLog("Recherche JSON avec mémoire + test réel" + (reason ? " : " + reason : "") + ".");
+      setStatus("Recherche JSON...");
+      addLog("Recherche JSON" + (reason ? " : " + reason : "") + ".");
 
       try {
-        const selectedCandidate = await findBestJsonCandidate();
+        addLog("JSON appelé : " + jsonUrl);
 
-        const jsonUrl = selectedCandidate.url;
-        jsonUrlInput.value = selectedCandidate.label + " | " + selectedCandidate.url;
+        const response = await fetch(jsonUrl, {
+          method: "GET",
+          cache: "no-store"
+        });
 
-        const data = selectedCandidate.data;
-        const rawM3u8 = selectedCandidate.rawM3u8;
-        const newPath = selectedCandidate.sunshinePath;
-
-        if (jsonViewer) {
-          jsonViewer.textContent = JSON.stringify(
-            {
-              selectedCandidate: selectedCandidate.label,
-              selectedUrl: selectedCandidate.url,
-              selectedPath: selectedCandidate.sunshinePath,
-              data
-            },
-            null,
-            2
-          );
+        if (!response.ok) {
+          throw new Error("HTTP " + response.status);
         }
 
+        const data = await response.json();
+
+        if (jsonViewer) {
+          jsonViewer.textContent = JSON.stringify(data, null, 2);
+        }
+
+        const rawM3u8 = findFirstM3u8Value(data);
+        const newPath = extractSunshinePath(rawM3u8);
+
         if (!rawM3u8 || !newPath) {
-          throw new Error("Aucune URL /sunshine/ .m3u8 trouvée dans le JSON sélectionné");
+          throw new Error("Aucune URL /sunshine/ .m3u8 trouvée dans le JSON");
         }
 
         if (
@@ -921,7 +760,10 @@
           return;
         }
 
-        const selectedServerIndex = 0;
+        const selectedServerIndex = await chooseServerForPath(
+          newPath,
+          reason && reason.includes("intervalle") ? "interval" : reason
+        );
 
         if (selectedServerIndex < 0) {
           setStatus("Chemin refusé par les serveurs, attente d'une nouvelle URL JSON");
@@ -1061,10 +903,32 @@
     }
 
     async function switchServerOrReloadJson(reason) {
-      addLog("Erreur détectée. Cache JSON vidé et nouveau tri réel lancé.");
-      clearCachedBestJsonCandidate();
+      if (!currentSunshinePath) {
+        loadJsonAndMaybeSwitch(reason);
+        return;
+      }
+
+      const otherServerIndex = currentServerIndex === 0 ? 1 : 0;
+      const otherOk = await testServerForPath(otherServerIndex, currentSunshinePath);
+
+      if (otherOk) {
+        addLog("Bascule vers " + STREAM_SERVERS[otherServerIndex].label + ".");
+        await playFinalUrl(
+          buildDirectUrl(otherServerIndex, currentSunshinePath),
+          currentSunshinePath,
+          otherServerIndex
+        );
+        return;
+      }
+
+      if (bothServersRejected(currentSunshinePath)) {
+        addLog("Serveur alternatif aussi refusé. Boucle 403 stoppée.");
+        requestFreshJsonAfterRejectedPath(reason);
+        return;
+      }
+
+      addLog("Serveur alternatif indisponible. Recherche nouveau JSON.");
       currentSunshinePath = "";
-      currentFinalUrl = "";
       loadJsonAndMaybeSwitch(reason);
     }
 
@@ -1147,7 +1011,7 @@
     });
 
     window.addEventListener("load", function () {
-      jsonUrlInput.value = "AUTO - SPORT TV 1 : mémoire + test réel";
+      jsonUrlInput.value = JSON_ENDPOINT;
       showLoader("Initialisation...");
       startAutoRefresh();
     });
