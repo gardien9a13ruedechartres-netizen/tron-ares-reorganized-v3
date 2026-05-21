@@ -15,14 +15,14 @@
    },
    {
       "name": "TF1",
-      "url": "https://cluone.dad:443/live/99F7CFCD396779DC13E1FEF9BA9F9AE8/32.m3u8",
+      "url": "/pagges/tf1-stream-work.html",
       "logo": {
         "type": "image",
         "value": "/media/image/tf1.webp"
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
         {
       "name": "France 2",
