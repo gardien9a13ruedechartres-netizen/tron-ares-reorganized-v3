@@ -15,7 +15,7 @@
    },
    {
       "name": "TF1",
-      "url": "https://poland.assistancefrancaise.com/hls/transcoder02/1/tracks-v1a1/mono.ts.m3u8",
+      "url": "https://cluone.dad:443/live/99F7CFCD396779DC13E1FEF9BA9F9AE8/32.m3u8",
       "logo": {
         "type": "image",
         "value": "/media/image/tf1.webp"
@@ -70,14 +70,14 @@
     },
     {
       "name": "M6",
-      "url": "https://poland.assistancefrancaise.com/hls/transcoder03/19/tracks-v1a1/mono.ts.m3u8",
+      "url": "/pages/m6-stream-work.html",
       "logo": {
         "type": "image",
         "value": "https://focus.telerama.fr/500x500/0000/00/01/clear-118.png"
     },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "name": "Arte",
@@ -92,18 +92,18 @@
     },
     {
       "name": "W9",
-      "url": "https://poland.assistancefrancaise.com/hls/transcoder02/20/tracks-v1a1/mono.ts.m3u8",
+      "url": "/pages/w9-stream-work.html",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/W9-Logo.svg"
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "name": "CStar",
-      "url": "https://blue-sun-08cf.victor-salema-53d.workers.dev/pages/cstar1.html",
+      "url": "/pages/c-star-stream-workhtml",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20CStar%202016.svg"
@@ -182,14 +182,14 @@
 
 {
       "name": "6ter",
-      "url": "https://poland.assistancefrancaise.com/hls/transcoder02/28/tracks-v1a1/mono.ts.m3u8",
+      "url": "/pages/6ter-stream-work.html",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%206ter%202016.svg"
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     
     {
