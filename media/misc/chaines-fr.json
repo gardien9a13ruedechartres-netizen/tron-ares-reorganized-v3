@@ -4,20 +4,7 @@
   "listType": "fr",
   "exportedAt": "2026-02-27T20:46:43.105Z",
   "items": [
-    {
-"id": "IPTV",
-"name": "CANAIS IPTV",
-"url": "/pages/cmlive2.html",
-"_hidden": [
-    "url"
-  ],
-
-"logo": { "type": "image", "value": "https://cdn.jsdelivr.net/gh/imagesloads/images@main/img_fb2cbb9ed17cb142.png" },
-"group": "Généraliste",
-"isFavorite": false,
-"isIframe": true
-   },
-   {
+       {
       "name": "TF1",
       "url": "https://tvradiozap.eu/tools/m3u-m3u8.php/para/TF1.m3u8",
       "logo": {

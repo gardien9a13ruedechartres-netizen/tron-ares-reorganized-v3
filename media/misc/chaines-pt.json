@@ -7,15 +7,6 @@
 "exportedAt": "2026-03-10T21:00:00Z",
 "items": [
 {
-"id": "IPTV",
-"name": "CANAIS IPTV",
-"url": "/pages/cmlive1.html",
-"logo": { "type": "image", "value": "https://cdn.jsdelivr.net/gh/imagesloads/images@main/img_fb2cbb9ed17cb142.png" },
-"group": "Généraliste",
-"isFavorite": false,
-"isIframe": true
-},
-{
 "id": "cmtv",
 "name": "CMTV",
 "url": "/pages/fullscreencm.html",
