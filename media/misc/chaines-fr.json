@@ -15,14 +15,14 @@
    },
    {
       "name": "TF1",
-      "url": "/pages/tf1-stream-works.html",
+      "url": "https://tvradiozap.eu/tools/m3u-m3u8.php/para/TF1.m3u8",
       "logo": {
         "type": "image",
         "value": "/media/image/tf1.webp"
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": false
     },
         {
       "name": "France 2",
