@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dailymotion Cover Test</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+html,
+body{
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#000;
+}
+
+.dm-cover{
+    position:fixed;
+
+    top:0;
+    left:0;
+
+    width:100vw;
+    height:100vh;
+
+    overflow:hidden;
+}
+
+.dm-cover iframe{
+    position:absolute;
+
+    top:59%;
+    left:50%;
+
+    border:none;
+
+    transform:translate(-50%,-50%);
+
+    /* ratio 16:9 */
+    min-width:100vw;
+    min-height:100vh;
+
+    width:177.78vh;
+    height:56.25vw;
+}
+
+/* si écran plus large */
+@media (min-aspect-ratio:16/9){
+    .dm-cover iframe{
+        width:100vw;
+        height:56.25vw;
+    }
+}
+
+/* si écran plus haut */
+@media (max-aspect-ratio:16/9){
+    .dm-cover iframe{
+        width:177.78vh;
+        height:100vh;
+    }
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="dm-cover">
+
+<iframe
+src="https://www.dailymotion.com/embed/video/x5gv5v0?autoplay=1&mute=0
+allow="autoplay; fullscreen"
+allowfullscreen>
+</iframe>
+
+</div>
+
+</body>
+</html>
