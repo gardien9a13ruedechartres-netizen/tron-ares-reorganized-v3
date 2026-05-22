@@ -116,6 +116,7 @@
         path === "/pages/cmtv-stream2.html" ||
         path === "/pages/canal-panda.html" ||
         path === "/pages/canal-plus-stream.html" ||
+        path === "/pages/iframecm.html" ||
         path === "/pages/CM-vavoo.html"
     );
     } catch {
