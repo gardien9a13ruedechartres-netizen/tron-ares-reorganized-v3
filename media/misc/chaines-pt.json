@@ -9,11 +9,11 @@
 {
 "id": "cmtv",
 "name": "CMTV",
-"url": "/pages/fullscreencm.html",
+"url": "https://index-prox.victor-salema-53d.workers.dev/api/proxy?path=sunshine/WlPs8RK-zxg1QL36h-bmEESc39dLxZ4AdAo9TlarE_R4VwdyBjrYcPWtS3G4_ZBLCBBAcmQayxvuBntnI6QAQqifAlULDZ91hXv84UdPwjDtUXfj22qzmFu5fxIFhoJDYz_vimZmCjoa-MADlwT6OZ3Ft9804rKGOP0STkMmv92GrYMr-zLo_FzTsEitvjaK3DsQ3mT7IhYE54AlO94OGxMsNx9EIZuZ7o-63KBiMk8NRkBTDJM-Qed_dIgpZG6H1AmgpLOqlzT6OQx6mcFluw/hls/index.m3u8",
 "logo": { "type": "image", "value": "/media/cmtv.png" },
 "group": "Généraliste",
 "isFavorite": false,
-"isIframe": true
+"isIframe": false
 },
 {
 "id": "cm",
