@@ -1,0 +1,16 @@
+{
+  "name": "cf-url-extractor",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --remote",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@cloudflare/puppeteer": "latest",
+    "typescript": "latest",
+    "wrangler": "latest"
+  }
+}

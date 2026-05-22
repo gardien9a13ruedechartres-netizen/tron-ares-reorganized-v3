@@ -1,0 +1,15 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "cf-url-extractor",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-05-22",
+  "compatibility_flags": ["nodejs_compat"],
+  "browser": {
+    "binding": "MYBROWSER"
+  },
+  "vars": {
+    "MAX_WAIT_MS": "12000",
+    "DEFAULT_CONTAINS": "https://",
+    "ALLOW_HOSTS": ""
+  }
+}
