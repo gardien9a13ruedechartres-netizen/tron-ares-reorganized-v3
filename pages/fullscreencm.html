@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IPTV HLS Player - Fullscreen Control Panel</title>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #000;
+      font-family: Arial, sans-serif;
+      color: #fff;
+    }
+    .player-shell {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #000;
+    }
+    video {
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: #000;
+      object-fit: fill;
+    }
+    .panel-toggle {
+      position: fixed;
+      top: 14px;
+      right: 14px;
+      z-index: 20;
+      width: 46px;
+      height: 46px;
+      border: 1px solid rgba(255,255,255,0.28);
+      border-radius: 50%;
+      background: rgba(20,20,25,0.52);
+      color: #fff;
+      font-size: 22px;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+      visibility: hidden;
+     }
+    .panel-toggle:hover { background: rgba(45,108,223,0.65); }
+    .control-panel {
+      position: fixed;
+      top: 70px;
+      right: 14px;
+      z-index: 19;
+      width: min(420px, calc(100vw - 28px));
+      max-height: calc(100vh - 92px);
+      overflow: auto;
+      padding: 14px;
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 16px;
+      background: rgba(15,15,20,0.62);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 16px 38px rgba(0,0,0,0.5);
+      transform-origin: top right;
+      transition: opacity .18s ease, transform .18s ease, visibility .18s ease;
+      visibility: hidden;
+    }
+    .control-panel.closed {
+      opacity: 0;
+      visibility: hidden;
+      transform: scale(.96) translateY(-8px);
+      pointer-events: none;
+    }
+    .panel-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+    }
+    .badge {
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.14);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+    .badge.live { background: rgba(176,0,32,0.85); }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+    input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(0,0,0,0.42);
+      color: #fff;
+      outline: none;
+    }
+    button, select {
+      flex: 1;
+      min-width: 112px;
+      padding: 11px 12px;
+      border: 0;
+      border-radius: 10px;
+      background: rgba(45,108,223,0.92);
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button.secondary, select { background: rgba(60,64,74,0.92); }
+    button.danger { background: rgba(165,29,45,0.92); }
+    button:hover, select:hover { opacity: .9; }
+    .info {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .info-box {
+      padding: 10px;
+      border-radius: 12px;
+      background: rgba(0,0,0,0.38);
+      border: 1px solid rgba(255,255,255,0.12);
+      min-width: 0;
+    }
+    .label { color: #c8c8c8; font-size: 11px; margin-bottom: 4px; }
+    .value { font-size: 13px; font-weight: 700; word-break: break-word; }
+    .logs {
+      margin-top: 10px;
+      padding: 10px;
+      height: 130px;
+      overflow: auto;
+      border-radius: 12px;
+      background: rgba(0,0,0,0.45);
+      border: 1px solid rgba(255,255,255,0.12);
+      font-family: monospace;
+      font-size: 11px;
+      color: #ddd;
+    }
+    .log-error { color: #ff8b8b; }
+    .log-success { color: #86ffb7; }
+    .log-warning { color: #ffd884; }
+    @media (max-width: 560px) {
+      .control-panel { top: 66px; }
+      .info { grid-template-columns: 1fr; }
+      button, select { min-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="player-shell">
+    <video id="video" controls playsinline autoplay muted></video>
+  </div>
+
+  <button id="panelToggle" class="panel-toggle" title="Ouvrir / fermer le panneau">⚙</button>
+
+  <aside id="controlPanel" class="control-panel">
+    <div class="panel-title">
+      <span>Control panel</span>
+      <span id="liveBadge" class="badge">ARRÊTÉ</span>
+    </div>
+
+    <div class="row">
+      <input id="streamUrl" type="text" value="https://livewatch.top/api/daddy/proxy?url=https%3A%2F%2Fchat.cfbu247.sbs%2Fapi%2Fproxy%2Fplaylist%3Ftoken%3DeyJyZWZlcmVyIjoiaHR0cHM6Ly9kb25pcy5qaW1wZW5vcGlzb25saW5lLm9ubGluZS9wcmVtaXVtdHYvZGFkZHkucGhwP2lkPTc5MCIsIm0zdTgiOiJodHRwczovL3BvbnRvcy5waGFudGVtbGlzLnRvcC9wcmVtaXVtNzkwL3RyYWNrcy12MWExL21vbm8ubTN1OD9tZDU9Z1V6TUhkUWhoVGM0N1d6aVE0VllCQSZleHBpcmVzPTE3Nzk0NTE4NzQiLCJ0cyI6MTc3OTQ0ODI3NDkzMCwiY2hhbm5lbElkIjoiNzkwIn0" placeholder="Colle ici ton URL .m3u8 ou proxy HLS" />
+    </div>
+
+    <div class="row">
+      <button id="loadBtn">Lire</button>
+      <button id="reloadBtn" class="secondary">Relancer</button>
+      <button id="stopBtn" class="danger">Stop</button>
+    </div>
+
+    <div class="row">
+      <select id="qualitySelect"><option value="-1">Qualité automatique</option></select>
+      <button id="liveBtn" class="secondary">Direct</button>
+      <button id="fullscreenBtn" class="secondary">Plein écran</button>
+    </div>
+
+    <div class="info">
+      <div class="info-box"><div class="label">État</div><div id="status" class="value">En attente</div></div>
+      <div class="info-box"><div class="label">Qualité</div><div id="qualityInfo" class="value">Auto</div></div>
+      <div class="info-box"><div class="label">Latence live</div><div id="latencyInfo" class="value">-</div></div>
+      <div class="info-box"><div class="label">Tentatives retry</div><div id="retryInfo" class="value">0</div></div>
+    </div>
+
+    <div id="logs" class="logs"></div>
+  </aside>
+
+  <script>
+    const video = document.getElementById("video");
+    const streamUrlInput = document.getElementById("streamUrl");
+    const loadBtn = document.getElementById("loadBtn");
+    const reloadBtn = document.getElementById("reloadBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const liveBtn = document.getElementById("liveBtn");
+    const fullscreenBtn = document.getElementById("fullscreenBtn");
+    const qualitySelect = document.getElementById("qualitySelect");
+    const panelToggle = document.getElementById("panelToggle");
+    const controlPanel = document.getElementById("controlPanel");
+    const statusEl = document.getElementById("status");
+    const qualityInfo = document.getElementById("qualityInfo");
+    const latencyInfo = document.getElementById("latencyInfo");
+    const retryInfo = document.getElementById("retryInfo");
+    const liveBadge = document.getElementById("liveBadge");
+    const logsEl = document.getElementById("logs");
+
+    let hls = null;
+    let currentUrl = "";
+    let retryCount = 0;
+    let retryTimer = null;
+    let latencyTimer = null;
+    let watchdogTimer = null;
+    let liveGuardTimer = null;
+    let manualStop = false;
+    let lastVideoTime = 0;
+    let stalledSeconds = 0;
+
+    const maxRetries = 20;
+    const stallReloadAfterSeconds = 24;
+    const targetLiveDelay = 18;
+    const maxAcceptedLiveDelay = 55;
+
+    function log(message, type = "normal") {
+      const line = document.createElement("div");
+      line.textContent = "[" + new Date().toLocaleTimeString() + "] " + message;
+      if (type === "error") line.className = "log-error";
+      if (type === "success") line.className = "log-success";
+      if (type === "warning") line.className = "log-warning";
+      logsEl.appendChild(line);
+      logsEl.scrollTop = logsEl.scrollHeight;
+    }
+
+    function setStatus(text, isLive = false) {
+      statusEl.textContent = text;
+      liveBadge.textContent = isLive ? "LIVE" : text.toUpperCase();
+      liveBadge.className = isLive ? "badge live" : "badge";
+    }
+
+    function clearAllTimers() {
+      clearTimeout(retryTimer);
+      clearInterval(latencyTimer);
+      clearInterval(watchdogTimer);
+      clearInterval(liveGuardTimer);
+      retryTimer = latencyTimer = watchdogTimer = liveGuardTimer = null;
+    }
+
+    function destroyPlayer() {
+      clearAllTimers();
+      if (hls) { hls.destroy(); hls = null; }
+      video.pause();
+      video.removeAttribute("src");
+      video.load();
+      qualitySelect.innerHTML = '<option value="-1">Qualité automatique</option>';
+      qualityInfo.textContent = "Auto";
+      latencyInfo.textContent = "-";
+    }
+
+    function loadStream(url, silent = false) {
+      if (!url || url.trim() === "") {
+        log("URL vide.", "error");
+        setStatus("URL manquante");
+        return;
+      }
+
+      currentUrl = url.trim();
+      manualStop = false;
+      stalledSeconds = 0;
+      lastVideoTime = 0;
+      destroyPlayer();
+      setStatus("Chargement");
+      if (!silent) log("Chargement du flux depuis l'input...");
+
+      video.muted = false;
+      video.autoplay = true;
+
+      if (window.Hls && Hls.isSupported()) {
+        hls = new Hls({
+          lowLatencyMode: false,
+          liveSyncDuration: targetLiveDelay,
+          liveMaxLatencyDuration: maxAcceptedLiveDelay,
+          maxBufferLength: 180,
+          maxMaxBufferLength: 300,
+          backBufferLength: 60,
+          maxBufferHole: 1.5,
+          highBufferWatchdogPeriod: 5,
+          nudgeOffset: 0.5,
+          nudgeMaxRetry: 15,
+          manifestLoadingTimeOut: 30000,
+          manifestLoadingMaxRetry: 10,
+          manifestLoadingRetryDelay: 1000,
+          manifestLoadingMaxRetryTimeout: 15000,
+          levelLoadingTimeOut: 30000,
+          levelLoadingMaxRetry: 10,
+          levelLoadingRetryDelay: 1000,
+          levelLoadingMaxRetryTimeout: 15000,
+          fragLoadingTimeOut: 30000,
+          fragLoadingMaxRetry: 12,
+          fragLoadingRetryDelay: 1000,
+          fragLoadingMaxRetryTimeout: 15000,
+          appendErrorMaxRetry: 8,
+          enableWorker: true,
+          startFragPrefetch: true
+        });
+
+        hls.loadSource(currentUrl);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MEDIA_ATTACHED, () => log("Média attaché au lecteur.", "success"));
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          setStatus("Pré-buffer");
+          log("Manifest HLS chargé. Pré-buffer...", "success");
+          retryCount = 0;
+          retryInfo.textContent = "0";
+          populateQualities();
+          setTimeout(startPlayback, 1200);
+        });
+        hls.on(Hls.Events.LEVEL_SWITCHED, (_, data) => updateQualityInfo(data.level));
+        hls.on(Hls.Events.ERROR, (_, data) => handleHlsError(data));
+      } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+        video.src = currentUrl;
+        video.addEventListener("loadedmetadata", function nativeLoaded() {
+          setStatus("Pré-buffer");
+          log("Lecture native HLS prête.", "success");
+          setTimeout(startPlayback, 1200);
+          video.removeEventListener("loadedmetadata", nativeLoaded);
+        });
+      } else {
+        setStatus("Non compatible");
+        log("Ce navigateur ne supporte pas HLS.", "error");
+      }
+    }
+
+    function startPlayback() {
+      if (manualStop) return;
+      setStatus("Lecture", true);
+      video.play().then(() => {
+        log("Autoplay démarré.", "success");
+        startStabilityTools();
+      }).catch(() => {
+        log("Autoplay bloqué par le navigateur. Le flux est chargé, clique sur Play.", "warning");
+        startStabilityTools();
+      });
+    }
+
+    function softReload(reason = "Reload automatique") {
+      if (!currentUrl || manualStop) return;
+      log(reason, "warning");
+      const volume = video.volume;
+      const muted = video.muted;
+      loadStream(currentUrl, true);
+      video.volume = volume;
+      video.muted = muted;
+    }
+
+    function populateQualities() {
+      qualitySelect.innerHTML = '<option value="-1">Qualité automatique</option>';
+      if (!hls || !hls.levels || hls.levels.length === 0) return;
+      hls.levels.forEach((level, index) => {
+        const option = document.createElement("option");
+        option.value = index;
+        const height = level.height ? level.height + "p" : "Qualité " + (index + 1);
+        const bitrate = level.bitrate ? Math.round(level.bitrate / 1000) + " kbps" : "";
+        option.textContent = height + (bitrate ? " - " + bitrate : "");
+        qualitySelect.appendChild(option);
+      });
+    }
+
+    function updateQualityInfo(levelIndex) {
+      if (!hls || levelIndex < 0 || !hls.levels[levelIndex]) { qualityInfo.textContent = "Auto"; return; }
+      const level = hls.levels[levelIndex];
+      const height = level.height ? level.height + "p" : "Niveau " + levelIndex;
+      const bitrate = level.bitrate ? Math.round(level.bitrate / 1000) + " kbps" : "";
+      qualityInfo.textContent = height + (bitrate ? " - " + bitrate : "");
+    }
+
+    function handleHlsError(data) {
+      const details = data.details || "erreur inconnue";
+      const fatal = data.fatal === true;
+      if (details === "bufferStalledError" || details === "bufferNudgeOnStall") {
+        log("Stall buffer détecté, récupération douce.", "warning");
+        return;
+      }
+      log("Erreur HLS : " + details, fatal ? "error" : "warning");
+      if (!fatal) return;
+      if (!hls) { scheduleRetry(); return; }
+      if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+        try { hls.startLoad(); } catch (e) { scheduleRetry(); }
+        return;
+      }
+      if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+        try { hls.recoverMediaError(); } catch (e) { scheduleRetry(); }
+        return;
+      }
+      scheduleRetry();
+    }
+
+    function scheduleRetry() {
+      if (!currentUrl || manualStop) return;
+      retryCount++;
+      retryInfo.textContent = String(retryCount);
+      if (retryCount > maxRetries) { setStatus("Échec"); log("Nombre maximum de tentatives atteint.", "error"); return; }
+      clearTimeout(retryTimer);
+      const delay = Math.min(4000 + retryCount * 700, 12000);
+      retryTimer = setTimeout(() => {
+        log("Retry doux " + retryCount + "/" + maxRetries, "warning");
+        loadStream(currentUrl, true);
+      }, delay);
+    }
+
+    function startStabilityTools() {
+      startLatencyMonitor();
+      startWatchdog();
+      startLiveGuard();
+    }
+
+    function startLatencyMonitor() {
+      clearInterval(latencyTimer);
+      latencyTimer = setInterval(() => {
+        try {
+          if (video.seekable && video.seekable.length > 0) {
+            const liveEdge = video.seekable.end(video.seekable.length - 1);
+            const latency = liveEdge - video.currentTime;
+            latencyInfo.textContent = latency > 0 && latency < 300 ? latency.toFixed(1) + " s" : "Live";
+          } else latencyInfo.textContent = "Live";
+        } catch (e) { latencyInfo.textContent = "-"; }
+      }, 1000);
+    }
+
+    function startWatchdog() {
+      clearInterval(watchdogTimer);
+      watchdogTimer = setInterval(() => {
+        if (manualStop || !currentUrl || video.paused || video.ended) return;
+        const currentTime = video.currentTime;
+        if (Math.abs(currentTime - lastVideoTime) < 0.05) {
+          stalledSeconds += 3;
+          log("Buffer en attente : " + stalledSeconds + "s/" + stallReloadAfterSeconds + "s", "warning");
+          if (stalledSeconds >= stallReloadAfterSeconds) {
+            stalledSeconds = 0;
+            softReload("Stall long confirmé : reload invisible");
+          }
+        } else stalledSeconds = 0;
+        lastVideoTime = currentTime;
+      }, 3000);
+    }
+
+    function startLiveGuard() {
+      clearInterval(liveGuardTimer);
+      liveGuardTimer = setInterval(() => {
+        if (manualStop || video.paused) return;
+        try {
+          if (video.seekable.length > 0) {
+            const liveEdge = video.seekable.end(video.seekable.length - 1);
+            const latency = liveEdge - video.currentTime;
+            if (latency > maxAcceptedLiveDelay) {
+              video.currentTime = Math.max(liveEdge - targetLiveDelay, 0);
+              log("Latence trop haute : retour au buffer stable.", "warning");
+            }
+          }
+        } catch (e) {}
+      }, 7000);
+    }
+
+    function goLive() {
+      try {
+        if (video.seekable.length > 0) {
+          const liveEdge = video.seekable.end(video.seekable.length - 1);
+          video.currentTime = Math.max(liveEdge - targetLiveDelay, 0);
+          log("Retour au direct stabilisé.", "success");
+        }
+      } catch (e) { log("Impossible de revenir au direct.", "warning"); }
+    }
+
+    function requestPageFullscreen() {
+      const el = document.documentElement;
+      if (document.fullscreenElement) document.exitFullscreen();
+      else if (el.requestFullscreen) el.requestFullscreen();
+    }
+
+    panelToggle.addEventListener("click", () => controlPanel.classList.toggle("closed"));
+    loadBtn.addEventListener("click", () => { retryCount = 0; retryInfo.textContent = "0"; loadStream(streamUrlInput.value); });
+    reloadBtn.addEventListener("click", () => { retryCount = 0; retryInfo.textContent = "0"; loadStream(currentUrl || streamUrlInput.value); });
+    stopBtn.addEventListener("click", () => { manualStop = true; destroyPlayer(); setStatus("Arrêté"); log("Lecture arrêtée."); });
+    liveBtn.addEventListener("click", goLive);
+    fullscreenBtn.addEventListener("click", requestPageFullscreen);
+    qualitySelect.addEventListener("change", () => {
+      if (!hls) return;
+      const selected = parseInt(qualitySelect.value, 10);
+      hls.currentLevel = selected;
+      if (selected === -1) { qualityInfo.textContent = "Auto"; log("Qualité automatique activée."); }
+      else { updateQualityInfo(selected); log("Qualité forcée : niveau " + selected); }
+    });
+
+    video.addEventListener("playing", () => { setStatus("Lecture", true); log("Lecture démarrée.", "success"); });
+    video.addEventListener("waiting", () => { setStatus("Buffering", true); log("Buffering : attente segments.", "warning"); });
+    video.addEventListener("pause", () => { if (!manualStop) setStatus("Pause"); });
+    video.addEventListener("stalled", () => { if (!manualStop) log("Stall navigateur détecté.", "warning"); });
+    video.addEventListener("error", () => { if (!manualStop) { log("Erreur vidéo détectée.", "error"); scheduleRetry(); } });
+
+    window.addEventListener("DOMContentLoaded", () => {
+      if (streamUrlInput.value.trim() !== "") loadStream(streamUrlInput.value, true);
+    });
+  </script>
+</body>
+</html>
