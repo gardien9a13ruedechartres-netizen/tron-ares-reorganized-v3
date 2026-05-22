@@ -8,6 +8,10 @@
 "id": "IPTV",
 "name": "CANAIS IPTV",
 "url": "/pages/cmlive2.html",
+"_hidden": [
+    "url"
+  ],
+
 "logo": { "type": "image", "value": "https://cdn.jsdelivr.net/gh/imagesloads/images@main/img_fb2cbb9ed17cb142.png" },
 "group": "Généraliste",
 "isFavorite": false,
