@@ -1,117 +1,97 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Player HLS Autoplay</title>
-
-  <style>
-    html,
-    body {
-      width: 100%;
-      height: 100%;
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      background: #000;
-    }
-
-    .player-wrapper {
-      position: fixed;
-      inset: 0;
-      width: 100vw;
-      height: 100vh;
-      overflow: hidden;
-      background: #000;
-    }
-
-    video {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: fill;
-      background: #000;
-    }
-
-    .iframe-overlay {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      border: 0;
-      z-index: 10;
-      background: transparent;
-      pointer-events: none;
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#000}
+#wrap{position:fixed;inset:0}
+iframe{
+position:absolute;
+inset:0;
+width:100%;
+height:100%;
+border:0;
+object-fit:fill;
+visibility:hidden;
+}
+iframe.active{
+visibility:visible;
+}
+#switchButton{
+position:fixed;
+top:12px;
+right:12px;
+z-index:9999;
+width:42px;
+height:42px;
+border:0;
+background:rgba(255,255,255,.12);
+border-radius:999px;
+}
+</style>
 </head>
 <body>
-  <div class="player-wrapper">
-    <video
-      id="video"
-      autoplay
-      playsinline
-      controls
-      preload="auto"
-      crossorigin="anonymous"
-    ></video>
 
-    <iframe
-      class="iframe-overlay"
-      src="about:blank"
-      allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
-      allowfullscreen
-    ></iframe>
-  </div>
+<div id="wrap"></div>
+<button id="switchButton"></button>
 
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-  <script>
-    const video = document.getElementById('video');
-    const hlsUrl = 'https://cluone.dad:443/live/99F7CFCD396779DC13E1FEF9BA9F9AE8/3.m3u8';
+<script>
+const IFRAME_1_URL='https://ancient-queen-a52f.victor-salema-53d.workers.dev/?https://lovetier.bz/player/CANALPLFR';
+const IFRAME_2_URL='https://ancient-queen-a52f.victor-salema-53d.workers.dev/?https://cluone.dad:443/live/99F7CFCD396779DC13E1FEF9BA9F9AE8/3.m3u8';
 
-    video.muted = false;
-    video.autoplay = true;
-    video.playsInline = true;
+const wrap=document.getElementById('wrap');
 
-    function startPlayback() {
-      const playPromise = video.play();
+function create(url){
+ const f=document.createElement('iframe');
+ f.allow='autoplay;fullscreen';
+ f.src=url;
+ return f;
+}
 
-      if (playPromise !== undefined) {
-        playPromise.catch(function () {
-          // Certains navigateurs bloquent encore l'autoplay selon leurs règles internes.
-          // Le player reste sans bouton, comme demandé.
-        });
-      }
-    }
+let a=create(IFRAME_1_URL);
+let b=create(IFRAME_2_URL);
 
-    if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      video.src = hlsUrl;
-      video.addEventListener('loadedmetadata', startPlayback, { once: true });
-    } else if (window.Hls && Hls.isSupported()) {
-      const hls = new Hls({
-        autoStartLoad: true,
-        startPosition: -1,
-        capLevelToPlayerSize: false,
-        enableWorker: true
-      });
+wrap.append(a,b);
 
-      hls.loadSource(hlsUrl);
-      hls.attachMedia(video);
+a.classList.add('active');
 
-      hls.on(Hls.Events.MANIFEST_PARSED, function () {
-        startPlayback();
-      });
-    } else {
-      video.src = hlsUrl;
-      video.addEventListener('canplay', startPlayback, { once: true });
-    }
+function hardStop(frame){
+ try{
+   frame.src='about:blank';
+ }catch(e){}
+}
 
-    document.addEventListener('visibilitychange', function () {
-      if (!document.hidden && video.paused) {
-        startPlayback();
-      }
-    });
-  </script>
+function revive(frame,url){
+ const fresh=create(url);
+ wrap.replaceChild(fresh,frame);
+ return fresh;
+}
+
+document.getElementById('switchButton').onclick=()=>{
+
+ if(a.classList.contains('active')){
+
+    hardStop(a);
+
+    a.classList.remove('active');
+
+    b=revive(b,IFRAME_2_URL);
+
+    b.classList.add('active');
+
+ }else{
+
+    hardStop(b);
+
+    b.classList.remove('active');
+
+    a=revive(a,IFRAME_1_URL);
+
+    a.classList.add('active');
+ }
+};
+</script>
+
 </body>
 </html>

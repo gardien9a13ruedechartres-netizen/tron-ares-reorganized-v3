@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Player noir propre</title>
+  <style>
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: #000;
+    }
+
+    #container {
+      width: 100%;
+      height: 100%;
+      background: #000;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    video,
+audio,
+iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  outline: none;
+  background: #000;
+}
+
+video,
+iframe {
+  object-fit: fill;
+}
+
+    audio {
+      height: 64px;
+      max-width: 100%;
+    }
+
+    #overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      color: #fff;
+      text-align: center;
+      padding: 24px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+      z-index: 3;
+    }
+
+    #overlay.hidden {
+      display: none;
+    }
+
+    #topbar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 4;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.78), rgba(0,0,0,0));
+      pointer-events: none;
+    }
+
+    #badge,
+    #actions {
+      pointer-events: auto;
+    }
+
+    #badge {
+      color: #fff;
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.12);
+      backdrop-filter: blur(4px);
+      max-width: calc(100% - 140px);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    #actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    button {
+      appearance: none;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      border-radius: 10px;
+      padding: 8px 10px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    button:hover {
+      background: rgba(255,255,255,0.14);
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <div id="topbar">
+      <div id="badge" style="visibility: hidden;">En attente</div>
+      <div id="actions">
+        <button id="reloadBtn" type="button" style="visibility: hidden;">Reload</button>
+        <button id="fullscreenBtn" type="button" style="visibility: hidden;">Fullscreen</button>
+      </div>
+    </div>
+    <div id="overlay">Chargement…</div>
+  </div>
+
+  <script>
+    const container = document.getElementById('container');
+    const overlay = document.getElementById('overlay');
+    const badge = document.getElementById('badge');
+    const reloadBtn = document.getElementById('reloadBtn');
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+
+    let currentNode = null;
+    let currentHls = null;
+
+    function setOverlay(text, visible = true) {
+      overlay.textContent = text;
+      overlay.classList.toggle('hidden', !visible);
+    }
+
+    function setBadge(text) {
+      badge.textContent = text;
+      badge.title = text;
+    }
+
+    function cleanup() {
+      try {
+        if (currentHls) {
+          currentHls.destroy();
+          currentHls = null;
+        }
+      } catch {}
+
+      if (currentNode) {
+        try {
+          if (typeof currentNode.pause === 'function') currentNode.pause();
+          if (typeof currentNode.removeAttribute === 'function') currentNode.removeAttribute('src');
+          if (typeof currentNode.load === 'function') currentNode.load();
+        } catch {}
+        currentNode.remove();
+        currentNode = null;
+      }
+    }
+
+    function getRawQuery() {
+      return window.location.search.startsWith('?') ? window.location.search.slice(1) : '';
+    }
+
+    function parseInput() {
+      const raw = getRawQuery();
+      if (!raw) {
+        return { url: '', forcedType: 'auto', autoplayMuted: false };
+      }
+
+      const maybeParams = new URLSearchParams(raw);
+      const iframeUrl = maybeParams.get('iframe');
+      const hlsUrl = maybeParams.get('hls');
+      const videoUrl = maybeParams.get('video');
+      const audioUrl = maybeParams.get('audio');
+
+      if (iframeUrl) {
+        return { url: iframeUrl.trim(), forcedType: 'iframe', autoplayMuted: false };
+      }
+
+      if (hlsUrl) {
+        return {
+          url: hlsUrl.trim(),
+          forcedType: 'hls',
+          autoplayMuted: ['1', 'true', 'yes'].includes((maybeParams.get('muted') || '').trim().toLowerCase())
+        };
+      }
+
+      if (videoUrl) {
+        return {
+          url: videoUrl.trim(),
+          forcedType: 'video',
+          autoplayMuted: ['1', 'true', 'yes'].includes((maybeParams.get('muted') || '').trim().toLowerCase())
+        };
+      }
+
+      if (audioUrl) {
+        return {
+          url: audioUrl.trim(),
+          forcedType: 'audio',
+          autoplayMuted: ['1', 'true', 'yes'].includes((maybeParams.get('muted') || '').trim().toLowerCase())
+        };
+      }
+
+      const hasStructuredParams = maybeParams.has('url') || maybeParams.has('type') || maybeParams.has('muted');
+
+      if (hasStructuredParams) {
+        return {
+          url: (maybeParams.get('url') || '').trim(),
+          forcedType: (maybeParams.get('type') || 'auto').trim().toLowerCase(),
+          autoplayMuted: ['1', 'true', 'yes'].includes((maybeParams.get('muted') || '').trim().toLowerCase())
+        };
+      }
+
+      try {
+        return {
+          url: decodeURIComponent(raw).trim(),
+          forcedType: 'auto',
+          autoplayMuted: false
+        };
+      } catch {
+        return {
+          url: raw.trim(),
+          forcedType: 'auto',
+          autoplayMuted: false
+        };
+      }
+    }
+
+    function getParsedUrl(url) {
+      try {
+        return new URL(url);
+      } catch {
+        return null;
+      }
+    }
+
+    function getExtension(url) {
+      const parsed = getParsedUrl(url);
+      const path = parsed ? parsed.pathname.toLowerCase() : url.split('#')[0].split('?')[0].toLowerCase();
+      const lastSegment = path.split('/').pop() || '';
+      const dot = lastSegment.lastIndexOf('.');
+      return dot >= 0 ? lastSegment.slice(dot + 1) : '';
+    }
+
+    function isAudioExtension(ext) {
+      return ['mp3', 'aac', 'm4a', 'wav', 'oga', 'ogg', 'flac'].includes(ext);
+    }
+
+    function isVideoExtension(ext) {
+      return ['mp4', 'webm', 'ogv', 'ogg', 'mov', 'm4v', 'mkv'].includes(ext);
+    }
+
+    function toYouTubeEmbed(url) {
+      const parsed = getParsedUrl(url);
+      if (!parsed) return url;
+
+      const host = parsed.hostname.toLowerCase();
+      if (host.includes('youtu.be')) {
+        const id = parsed.pathname.replace(/^\//, '').split('/')[0];
+        return id ? 'https://www.youtube.com/embed/' + id : url;
+      }
+
+      if (host.includes('youtube.com')) {
+        const id = parsed.searchParams.get('v');
+        return id ? 'https://www.youtube.com/embed/' + id : url;
+      }
+
+      return url;
+    }
+
+    function toVimeoEmbed(url) {
+      const parsed = getParsedUrl(url);
+      if (!parsed) return url;
+      const host = parsed.hostname.toLowerCase();
+      if (!host.includes('vimeo.com')) return url;
+      const id = (parsed.pathname.split('/').filter(Boolean).find(part => /^\d+$/.test(part)) || '').trim();
+      return id ? 'https://player.vimeo.com/video/' + id : url;
+    }
+
+    function normalizeIframeUrl(url) {
+      let result = toYouTubeEmbed(url);
+      result = toVimeoEmbed(result);
+      return result;
+    }
+
+    function shouldUseIframe(url, ext) {
+      const parsed = getParsedUrl(url);
+      if (!parsed) return false;
+
+      const host = parsed.hostname.toLowerCase();
+      const path = parsed.pathname.toLowerCase();
+
+      if (/youtube\.com|youtu\.be|vimeo\.com/.test(host)) return true;
+      if (path.includes('/embed/') || path.includes('/player/') || path.includes('/yayin/')) return true;
+      if (!ext && parsed.searchParams.toString()) return true;
+      return false;
+    }
+
+    function detectType(url, forcedType) {
+      if (forcedType && forcedType !== 'auto') return forcedType;
+
+      const ext = getExtension(url);
+      const parsed = getParsedUrl(url);
+      const path = parsed ? parsed.pathname.toLowerCase() : '';
+
+      if (ext === 'm3u8') return 'hls';
+      if (isAudioExtension(ext)) return 'audio';
+      if (isVideoExtension(ext)) return 'video';
+      if (ext === 'php' || ext === 'html') return 'iframe';
+      if (path.includes('/player') || path.includes('/embed') || path.includes('/yayin')) return 'iframe';
+      if (looksLikeHtmlPlayerPage(url)) return 'iframe';
+
+      return 'video';
+    }
+
+    function createVideo(muted) {
+      const node = document.createElement('video');
+      node.controls = true;
+      node.autoplay = true;
+      node.playsInline = true;
+      node.preload = 'auto';
+      node.muted = !!muted;
+      node.crossOrigin = 'anonymous';
+      return node;
+    }
+
+    function createAudio(muted) {
+      const node = document.createElement('audio');
+      node.controls = true;
+      node.autoplay = true;
+      node.preload = 'auto';
+      node.muted = !!muted;
+      node.crossOrigin = 'anonymous';
+      return node;
+    }
+
+    function createIframe(url) {
+      const node = document.createElement('iframe');
+      node.src = normalizeIframeUrl(url);
+      node.allow = 'autoplay; fullscreen; encrypted-media; picture-in-picture';
+      node.allowFullscreen = true;
+      node.referrerPolicy = 'no-referrer';
+      node.loading = 'eager';
+      node.title = 'Embedded Player';
+      node.setAttribute('sandbox', 'allow-scripts allow-forms');
+      return node;
+    }
+
+    function mount(node) {
+      cleanup();
+      currentNode = node;
+      container.appendChild(node);
+    }
+
+    function bindMediaErrors(node, label, url) {
+      node.addEventListener('error', () => {
+        const err = node.error;
+        let text = label + ' : lecture impossible.';
+        if (err) {
+          if (err.code === 2) text = label + ' : erreur réseau.';
+          else if (err.code === 3) text = label + ' : décodage impossible.';
+          else if (err.code === 4) text = label + ' : source non supportée ou inaccessible.';
+        }
+        setOverlay(text + '\n\n' + url, true);
+      });
+    }
+
+    async function tryPlay(node) {
+      try {
+        await node.play();
+      } catch {
+        setOverlay('Lecture prête. Clique sur Play si l’autoplay est bloqué.', true);
+      }
+    }
+
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        const existing = document.querySelector('script[data-src="' + src + '"]');
+        if (existing) {
+          if (existing.dataset.loaded === 'true') {
+            resolve();
+            return;
+          }
+          existing.addEventListener('load', resolve, { once: true });
+          existing.addEventListener('error', () => reject(new Error('Chargement bibliothèque impossible.')), { once: true });
+          return;
+        }
+
+        const script = document.createElement('script');
+        script.src = src;
+        script.async = true;
+        script.dataset.src = src;
+        script.addEventListener('load', () => {
+          script.dataset.loaded = 'true';
+          resolve();
+        }, { once: true });
+        script.addEventListener('error', () => reject(new Error('Chargement bibliothèque impossible.')), { once: true });
+        document.head.appendChild(script);
+      });
+    }
+
+    async function openVideo(url, muted) {
+      const node = createVideo(muted);
+      bindMediaErrors(node, 'Vidéo', url);
+      node.addEventListener('loadedmetadata', () => setOverlay('', false), { once: true });
+      mount(node);
+      node.src = url;
+      setBadge('video');
+      await tryPlay(node);
+    }
+
+    async function openAudio(url, muted) {
+      const node = createAudio(muted);
+      bindMediaErrors(node, 'Audio', url);
+      node.addEventListener('loadedmetadata', () => setOverlay('', false), { once: true });
+      mount(node);
+      node.src = url;
+      setBadge('audio');
+      await tryPlay(node);
+    }
+
+    async function openHls(url, muted) {
+      const node = createVideo(muted);
+      bindMediaErrors(node, 'HLS', url);
+      node.addEventListener('loadedmetadata', () => setOverlay('', false), { once: true });
+      mount(node);
+      setBadge('hls');
+
+      if (node.canPlayType('application/vnd.apple.mpegurl')) {
+        node.src = url;
+        await tryPlay(node);
+        return;
+      }
+
+      await loadScript('https://cdn.jsdelivr.net/npm/hls.js@latest');
+      if (!window.Hls || !window.Hls.isSupported()) {
+        throw new Error('HLS non pris en charge par ce navigateur.');
+      }
+
+      currentHls = new window.Hls();
+      currentHls.loadSource(url);
+      currentHls.attachMedia(node);
+      currentHls.on(window.Hls.Events.MANIFEST_PARSED, async () => {
+        setOverlay('', false);
+        await tryPlay(node);
+      });
+      currentHls.on(window.Hls.Events.ERROR, (_, data) => {
+        if (data && data.fatal) {
+          setOverlay('Erreur HLS : ' + (data.details || 'inconnue') + '\n\n' + url, true);
+        }
+      });
+    }
+
+    async function openIframe(url) {
+      const node = createIframe(url);
+      mount(node);
+      setBadge('iframe');
+      setOverlay('', false);
+    }
+
+    async function start() {
+      const input = parseInput();
+      const url = input.url;
+      const forcedType = input.forcedType;
+      const autoplayMuted = input.autoplayMuted;
+
+      if (!url) {
+        setBadge('idle');
+        setOverlay(
+          '' +
+          '' +
+          '' +
+          '' +
+          '',
+          true
+        );
+        return;
+      }
+
+      const type = detectType(url, forcedType);
+      setOverlay('Chargement…', true);
+      setBadge(type + ' · ' + url);
+
+      try {
+        if (type === 'hls') {
+          await openHls(url, autoplayMuted);
+          return;
+        }
+
+        if (type === 'audio') {
+          await openAudio(url, autoplayMuted);
+          return;
+        }
+
+        if (type === 'iframe') {
+          await openIframe(url);
+          return;
+        }
+
+        await openVideo(url, autoplayMuted);
+      } catch (error) {
+        if (type !== 'iframe' && shouldUseIframe(url, getExtension(url))) {
+          try {
+            await openIframe(url);
+            return;
+          } catch {}
+        }
+
+        setOverlay((error && error.message ? error.message : 'Chargement impossible.') + '\n\n' + url, true);
+      }
+    }
+
+    reloadBtn.addEventListener('click', () => {
+      start();
+    });
+
+    fullscreenBtn.addEventListener('click', async () => {
+      try {
+        if (document.fullscreenElement) {
+          await document.exitFullscreen();
+        } else {
+          await container.requestFullscreen();
+        }
+      } catch {}
+    });
+
+    start();
+  </script>
+</body>
+</html>
