@@ -6,7 +6,7 @@
   "items": [
        {
       "name": "TF1",
-      "url": "https://tvradiozap.eu/tools/m3u-m3u8.php/para/TF1.m3u8",
+      "url": "/pages/tf1.html",
       "logo": {
         "type": "image",
         "value": "/media/image/tf1.webp"
