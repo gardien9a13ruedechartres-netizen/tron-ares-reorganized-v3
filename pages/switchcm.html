@@ -44,7 +44,10 @@ const wrap=document.getElementById('wrap');
 
 function create(url){
  const f=document.createElement('iframe');
- f.allow='autoplay;fullscreen';
+ f.allow='autoplay; fullscreen; picture-in-picture; encrypted-media';
+ f.allowFullscreen=true;
+ f.referrerPolicy='strict-origin-when-cross-origin';
+ f.sandbox='allow-scripts allow-same-origin allow-forms allow-presentation allow-popups';
  f.src=url;
  return f;
 }
