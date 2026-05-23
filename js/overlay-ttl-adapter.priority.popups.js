@@ -118,6 +118,7 @@
         path === "/pages/canal-plus-stream.html" ||
         path === "/pages/iframecm.html" ||
         path === "/pages/cstar.html" ||
+        path === "/pages/switchcm.html" ||
         path === "/pages/CM-vavoo.html"
     );
     } catch {
