@@ -120,6 +120,7 @@
         path === "/pages/cstar.html" ||
         path === "/pages/switchcm.html" ||
         path === "/pages/canal-panda.html" ||
+        path === "/pages/disney-pixar-work.html" ||
         path === "/pages/CM-vavoo.html"
     );
     } catch {
