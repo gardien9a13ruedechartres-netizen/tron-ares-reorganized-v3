@@ -81,11 +81,11 @@
 {
 "id": "rtp1",
 "name": "RTP1",
-"url": "/pages/rtp1-stream.html",
+"url": "https://streaming-live.rtp.pt/liverepeater/smil:rtp1HD.smil/chunklist_b2540000_slpor.m3u8",
 "logo": { "type": "image", "value": "/media/rtp1.jpg" },
 "group": "Généraliste",
 "isFavorite": false,
-"isIframe": true
+"isIframe": false
 },
 {
 "id": "rtp2",
