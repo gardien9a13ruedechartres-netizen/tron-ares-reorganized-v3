@@ -79,7 +79,7 @@
 "isIframe": true
 },
 {
-"id": "rtp1",
+"id": "rtp1v1",
 "name": "RTP1",
 "url": "https://streaming-live.rtp.pt/liverepeater/smil:rtp1HD.smil/playlist.m3u8",
 "logo": { "type": "image", "value": "/media/rtp1.jpg" },
