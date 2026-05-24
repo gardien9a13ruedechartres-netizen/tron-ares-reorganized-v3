@@ -85,7 +85,7 @@
 "logo": { "type": "image", "value": "/media/rtp1.jpg" },
 "group": "Généraliste",
 "isFavorite": false,
-"isIframe": false
+"isIframe": true
 },
 {
 "id": "rtp2",
