@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+<style>
+html,
+body{
+    margin:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#000;
+}
+
+#video{
+    position:fixed;
+    inset:0;
+    width:100vw;
+    height:100vh;
+    object-fit:fill;
+}
+</style>
+
+</head>
+
+<body>
+
+<video
+id="video"
+poster=""
+controls
+playsinline
+autoplay
+muted>
+</video>
+<script>
+        if(Hls.isSupported()) {
+          var video = document.getElementById('video');
+          var hls = new Hls({
+              debug: true,
+			  enableWorker: true,
+			  lowLatencyMode: true,
+			  backBufferLength: 90
+          });
+          hls.loadSource('https://video-auth6.iol.pt/live_cnn/live_cnn/playlist.m3u8?wmsAuthSign=c2VydmVyX3RpbWU9NS8yNS8yMDI2IDc6MTQ6NDYgUE0maGFzaF92YWx1ZT1sVjAxbFM2dXpLTWoyVkJDcWNIQUVBPT0mdmFsaWRtaW51dGVzPTE0NDAmaWQ9MmVhNGVhMTItZjE0ZS00ZDk0LTlhY2YtNTc2ZjE1ZmJjZTRi');
+          hls.attachMedia(video);
+          hls.on(Hls.Events.MEDIA_ATTACHED, function() {
+            video.muted = false;
+            video.play();
+        });
+       }
+       // hls.js is not supported on platforms that do not have Media Source Extensions (MSE) enabled.
+       // When the browser has built-in HLS support (check using `canPlayType`), we can provide an HLS manifest (i.e. .m3u8 URL) directly to the video element throught the `src` property.
+       // This is using the built-in support of the plain video element, without using hls.js.
+        else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+          video.src = 'https://video-auth6.iol.pt/live_cnn/live_cnn/playlist.m3u8?wmsAuthSign=c2VydmVyX3RpbWU9NS8yNS8yMDI2IDc6MTQ6NDYgUE0maGFzaF92YWx1ZT1sVjAxbFM2dXpLTWoyVkJDcWNIQUVBPT0mdmFsaWRtaW51dGVzPTE0NDAmaWQ9MmVhNGVhMTItZjE0ZS00ZDk0LTlhY2YtNTc2ZjE1ZmJjZTRi';
+          video.addEventListener('canplay',function() {
+            video.play();
+          });
+        }
+      </script>
+            
+          
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a016dd6edffe0cd3',t:'MTc3OTczNjQ4Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+
+</body>
+</html>
