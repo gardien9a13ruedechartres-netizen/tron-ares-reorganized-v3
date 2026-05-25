@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+<style>
+html,
+body{
+    margin:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#000;
+}
+
+#video{
+    position:fixed;
+    inset:0;
+    width:100vw;
+    height:100vh;
+    object-fit:fill;
+}
+</style>
+
+</head>
+
+<body>
+
+<video
+id="video"
+poster=""
+controls
+playsinline
+autoplay
+muted>
+</video>
+
+<script>
+const video = document.getElementById('video');
+
+if (Hls.isSupported()) {
+
+    var hls = new Hls({
+        debug: true,
+        enableWorker: true,
+        lowLatencyMode: true,
+        backBufferLength: 90
+    });
+
+    hls.loadSource(
+        'https://video-auth6.iol.pt/live_tvi/live_tvi/playlist.m3u8?wmsAuthSign=c2VydmVyX3RpbWU9NS8yNS8yMDI2IDY6NDI6NDAgUE0maGFzaF92YWx1ZT1pNzhmbFQ0NFo0U2t3VGtrMVpoMGZBPT0mdmFsaWRtaW51dGVzPTE0NDAmaWQ9N2ZjZDM2OTAtNjE5MC00MmQ0LWE5NjctNDI4YTIxOGNiNmEy'
+    );
+
+    hls.attachMedia(video);
+
+    hls.on(Hls.Events.MEDIA_ATTACHED, function () {
+        video.muted = false;
+        video.play();
+    });
+
+}
+else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+
+    video.src =
+    'https://video-auth6.iol.pt/live_tvi/live_tvi/playlist.m3u8?wmsAuthSign=c2VydmVyX3RpbWU9NS8yNS8yMDI2IDY6NDI6NDAgUE0maGFzaF92YWx1ZT1pNzhmbFQ0NFo0U2t3VGtrMVpoMGZBPT0mdmFsaWRtaW51dGVzPTE0NDAmaWQ9N2ZjZDM2OTAtNjE5MC00MmQ0LWE5NjctNDI4YTIxOGNiNmEy';
+
+    video.addEventListener('canplay', function () {
+        video.play();
+    });
+
+}
+</script>
+
+</body>
+</html>

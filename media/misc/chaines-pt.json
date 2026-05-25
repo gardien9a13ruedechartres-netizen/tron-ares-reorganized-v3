@@ -18,7 +18,7 @@
 {
 "id": "tvi",
 "name": "TVI",
-"url": "/pages/tvi.html",
+"url": "/pages/tvi2.html",
 "logo": { "type": "image", "value": "/media/TVI.png" },
 "group": "Généraliste",
 "isFavorite": false,
@@ -27,7 +27,7 @@
 {
 "id": "tvir",
 "name": "TVI Reality",
-"url": "/pages/tvi-reality.html",
+"url": "/pages/tvi-reality2.html",
 "logo": { "type": "image", "value": "/media/tvir.jpg" },
 "group": "Divertissement",
 "isFavorite": false,
@@ -36,7 +36,7 @@
 {
 "id": "tvif",
 "name": "TVI Ficção",
-"url": "/pages/tvi-ficcao.html",
+"url": "/pages/tvi-ficcao2.html",
 "logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/commons/0/0d/TVI_Fic%C3%A7%C3%A3o_%282017%29.png" },
 "group": "Divertissement",
 "isFavorite": false,
