@@ -1,10 +1,9 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HLS Player avec fallback iframe + retour invisible</title>
-
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>HLS / iframe avec toggle discret</title>
 <style>
 html, body {
     margin: 0;
@@ -25,33 +24,27 @@ html, body {
 
 #mainVideo,
 #probeVideo,
-#iframeViewport,
-#fallbackFrame,
-#status {
+#status,
+#fallbackFrame {
     position: absolute;
+    inset: 0;
 }
 
-#mainVideo {
-    inset: 0;
+#mainVideo,
+#fallbackFrame {
     width: 100%;
     height: 100%;
     border: 0;
     background: black;
+}
+
+#mainVideo {
     object-fit: fill;
     z-index: 2;
 }
 
-#iframeViewport {
-    inset: 0;
-    overflow: hidden;
-    background: black;
-    z-index: 1;
-}
-
 #fallbackFrame {
-    border: 0;
-    background: black;
-    transform-origin: center center;
+    z-index: 1;
 }
 
 #probeVideo {
@@ -68,16 +61,15 @@ html, body {
 }
 
 #status {
-    inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
     font-family: Arial, sans-serif;
     font-size: 16px;
-    background: rgba(0,0,0,0.25);
+    background: rgba(0,0,0,0.22);
     pointer-events: none;
-    z-index: 5;
+    z-index: 6;
     opacity: 0;
     transition: opacity 0.25s ease;
 }
@@ -85,25 +77,58 @@ html, body {
 #status.show {
     opacity: 1;
 }
+
+#modeToggle {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 10;
+    border: 0;
+    border-radius: 999px;
+    padding: 7px 11px;
+    font-size: 12px;
+    line-height: 1;
+    font-family: Arial, sans-serif;
+    color: rgba(255,255,255,0.92);
+    background: rgba(20,20,20,0.38);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    cursor: pointer;
+    opacity: 0.42;
+    transition: opacity 0.18s ease, background 0.18s ease, transform 0.18s ease;
+}
+
+#modeToggle:hover,
+#modeToggle:focus-visible {
+    opacity: 0.88;
+    background: rgba(20,20,20,0.62);
+    outline: none;
+}
+
+#modeToggle:active {
+    transform: scale(0.98);
+}
 </style>
 </head>
 <body>
 
 <div id="player-container">
-    <div id="iframeViewport" class="hidden">
-        <iframe
-            id="fallbackFrame"
-            src=""
-            allowfullscreen
-            allow="autoplay; fullscreen"
-            referrerpolicy="no-referrer">
-        </iframe>
-    </div>
+    <iframe
+        id="fallbackFrame"
+        class="hidden"
+        src=""
+        allowfullscreen
+        allow="autoplay; fullscreen"
+        sandbox="allow-scripts allow-same-origin allow-forms"
+        referrerpolicy="no-referrer">
+    </iframe>
 
     <video id="mainVideo" controls autoplay playsinline></video>
     <video id="probeVideo" autoplay playsinline muted></video>
 
     <div id="status">Chargement…</div>
+
+    <button id="modeToggle" type="button" aria-label="Basculer de lecteur">Iframe</button>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
@@ -112,468 +137,202 @@ html, body {
 (() => {
     const mainVideo = document.getElementById("mainVideo");
     const probeVideo = document.getElementById("probeVideo");
-    const iframeViewport = document.getElementById("iframeViewport");
     const iframe = document.getElementById("fallbackFrame");
     const statusBox = document.getElementById("status");
+    const modeToggle = document.getElementById("modeToggle");
 
-    const streamUrl = "https://livewatch.top/api/proxy?url=https://chat.cfbu247.sbs/api/proxy/playlist?token=eyJyZWZlcmVyIjoiaHR0cHM6Ly9kb25pcy5qaW1wZW5vcGlzb25saW5lLm9ubGluZS9wcmVtaXVtdHYvZGFkZHkyLnBocD9pZD0xMjEiLCJtM3U4IjoiaHR0cHM6Ly9ib2Jpcy56YWdsZW1wbG9raXMub25saW5lL3ByZW1pdW0xMjEvdHJhY2tzLXYxYTEvbW9uby5tM3U4IiwidHMiOjE3Nzg3NjIyNDY3OTQsImNoYW5uZWxJZCI6IjEyMSJ9";
-    const iframeUrl = "/pages/canal-plus-stream.html";
+    const streamUrl = "https://cluone.dad:443/live/99F7CFCD396779DC13E1FEF9BA9F9AE8/3.m3u8";
+    const iframeUrl = "https://lovetier.bz/player/CANALPLFR";
 
-    const CONFIG = {
-        startupTimeoutMs: 5000,
-        stallThresholdMs: 4000,
-        silenceThresholdMs: 12000,
-        retryBackDelayMs: 30000,
-        stableBeforeReturnMs: 15000,
-        progressCheckIntervalMs: 500,
-        minAudioRms: 0.0025,
-        showVisibleMessages: false,
+    // Réglages
+    const HLS_START_TIMEOUT = 15000;
+    const HLS_STALL_CHECK_INTERVAL = 4000;
+    const HLS_STALL_MAX_NO_PROGRESS = 12000;
+    const PROBE_INTERVAL = 10000;
+    const PROBE_SUCCESS_TIME = 2500;
+    const PROBE_TIMEOUT = 12000;
+    const STATUS_DELAY = 250;
 
-        iframeAutoRefreshEnabled: true,
-        iframeAutoRefreshMs: (10 * 60 + 16) * 1000,
-        iframeRefreshOnlyWhenVisible: true,
-        iframeRefreshStartDelayMs: 5000,
-
-        // Réglages fill iframe
-        iframeBaseWidth: 1920,
-        iframeBaseHeight: 1080,
-
-        // "contain" | "cover" | "fill"
-        iframeFitMode: "cover",
-
-        // Recentrage fin
-        iframeOffsetX: 0,
-        iframeOffsetY: 0,
-
-        // Zoom additionnel en mode cover
-        iframeExtraScale: 1.03,
-
-        // Zoom plus agressif en mode fill
-        iframeFillBoost: 1.08,
-
-        // On garde l'iframe chargée tant qu'on reste en mode iframe
-        keepIframeLoaded: true
-    };
-
-    let activeMode = "main";
+    let activeMode = "main";            // "main" | "iframe"
     let mainHls = null;
     let probeHls = null;
 
-    let mainState = null;
-    let probeState = null;
+    let startupTimer = null;
+    let stallWatchTimer = null;
+    let probeIntervalTimer = null;
+    let probeAttemptRunning = false;
 
-    let mainAudioContext = null;
-    let mainAnalyser = null;
-    let mainSourceNode = null;
-    let mainAudioAnalysisAvailable = false;
-
-    let probeAudioContext = null;
-    let probeAnalyser = null;
-    let probeSourceNode = null;
-    let probeAudioAnalysisAvailable = false;
-
-    let retryTimer = null;
-    let resizeRaf = null;
-
-    let iframeRefreshTimer = null;
-    let iframeRefreshStartTimer = null;
-    let iframeIsReady = false;
-    let iframeLastLoad = 0;
+    let iframeLoaded = false;
+    let hlsActuallyPlaying = false;
+    let lastMainProgressTs = 0;
+    let lastMainCurrentTime = 0;
+    let statusHideTimer = null;
+    let isSwitching = false;
 
     function showStatus(message) {
-        if (!CONFIG.showVisibleMessages) return;
+        clearTimeout(statusHideTimer);
         statusBox.textContent = message || "";
         statusBox.classList.add("show");
     }
 
     function hideStatus() {
-        statusBox.classList.remove("show");
+        clearTimeout(statusHideTimer);
+        statusHideTimer = setTimeout(() => {
+            statusBox.classList.remove("show");
+        }, STATUS_DELAY);
     }
 
-    function createRuntimeState() {
-        return {
-            startedAt: 0,
-            stableSince: 0,
-            lastCurrentTime: 0,
-            lastProgressAt: Date.now(),
-            audioTracksDetected: null,
-            silenceSince: null,
-            startupTimer: null,
-            monitorTimer: null
-        };
-    }
-
-    function clearStateTimers(state) {
-        if (!state) return;
-
-        if (state.startupTimer) {
-            clearTimeout(state.startupTimer);
-            state.startupTimer = null;
-        }
-
-        if (state.monitorTimer) {
-            clearInterval(state.monitorTimer);
-            state.monitorTimer = null;
+    function updateToggleButton() {
+        if (activeMode === "main") {
+            modeToggle.textContent = "Iframe";
+            modeToggle.setAttribute("aria-label", "Basculer vers iframe");
+            modeToggle.title = "Basculer vers iframe";
+        } else {
+            modeToggle.textContent = "HLS";
+            modeToggle.setAttribute("aria-label", "Basculer vers HLS");
+            modeToggle.title = "Basculer vers HLS";
         }
     }
 
-    function stopRetryTimer() {
-        if (retryTimer) {
-            clearTimeout(retryTimer);
-            retryTimer = null;
+    function clearMainTimers() {
+        if (startupTimer) {
+            clearTimeout(startupTimer);
+            startupTimer = null;
+        }
+
+        if (stallWatchTimer) {
+            clearInterval(stallWatchTimer);
+            stallWatchTimer = null;
         }
     }
 
-    function stopIframeRefreshTimer() {
-        if (iframeRefreshTimer) {
-            clearInterval(iframeRefreshTimer);
-            iframeRefreshTimer = null;
-        }
-
-        if (iframeRefreshStartTimer) {
-            clearTimeout(iframeRefreshStartTimer);
-            iframeRefreshStartTimer = null;
+    function clearProbeInterval() {
+        if (probeIntervalTimer) {
+            clearInterval(probeIntervalTimer);
+            probeIntervalTimer = null;
         }
     }
 
-    function destroyHlsInstance(instance) {
-        if (!instance) return null;
+    function destroyMainHls() {
+        if (mainHls) {
+            try {
+                mainHls.destroy();
+            } catch (_) {}
+            mainHls = null;
+        }
+    }
+
+    function destroyProbeHls() {
+        if (probeHls) {
+            try {
+                probeHls.destroy();
+            } catch (_) {}
+            probeHls = null;
+        }
+    }
+
+    function resetMainVideo() {
         try {
-            instance.destroy();
-        } catch (e) {}
-        return null;
+            mainVideo.pause();
+        } catch (_) {}
+
+        mainVideo.removeAttribute("src");
+        mainVideo.load();
+
+        hlsActuallyPlaying = false;
+        lastMainCurrentTime = 0;
+        lastMainProgressTs = 0;
     }
 
-    function stopVideo(video) {
+    function resetProbeVideo() {
         try {
-            video.pause();
-        } catch (e) {}
+            probeVideo.pause();
+        } catch (_) {}
 
-        try {
-            video.removeAttribute("src");
-            video.load();
-        } catch (e) {}
+        probeVideo.removeAttribute("src");
+        probeVideo.load();
     }
 
-    async function enableAudioAnalysis(video, type) {
-        try {
-            if (!window.AudioContext && !window.webkitAudioContext) {
-                return false;
-            }
-
-            if (type === "main") {
-                if (!mainAudioContext) {
-                    const Ctx = window.AudioContext || window.webkitAudioContext;
-                    mainAudioContext = new Ctx();
-                }
-
-                if (mainAudioContext.state === "suspended") {
-                    try { await mainAudioContext.resume(); } catch (e) {}
-                }
-
-                if (!mainSourceNode) {
-                    mainSourceNode = mainAudioContext.createMediaElementSource(video);
-                    mainAnalyser = mainAudioContext.createAnalyser();
-                    mainAnalyser.fftSize = 2048;
-                    mainSourceNode.connect(mainAnalyser);
-                    mainAnalyser.connect(mainAudioContext.destination);
-                }
-
-                mainAudioAnalysisAvailable = true;
-                return true;
-            }
-
-            if (type === "probe") {
-                if (!probeAudioContext) {
-                    const Ctx = window.AudioContext || window.webkitAudioContext;
-                    probeAudioContext = new Ctx();
-                }
-
-                if (probeAudioContext.state === "suspended") {
-                    try { await probeAudioContext.resume(); } catch (e) {}
-                }
-
-                if (!probeSourceNode) {
-                    probeSourceNode = probeAudioContext.createMediaElementSource(video);
-                    probeAnalyser = probeAudioContext.createAnalyser();
-                    probeAnalyser.fftSize = 2048;
-                    probeSourceNode.connect(probeAnalyser);
-                }
-
-                probeAudioAnalysisAvailable = true;
-                return true;
-            }
-
-            return false;
-        } catch (e) {
-            if (type === "main") mainAudioAnalysisAvailable = false;
-            if (type === "probe") probeAudioAnalysisAvailable = false;
-            return false;
+    function ensureIframeLoaded() {
+        if (!iframeLoaded) {
+            iframe.src = iframeUrl;
+            iframeLoaded = true;
         }
-    }
-
-    function getAudioRms(type) {
-        try {
-            let analyser = null;
-            let available = false;
-
-            if (type === "main") {
-                analyser = mainAnalyser;
-                available = mainAudioAnalysisAvailable;
-            } else {
-                analyser = probeAnalyser;
-                available = probeAudioAnalysisAvailable;
-            }
-
-            if (!available || !analyser) return null;
-
-            const data = new Uint8Array(analyser.fftSize);
-            analyser.getByteTimeDomainData(data);
-
-            let sum = 0;
-            for (let i = 0; i < data.length; i++) {
-                const v = (data[i] - 128) / 128;
-                sum += v * v;
-            }
-
-            return Math.sqrt(sum / data.length);
-        } catch (e) {
-            return null;
-        }
-    }
-
-    function applyIframeLayout() {
-        const viewportWidth = iframeViewport.clientWidth || window.innerWidth;
-        const viewportHeight = iframeViewport.clientHeight || window.innerHeight;
-
-        const baseWidth = CONFIG.iframeBaseWidth;
-        const baseHeight = CONFIG.iframeBaseHeight;
-
-        const scaleContain = Math.min(viewportWidth / baseWidth, viewportHeight / baseHeight);
-        const scaleCover = Math.max(viewportWidth / baseWidth, viewportHeight / baseHeight);
-
-        let finalScale = scaleCover;
-
-        if (CONFIG.iframeFitMode === "contain") {
-            finalScale = scaleContain;
-        } else if (CONFIG.iframeFitMode === "cover") {
-            finalScale = scaleCover * CONFIG.iframeExtraScale;
-        } else if (CONFIG.iframeFitMode === "fill") {
-            finalScale = scaleCover * CONFIG.iframeExtraScale * CONFIG.iframeFillBoost;
-        }
-
-        const renderedWidth = baseWidth * finalScale;
-        const renderedHeight = baseHeight * finalScale;
-
-        const left = (viewportWidth - renderedWidth) / 2 + CONFIG.iframeOffsetX;
-        const top = (viewportHeight - renderedHeight) / 2 + CONFIG.iframeOffsetY;
-
-        iframe.style.width = renderedWidth + "px";
-        iframe.style.height = renderedHeight + "px";
-        iframe.style.left = left + "px";
-        iframe.style.top = top + "px";
-        iframe.style.transform = "translateZ(0)";
-    }
-
-    function refreshIframeLayout() {
-        if (resizeRaf) cancelAnimationFrame(resizeRaf);
-        resizeRaf = requestAnimationFrame(() => {
-            applyIframeLayout();
-        });
-    }
-
-    function refreshIframeSafely() {
-        if (!CONFIG.iframeAutoRefreshEnabled) return;
-        if (!iframe.src) return;
-
-        if (CONFIG.iframeRefreshOnlyWhenVisible && activeMode !== "iframe") {
-            return;
-        }
-
-        if (!iframeIsReady) {
-            return;
-        }
-
-        const now = Date.now();
-
-        if (now - iframeLastLoad < CONFIG.iframeAutoRefreshMs - 2000) {
-            return;
-        }
-
-        iframeIsReady = false;
-        iframe.src = iframeUrl;
-    }
-
-    function startIframeRefreshTimer() {
-        stopIframeRefreshTimer();
-
-        if (!CONFIG.iframeAutoRefreshEnabled) return;
-        if (activeMode !== "iframe") return;
-
-        iframeRefreshStartTimer = setTimeout(() => {
-            iframeRefreshTimer = setInterval(() => {
-                refreshIframeSafely();
-            }, CONFIG.iframeAutoRefreshMs);
-        }, CONFIG.iframeRefreshStartDelayMs);
     }
 
     function showMainPlayer() {
-        iframeViewport.classList.add("hidden");
-        stopIframeRefreshTimer();
-
-        if (!CONFIG.keepIframeLoaded) {
-            iframe.src = "";
-            iframeIsReady = false;
-            iframeLastLoad = 0;
-        }
-
+        iframe.classList.add("hidden");
         mainVideo.classList.remove("hidden");
         activeMode = "main";
+        updateToggleButton();
+        hideStatus();
     }
 
     function showIframePlayer() {
-        // On applique le fill AVANT affichage pour éviter l'effet mal calé
-        refreshIframeLayout();
-
+        ensureIframeLoaded();
         mainVideo.classList.add("hidden");
-        iframeViewport.classList.remove("hidden");
-
-        if (iframe.src !== iframeUrl) {
-            iframeIsReady = false;
-            iframe.src = iframeUrl;
-        }
-
+        iframe.classList.remove("hidden");
         activeMode = "iframe";
-        startIframeRefreshTimer();
+        updateToggleButton();
+        hideStatus();
     }
 
-    function attachVideoListeners(video, state, type, onFatal) {
-        video.onplaying = async () => {
-            state.lastProgressAt = Date.now();
-            if (!state.startedAt) state.startedAt = Date.now();
-            if (!state.stableSince) state.stableSince = Date.now();
-            await enableAudioAnalysis(video, type);
-        };
-
-        video.ontimeupdate = () => {
-            const now = Date.now();
-
-            if (video.currentTime > state.lastCurrentTime + 0.05) {
-                state.lastCurrentTime = video.currentTime;
-                state.lastProgressAt = now;
-
-                if (!state.startedAt) state.startedAt = now;
-                if (!state.stableSince) state.stableSince = now;
-            }
-        };
-
-        video.onloadeddata = async () => {
-            await enableAudioAnalysis(video, type);
-        };
-
-        video.onerror = () => {
-            onFatal("Erreur élément video");
-        };
+    function onMainPlaying() {
+        hlsActuallyPlaying = true;
+        lastMainProgressTs = Date.now();
+        lastMainCurrentTime = mainVideo.currentTime || 0;
+        showMainPlayer();
     }
 
-    function startMonitor(video, state, type, isBackgroundProbe, onStable, onFatal) {
-        clearStateTimers(state);
-        state.lastProgressAt = Date.now();
+    function startMainStallWatcher() {
+        clearInterval(stallWatchTimer);
 
-        state.monitorTimer = setInterval(() => {
+        stallWatchTimer = setInterval(() => {
+            if (activeMode !== "main") return;
+            if (!hlsActuallyPlaying) return;
+
             const now = Date.now();
-            const hasStarted = state.startedAt > 0;
-            const isActuallyPlaying = !video.paused && !video.ended && video.readyState >= 2;
+            const current = mainVideo.currentTime || 0;
+            const progressed = current > lastMainCurrentTime + 0.01;
 
-            if (!hasStarted) {
-                const noBuffer = video.readyState < 2;
-                const tooLong = now - state.lastProgressAt > CONFIG.startupTimeoutMs;
-
-                if (noBuffer && tooLong) {
-                    onFatal("Le flux ne démarre pas");
-                    return;
-                }
-            }
-
-            if (hasStarted && isActuallyPlaying && now - state.lastProgressAt > CONFIG.stallThresholdMs) {
-                onFatal("Le flux est figé");
+            if (progressed) {
+                lastMainCurrentTime = current;
+                lastMainProgressTs = now;
                 return;
             }
 
-            if (state.audioTracksDetected === 0) {
-                onFatal("Aucune piste audio détectée");
-                return;
+            const noProgressFor = now - lastMainProgressTs;
+            const waitingHard = mainVideo.readyState < 3 && !mainVideo.paused && !mainVideo.ended;
+
+            if (waitingHard && noProgressFor >= HLS_STALL_MAX_NO_PROGRESS) {
+                fallbackToIframe("Flux HLS bloqué");
             }
-
-            const rms = getAudioRms(type);
-
-            if (rms !== null && hasStarted && isActuallyPlaying) {
-                if (rms < CONFIG.minAudioRms) {
-                    if (!state.silenceSince) state.silenceSince = now;
-
-                    if (now - state.silenceSince > CONFIG.silenceThresholdMs) {
-                        onFatal("Silence prolongé détecté");
-                        return;
-                    }
-                } else {
-                    state.silenceSince = null;
-                }
-            }
-
-            if (isBackgroundProbe && hasStarted) {
-                const stableDuration = now - state.stableSince;
-                const audioOk = state.audioTracksDetected !== 0;
-                const noLongSilenceIssue = state.silenceSince === null || (now - state.silenceSince < CONFIG.silenceThresholdMs);
-
-                if (stableDuration >= CONFIG.stableBeforeReturnMs && audioOk && noLongSilenceIssue) {
-                    onStable();
-                }
-            }
-        }, CONFIG.progressCheckIntervalMs);
+        }, HLS_STALL_CHECK_INTERVAL);
     }
 
-    function startMainPlayback() {
-        stopRetryTimer();
-        clearStateTimers(mainState);
-        mainState = createRuntimeState();
+    function startMainPlayback(options = {}) {
+        const { forceVisible = true } = options;
 
-        mainHls = destroyHlsInstance(mainHls);
-        stopVideo(mainVideo);
+        clearMainTimers();
+        destroyMainHls();
+        resetMainVideo();
 
-        attachVideoListeners(mainVideo, mainState, "main", () => {
-            fallbackToIframe("Erreur vidéo principale");
-        });
+        showStatus("Connexion au flux HLS…");
 
-        showStatus("Chargement…");
+        mainVideo.onplaying = onMainPlaying;
+        mainVideo.ontimeupdate = () => {
+            const current = mainVideo.currentTime || 0;
+            if (current > lastMainCurrentTime + 0.01) {
+                lastMainCurrentTime = current;
+                lastMainProgressTs = Date.now();
+            }
+        };
 
-        if (mainVideo.canPlayType("application/vnd.apple.mpegurl")) {
-            mainState.startupTimer = setTimeout(() => {
-                if (!mainState.startedAt && mainVideo.readyState < 2) {
-                    fallbackToIframe("Timeout démarrage HLS natif");
-                }
-            }, CONFIG.startupTimeoutMs);
-
-            mainVideo.src = streamUrl;
-            mainVideo.play().catch(() => {});
-            startMonitor(
-                mainVideo,
-                mainState,
-                "main",
-                false,
-                () => {},
-                (reason) => fallbackToIframe(reason)
-            );
-            hideStatus();
-            return;
-        }
-
-        if (window.Hls && Hls.isSupported()) {
+        if (Hls.isSupported()) {
             mainHls = new Hls({
                 enableWorker: true,
                 lowLatencyMode: false,
-                maxBufferLength: 30,
-                liveSyncDurationCount: 3,
-                liveMaxLatencyDurationCount: 10
+                backBufferLength: 30
             });
 
             mainHls.on(Hls.Events.MEDIA_ATTACHED, () => {
@@ -584,96 +343,172 @@ html, body {
                 mainVideo.play().catch(() => {});
             });
 
-            mainHls.on(Hls.Events.AUDIO_TRACKS_UPDATED, (event, data) => {
-                mainState.audioTracksDetected = Array.isArray(data.audioTracks) ? data.audioTracks.length : 0;
-            });
-
             mainHls.on(Hls.Events.ERROR, (event, data) => {
                 if (!data.fatal) return;
 
                 switch (data.type) {
                     case Hls.ErrorTypes.NETWORK_ERROR:
-                        fallbackToIframe("Erreur réseau HLS fatale");
+                        fallbackToIframe("Erreur réseau HLS");
                         break;
 
                     case Hls.ErrorTypes.MEDIA_ERROR:
                         try {
                             mainHls.recoverMediaError();
-                        } catch (e) {
-                            fallbackToIframe("Impossible de récupérer l'erreur média");
+                        } catch (_) {
+                            fallbackToIframe("Erreur média HLS");
                         }
                         break;
 
                     default:
-                        fallbackToIframe("Erreur HLS fatale");
+                        fallbackToIframe("Erreur HLS");
                         break;
                 }
             });
 
             mainHls.attachMedia(mainVideo);
-
-            mainState.startupTimer = setTimeout(() => {
-                if (!mainState.startedAt && mainVideo.readyState < 2) {
-                    fallbackToIframe("Timeout démarrage HLS.js");
-                }
-            }, CONFIG.startupTimeoutMs);
-
-            startMonitor(
-                mainVideo,
-                mainState,
-                "main",
-                false,
-                () => {},
-                (reason) => fallbackToIframe(reason)
-            );
-
-            hideStatus();
+        } else if (mainVideo.canPlayType("application/vnd.apple.mpegurl")) {
+            mainVideo.src = streamUrl;
+            mainVideo.play().catch(() => {});
+        } else {
+            fallbackToIframe("HLS non supporté");
             return;
         }
 
-        fallbackToIframe("HLS non supporté");
+        startupTimer = setTimeout(() => {
+            if (!hlsActuallyPlaying && activeMode === "main") {
+                fallbackToIframe("Timeout de démarrage HLS");
+            }
+        }, HLS_START_TIMEOUT);
+
+        startMainStallWatcher();
+
+        if (forceVisible) {
+            showMainPlayer();
+        }
     }
 
-    function startBackgroundProbe() {
-        clearStateTimers(probeState);
-        probeState = createRuntimeState();
+    function fallbackToIframe(reason) {
+        if (activeMode === "iframe") return;
 
-        probeHls = destroyHlsInstance(probeHls);
-        stopVideo(probeVideo);
+        console.log("Fallback vers iframe :", reason);
 
-        attachVideoListeners(probeVideo, probeState, "probe", () => {
-            failBackgroundProbe("Erreur vidéo probe");
-        });
+        clearMainTimers();
+        destroyMainHls();
+        resetMainVideo();
 
-        if (probeVideo.canPlayType("application/vnd.apple.mpegurl")) {
-            probeState.startupTimer = setTimeout(() => {
-                if (!probeState.startedAt && probeVideo.readyState < 2) {
-                    failBackgroundProbe("Timeout probe natif");
-                }
-            }, CONFIG.startupTimeoutMs);
+        showIframePlayer();
+        startProbeLoop();
+    }
 
-            probeVideo.src = streamUrl;
-            probeVideo.play().catch(() => {});
+    function switchBackToMain(auto = false) {
+        console.log(auto ? "Retour automatique vers HLS" : "Retour manuel vers HLS");
 
-            startMonitor(
-                probeVideo,
-                probeState,
-                "probe",
-                true,
-                () => succeedBackgroundProbe(),
-                () => failBackgroundProbe("Probe échouée")
-            );
+        clearProbeInterval();
+        probeAttemptRunning = false;
+        destroyProbeHls();
+        resetProbeVideo();
 
-            return;
+        startMainPlayback({ forceVisible: true });
+    }
+
+    function switchToIframeManual() {
+        console.log("Bascule manuelle vers iframe");
+
+        clearMainTimers();
+        destroyMainHls();
+        resetMainVideo();
+
+        showIframePlayer();
+        startProbeLoop();
+    }
+
+    function startProbeLoop() {
+        clearProbeInterval();
+
+        attemptProbe();
+
+        probeIntervalTimer = setInterval(() => {
+            if (activeMode !== "iframe") return;
+            if (probeAttemptRunning) return;
+            attemptProbe();
+        }, PROBE_INTERVAL);
+    }
+
+    function attemptProbe() {
+        if (probeAttemptRunning) return;
+        probeAttemptRunning = true;
+
+        destroyProbeHls();
+        resetProbeVideo();
+
+        let probeSuccessTimer = null;
+        let probeTimeoutTimer = null;
+        let probeStarted = false;
+        let lastProbeCurrentTime = 0;
+
+        function cleanup(success) {
+            if (probeSuccessTimer) {
+                clearTimeout(probeSuccessTimer);
+                probeSuccessTimer = null;
+            }
+
+            if (probeTimeoutTimer) {
+                clearTimeout(probeTimeoutTimer);
+                probeTimeoutTimer = null;
+            }
+
+            probeVideo.onplaying = null;
+            probeVideo.ontimeupdate = null;
+            probeVideo.onerror = null;
+
+            destroyProbeHls();
+            resetProbeVideo();
+
+            probeAttemptRunning = false;
+
+            if (success && activeMode === "iframe") {
+                switchBackToMain(true);
+            }
         }
 
-        if (window.Hls && Hls.isSupported()) {
+        function markProbeStarted() {
+            if (probeStarted) return;
+            probeStarted = true;
+
+            probeSuccessTimer = setTimeout(() => {
+                cleanup(true);
+            }, PROBE_SUCCESS_TIME);
+        }
+
+        probeVideo.muted = true;
+        probeVideo.autoplay = true;
+        probeVideo.playsInline = true;
+
+        probeVideo.onplaying = () => {
+            markProbeStarted();
+        };
+
+        probeVideo.ontimeupdate = () => {
+            const current = probeVideo.currentTime || 0;
+            if (current > lastProbeCurrentTime + 0.01) {
+                lastProbeCurrentTime = current;
+                markProbeStarted();
+            }
+        };
+
+        probeVideo.onerror = () => {
+            cleanup(false);
+        };
+
+        probeTimeoutTimer = setTimeout(() => {
+            cleanup(false);
+        }, PROBE_TIMEOUT);
+
+        if (Hls.isSupported()) {
             probeHls = new Hls({
                 enableWorker: true,
                 lowLatencyMode: false,
-                maxBufferLength: 30,
-                liveSyncDurationCount: 3,
-                liveMaxLatencyDurationCount: 10
+                backBufferLength: 10
             });
 
             probeHls.on(Hls.Events.MEDIA_ATTACHED, () => {
@@ -684,116 +519,60 @@ html, body {
                 probeVideo.play().catch(() => {});
             });
 
-            probeHls.on(Hls.Events.AUDIO_TRACKS_UPDATED, (event, data) => {
-                probeState.audioTracksDetected = Array.isArray(data.audioTracks) ? data.audioTracks.length : 0;
-            });
-
             probeHls.on(Hls.Events.ERROR, (event, data) => {
-                if (!data.fatal) return;
-
-                switch (data.type) {
-                    case Hls.ErrorTypes.NETWORK_ERROR:
-                        failBackgroundProbe("Erreur réseau probe");
-                        break;
-
-                    case Hls.ErrorTypes.MEDIA_ERROR:
-                        try {
-                            probeHls.recoverMediaError();
-                        } catch (e) {
-                            failBackgroundProbe("Erreur média probe");
-                        }
-                        break;
-
-                    default:
-                        failBackgroundProbe("Erreur HLS probe");
-                        break;
+                if (data && data.fatal) {
+                    cleanup(false);
                 }
             });
 
             probeHls.attachMedia(probeVideo);
-
-            probeState.startupTimer = setTimeout(() => {
-                if (!probeState.startedAt && probeVideo.readyState < 2) {
-                    failBackgroundProbe("Timeout probe HLS.js");
-                }
-            }, CONFIG.startupTimeoutMs);
-
-            startMonitor(
-                probeVideo,
-                probeState,
-                "probe",
-                true,
-                () => succeedBackgroundProbe(),
-                () => failBackgroundProbe("Probe échouée")
-            );
-
-            return;
+        } else if (probeVideo.canPlayType("application/vnd.apple.mpegurl")) {
+            probeVideo.src = streamUrl;
+            probeVideo.play().catch(() => {});
+        } else {
+            cleanup(false);
         }
-
-        scheduleNextProbe();
     }
 
-    function failBackgroundProbe(reason) {
-        clearStateTimers(probeState);
-        probeHls = destroyHlsInstance(probeHls);
-        stopVideo(probeVideo);
-        scheduleNextProbe();
-    }
+    function manualToggle() {
+        if (isSwitching) return;
+        isSwitching = true;
 
-    function succeedBackgroundProbe() {
-        clearStateTimers(probeState);
-        probeHls = destroyHlsInstance(probeHls);
-        stopVideo(probeVideo);
-
-        showMainPlayer();
-        startMainPlayback();
-    }
-
-    function scheduleNextProbe() {
-        stopRetryTimer();
-
-        retryTimer = setTimeout(() => {
-            if (activeMode === "iframe") {
-                startBackgroundProbe();
+        try {
+            if (activeMode === "main") {
+                switchToIframeManual();
+            } else {
+                switchBackToMain(false);
             }
-        }, CONFIG.retryBackDelayMs);
+        } finally {
+            setTimeout(() => {
+                isSwitching = false;
+            }, 300);
+        }
     }
 
-    function fallbackToIframe(reason) {
-        clearStateTimers(mainState);
-        mainHls = destroyHlsInstance(mainHls);
-        stopVideo(mainVideo);
-
-        showIframePlayer();
-        hideStatus();
-        scheduleNextProbe();
+    function init() {
+        updateToggleButton();
+        showStatus("Initialisation…");
+        startMainPlayback({ forceVisible: true });
     }
 
-    iframe.addEventListener("load", () => {
-        iframeIsReady = true;
-        iframeLastLoad = Date.now();
+    modeToggle.addEventListener("click", (event) => {
+        event.stopPropagation();
+        manualToggle();
     });
 
-    window.addEventListener("resize", refreshIframeLayout);
+    document.addEventListener("visibilitychange", () => {
+        if (document.hidden) return;
 
-    document.addEventListener("click", () => {
-        enableAudioAnalysis(mainVideo, "main");
-        enableAudioAnalysis(probeVideo, "probe");
-    }, { passive: true });
+        if (activeMode === "iframe" && !probeAttemptRunning) {
+            attemptProbe();
+        }
+    });
 
-    document.addEventListener("touchstart", () => {
-        enableAudioAnalysis(mainVideo, "main");
-        enableAudioAnalysis(probeVideo, "probe");
-    }, { passive: true });
-
-    mainState = createRuntimeState();
-    probeState = createRuntimeState();
-
-    refreshIframeLayout();
-    showMainPlayer();
-    startMainPlayback();
+    init();
 })();
 </script>
-<script src="../js/wheel-volume-iframe.js"></script>
+
 </body>
 </html>
