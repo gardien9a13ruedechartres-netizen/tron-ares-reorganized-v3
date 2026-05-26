@@ -43,9 +43,9 @@
 "isIframe": true
 },
 {
-"id": "tvii",
+"id": "tvi-int",
 "name": "TVI Internacional",
-"url": "/pages/tvii.html",
+"url": "/pages/tvi-int.html",
 "logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/commons/0/08/TVI_Internacional_%282017%29.png" },
 "group": "Généraliste",
 "isFavorite": false,
