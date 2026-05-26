@@ -46,7 +46,7 @@ muted>
 			  lowLatencyMode: true,
 			  backBufferLength: 90
           });
-          hls.loadSource('https://video-auth6.iol.pt/live_tvi_ficcao/live_tvi_ficcao/playlist.m3u8?wmsAuthSign=c2VydmVyX3RpbWU9NS8yNS8yMDI2IDY6NTU6NTYgUE0maGFzaF92YWx1ZT16TmVKTHRuTnVTbWxLZ1BhUDlRaGpRPT0mdmFsaWRtaW51dGVzPTE0NDAmaWQ9NGQ1YTdhN2ItOTg5Ny00NDMyLWI3NjQtZDExMDQ2YTcwMjM1');
+          hls.loadSource('https://raw.githubusercontent.com/LITUATUI/M3UPT/refs/heads/main/M3U/TVI_Reality.m3u8');
           hls.attachMedia(video);
           hls.on(Hls.Events.MEDIA_ATTACHED, function() {
             video.muted = false;
@@ -57,7 +57,7 @@ muted>
        // When the browser has built-in HLS support (check using `canPlayType`), we can provide an HLS manifest (i.e. .m3u8 URL) directly to the video element throught the `src` property.
        // This is using the built-in support of the plain video element, without using hls.js.
         else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-          video.src = 'https://video-auth6.iol.pt/live_tvi_ficcao/live_tvi_ficcao/playlist.m3u8?wmsAuthSign=c2VydmVyX3RpbWU9NS8yNS8yMDI2IDY6NTU6NTYgUE0maGFzaF92YWx1ZT16TmVKTHRuTnVTbWxLZ1BhUDlRaGpRPT0mdmFsaWRtaW51dGVzPTE0NDAmaWQ9NGQ1YTdhN2ItOTg5Ny00NDMyLWI3NjQtZDExMDQ2YTcwMjM1';
+          video.src = 'https://raw.githubusercontent.com/LITUATUI/M3UPT/refs/heads/main/M3U/TVI_Reality.m3u8';
           video.addEventListener('canplay',function() {
             video.play();
           });

@@ -51,7 +51,7 @@ if (Hls.isSupported()) {
     });
 
     hls.loadSource(
-        'https://video-auth6.iol.pt/live_tvi/live_tvi/playlist.m3u8?wmsAuthSign=c2VydmVyX3RpbWU9NS8yNS8yMDI2IDY6NDI6NDAgUE0maGFzaF92YWx1ZT1pNzhmbFQ0NFo0U2t3VGtrMVpoMGZBPT0mdmFsaWRtaW51dGVzPTE0NDAmaWQ9N2ZjZDM2OTAtNjE5MC00MmQ0LWE5NjctNDI4YTIxOGNiNmEy'
+        'https://raw.githubusercontent.com/LITUATUI/M3UPT/refs/heads/main/M3U/TVI.m3u8'
     );
 
     hls.attachMedia(video);
@@ -65,7 +65,7 @@ if (Hls.isSupported()) {
 else if (video.canPlayType('application/vnd.apple.mpegurl')) {
 
     video.src =
-    'https://video-auth6.iol.pt/live_tvi/live_tvi/playlist.m3u8?wmsAuthSign=c2VydmVyX3RpbWU9NS8yNS8yMDI2IDY6NDI6NDAgUE0maGFzaF92YWx1ZT1pNzhmbFQ0NFo0U2t3VGtrMVpoMGZBPT0mdmFsaWRtaW51dGVzPTE0NDAmaWQ9N2ZjZDM2OTAtNjE5MC00MmQ0LWE5NjctNDI4YTIxOGNiNmEy';
+    'https://raw.githubusercontent.com/LITUATUI/M3UPT/refs/heads/main/M3U/TVI.m3u8';
 
     video.addEventListener('canplay', function () {
         video.play();
