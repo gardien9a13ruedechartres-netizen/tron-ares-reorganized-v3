@@ -3,97 +3,151 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+
 <style>
-html,body{margin:0;height:100%;overflow:hidden;background:#000}
-#wrap{position:fixed;inset:0}
+html,
+body{
+    margin:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#000;
+}
+
+#wrap{
+    position:fixed;
+    inset:0;
+}
+
 iframe{
-position:absolute;
-inset:0;
-width:100%;
-height:100%;
-border:0;
-object-fit:fill;
-visibility:hidden;
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    border:0;
 }
-iframe.active{
-visibility:visible;
-}
+
 #switchButton{
-position:fixed;
-top:12px;
-right:12px;
-z-index:9999;
-width:42px;
-height:42px;
-border:0;
-background:rgba(255,255,255,.12);
-border-radius:999px;
+    position:fixed;
+    top:12px;
+    right:12px;
+    z-index:9999;
+    width:48px;
+    height:48px;
+    border:0;
+    border-radius:999px;
+    background:rgba(255,255,255,.15);
+    backdrop-filter:blur(8px);
+    cursor:pointer;
 }
 </style>
 </head>
+
 <body>
 
 <div id="wrap"></div>
-<button id="switchButton"></button>
+
+<button id="switchButton">
+
+</button>
 
 <script>
-const IFRAME_1_URL='/pages/cmtv-tv247';
-const IFRAME_2_URL='https://player-engine.com/pages/cmtv2.html';
+const IFRAME_1_URL = 'https://player-engine.com/pages/cmtv-tv247';
+const IFRAME_2_URL = 'https://player-engine.com/pages/cmtv2.html';
 
-const wrap=document.getElementById('wrap');
+const wrap = document.getElementById('wrap');
 
-function create(url){
- const f=document.createElement('iframe');
- f.allow='autoplay; fullscreen; picture-in-picture; encrypted-media';
- f.allowFullscreen=true;
- f.referrerPolicy='strict-origin-when-cross-origin';
- f.sandbox='allow-scripts allow-same-origin allow-forms allow-presentation allow-popups';
- f.src=url;
- return f;
+let currentFrame = null;
+let currentIndex = 1;
+
+function createFrame(url){
+
+    const iframe = document.createElement('iframe');
+
+    iframe.allow =
+        'autoplay; fullscreen; picture-in-picture; encrypted-media';
+
+    iframe.allowFullscreen = true;
+
+    iframe.referrerPolicy =
+        'strict-origin-when-cross-origin';
+
+    iframe.sandbox =
+        'allow-scripts allow-same-origin allow-forms allow-presentation allow-popups';
+
+    iframe.src = url;
+
+    return iframe;
 }
 
-let a=create(IFRAME_1_URL);
-let b=create(IFRAME_2_URL);
+function destroyFrame(frame){
 
-wrap.append(a,b);
+    if(!frame) return;
 
-a.classList.add('active');
+    try{
 
-function hardStop(frame){
- try{
-   frame.src='about:blank';
- }catch(e){}
+        /*
+         Stop immédiat audio/video
+        */
+        frame.src = 'about:blank';
+
+    }catch(e){}
+
+    /*
+     Retire du DOM
+    */
+    frame.remove();
 }
 
-function revive(frame,url){
- const fresh=create(url);
- wrap.replaceChild(fresh,frame);
- return fresh;
+function loadFrame(index){
+
+    /*
+     Détruit totalement l'ancienne iframe
+    */
+    destroyFrame(currentFrame);
+
+    /*
+     Choisit URL
+    */
+    const url =
+        index === 1
+        ? IFRAME_1_URL
+        : IFRAME_2_URL;
+
+    /*
+     Crée nouvelle iframe
+    */
+    currentFrame = createFrame(url);
+
+    /*
+     Ajoute au DOM
+    */
+    wrap.appendChild(currentFrame);
+
+    currentIndex = index;
 }
 
-document.getElementById('switchButton').onclick=()=>{
+/*
+ Chargement initial
+*/
+loadFrame(1);
 
- if(a.classList.contains('active')){
+/*
+ Switch
+*/
+document
+.getElementById('switchButton')
+.addEventListener('click',()=>{
 
-    hardStop(a);
+    if(currentIndex === 1){
 
-    a.classList.remove('active');
+        loadFrame(2);
 
-    b=revive(b,IFRAME_2_URL);
+    }else{
 
-    b.classList.add('active');
-
- }else{
-
-    hardStop(b);
-
-    b.classList.remove('active');
-
-    a=revive(a,IFRAME_1_URL);
-
-    a.classList.add('active');
- }
-};
+        loadFrame(1);
+    }
+});
 </script>
 
 </body>
