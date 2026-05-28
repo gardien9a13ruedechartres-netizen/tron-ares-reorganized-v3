@@ -121,7 +121,7 @@
         path === "/pages/switchcm.html" ||
         path === "/pages/canal-panda.html" ||
         path === "/pages/disney-pixar-work.html" ||
-        path === "https://streaming-live.rtp.pt/liverepeater/smil:rtp1HD.smil/playlist.m3u8" ||
+        path === "/pages/cm-tv247.html" ||
         path === "/pages/CM-vavoo.html"
     );
     } catch {
