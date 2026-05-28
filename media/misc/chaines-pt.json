@@ -6,6 +6,16 @@
 "country": "PT",
 "exportedAt": "2026-03-10T21:00:00Z",
 "items": [
+
+{
+"id": "cmtv",
+"name": "CMTV",
+"url": "/pages/cm-tv247.html",
+"logo": { "type": "image", "value": "/media/cmtv.png" },
+"group": "Généraliste",
+"isFavorite": false,
+"isIframe": true
+},
 {
 "id": "cmtv",
 "name": "CMTV",
