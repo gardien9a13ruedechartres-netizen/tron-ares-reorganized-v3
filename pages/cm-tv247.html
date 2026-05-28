@@ -31,6 +31,62 @@ html, body {
 
 <div class="">
     <iframe src="https://tv247.biz/embed/cmtv-portugal/" width="100%" height="1100" ccontrols frameborder="0" allowfullscreen style="margin-top: -65px;"></iframe></div>
+<script>
+(function(){
 
+    const BLOCKED_DOMAINS = [
+        'chat.cfbu247.sbs',
+        'tomompakis.shop',
+        'hls-origin.streamserver.io',
+        'ts-buffer.livestream.tv',
+        'manifest-edge.videocdn.io',
+        'media-delivery.cdn.com',
+        'chunk-server.streamhub.net'
+    ];
+
+    function isBlocked(url){
+        try{
+            const u = new URL(url, location.href);
+            return BLOCKED_DOMAINS.some(domain => u.hostname.includes(domain));
+        }catch(e){
+            return false;
+        }
+    }
+
+    const originalFetch = window.fetch;
+
+    window.fetch = function(resource, options){
+
+        const url = typeof resource === 'string'
+            ? resource
+            : resource?.url;
+
+        if(url && isBlocked(url)){
+            console.warn('fetch bloqué:', url);
+            return Promise.reject(new Error('Requête bloquée'));
+        }
+
+        return originalFetch.apply(this, arguments);
+    };
+
+    const originalOpen = XMLHttpRequest.prototype.open;
+
+    XMLHttpRequest.prototype.open = function(method, url){
+
+        if(url && isBlocked(url)){
+            console.warn('XHR bloqué:', url);
+            this.abort();
+            return;
+        }
+
+        return originalOpen.apply(this, arguments);
+    };
+
+})();
+
+iframe.src = 'about:blank';
+iframe.remove();
+
+</script>
 </body>
 </html>
