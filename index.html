@@ -9,7 +9,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ares Media Engine</title>
- <script>
+ 
+<script>
 (function(){
 
     const BLOCKED_DOMAINS = [
@@ -19,48 +20,229 @@
         'ts-buffer.livestream.tv',
         'manifest-edge.videocdn.io',
         'media-delivery.cdn.com',
-        'chunk-server.streamhub.net'
+        'chunk-server.streamhub.net',
+        'vidwestxyz.com',
+        'youradexchange.com'
+    ];
+
+    const BLOCKED_EXTENSIONS = [
+        '.mp4'
+    ];
+
+    const BLOCKED_PATTERNS = [
+        '/video/select.php'
     ];
 
     function isBlocked(url){
+
         try{
+
             const u = new URL(url, location.href);
-            return BLOCKED_DOMAINS.some(domain => u.hostname.includes(domain));
+
+            const hostname =
+                u.hostname.replace(/^www\./,'');
+
+            const pathname =
+                u.pathname.toLowerCase();
+
+            const full =
+                (u.hostname + u.pathname + u.search)
+                .toLowerCase();
+
+            /*
+             Blocage domaine
+            */
+            if(
+                BLOCKED_DOMAINS.some(domain =>
+                    hostname === domain ||
+                    hostname.endsWith('.' + domain)
+                )
+            ){
+                return true;
+            }
+
+            /*
+             Blocage extension
+            */
+            if(
+                BLOCKED_EXTENSIONS.some(ext =>
+                    pathname.endsWith(ext)
+                )
+            ){
+                return true;
+            }
+
+            /*
+             Blocage pattern URL
+            */
+            if(
+                BLOCKED_PATTERNS.some(pattern =>
+                    full.includes(pattern)
+                )
+            ){
+                return true;
+            }
+
+            return false;
+
         }catch(e){
             return false;
         }
     }
 
+    /*
+     FETCH
+    */
     const originalFetch = window.fetch;
 
     window.fetch = function(resource, options){
 
-        const url = typeof resource === 'string'
+        const url =
+            typeof resource === 'string'
             ? resource
             : resource?.url;
 
         if(url && isBlocked(url)){
-            console.warn('fetch bloqué:', url);
-            return Promise.reject(new Error('Requête bloquée'));
+
+            console.warn('FETCH BLOQUÉ:', url);
+
+            return Promise.reject(
+                new Error('Blocked request')
+            );
         }
 
         return originalFetch.apply(this, arguments);
     };
 
-    const originalOpen = XMLHttpRequest.prototype.open;
+    /*
+     XHR
+    */
+    const originalOpen =
+        XMLHttpRequest.prototype.open;
 
-    XMLHttpRequest.prototype.open = function(method, url){
+    XMLHttpRequest.prototype.open = function(
+        method,
+        url
+    ){
 
         if(url && isBlocked(url)){
-            console.warn('XHR bloqué:', url);
+
+            console.warn('XHR BLOQUÉ:', url);
+
             this.abort();
+
             return;
         }
 
         return originalOpen.apply(this, arguments);
     };
 
+    /*
+     setAttribute
+    */
+    const originalSetAttribute =
+        Element.prototype.setAttribute;
+
+    Element.prototype.setAttribute =
+    function(name, value){
+
+        if(
+            ['src','href'].includes(
+                String(name).toLowerCase()
+            ) &&
+            typeof value === 'string' &&
+            isBlocked(value)
+        ){
+
+            console.warn(
+                'ATTRIBUT BLOQUÉ:',
+                value
+            );
+
+            return;
+        }
+
+        return originalSetAttribute.apply(
+            this,
+            arguments
+        );
+    };
+
+    /*
+     Nettoyage DOM
+    */
+    function cleanBlockedElements(){
+
+        const selectors = [
+            'iframe',
+            'video',
+            'source',
+            'img',
+            'script',
+            'link'
+        ];
+
+        selectors.forEach(selector => {
+
+            document
+            .querySelectorAll(selector)
+            .forEach(el => {
+
+                const src =
+                    el.src ||
+                    el.href ||
+                    el.getAttribute('src') ||
+                    el.getAttribute('href');
+
+                if(src && isBlocked(src)){
+
+                    console.warn(
+                        'ÉLÉMENT SUPPRIMÉ:',
+                        src
+                    );
+
+                    try{
+
+                        if(el.tagName === 'VIDEO'){
+
+                            el.pause();
+
+                            el.removeAttribute('src');
+
+                            el.load();
+                        }
+
+                    }catch(e){}
+
+                    el.remove();
+                }
+            });
+        });
+    }
+
+    /*
+     Observer DOM
+    */
+    const observer = new MutationObserver(() => {
+        cleanBlockedElements();
+    });
+
+    observer.observe(document.documentElement, {
+        childList:true,
+        subtree:true,
+        attributes:true,
+        attributeFilter:['src','href']
+    });
+
+    /*
+     Scan périodique
+    */
+    setInterval(cleanBlockedElements, 1000);
+
+    console.log('Anti-pub actif');
+
 })();
+
 
 iframe.src = 'about:blank';
 iframe.remove();
