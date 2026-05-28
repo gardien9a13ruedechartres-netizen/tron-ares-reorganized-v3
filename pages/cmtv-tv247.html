@@ -48,6 +48,7 @@ body {
         referrerpolicy="no-referrer"
     ></iframe>
 </div>
+
 <script>
 (function(){
 
@@ -63,74 +64,115 @@ body {
         'youradexchange.com'
     ];
 
-    const BLOCKED_EXTENSIONS = [
-        '.mp4'
-    ];
-
     const BLOCKED_PATTERNS = [
-        '/video/select.php'
+        'vidwestxyz.com',
+        '.mp4',
+        '/video/select.php',
+        '/ingest/'
     ];
 
     function isBlocked(url){
-
         try{
-
             const u = new URL(url, location.href);
+            const full = u.href.toLowerCase();
+            const host = u.hostname.replace(/^www\./,'');
 
-            const hostname =
-                u.hostname.replace(/^www\./,'');
-
-            const pathname =
-                u.pathname.toLowerCase();
-
-            const full =
-                (u.hostname + u.pathname + u.search)
-                .toLowerCase();
-
-            /*
-             Blocage domaine
-            */
             if(
                 BLOCKED_DOMAINS.some(domain =>
-                    hostname === domain ||
-                    hostname.endsWith('.' + domain)
+                    host === domain || host.endsWith('.' + domain)
                 )
             ){
                 return true;
             }
 
-            /*
-             Blocage extension
-            */
-            if(
-                BLOCKED_EXTENSIONS.some(ext =>
-                    pathname.endsWith(ext)
-                )
-            ){
-                return true;
-            }
-
-            /*
-             Blocage pattern URL
-            */
-            if(
-                BLOCKED_PATTERNS.some(pattern =>
-                    full.includes(pattern)
-                )
-            ){
-                return true;
-            }
-
-            return false;
+            return BLOCKED_PATTERNS.some(pattern =>
+                full.includes(pattern)
+            );
 
         }catch(e){
             return false;
         }
     }
 
-    /*
-     FETCH
-    */
+    function killMediaElement(el){
+
+        try{
+            el.pause();
+        }catch(e){}
+
+        try{
+            el.muted = true;
+            el.volume = 0;
+        }catch(e){}
+
+        try{
+            el.src = '';
+            el.removeAttribute('src');
+        }catch(e){}
+
+        try{
+            el.querySelectorAll('source').forEach(source => {
+                source.src = '';
+                source.removeAttribute('src');
+                source.remove();
+            });
+        }catch(e){}
+
+        try{
+            el.load();
+        }catch(e){}
+
+        try{
+            el.remove();
+        }catch(e){}
+    }
+
+    function killIframe(frame){
+
+        try{
+            frame.src = 'about:blank';
+        }catch(e){}
+
+        try{
+            frame.removeAttribute('src');
+        }catch(e){}
+
+        try{
+            frame.remove();
+        }catch(e){}
+    }
+
+    function cleanBlockedElements(){
+
+        document.querySelectorAll('video,audio,source,iframe,img,script,link').forEach(el => {
+
+            const src =
+                el.src ||
+                el.href ||
+                el.currentSrc ||
+                el.getAttribute('src') ||
+                el.getAttribute('href') ||
+                '';
+
+            if(src && isBlocked(src)){
+
+                console.warn('Élément bloqué supprimé:', src);
+
+                if(el.tagName === 'VIDEO' || el.tagName === 'AUDIO'){
+                    killMediaElement(el);
+                    return;
+                }
+
+                if(el.tagName === 'IFRAME'){
+                    killIframe(el);
+                    return;
+                }
+
+                el.remove();
+            }
+        });
+    }
+
     const originalFetch = window.fetch;
 
     window.fetch = function(resource, options){
@@ -138,129 +180,68 @@ body {
         const url =
             typeof resource === 'string'
             ? resource
-            : resource?.url;
+            : resource && resource.url;
 
         if(url && isBlocked(url)){
-
-            console.warn('FETCH BLOQUÉ:', url);
-
-            return Promise.reject(
-                new Error('Blocked request')
-            );
+            console.warn('FETCH bloqué:', url);
+            return Promise.reject(new Error('Requête bloquée'));
         }
 
         return originalFetch.apply(this, arguments);
     };
 
-    /*
-     XHR
-    */
-    const originalOpen =
-        XMLHttpRequest.prototype.open;
+    const originalOpen = XMLHttpRequest.prototype.open;
 
-    XMLHttpRequest.prototype.open = function(
-        method,
-        url
-    ){
+    XMLHttpRequest.prototype.open = function(method, url){
 
         if(url && isBlocked(url)){
-
-            console.warn('XHR BLOQUÉ:', url);
-
+            console.warn('XHR bloqué:', url);
             this.abort();
-
             return;
         }
 
         return originalOpen.apply(this, arguments);
     };
 
-    /*
-     setAttribute
-    */
-    const originalSetAttribute =
-        Element.prototype.setAttribute;
+    const originalSetAttribute = Element.prototype.setAttribute;
 
-    Element.prototype.setAttribute =
-    function(name, value){
+    Element.prototype.setAttribute = function(name, value){
 
         if(
-            ['src','href'].includes(
-                String(name).toLowerCase()
-            ) &&
+            ['src','href'].includes(String(name).toLowerCase()) &&
             typeof value === 'string' &&
             isBlocked(value)
         ){
-
-            console.warn(
-                'ATTRIBUT BLOQUÉ:',
-                value
-            );
-
+            console.warn('Attribut bloqué:', value);
             return;
         }
 
-        return originalSetAttribute.apply(
-            this,
-            arguments
-        );
+        return originalSetAttribute.apply(this, arguments);
     };
 
-    /*
-     Nettoyage DOM
-    */
-    function cleanBlockedElements(){
+    function scanPerformance(){
 
-        const selectors = [
-            'iframe',
-            'video',
-            'source',
-            'img',
-            'script',
-            'link'
-        ];
+        const entries = performance.getEntriesByType('resource');
 
-        selectors.forEach(selector => {
+        entries.forEach(entry => {
 
-            document
-            .querySelectorAll(selector)
-            .forEach(el => {
+            if(entry.name && isBlocked(entry.name)){
 
-                const src =
-                    el.src ||
-                    el.href ||
-                    el.getAttribute('src') ||
-                    el.getAttribute('href');
+                console.warn('Requête média suspecte détectée:', entry.name);
 
-                if(src && isBlocked(src)){
+                document.querySelectorAll('video,audio').forEach(killMediaElement);
 
-                    console.warn(
-                        'ÉLÉMENT SUPPRIMÉ:',
-                        src
-                    );
-
+                document.querySelectorAll('iframe').forEach(frame => {
                     try{
-
-                        if(el.tagName === 'VIDEO'){
-
-                            el.pause();
-
-                            el.removeAttribute('src');
-
-                            el.load();
+                        if(frame.src && frame.src !== 'about:blank'){
+                            killIframe(frame);
                         }
-
                     }catch(e){}
-
-                    el.remove();
-                }
-            });
+                });
+            }
         });
     }
 
-    /*
-     Observer DOM
-    */
     const observer = new MutationObserver(() => {
         cleanBlockedElements();
     });
@@ -272,19 +253,31 @@ body {
         attributeFilter:['src','href']
     });
 
-    /*
-     Scan périodique
-    */
-    setInterval(cleanBlockedElements, 1000);
+    setInterval(() => {
+        cleanBlockedElements();
+        scanPerformance();
+    }, 500);
 
-    console.log('Anti-pub actif');
+    document.addEventListener('play', function(e){
+        const el = e.target;
+
+        if(
+            (el.tagName === 'VIDEO' || el.tagName === 'AUDIO') &&
+            (
+                isBlocked(el.src || '') ||
+                isBlocked(el.currentSrc || '')
+            )
+        ){
+            killMediaElement(el);
+        }
+
+    }, true);
+
+    console.log('Anti-pub audio/vidéo actif');
 
 })();
-
-
 iframe.src = 'about:blank';
 iframe.remove();
-
 </script>
 </body>
 </html>
