@@ -3,281 +3,203 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Benfica TV Player</title>
-
-
+<title>Player Smooth Reload</title>
 <style>
-html,
-body {
-    margin: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    background: #000;
-}
+    html, body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #000;
+    }
 
-.player-wrapper {
-    position: fixed;
-    inset: 0;
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden;
-    background: #000;
-}
+    #container {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        background: #000;
+    }
 
-.player-wrapper iframe {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    border: 0;
+    iframe.player-frame {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+        display: block;
+        background: #000;
+        opacity: 0;
+        transition: opacity 220ms linear;
+        pointer-events: none;
+        z-index: 1;
+    }
 
-    /* équivalent objet-fit: fill */
-    object-fit: fill;
-}
+    iframe.visible-frame {
+        opacity: 1;
+        pointer-events: auto;
+        z-index: 2;
+    }
+
+    iframe.preload-frame {
+        opacity: 0;
+        pointer-events: none;
+        z-index: 3;
+    }
+
+    iframe.fade-out-frame {
+        opacity: 0;
+        pointer-events: none;
+        z-index: 2;
+    }
 </style>
 </head>
-
 <body>
 
-<div class="player-wrapper">
-    <iframe
-        src="https://chat.cfbu247.sbs/api/proxy/player?token=eyJjaGFubmVsSWQiOiI3OTAiLCJ0cyI6MTc4MDA2NzU3MjU3OH0"
-        allowfullscreen
-        loading="lazy"
-        referrerpolicy="no-referrer"
-    ></iframe>
-</div>
+<div id="container"></div>
 
 <script>
-(function(){
+(() => {
+    // Récupérer l'URL passée en paramètre (si elle existe)
+    const params = new URLSearchParams(window.location.search);
+    const PLAYER_URL = params.get('src') || "https://chat.cfbu247.sbs/api/proxy/player?token=eyJjaGFubmVsSWQiOiI3OTAiLCJ0cyI6MTc4MDA2NzU3MjU3OH0"; // URL par défaut
 
-    const BLOCKED_DOMAINS = [
-        'chat.cfbu247.sbs',
-        'tomompakis.shop',
-        'hls-origin.streamserver.io',
-        'ts-buffer.livestream.tv',
-        'manifest-edge.videocdn.io',
-        'media-delivery.cdn.com',
-        'chunk-server.streamhub.net',
-        'vidwestxyz.com',
-        'youradexchange.com'
-    ];
+    // Réglages
+    const CHECK_INTERVAL = 5000;       // vérifie toutes les 5 secondes
+    const RELOAD_TIMEOUT = 300000;     // 5 min
+    const LOAD_FAILSAFE = 25000;       // abandonne un préchargement bloqué après 25 s
+    const CROSSFADE_MS = 220;          // durée du fondu
 
-    const BLOCKED_PATTERNS = [
-        'vidwestxyz.com',
-        '.mp4',
-        '/video/select.php',
-        '/ingest/'
-    ];
+    const container = document.getElementById("container");
 
-    function isBlocked(url){
-        try{
-            const u = new URL(url, location.href);
-            const full = u.href.toLowerCase();
-            const host = u.hostname.replace(/^www\./,'');
+    let activeFrame = null;
+    let preloadFrame = null;
+    let lastSwapTime = Date.now();
+    let reloading = false;
+    let preloadTimeoutId = null;
 
-            if(
-                BLOCKED_DOMAINS.some(domain =>
-                    host === domain || host.endsWith('.' + domain)
-                )
-            ){
-                return true;
-            }
+    function createFrame(src, visible) {
+        const frame = document.createElement("iframe");
+        frame.className = "player-frame " + (visible ? "visible-frame" : "preload-frame");
+        frame.setAttribute("allow", "autoplay; fullscreen");
+        frame.setAttribute("referrerpolicy", "no-referrer");
+        frame.src = src;
+        return frame;
+    }
 
-            return BLOCKED_PATTERNS.some(pattern =>
-                full.includes(pattern)
-            );
+    function cleanupPreload() {
+        if (preloadTimeoutId) {
+            clearTimeout(preloadTimeoutId);
+            preloadTimeoutId = null;
+        }
 
-        }catch(e){
-            return false;
+        if (preloadFrame) {
+            preloadFrame.onload = null;
+            preloadFrame.onerror = null;
         }
     }
 
-    function killMediaElement(el){
-
-        try{
-            el.pause();
-        }catch(e){}
-
-        try{
-            el.muted = true;
-            el.volume = 0;
-        }catch(e){}
-
-        try{
-            el.src = '';
-            el.removeAttribute('src');
-        }catch(e){}
-
-        try{
-            el.querySelectorAll('source').forEach(source => {
-                source.src = '';
-                source.removeAttribute('src');
-                source.remove();
-            });
-        }catch(e){}
-
-        try{
-            el.load();
-        }catch(e){}
-
-        try{
-            el.remove();
-        }catch(e){}
+    function installActiveErrorHandler(frame) {
+        frame.onerror = () => {
+            startSmoothReload();
+        };
     }
 
-    function killIframe(frame){
+    function swapToPreloadedFrame() {
+        if (!preloadFrame || !activeFrame) return;
 
-        try{
-            frame.src = 'about:blank';
-        }catch(e){}
+        const oldActive = activeFrame;
+        const newActive = preloadFrame;
 
-        try{
-            frame.removeAttribute('src');
-        }catch(e){}
+        // La nouvelle devient visible
+        newActive.classList.remove("preload-frame");
+        newActive.classList.add("visible-frame");
 
-        try{
-            frame.remove();
-        }catch(e){}
+        // L'ancienne s'efface doucement
+        oldActive.classList.remove("visible-frame");
+        oldActive.classList.add("fade-out-frame");
+
+        activeFrame = newActive;
+        preloadFrame = null;
+        lastSwapTime = Date.now();
+        reloading = false;
+
+        installActiveErrorHandler(activeFrame);
+
+        setTimeout(() => {
+            if (oldActive && oldActive.parentNode) {
+                oldActive.remove();
+            }
+        }, CROSSFADE_MS + 30);
     }
 
-    function cleanBlockedElements(){
+    function startSmoothReload() {
+        if (reloading) return;
+        if (!activeFrame) return;
 
-        document.querySelectorAll('video,audio,source,iframe,img,script,link').forEach(el => {
+        reloading = true;
 
-            const src =
-                el.src ||
-                el.href ||
-                el.currentSrc ||
-                el.getAttribute('src') ||
-                el.getAttribute('href') ||
-                '';
+        preloadFrame = createFrame(activeFrame.src, false);
+        container.appendChild(preloadFrame);
 
-            if(src && isBlocked(src)){
+        preloadFrame.onload = () => {
+            cleanupPreload();
+            swapToPreloadedFrame();
+        };
 
-                console.warn('Élément bloqué supprimé:', src);
+        preloadFrame.onerror = () => {
+            cleanupPreload();
 
-                if(el.tagName === 'VIDEO' || el.tagName === 'AUDIO'){
-                    killMediaElement(el);
-                    return;
+            if (preloadFrame && preloadFrame.parentNode) {
+                preloadFrame.remove();
+            }
+
+            preloadFrame = null;
+            reloading = false;
+        };
+
+        preloadTimeoutId = setTimeout(() => {
+            if (!reloading) return;
+
+            cleanupPreload();
+
+            if (preloadFrame && preloadFrame.parentNode) {
+                preloadFrame.remove();
+            }
+
+            preloadFrame = null;
+            reloading = false;
+        }, LOAD_FAILSAFE);
+    }
+
+    function init() {
+        activeFrame = createFrame(PLAYER_URL, true);
+        container.appendChild(activeFrame);
+        installActiveErrorHandler(activeFrame);
+
+        lastSwapTime = Date.now();
+
+        setInterval(() => {
+            const now = Date.now();
+
+            if (!reloading && (now - lastSwapTime >= RELOAD_TIMEOUT)) {
+                startSmoothReload();
+            }
+        }, CHECK_INTERVAL);
+
+        document.addEventListener("visibilitychange", () => {
+            if (!document.hidden && !reloading) {
+                const now = Date.now();
+
+                if (now - lastSwapTime >= RELOAD_TIMEOUT) {
+                    startSmoothReload();
                 }
-
-                if(el.tagName === 'IFRAME'){
-                    killIframe(el);
-                    return;
-                }
-
-                el.remove();
             }
         });
     }
 
-    const originalFetch = window.fetch;
-
-    window.fetch = function(resource, options){
-
-        const url =
-            typeof resource === 'string'
-            ? resource
-            : resource && resource.url;
-
-        if(url && isBlocked(url)){
-            console.warn('FETCH bloqué:', url);
-            return Promise.reject(new Error('Requête bloquée'));
-        }
-
-        return originalFetch.apply(this, arguments);
-    };
-
-    const originalOpen = XMLHttpRequest.prototype.open;
-
-    XMLHttpRequest.prototype.open = function(method, url){
-
-        if(url && isBlocked(url)){
-            console.warn('XHR bloqué:', url);
-            this.abort();
-            return;
-        }
-
-        return originalOpen.apply(this, arguments);
-    };
-
-    const originalSetAttribute = Element.prototype.setAttribute;
-
-    Element.prototype.setAttribute = function(name, value){
-
-        if(
-            ['src','href'].includes(String(name).toLowerCase()) &&
-            typeof value === 'string' &&
-            isBlocked(value)
-        ){
-            console.warn('Attribut bloqué:', value);
-            return;
-        }
-
-        return originalSetAttribute.apply(this, arguments);
-    };
-
-    function scanPerformance(){
-
-        const entries = performance.getEntriesByType('resource');
-
-        entries.forEach(entry => {
-
-            if(entry.name && isBlocked(entry.name)){
-
-                console.warn('Requête média suspecte détectée:', entry.name);
-
-                document.querySelectorAll('video,audio').forEach(killMediaElement);
-
-                document.querySelectorAll('iframe').forEach(frame => {
-                    try{
-                        if(frame.src && frame.src !== 'about:blank'){
-                            killIframe(frame);
-                        }
-                    }catch(e){}
-                });
-            }
-        });
-    }
-
-    const observer = new MutationObserver(() => {
-        cleanBlockedElements();
-    });
-
-    observer.observe(document.documentElement, {
-        childList:true,
-        subtree:true,
-        attributes:true,
-        attributeFilter:['src','href']
-    });
-
-    setInterval(() => {
-        cleanBlockedElements();
-        scanPerformance();
-    }, 500);
-
-    document.addEventListener('play', function(e){
-        const el = e.target;
-
-        if(
-            (el.tagName === 'VIDEO' || el.tagName === 'AUDIO') &&
-            (
-                isBlocked(el.src || '') ||
-                isBlocked(el.currentSrc || '')
-            )
-        ){
-            killMediaElement(el);
-        }
-
-    }, true);
-
-    console.log('Anti-pub audio/vidéo actif');
-
+    init();
 })();
-iframe.src = 'about:blank';
-iframe.remove();
 </script>
+
 </body>
 </html>
