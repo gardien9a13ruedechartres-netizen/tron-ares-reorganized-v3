@@ -122,7 +122,7 @@
         path === "/pages/canal-panda.html" ||
         path === "/pages/disney-pixar-work.html" ||
         path === "/pages/cm-tv247.html" ||
-        path === "/pages/cmtv-tv247.html" ||
+        path === "/" ||
         path === "/pages/CM-vavoo.html"
     );
     } catch {
