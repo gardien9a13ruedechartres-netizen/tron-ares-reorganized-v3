@@ -119,7 +119,7 @@
         path === "/pages/iframecm.html" ||
         path === "/pages/cstar.html" ||
         path === "/pages/switchcm.html" ||
-        path === "/" ||
+        path === "/pages/tvi2.html" ||
         path === "/" ||
         path === "/" ||
         path === "/"
