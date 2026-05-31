@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Player HLS</title>
+
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<style>
+html,
+body{
+    margin:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#000;
+}
+
+#video{
+    position:fixed;
+    inset:0;
+    width:100vw;
+    height:100vh;
+    object-fit:fill;
+}
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+    <video id="video" controls autoplay="" preload="auto" data-setup="{}" tabindex="-1"></video>
+
+    
+
+</div>
+
+<script>
+
+const streams = [
+    "https://sv1.data-stream.top/d7f139e40500fe00c8479b2acee5da17cef86aff1c3675b3567887efc09bc915/hls/t18france.m3u8",
+    "https://live81.vkuserlive.com/639907/live/0/e0RTlRXUJmYEFuYXA/playlist.m3u8"
+];
+
+const video = document.getElementById('video');
+let hls;
+
+function loadStream(url){
+
+    if(hls){
+        hls.destroy();
+    }
+
+    if(Hls.isSupported()){
+
+        hls = new Hls({
+            enableWorker: true,
+            lowLatencyMode: true
+        });
+
+        hls.loadSource(url);
+        hls.attachMedia(video);
+
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            video.play().catch(()=>{});
+        });
+
+    } else if(video.canPlayType('application/vnd.apple.mpegurl')) {
+
+        video.src = url;
+        video.play().catch(()=>{});
+    }
+}
+
+loadStream(streams[0]);
+
+</script>
+
+</body>
+</html>

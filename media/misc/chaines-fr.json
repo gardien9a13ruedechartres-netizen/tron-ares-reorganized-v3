@@ -160,14 +160,14 @@
     },
     {
       "name": "T18",
-      "url": "https://poland.assistancefrancaise.com/hls/transcoder02/21/tracks-v1a1/mono.ts.m3u8",
+      "url": "/pages/t18.html",
       "logo": {
         "type": "image",
         "value": "https://focus.telerama.fr/500x500/0000/00/01/clear-4139.png"
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     
     {
