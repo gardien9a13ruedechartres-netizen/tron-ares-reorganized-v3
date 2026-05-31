@@ -1,78 +1,117 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Player HLS HTML5</title>
 
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+    }
 
-<style>
-html,
-body{
-    margin:0;
-    width:100%;
-    height:100%;
-    overflow:hidden;
-    background:#000;
-}
+    #player {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #000;
+      object-fit: fill;
+    }
 
-#video{
-    position:fixed;
-    inset:0;
-    width:100vw;
-    height:100vh;
-    object-fit:fill;
-}
-</style>
-
+    #message {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%);
+      z-index: 10;
+      max-width: 90vw;
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.7);
+      color: #fff;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      text-align: center;
+      display: none;
+    }
+  </style>
 </head>
-
 <body>
+  <video
+    id="player"
+    controls
+    autoplay
+    playsinline
+    preload="auto"
+  ></video>
 
-<video
-id="video"
-poster=""
-controls
-playsinline
-autoplay
-muted>
-</video>
+  <div id="message"></div>
 
-<script>
-const video = document.getElementById('video');
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <script>
+    const video = document.getElementById('player');
+    const message = document.getElementById('message');
 
-if (Hls.isSupported()) {
+    const source = 'https://raw.githubusercontent.com/LITUATUI/M3UPT/refs/heads/main/M3U/TVI.m3u8';
 
-    var hls = new Hls({
-        debug: true,
+    function showMessage(text) {
+      message.textContent = text;
+      message.style.display = 'block';
+    }
+
+    function startPlayback() {
+      const playPromise = video.play();
+
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          showMessage('Lecture automatique bloquée : clique sur Play pour lancer la vidéo.');
+        });
+      }
+    }
+
+    if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = source;
+      video.addEventListener('loadedmetadata', startPlayback);
+    } else if (window.Hls && Hls.isSupported()) {
+      const hls = new Hls({
         enableWorker: true,
         lowLatencyMode: true,
         backBufferLength: 90
-    });
+      });
 
-    hls.loadSource(
-        'https://raw.githubusercontent.com/LITUATUI/M3UPT/refs/heads/main/M3U/TVI.m3u8'
-    );
+      hls.loadSource(source);
+      hls.attachMedia(video);
 
-    hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, startPlayback);
 
-    hls.on(Hls.Events.MEDIA_ATTACHED, function () {
-        video.muted = false;
-        video.play();
-    });
-
-}
-else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-
-    video.src =
-    'https://raw.githubusercontent.com/LITUATUI/M3UPT/refs/heads/main/M3U/TVI.m3u8';
-
-    video.addEventListener('canplay', function () {
-        video.play();
-    });
-
-}
-</script>
-
+      hls.on(Hls.Events.ERROR, function (_event, data) {
+        if (data.fatal) {
+          switch (data.type) {
+            case Hls.ErrorTypes.NETWORK_ERROR:
+              showMessage('Erreur réseau HLS. Nouvelle tentative...');
+              hls.startLoad();
+              break;
+            case Hls.ErrorTypes.MEDIA_ERROR:
+              showMessage('Erreur média. Tentative de récupération...');
+              hls.recoverMediaError();
+              break;
+            default:
+              showMessage('Erreur fatale du lecteur HLS.');
+              hls.destroy();
+              break;
+          }
+        }
+      });
+    } else {
+      showMessage('Ce navigateur ne supporte pas la lecture HLS.');
+    }
+  </script>
 </body>
 </html>
