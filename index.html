@@ -9,7 +9,240 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ares Media Engine</title>
- 
+  <script>
+(function(){
+
+    /*
+      Anti-pub média sécurisé.
+      Correction :
+      - ne bloque plus tous les .mp4 ;
+      - ne détruit plus toutes les vidéos/iframes quand une ressource suspecte est vue ;
+      - supprime uniquement l'élément dont l'URL est réellement dans la liste noire.
+    */
+
+    const BLOCKED_DOMAINS = [
+        'chat.cfbu247.sbs',
+        'tomompakis.shop',
+        'hls-origin.streamserver.io',
+        'ts-buffer.livestream.tv',
+        'manifest-edge.videocdn.io',
+        'media-delivery.cdn.com',
+        'chunk-server.streamhub.net',
+        'vidwestxyz.com',
+        'youradexchange.com'
+    ];
+
+    const BLOCKED_PATTERNS = [
+        'vidwestxyz.com',
+        '/video/select.php',
+        '/ingest/'
+    ];
+
+    function isBlocked(url){
+        try{
+            const u = new URL(url, location.href);
+            const full = u.href.toLowerCase();
+            const host = u.hostname.replace(/^www\./,'');
+
+            if(
+                BLOCKED_DOMAINS.some(domain =>
+                    host === domain || host.endsWith('.' + domain)
+                )
+            ){
+                return true;
+            }
+
+            return BLOCKED_PATTERNS.some(pattern =>
+                full.includes(pattern)
+            );
+
+        }catch(e){
+            return false;
+        }
+    }
+
+    function clearMediaElement(el){
+        try{
+            el.pause();
+        }catch(e){}
+
+        try{
+            el.muted = true;
+            el.volume = 0;
+        }catch(e){}
+
+        try{
+            el.src = '';
+            el.removeAttribute('src');
+        }catch(e){}
+
+        try{
+            el.querySelectorAll('source').forEach(source => {
+                source.src = '';
+                source.removeAttribute('src');
+                source.remove();
+            });
+        }catch(e){}
+
+        try{
+            el.load();
+        }catch(e){}
+    }
+
+    function clearIframe(frame){
+        try{
+            frame.src = 'about:blank';
+        }catch(e){}
+
+        try{
+            frame.removeAttribute('src');
+        }catch(e){}
+    }
+
+    function removeBlockedElement(el, src){
+        console.warn('Élément bloqué supprimé:', src);
+
+        if(el.tagName === 'VIDEO' || el.tagName === 'AUDIO'){
+            clearMediaElement(el);
+            el.remove();
+            return;
+        }
+
+        if(el.tagName === 'IFRAME'){
+            clearIframe(el);
+            el.remove();
+            return;
+        }
+
+        el.remove();
+    }
+
+    function cleanBlockedElements(){
+
+        document.querySelectorAll('video,audio,source,iframe,img,script,link').forEach(el => {
+
+            const src =
+                el.src ||
+                el.href ||
+                el.currentSrc ||
+                el.getAttribute('src') ||
+                el.getAttribute('href') ||
+                '';
+
+            if(src && isBlocked(src)){
+                removeBlockedElement(el, src);
+            }
+        });
+    }
+
+    const originalFetch = window.fetch;
+
+    window.fetch = function(resource, options){
+
+        const url =
+            typeof resource === 'string'
+            ? resource
+            : resource && resource.url;
+
+        if(url && isBlocked(url)){
+            console.warn('FETCH bloqué:', url);
+            return Promise.reject(new Error('Requête bloquée'));
+        }
+
+        return originalFetch.apply(this, arguments);
+    };
+
+    const originalOpen = XMLHttpRequest.prototype.open;
+
+    XMLHttpRequest.prototype.open = function(method, url){
+
+        if(url && isBlocked(url)){
+            console.warn('XHR bloqué:', url);
+            this.abort();
+            return;
+        }
+
+        return originalOpen.apply(this, arguments);
+    };
+
+    const originalSetAttribute = Element.prototype.setAttribute;
+
+    Element.prototype.setAttribute = function(name, value){
+
+        if(
+            ['src','href'].includes(String(name).toLowerCase()) &&
+            typeof value === 'string' &&
+            isBlocked(value)
+        ){
+            console.warn('Attribut bloqué:', value);
+            return;
+        }
+
+        return originalSetAttribute.apply(this, arguments);
+    };
+
+    function scanPerformance(){
+
+        const entries = performance.getEntriesByType('resource');
+
+        entries.forEach(entry => {
+
+            if(entry.name && isBlocked(entry.name)){
+                console.warn('Requête média suspecte détectée:', entry.name);
+
+                document.querySelectorAll('video,audio,source,iframe,img,script,link').forEach(el => {
+                    const src =
+                        el.src ||
+                        el.href ||
+                        el.currentSrc ||
+                        el.getAttribute('src') ||
+                        el.getAttribute('href') ||
+                        '';
+
+                    if(src && isBlocked(src)){
+                        removeBlockedElement(el, src);
+                    }
+                });
+            }
+        });
+    }
+
+    const observer = new MutationObserver(() => {
+        cleanBlockedElements();
+    });
+
+    observer.observe(document.documentElement, {
+        childList:true,
+        subtree:true,
+        attributes:true,
+        attributeFilter:['src','href']
+    });
+
+    setInterval(() => {
+        cleanBlockedElements();
+        scanPerformance();
+    }, 1500);
+
+    document.addEventListener('play', function(e){
+        const el = e.target;
+
+        if(
+            (el.tagName === 'VIDEO' || el.tagName === 'AUDIO') &&
+            (
+                isBlocked(el.src || '') ||
+                isBlocked(el.currentSrc || '')
+            )
+        ){
+            clearMediaElement(el);
+            el.remove();
+        }
+
+    }, true);
+
+    console.log('Anti-pub audio/vidéo sécurisé actif');
+
+})();
+</script>
 
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2064%2064%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%2300e5ff%22/%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ff9100%22/%3E%0A%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3Cfilter%20id%3D%22glow%22%20x%3D%22-50%25%22%20y%3D%22-50%25%22%20width%3D%22200%25%22%20height%3D%22200%25%22%3E%0A%20%20%20%20%20%20%3CfeGaussianBlur%20stdDeviation%3D%222.2%22%20result%3D%22b%22/%3E%0A%20%20%20%20%20%20%3CfeMerge%3E%0A%20%20%20%20%20%20%20%20%3CfeMergeNode%20in%3D%22b%22/%3E%0A%20%20%20%20%20%20%20%20%3CfeMergeNode%20in%3D%22SourceGraphic%22/%3E%0A%20%20%20%20%20%20%3C/feMerge%3E%0A%20%20%20%20%3C/filter%3E%0A%20%20%3C/defs%3E%0A%20%20%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2214%22%20fill%3D%22%2302040a%22/%3E%0A%20%20%3Cpath%20d%3D%22M32%2010%20L50%2054%20H43.5%20L39.5%2044%20H24.5%20L20.5%2054%20H14%20L32%2010%20Z%0A%20%20%20%20%20%20%20%20%20%20%20M27.2%2036.5%20H36.8%20L32%2024.5%20Z%22%0A%20%20%20%20%20%20%20%20fill%3D%22url%28%23g%29%22%20filter%3D%22url%28%23glow%29%22/%3E%0A%3C/svg%3E">
   <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2064%2064%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%2300e5ff%22/%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23ff9100%22/%3E%0A%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3Cfilter%20id%3D%22glow%22%20x%3D%22-50%25%22%20y%3D%22-50%25%22%20width%3D%22200%25%22%20height%3D%22200%25%22%3E%0A%20%20%20%20%20%20%3CfeGaussianBlur%20stdDeviation%3D%222.2%22%20result%3D%22b%22/%3E%0A%20%20%20%20%20%20%3CfeMerge%3E%0A%20%20%20%20%20%20%20%20%3CfeMergeNode%20in%3D%22b%22/%3E%0A%20%20%20%20%20%20%20%20%3CfeMergeNode%20in%3D%22SourceGraphic%22/%3E%0A%20%20%20%20%20%20%3C/feMerge%3E%0A%20%20%20%20%3C/filter%3E%0A%20%20%3C/defs%3E%0A%20%20%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2214%22%20fill%3D%22%2302040a%22/%3E%0A%20%20%3Cpath%20d%3D%22M32%2010%20L50%2054%20H43.5%20L39.5%2044%20H24.5%20L20.5%2054%20H14%20L32%2010%20Z%0A%20%20%20%20%20%20%20%20%20%20%20M27.2%2036.5%20H36.8%20L32%2024.5%20Z%22%0A%20%20%20%20%20%20%20%20fill%3D%22url%28%23g%29%22%20filter%3D%22url%28%23glow%29%22/%3E%0A%3C/svg%3E">
