@@ -119,11 +119,10 @@
         path === "/pages/iframecm.html" ||
         path === "/pages/cstar.html" ||
         path === "/pages/switchcm.html" ||
-        path === "/pages/canal-panda.html" ||
-        path === "/pages/disney-pixar-work.html" ||
-        path === "/pages/cm-tv247.html" ||
-        path === "/https://chat.cfbu247.sbs/api/proxy/player?token=eyJjaGFubmVsSWQiOiI3OTAiLCJ0cyI6MTc4MDA2NzU3MjU3OH0" ||
-        path === "/pages/CM-vavoo.html"
+        path === "/" ||
+        path === "/" ||
+        path === "/" ||
+        path === "/"
     );
     } catch {
       return false;
