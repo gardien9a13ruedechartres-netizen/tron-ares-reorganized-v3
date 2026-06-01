@@ -189,11 +189,11 @@
 {
 "id": "PORTO canal",
 "name": "PORTO canal",
-"url": "https://pull-live-156-1.global.ssl.fastly.net/pc5865dc25400thmb-ea6bf03b14fa318f7133/smil:pc1-jhrgyuoqe5865db-68tkgb14fa318f7133f03.smil/playlist.m3u8",
+"url": "",
 "logo": { "type": "image", "value": "https://www.freeshot.live/upload/source/Porto-Canal-logo.png" },
 "group": "Sport",
 "isFavorite": false,
-"isIframe": false
+"isIframe": true
 },
 {
 "id": "abola",
