@@ -1,0 +1,479 @@
+/*
+  Ares Multi-View Module
+  Script/CSS isolés du moteur principal tron-ares.js
+*/
+
+:root {
+  --mv-bg: rgba(2, 6, 15, 0.98);
+  --mv-card: rgba(31, 43, 58, 0.78);
+  --mv-card-soft: rgba(24, 35, 50, 0.78);
+  --mv-border: rgba(112, 133, 160, 0.48);
+  --mv-border-strong: rgba(0, 229, 255, 0.55);
+  --mv-text: #eaf6ff;
+  --mv-muted: rgba(210, 226, 240, 0.68);
+  --mv-accent: #12c8e8;
+  --mv-accent-2: #ff9100;
+  --mv-danger: #ff5252;
+  --mv-radius: 18px;
+}
+
+/* Mode activé : le lecteur classique reste intact, il est juste masqué visuellement. */
+.main.multi-view-active .player-shell,
+.main.multi-view-active .bottom-bar {
+  display: none !important;
+}
+
+.ares-multiview {
+  display: none;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: var(--radius-lg, 18px);
+  border: 1px solid rgba(0, 229, 255, 0.18);
+  background:
+    radial-gradient(circle at top left, rgba(0, 229, 255, 0.08), transparent 38%),
+    linear-gradient(180deg, rgba(5, 10, 20, 0.96), rgba(0, 0, 0, 0.96));
+  box-shadow:
+    0 0 28px rgba(0, 229, 255, 0.20),
+    inset 0 0 38px rgba(0, 0, 0, 0.72);
+  position: relative;
+}
+
+.main.multi-view-active .ares-multiview {
+  display: flex;
+  flex-direction: column;
+}
+
+.ares-mv-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 18px 12px;
+  flex: 0 0 auto;
+}
+
+.ares-mv-title-wrap {
+  min-width: 0;
+}
+
+.ares-mv-title {
+  margin: 0;
+  font-family: "Orbitron", system-ui, sans-serif;
+  font-size: clamp(34px, 5vw, 70px);
+  line-height: 0.86;
+  letter-spacing: -0.055em;
+  text-transform: uppercase;
+  color: #ffffff;
+  text-shadow: 3px 3px 0 rgba(255, 145, 0, 0.95), 0 0 20px rgba(0, 229, 255, 0.25);
+}
+
+.ares-mv-subtitle {
+  margin-top: 10px;
+  color: var(--mv-muted);
+  font-size: 14px;
+}
+
+.ares-mv-layout {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(18, 24, 34, 0.82);
+  box-shadow: 0 0 22px rgba(0, 0, 0, 0.28);
+  flex: 0 0 auto;
+}
+
+.ares-mv-layout-label {
+  padding: 0 8px;
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.50);
+  font-weight: 700;
+}
+
+.ares-mv-layout-btn,
+.ares-mv-top-btn,
+.ares-mv-picker-close,
+.ares-mv-action,
+.ares-mv-add-btn,
+.ares-mv-list-item {
+  font: inherit;
+}
+
+.ares-mv-layout-btn {
+  min-width: 48px;
+  height: 46px;
+  border: 0;
+  border-radius: 15px;
+  background: transparent;
+  color: rgba(255,255,255,0.54);
+  font-size: 18px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: 0.18s ease-out;
+}
+
+.ares-mv-layout-btn:hover {
+  color: #fff;
+  background: rgba(255,255,255,0.08);
+}
+
+.ares-mv-layout-btn.is-active {
+  color: #fff;
+  background: linear-gradient(135deg, rgba(0, 229, 255, 0.95), rgba(0, 151, 187, 0.90));
+  box-shadow: 0 0 18px rgba(0, 229, 255, 0.48);
+}
+
+.ares-mv-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  gap: 28px;
+  padding: 18px;
+  overflow: auto;
+  align-content: stretch;
+}
+
+.ares-mv-grid[data-layout="2"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.ares-mv-grid[data-layout="4"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.ares-mv-grid[data-layout="6"] {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.ares-mv-slot {
+  min-width: 0;
+  min-height: 170px;
+  border-radius: 18px;
+  border: 1px solid var(--mv-border);
+  background: var(--mv-card-soft);
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.35);
+}
+
+.ares-mv-slot.is-empty {
+  border-style: dashed;
+  border-width: 2px;
+}
+
+.ares-mv-player,
+.ares-mv-player video,
+.ares-mv-player iframe {
+  width: 100%;
+  height: 100%;
+}
+
+.ares-mv-player {
+  position: absolute;
+  inset: 0;
+  background: #000;
+}
+
+.ares-mv-player video {
+  object-fit: fill;
+  display: block;
+  background: #000;
+}
+
+.ares-mv-player iframe {
+  display: block;
+  border: 0;
+  background: #000;
+}
+
+.ares-mv-empty-inner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: rgba(220, 235, 255, 0.75);
+}
+
+.ares-mv-add-btn {
+  width: 60px;
+  height: 60px;
+  border-radius: 999px;
+  border: 0;
+  background: rgba(100, 116, 139, 0.55);
+  color: #fff;
+  font-size: 30px;
+  line-height: 1;
+  cursor: pointer;
+  transition: 0.18s ease-out;
+}
+
+.ares-mv-add-btn:hover {
+  transform: translateY(-1px) scale(1.04);
+  background: rgba(0, 229, 255, 0.65);
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.38);
+}
+
+.ares-mv-empty-text {
+  font-size: 15px;
+  color: rgba(220, 235, 255, 0.76);
+}
+
+.ares-mv-tile-bar {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.62);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.11);
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+  transition: 0.18s ease-out;
+}
+
+.ares-mv-slot:hover .ares-mv-tile-bar,
+.ares-mv-slot:focus-within .ares-mv-tile-bar {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.ares-mv-tile-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 12px;
+  color: #fff;
+}
+
+.ares-mv-action {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 229, 255, 0.35);
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.18s ease-out;
+}
+
+.ares-mv-action:hover {
+  border-color: var(--mv-accent-2);
+  color: var(--mv-accent-2);
+  box-shadow: 0 0 12px rgba(255, 145, 0, 0.44);
+}
+
+.ares-mv-action.is-danger:hover {
+  border-color: var(--mv-danger);
+  color: var(--mv-danger);
+}
+
+.ares-mv-toggle {
+  border-color: rgba(0, 229, 255, 0.45) !important;
+}
+
+.ares-mv-toggle.is-active {
+  border-color: var(--tron-accent, #ff9100) !important;
+  color: var(--tron-accent-soft, #ffb74d) !important;
+  box-shadow: 0 0 12px rgba(255, 145, 0, 0.42);
+}
+
+.ares-mv-picker {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.64);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+.ares-mv-picker.is-open {
+  display: flex;
+}
+
+.ares-mv-picker-card {
+  width: min(760px, 96vw);
+  max-height: min(720px, 88vh);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 20px;
+  border: 1px solid rgba(0, 229, 255, 0.35);
+  background: radial-gradient(circle at top, rgba(10, 27, 46, 0.98), rgba(0, 0, 0, 0.98));
+  box-shadow: 0 0 36px rgba(0, 229, 255, 0.28);
+}
+
+.ares-mv-picker-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-bottom: 1px solid rgba(0, 229, 255, 0.18);
+}
+
+.ares-mv-picker-title {
+  font-family: "Orbitron", system-ui, sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 13px;
+  color: #fff;
+}
+
+.ares-mv-picker-search {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 229, 255, 0.35);
+  background: rgba(0, 0, 0, 0.48);
+  color: #fff;
+  outline: none;
+}
+
+.ares-mv-picker-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(0, 0, 0, 0.58);
+  color: #fff;
+  cursor: pointer;
+}
+
+.ares-mv-list {
+  overflow: auto;
+  padding: 10px;
+}
+
+.ares-mv-list-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 6px 0;
+  padding: 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 229, 255, 0.18);
+  background: rgba(1, 9, 20, 0.78);
+  color: #fff;
+  cursor: pointer;
+  text-align: left;
+  transition: 0.18s ease-out;
+}
+
+.ares-mv-list-item:hover {
+  border-color: var(--mv-accent-2);
+  box-shadow: 0 0 14px rgba(255, 145, 0, 0.30);
+  transform: translateY(-1px);
+}
+
+.ares-mv-list-logo {
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid rgba(0, 229, 255, 0.35);
+  background: rgba(0,0,0,0.45);
+}
+
+.ares-mv-list-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.ares-mv-list-meta {
+  min-width: 0;
+  flex: 1;
+}
+
+.ares-mv-list-title {
+  font-size: 13px;
+  font-weight: 700;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ares-mv-list-sub {
+  margin-top: 2px;
+  font-size: 11px;
+  color: rgba(220, 235, 255, 0.58);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ares-mv-empty-picker {
+  padding: 24px;
+  text-align: center;
+  color: rgba(220, 235, 255, 0.68);
+}
+
+@media (max-width: 980px) {
+  .ares-mv-header {
+    flex-direction: column;
+  }
+  .ares-mv-layout {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  .ares-mv-grid[data-layout="6"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .ares-mv-grid,
+  .ares-mv-grid[data-layout="2"],
+  .ares-mv-grid[data-layout="4"],
+  .ares-mv-grid[data-layout="6"] {
+    grid-template-columns: 1fr;
+  }
+  .ares-mv-grid {
+    gap: 14px;
+    padding: 12px;
+  }
+  .ares-mv-slot {
+    min-height: 210px;
+  }
+  .ares-mv-title {
+    font-size: 40px;
+  }
+  .ares-mv-picker-head {
+    flex-wrap: wrap;
+  }
+  .ares-mv-picker-title {
+    width: calc(100% - 50px);
+  }
+}
