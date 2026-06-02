@@ -452,7 +452,7 @@
     var isIframeEntry = entry.type === 'iframe' || guessTypeFromUrl(entry.url) === 'iframe' || isYoutubeUrl(entry.url);
     bar.innerHTML =
       '<div class="ares-mv-tile-title" title="' + htmlEscape(entry.title) + '">' + htmlEscape(entry.title) + '</div>' +
-      (isIframeEntry ? '' : '<button class="ares-mv-action" type="button" data-action="mute" title="Son / muet">🔇</button>') +
+      (isIframeEntry ? '<button class="ares-mv-action" type="button" data-action="reload" title="Actualiser le cadre">↻</button>' : '<button class="ares-mv-action" type="button" data-action="mute" title="Son / muet">🔇</button>') +
       '<button class="ares-mv-action" type="button" data-action="replace" title="Remplacer">＋</button>' +
       '<button class="ares-mv-action" type="button" data-action="full" title="Plein écran">⛶</button>' +
       '<button class="ares-mv-action is-danger" type="button" data-action="remove" title="Retirer">✕</button>';
@@ -466,6 +466,7 @@
       if (action === 'replace') openPicker(index);
       if (action === 'full') requestSlotFullscreen(slot);
       if (action === 'mute') toggleSlotAudio(slot, btn);
+      if (action === 'reload') reloadSlotFrame(slot, btn);
     });
 
     return slot;
@@ -532,6 +533,30 @@
 
     video.muted = nextMuted;
     btn.textContent = video.muted ? '🔇' : '🔊';
+  }
+
+  function reloadSlotFrame(slot, btn) {
+    var frame = slot.querySelector('iframe');
+    if (!frame) return;
+
+    var currentSrc = frame.getAttribute('src') || frame.src || '';
+    if (!currentSrc) return;
+
+    btn.disabled = true;
+    btn.textContent = '…';
+
+    try {
+      frame.src = 'about:blank';
+    } catch (e) {}
+
+    window.setTimeout(function () {
+      try {
+        frame.src = currentSrc;
+      } catch (e2) {}
+
+      btn.textContent = '↻';
+      btn.disabled = false;
+    }, 120);
   }
 
   function requestSlotFullscreen(slot) {
