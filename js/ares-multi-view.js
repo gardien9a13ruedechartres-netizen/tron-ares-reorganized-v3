@@ -21,6 +21,7 @@
   var externalJsonChannels = [];
   var externalJsonLoaded = false;
   var externalJsonLoading = false;
+  var externalPlaybackSnapshot = null;
 
   /*
     Sources JSON externes lues par le module Multi-View.
@@ -291,6 +292,73 @@
     return true;
   }
 
+
+  function isInsideMultiViewNode(node) {
+    if (!node || !node.closest) return false;
+    return !!node.closest('#aresMultiView, #aresMvPicker');
+  }
+
+  function snapshotExternalPlayback() {
+    if (externalPlaybackSnapshot) return;
+
+    externalPlaybackSnapshot = {
+      media: [],
+      frames: []
+    };
+
+    document.querySelectorAll('video,audio').forEach(function (media) {
+      if (isInsideMultiViewNode(media)) return;
+
+      externalPlaybackSnapshot.media.push({
+        el: media,
+        muted: !!media.muted,
+        volume: typeof media.volume === 'number' ? media.volume : 1
+      });
+
+      try { media.muted = true; } catch (e) {}
+      try { media.volume = 0; } catch (e2) {}
+    });
+
+    /*
+      Le son d'une iframe externe ne peut pas être coupé proprement par JavaScript
+      quand le lecteur vient d'un autre domaine. Pour éviter le son en arrière-plan,
+      on suspend temporairement l'iframe externe, puis on restaure son URL à la sortie.
+      Les iframes des mini players Multi-View sont exclues.
+    */
+    document.querySelectorAll('iframe').forEach(function (frame) {
+      if (isInsideMultiViewNode(frame)) return;
+
+      var src = frame.getAttribute('src') || '';
+      if (!src || src === 'about:blank') return;
+
+      externalPlaybackSnapshot.frames.push({
+        el: frame,
+        src: src
+      });
+
+      try { frame.src = 'about:blank'; } catch (e) {}
+    });
+  }
+
+  function restoreExternalPlayback() {
+    if (!externalPlaybackSnapshot) return;
+
+    externalPlaybackSnapshot.media.forEach(function (item) {
+      var media = item.el;
+      if (!media || !media.isConnected) return;
+      try { media.muted = item.muted; } catch (e) {}
+      try { media.volume = item.volume; } catch (e2) {}
+    });
+
+    externalPlaybackSnapshot.frames.forEach(function (item) {
+      var frame = item.el;
+      if (!frame || !frame.isConnected) return;
+      try { frame.src = item.src; } catch (e) {}
+    });
+
+    externalPlaybackSnapshot = null;
+  }
+
   function bindEvents() {
     if (refs.toggleBtn) {
       refs.toggleBtn.addEventListener('click', function () {
@@ -319,10 +387,12 @@
     refs.main.classList.toggle('multi-view-active', state.enabled);
     if (refs.toggleBtn) refs.toggleBtn.classList.toggle('is-active', state.enabled);
     if (state.enabled) {
+      snapshotExternalPlayback();
       renderGrid();
     } else {
       closePicker();
       destroyAllPlayers();
+      restoreExternalPlayback();
     }
   }
 
@@ -379,9 +449,10 @@
 
     var bar = document.createElement('div');
     bar.className = 'ares-mv-tile-bar';
+    var isIframeEntry = entry.type === 'iframe' || guessTypeFromUrl(entry.url) === 'iframe' || isYoutubeUrl(entry.url);
     bar.innerHTML =
       '<div class="ares-mv-tile-title" title="' + htmlEscape(entry.title) + '">' + htmlEscape(entry.title) + '</div>' +
-      '<button class="ares-mv-action" type="button" data-action="mute" title="Son / muet">🔇</button>' +
+      (isIframeEntry ? '' : '<button class="ares-mv-action" type="button" data-action="mute" title="Son / muet">🔇</button>') +
       '<button class="ares-mv-action" type="button" data-action="replace" title="Remplacer">＋</button>' +
       '<button class="ares-mv-action" type="button" data-action="full" title="Plein écran">⛶</button>' +
       '<button class="ares-mv-action is-danger" type="button" data-action="remove" title="Retirer">✕</button>';
