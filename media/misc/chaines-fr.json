@@ -644,7 +644,7 @@
       },
       "group": "Jeunesse",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": false
     },
     {
       "name": "DreamWorks",
