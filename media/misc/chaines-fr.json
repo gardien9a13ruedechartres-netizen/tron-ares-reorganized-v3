@@ -681,14 +681,14 @@
     },
     {
       "name": "Gulli",
-      "url": "https://poland.assistancefrancaise.com/hls/transcoder03/23/tracks-v1a1/mono.ts.m3u8",
+      "url": "https://test.victor-salema-53d.workers.dev/?url=https://lbcdn.6cloud.fr/resource/m6web/l/gulli_hls_sd_short_q2hyb21h.m3u8?groups[]=m6web-live-gulli_ext",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Gulli%20logo%202023.png"
       },
       "group": "Jeunesse",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "name": "Télétoon",
