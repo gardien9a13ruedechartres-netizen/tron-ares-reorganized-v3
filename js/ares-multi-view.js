@@ -391,7 +391,7 @@
       renderGrid();
     } else {
       closePicker();
-      destroyAllPlayers();
+      renderGrid();
       restoreExternalPlayback();
     }
   }
@@ -419,6 +419,15 @@
 
     destroyAllPlayers();
     refs.grid.innerHTML = '';
+
+    /*
+      Sécurité son : tant que le mode Multi-View n'est pas sélectionné,
+      aucun mini player Multi-View ne doit rester chargé en arrière-plan.
+      C'est important surtout pour les iframes : elles ne peuvent pas être
+      mutées proprement, donc on ne les crée/recharge que lorsque Multi-View
+      est actif.
+    */
+    if (!state.enabled) return;
 
     for (var i = 0; i < state.layout; i += 1) {
       refs.grid.appendChild(renderSlot(i));
