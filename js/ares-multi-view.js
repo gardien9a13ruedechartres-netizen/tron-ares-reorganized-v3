@@ -18,6 +18,18 @@
   var refs = {};
   var hlsBySlot = new Map();
   var pickerSlot = 0;
+  var externalJsonChannels = [];
+  var externalJsonLoaded = false;
+  var externalJsonLoading = false;
+
+  /*
+    Sources JSON externes lues par le module Multi-View.
+    Chemins relatifs uniquement : le module reste indépendant de tron-ares.js.
+  */
+  var EXTERNAL_JSON_SOURCES = [
+    'media/misc/chaines-pt.json',
+    'chaines-pt.json'
+  ];
 
   function ready(fn) {
     if (document.readyState === 'loading') {
@@ -63,6 +75,98 @@
 
   function isYoutubeUrl(url) {
     return /(^|\.)youtube\.com|(^|\.)youtu\.be/i.test(String(url || ''));
+  }
+
+
+  function isIframeFriendlyUrl(url) {
+    var value = String(url || '').trim();
+    if (!value) return false;
+    if (isYoutubeUrl(value)) return true;
+    return /(^|\.)dailymotion\.com|(^|\.)twitch\.tv|(^|\.)vimeo\.com|(^|\.)odysee\.com|(^|\.)rumble\.com/i.test(value);
+  }
+
+  function isDirectMediaUrl(url) {
+    var value = String(url || '').split('#')[0].split('?')[0].toLowerCase();
+    return /\.(m3u8|mpd|mp4|m4v|webm|ogv|mov|ts|mp3|aac|m4a|ogg|wav|flac)$/i.test(value);
+  }
+
+  function guessTypeFromUrl(url) {
+    var value = String(url || '').trim();
+    if (!value) return 'stream';
+    if (isDirectMediaUrl(value)) return 'stream';
+    if (isIframeFriendlyUrl(value)) return 'iframe';
+    /*
+      Beaucoup de chaînes PT sont des lecteurs web/overlays et non des fichiers vidéo directs.
+      Dans ce cas, on les ouvre en iframe dans les mini players.
+    */
+    return 'iframe';
+  }
+
+  function normalizeLogo(raw, fallbackText) {
+    if (!raw) return { src: '', text: fallbackText || '?' };
+    if (typeof raw === 'string') return { src: raw, text: fallbackText || '?' };
+    if (typeof raw === 'object') {
+      if (raw.type === 'image' && raw.value) return { src: String(raw.value), text: fallbackText || '?' };
+      if (raw.value) return { src: '', text: String(raw.value).slice(0, 2) };
+    }
+    return { src: '', text: fallbackText || '?' };
+  }
+
+  function normalizeJsonItems(payload) {
+    if (Array.isArray(payload)) return payload;
+    if (payload && Array.isArray(payload.items)) return payload.items;
+    if (payload && Array.isArray(payload.channels)) return payload.channels;
+    if (payload && Array.isArray(payload.data)) return payload.data;
+    return [];
+  }
+
+  function normalizeJsonChannel(item, sourceLabel) {
+    if (!item || typeof item !== 'object') return null;
+    var url = normalizeText(item.url || item.src || item.link || item.href || item.stream || item.iframe, '');
+    if (!url) return null;
+    var title = normalizeText(item.name || item.title || item.label || item.tvgName, 'Chaîne sans titre');
+    var group = normalizeText(item.group || item.category || item.country || sourceLabel || 'chaines-pt.json', 'chaines-pt.json');
+    var logo = normalizeLogo(item.logo || item.tvgLogo || item.image || item.icon, title.slice(0, 2));
+    var explicitIframe = item.isIframe === true || item.type === 'iframe' || item.kind === 'iframe' || item.listType === 'iframe';
+    var explicitStream = item.isIframe === false && (item.type === 'stream' || item.kind === 'stream' || isDirectMediaUrl(url));
+    var type = explicitIframe ? 'iframe' : (explicitStream ? 'stream' : guessTypeFromUrl(url));
+    return {
+      title: title,
+      group: group,
+      url: url,
+      type: type,
+      logo: logo.src,
+      logoText: logo.text || title.slice(0, 2),
+      source: sourceLabel || 'chaines-pt.json'
+    };
+  }
+
+  async function loadExternalJsonChannels() {
+    if (externalJsonLoaded || externalJsonLoading) return externalJsonChannels;
+    externalJsonLoading = true;
+
+    var found = false;
+    for (var i = 0; i < EXTERNAL_JSON_SOURCES.length; i += 1) {
+      var source = EXTERNAL_JSON_SOURCES[i];
+      try {
+        var res = await fetch(source, { cache: 'no-store' });
+        if (!res.ok) continue;
+        var payload = await res.json();
+        var items = normalizeJsonItems(payload);
+        if (!items.length) continue;
+        externalJsonChannels = items
+          .map(function (item) { return normalizeJsonChannel(item, 'chaines-pt.json'); })
+          .filter(Boolean);
+        found = true;
+        break;
+      } catch (e) {}
+    }
+
+    externalJsonLoaded = true;
+    externalJsonLoading = false;
+
+    if (!found) externalJsonChannels = [];
+    return externalJsonChannels;
   }
 
   function youtubeToEmbed(url) {
@@ -166,7 +270,7 @@
         '<div class="ares-mv-picker-card" role="dialog" aria-modal="true" aria-label="Ajouter une chaîne au multi-view">' +
           '<div class="ares-mv-picker-head">' +
             '<div class="ares-mv-picker-title">Ajouter une chaîne</div>' +
-            '<input id="aresMvPickerSearch" class="ares-mv-picker-search" type="text" placeholder="Rechercher dans les listes chargées…" autocomplete="off" spellcheck="false">' +
+            '<input id="aresMvPickerSearch" class="ares-mv-picker-search" type="text" placeholder="Rechercher chaînes FR, PT, iFrames, favoris…" autocomplete="off" spellcheck="false">' +
             '<button id="aresMvPickerClose" class="ares-mv-picker-close" type="button" title="Fermer">✕</button>' +
           '</div>' +
           '<div id="aresMvList" class="ares-mv-list"></div>' +
@@ -300,7 +404,7 @@
     var url = String(entry.url || '');
     if (!url) return;
 
-    if (entry.type === 'iframe' || isYoutubeUrl(url)) {
+    if (entry.type === 'iframe' || guessTypeFromUrl(url) === 'iframe' || isYoutubeUrl(url)) {
       var frame = document.createElement('iframe');
       frame.allow = 'autoplay; fullscreen; picture-in-picture; encrypted-media';
       frame.allowFullscreen = true;
@@ -380,6 +484,9 @@
     refs.picker.setAttribute('aria-hidden', 'false');
     refs.pickerSearch.value = '';
     renderPickerList();
+    loadExternalJsonChannels().then(function () {
+      if (refs.picker.classList.contains('is-open')) renderPickerList();
+    });
     setTimeout(function () { refs.pickerSearch.focus(); }, 30);
   }
 
@@ -394,37 +501,50 @@
       '#channelFrList .channel-item[data-url]',
       '#channelList .channel-item[data-url]',
       '#iframeList .channel-item[data-url]',
-      '#favoriteList .channel-item[data-url]'
+      '#favoriteList .channel-item[data-url]',
+      '#torrentList .channel-item[data-url]'
     ];
+
+    function addEntry(entry) {
+      if (!entry || !entry.url) return;
+      var key = String(entry.url) + '|' + String(entry.title || '');
+      if (map.has(key)) return;
+      map.set(key, entry);
+    }
 
     selectors.forEach(function (selector) {
       document.querySelectorAll(selector).forEach(function (item) {
         var url = item.dataset.url || '';
         if (!url) return;
 
-        var type = item.dataset.type || '';
+        var rawType = item.dataset.type || '';
         var title = normalizeText(
           item.querySelector('.channel-title') && item.querySelector('.channel-title').textContent,
           'Chaîne sans titre'
         );
         var group = normalizeText(
           item.querySelector('.channel-sub') && item.querySelector('.channel-sub').textContent,
-          type || 'Flux'
+          rawType || 'Flux'
         );
         var logoImg = item.querySelector('.channel-logo img');
         var logoText = normalizeText(item.querySelector('.channel-logo') && item.querySelector('.channel-logo').textContent, title.slice(0, 1));
-        var key = url + '|' + title;
-        if (map.has(key)) return;
-        map.set(key, {
+        var hasIframeChip = !!item.querySelector('.tag-chip--iframe, [data-type="iframe"], [data-iframe="true"]');
+        var isIframeList = !!item.closest('#iframeList');
+        var type = (rawType === 'iframe' || hasIframeChip || isIframeList) ? 'iframe' : guessTypeFromUrl(url);
+
+        addEntry({
           title: title,
           group: group,
           url: url,
-          type: type === 'iframe' ? 'iframe' : 'stream',
+          type: type,
           logo: logoImg ? logoImg.src : '',
-          logoText: logoText || title.slice(0, 1)
+          logoText: logoText || title.slice(0, 1),
+          source: isIframeList ? 'Onglet PT / iFrame' : 'Page'
         });
       });
     });
+
+    externalJsonChannels.forEach(addEntry);
 
     return Array.from(map.values());
   }
@@ -438,7 +558,7 @@
 
     refs.list.innerHTML = '';
     if (!channels.length) {
-      refs.list.innerHTML = '<div class="ares-mv-empty-picker">Aucune chaîne disponible. Ouvre d’abord un onglet avec des chaînes chargées, puis reviens ici.</div>';
+      refs.list.innerHTML = '<div class="ares-mv-empty-picker">Aucune chaîne disponible. Le module cherche dans les listes visibles et dans media/misc/chaines-pt.json.</div>';
       return;
     }
 
@@ -453,7 +573,7 @@
         '<span class="ares-mv-list-logo">' + logo + '</span>' +
         '<span class="ares-mv-list-meta">' +
           '<span class="ares-mv-list-title">' + htmlEscape(entry.title) + '</span>' +
-          '<span class="ares-mv-list-sub">' + htmlEscape(entry.group) + '</span>' +
+          '<span class="ares-mv-list-sub">' + htmlEscape(entry.group + ' • ' + (entry.type === 'iframe' ? 'IFRAME' : 'STREAM')) + '</span>' +
         '</span>';
       btn.addEventListener('click', function () {
         state.slots[pickerSlot] = entry;
@@ -472,5 +592,6 @@
     bindEvents();
     updateLayoutUi();
     renderGrid();
+    loadExternalJsonChannels();
   });
 })();
