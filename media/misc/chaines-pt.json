@@ -307,7 +307,7 @@
 {
 "id": "turkey",
 "name": "turkey",
-"url": "/pages/cmtv.html",
+"url": "https://lecteur-wavewatch-search-title-fixed4.victor-salema-53d.workers.dev/",
 "logo": { "type": "image", "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/sports-tv-tr.png" },
 "group": "Sport",
 "isFavorite": false,
