@@ -305,9 +305,9 @@
 "isIframe": true
 },
 {
-"id": "turkey",
-"name": "turkey",
-"url": "https://lecteur-wavewatch-search-title-fixed4.victor-salema-53d.workers.dev/",
+"id": "serie-film",
+"name": "serie-film",
+"url": "https://lecteur-wavewatch-universal-stable.victor-salema-53d.workers.dev",
 "logo": { "type": "image", "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/sports-tv-tr.png" },
 "group": "Sport",
 "isFavorite": false,
