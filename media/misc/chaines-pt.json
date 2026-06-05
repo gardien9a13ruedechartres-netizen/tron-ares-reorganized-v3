@@ -305,15 +305,26 @@
 "isIframe": true
 },
 {
-"id": "serie-film",
-"name": "serie-film",
-"url": "https://lecteur-wavewatch-universal-stable.victor-salema-53d.workers.dev",
-"logo": { "type": "image", "value": "https://cdn.jsdelivr.net/gh/imagesloads/images@main/img_2a20cb1c6c16084b.png" },
-"objectFit": "fill",
-"height": "55px",
-"group": "Sport",
-"isFavorite": false,
-"isIframe": true
+  "id": "serie-film",
+  "name": "serie-film",
+  "url": "https://lecteur-wavewatch-universal-stable.victor-salema-53d.workers.dev",
+  "logo": {
+    "type": "image",
+    "value": "https://cdn.jsdelivr.net/gh/imagesloads/images@main/img_2a20cb1c6c16084b.png",
+    "style": {
+      "width": "120px",
+      "height": "120px",
+      "borderRadius": "20px",
+      "objectFit": "contain",
+      "backgroundColor": "#000000",
+      "padding": "10px",
+      "boxShadow": "0 4px 12px rgba(0,0,0,0.35)"
+    }
+  },
+  "group": "Sport",
+  "isFavorite": false,
+  "isIframe": true
 }
+
 ]
 }
