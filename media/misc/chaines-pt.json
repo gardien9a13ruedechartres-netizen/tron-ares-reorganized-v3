@@ -308,7 +308,7 @@
 "id": "serie-film",
 "name": "serie-film",
 "url": "https://lecteur-wavewatch-universal-stable.victor-salema-53d.workers.dev",
-"logo": { "type": "image", "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/sports-tv-tr.png" },
+"logo": { "type": "image", "value": "https://cdn.jsdelivr.net/gh/imagesloads/images@main/img_195320ceaa2c67b5.png" },
 "group": "Sport",
 "isFavorite": false,
 "isIframe": true
