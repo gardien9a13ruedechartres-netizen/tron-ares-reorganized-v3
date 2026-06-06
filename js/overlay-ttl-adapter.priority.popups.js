@@ -120,7 +120,7 @@
         path === "/pages/cstar.html" ||
         path === "/pages/switchcm.html" ||
         path === "/pages/tvi2.html" ||
-        path === "/" ||
+        path === "/pages/wave.html" ||
         path === "/" ||
         path === "/"
     );

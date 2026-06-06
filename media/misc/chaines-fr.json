@@ -1153,7 +1153,7 @@
     },
     {
       "name": "film-serie",
-      "url": "https://wavewatch.top/movies?provider=56",
+      "url": "/pages/wave.html",
       "logo": {
         "type": "image",
         "value": "https://cdn.jsdelivr.net/gh/imagesloads/images@main/img_64e9b89d869cac54.png"
