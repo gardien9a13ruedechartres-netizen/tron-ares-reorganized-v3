@@ -1152,6 +1152,18 @@
       "isIframe": false
     },
     {
+      "name": "film-serie",
+      "url": "https://wavewatch.top/movies?provider=56",
+      "logo": {
+        "type": "image",
+        "value": "https://cdn.jsdelivr.net/gh/imagesloads/images@main/img_64e9b89d869cac54.png"
+      },
+      "group": "Info",
+      "isFavorite": false,
+      "isIframe": true
+    },
+
+    {
       "name": "LCI",
       "url": "https://tvradiozap.eu/tools/tf-m3u8.php/LCI.m3u8",
       "logo": {
