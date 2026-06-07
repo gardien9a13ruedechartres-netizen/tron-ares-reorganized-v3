@@ -121,7 +121,7 @@
         path === "/pages/switchcm.html" ||
         path === "/pages/tvi2.html" ||
         path === "/pages/wave.html" ||
-        path === "https://streamingnow.mov/" ||
+        path === "/pages/serie-film.html" ||
         path === "/"
     );
     } catch {

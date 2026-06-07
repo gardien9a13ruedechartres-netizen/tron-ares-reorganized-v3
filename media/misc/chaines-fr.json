@@ -18,7 +18,7 @@
     {
   "id": "serie-film",
   "name": "serie-film",
-  "url": "https://lecteur-wavewatch-universal-stable.victor-salema-53d.workers.dev",
+  "url": "/pages/serie-film.html",
   "logo": {
     "type": "image",
     "value": "https://cdn.jsdelivr.net/gh/imagesloads/images@main/img_1a8b19085214ccd5.png",
