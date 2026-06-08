@@ -8,8 +8,7 @@
    - YouTube / youtube-nocookie doit être traité à part :
      * referrerpolicy="origin"
      * PAS de sandbox restrictif
-   - /pages/cmlive1.html, /pages/cmlive2.html, https://livewatch.top/channels/Portugal + France
-     et https://lecteur-wavewatch-universal-stable.victor-salema-53d.workers.dev/ :
+   - /pages/cmlive1.html, /pages/cmlive2.html et https://livewatch.top/channels/Portugal + France :
      * referrerpolicy="origin"
      * PAS de sandbox restrictif
    - /pages/test6.html :
@@ -105,19 +104,6 @@
     }
   }
 
-  function isWavewatchUniversalWorkerUrl(url) {
-    try {
-      const u = new URL(String(url || ""), window.location.href);
-
-      return (
-        u.protocol === "https:" &&
-        u.hostname === "lecteur-wavewatch-universal-stable.victor-salema-53d.workers.dev"
-      );
-    } catch {
-      return false;
-    }
-  }
-
   function isCMLivePortugalPageUrl(url) {
     try {
       const u = new URL(String(url || ""), window.location.href);
@@ -135,7 +121,7 @@
         path === "/pages/switchcm.html" ||
         path === "/pages/tvi2.html" ||
         path === "/pages/wave.html" ||
-        path === "" ||
+        path === "/pages/serie-film.html" ||
         path === "/"
     );
     } catch {
@@ -166,7 +152,6 @@
     return (
       isLivewatchChannelAllowed(url) ||
       isLivewatchPlayerUrl(url) ||
-      isWavewatchUniversalWorkerUrl(url) ||
       isCMLivePortugalPageUrl(url) ||
       isGeneratedPlayerPageUrl(url)
     );
@@ -189,7 +174,7 @@
     if (!s || s === "about:blank") return;
 
     if (isYouTubeUrl(s) || isNoSandboxExceptionUrl(s)) {
-      // ✅ Cas autorisés sans sandbox : YouTube + exceptions Livewatch / Wavewatch.
+      // ✅ Cas autorisés sans sandbox : YouTube + exception Livewatch Portugal.
       try {
         iframeEl.setAttribute(
           "allow",
