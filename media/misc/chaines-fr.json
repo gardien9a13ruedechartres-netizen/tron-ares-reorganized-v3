@@ -127,14 +127,14 @@
     {
       "id": "tmc",
       "name": "TMC",
-      "url": "https://tmc.victor-salema-53d.workers.dev/",
+      "url": "https://tvradiozap.eu/tools/m3u-m3u8.php/para/TMC.m3u8",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/TMC%20logo.jpg"
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": false
     },
     {
       "id": "tfx",
