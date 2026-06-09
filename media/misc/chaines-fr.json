@@ -127,14 +127,14 @@
     {
       "id": "tmc",
       "name": "TMC",
-      "url": "https://poland.assistancefrancaise.com/hls/transcoder03/9/tracks-v1a1/mono.ts.m3u8",
+      "url": "https://tmc.victor-salema-53d.workers.dev/",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/TMC%20logo.jpg"
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "tfx",
