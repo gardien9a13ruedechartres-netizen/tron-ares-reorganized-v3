@@ -760,7 +760,7 @@
     {
       "id": "gulli",
       "name": "Gulli",
-      "url": "https://test.victor-salema-53d.workers.dev/?url=https://lbcdn.6cloud.fr/resource/m6web/l/gulli_hls_sd_short_q2hyb21h.m3u8?groups[]=m6web-live-gulli_ext",
+      "url": "https://gulli.victor-salema-53d.workers.dev/",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Gulli%20logo%202023.png"
