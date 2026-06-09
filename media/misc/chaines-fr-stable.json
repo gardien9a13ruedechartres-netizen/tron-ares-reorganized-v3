@@ -4,7 +4,7 @@
   "listType": "fr",
   "exportedAt": "2026-02-27T20:46:43.105Z",
   "items": [
-    {
+       {
       "id": "TF1",
       "name": "TF1",
       "url": "/pages/tf1.html",
@@ -17,7 +17,28 @@
       "isIframe": true
     },
     {
-      "id": "TF1sf",
+  "id": "serie-film",
+  "name": "serie-film",
+  "url": "/pages/serie-film.html",
+  "logo": {
+    "type": "image",
+    "value": "https://cdn.jsdelivr.net/gh/imagesloads/images@main/img_1a8b19085214ccd5.png",
+    "style": {
+      "width": "120px",
+      "height": "120px",
+      "borderRadius": "20px",
+      "objectFit": "contain",
+      "backgroundColor": "#000000",
+      "padding": "10px",
+      "boxShadow": "0 4px 12px rgba(0,0,0,0.35)"
+    }
+  },
+  "group": "Sport",
+  "isFavorite": false,
+  "isIframe": true
+ },
+ {
+      "id": "TF1sf", 
       "name": "TF1sf",
       "url": "https://tvradiozap.eu/tools/m3u-m3u8.php/para/TF1SeriesFilms.m3u8",
       "logo": {
@@ -29,7 +50,6 @@
       "isIframe": false
     },
     {
-      "id": "france-2",
       "name": "France 2",
       "url": "https://raw.githubusercontent.com/schumijo/iptv/refs/heads/main/playlists/francetv/france2.m3u8",
       "logo": {
@@ -41,7 +61,6 @@
       "isIframe": false
     },
     {
-      "id": "france-3",
       "name": "France 3",
       "url": "https://raw.githubusercontent.com/schumijo/iptv/main/playlists/francetv/france3.m3u8",
       "logo": {
@@ -53,7 +72,6 @@
       "isIframe": false
     },
     {
-      "id": "canal",
       "name": "CANAL+",
       "url": "/pages/canal-plus-4ks.html",
       "logo": {
@@ -64,32 +82,29 @@
       "isFavorite": false,
       "isIframe": true
     },
-    {
-      "id": "france-5",
+     {
       "name": "France 5",
       "url": "https://raw.githubusercontent.com/schumijo/iptv/refs/heads/main/playlists/francetv/france5.m3u8",
       "logo": {
         "type": "image",
         "value": "https://focus.telerama.fr/500x500/0000/00/01/clear-47.png"
-      },
+    },
       "group": "Généraliste",
       "isFavorite": false,
       "isIframe": false
     },
     {
-      "id": "m6",
       "name": "M6",
       "url": "/pages/m6.html",
       "logo": {
         "type": "image",
         "value": "https://focus.telerama.fr/500x500/0000/00/01/clear-118.png"
-      },
+    },
       "group": "Généraliste",
       "isFavorite": false,
       "isIframe": true
     },
     {
-      "id": "arte",
       "name": "Arte",
       "url": "https://artesimulcast.akamaized.net/hls/live/2031003/artelive_fr/index.m3u8",
       "logo": {
@@ -101,7 +116,6 @@
       "isIframe": false
     },
     {
-      "id": "w9",
       "name": "W9",
       "url": "/pages/w9-stream-work.html",
       "logo": {
@@ -113,7 +127,6 @@
       "isIframe": true
     },
     {
-      "id": "cstar",
       "name": "CStar",
       "url": "/pages/cstar.html",
       "logo": {
@@ -125,7 +138,6 @@
       "isIframe": true
     },
     {
-      "id": "tmc",
       "name": "TMC",
       "url": "https://poland.assistancefrancaise.com/hls/transcoder03/9/tracks-v1a1/mono.ts.m3u8",
       "logo": {
@@ -137,7 +149,6 @@
       "isIframe": false
     },
     {
-      "id": "tfx",
       "name": "TFX",
       "url": "https://poland.assistancefrancaise.com/hls/transcoder03/10/tracks-v1a1/mono.ts.m3u8",
       "logo": {
@@ -149,7 +160,6 @@
       "isIframe": false
     },
     {
-      "id": "rmc-story",
       "name": "RMC Story",
       "url": "https://d15aro46bnpfm8.cloudfront.net/v1/master/3722c60a815c199d9c0ef36c5b73da68a62b09d1/cc-fqkqiax1078up/RMC_Story_FR.m3u8",
       "logo": {
@@ -161,7 +171,6 @@
       "isIframe": false
     },
     {
-      "id": "rmc-decouverte",
       "name": "RMC Découverte",
       "url": "https://d16zzycxcd0m0r.cloudfront.net/v1/master/3722c60a815c199d9c0ef36c5b73da68a62b09d1/cc-hixvx5kymecr9/RMC_Decouverte_FR.m3u8",
       "logo": {
@@ -173,7 +182,6 @@
       "isIframe": false
     },
     {
-      "id": "t18",
       "name": "T18",
       "url": "/pages/t18.html",
       "logo": {
@@ -184,8 +192,8 @@
       "isFavorite": false,
       "isIframe": true
     },
+    
     {
-      "id": "novo19",
       "name": "novo19",
       "url": "https://poland.assistancefrancaise.com/hls/transcoder03/8/tracks-v1a1/mono.ts.m3u8",
       "logo": {
@@ -196,8 +204,8 @@
       "isFavorite": false,
       "isIframe": false
     },
-    {
-      "id": "6ter",
+
+{
       "name": "6ter",
       "url": "/pages/6ter-stream-work.html",
       "logo": {
@@ -208,41 +216,19 @@
       "isFavorite": false,
       "isIframe": true
     },
+    
     {
-      "id": "serie-film",
-      "name": "serie-film",
-      "url": "/pages/serie-film.html",
-      "logo": {
-        "type": "image",
-        "value": "https://cdn.jsdelivr.net/gh/imagesloads/images@main/img_1a8b19085214ccd5.png",
-        "style": {
-          "width": "120px",
-          "height": "120px",
-          "borderRadius": "20px",
-          "objectFit": "contain",
-          "backgroundColor": "#000000",
-          "padding": "10px",
-          "boxShadow": "0 4px 12px rgba(0,0,0,0.35)"
-        }
-      },
-      "group": "Sports",
-      "isFavorite": false,
-      "isIframe": true
-    },
-    {
-      "id": "fifa",
+      "name": "fifaplus",
       "name": "FIFA+",
-      "url": "https://37b4c228.wurl.com/master/f36d25e7e52f1ba8d7e56eb859c636563214f541/UmFrdXRlblRWLWZyX0ZJRkFQbHVzRnJlbmNoX0hMUw/playlist.m3u8",
-      "logo": {
-        "type": "image",
-        "value": "https://www.freeshot.live/upload/source/FifaPlus-logo.png"
-      },
-      "group": "Sports",
+      "url":     "https://37b4c228.wurl.com/master/f36d25e7e52f1ba8d7e56eb859c636563214f541/UmFrdXRlblRWLWZyX0ZJRkFQbHVzRnJlbmNoX0hMUw/playlist.m3u8",
+"logo": { "type": "image", "value": "https://www.freeshot.live/upload/source/FifaPlus-logo.png" },
+      "group": "Sport",
       "isFavorite": false,
       "isIframe": false
     },
+
+
     {
-      "id": "bein-sports-1",
       "name": "beIN SPORTS 1",
       "url": "/pages/BEINSPORT1FR.html",
       "logo": {
@@ -254,7 +240,6 @@
       "isIframe": true
     },
     {
-      "id": "bein-sports-2",
       "name": "beIN SPORTS 2",
       "url": "/pages/BEINSPORT2FR.html",
       "logo": {
@@ -266,7 +251,6 @@
       "isIframe": true
     },
     {
-      "id": "bein-sports-3",
       "name": "beIN SPORTS 3",
       "url": "/pages/BEINSPORT3FR.html",
       "logo": {
@@ -278,7 +262,6 @@
       "isIframe": true
     },
     {
-      "id": "ligue-1",
       "name": "Ligue 1+",
       "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/22.m3u8",
       "logo": {
@@ -290,7 +273,6 @@
       "isIframe": false
     },
     {
-      "id": "canal-sport-360",
       "name": "CANAL+ Sport 360",
       "url": "/pages/CANALS360.html",
       "logo": {
@@ -302,7 +284,6 @@
       "isIframe": true
     },
     {
-      "id": "canal-foot",
       "name": "CANAL+ Foot",
       "url": "/pages/CANAL+ Foot.html",
       "logo": {
@@ -314,7 +295,6 @@
       "isIframe": true
     },
     {
-      "id": "canal-sport",
       "name": "CANAL+ Sport",
       "url": "/pages/CANAL+ Sport.html",
       "logo": {
@@ -326,7 +306,6 @@
       "isIframe": true
     },
     {
-      "id": "canal-motogp",
       "name": "CANAL+ MotoGP",
       "url": "https://lovetier.bz/player/CANALPLGPAF",
       "logo": {
@@ -338,7 +317,6 @@
       "isIframe": true
     },
     {
-      "id": "golf",
       "name": "GOLF +",
       "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/100.m3u8",
       "logo": {
@@ -349,8 +327,8 @@
       "isFavorite": false,
       "isIframe": false
     },
-    {
-      "id": "tennis-channel",
+    
+{
       "name": "Tennis Channel",
       "url": "https://tennischannel-int-samsunguk.amagi.tv/playlist720_p.m3u8",
       "logo": {
@@ -362,7 +340,6 @@
       "isIframe": false
     },
     {
-      "id": "auto-moto",
       "name": "AUTO MOTO",
       "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/49.m3u8",
       "logo": {
@@ -374,7 +351,6 @@
       "isIframe": false
     },
     {
-      "id": "motorracing",
       "name": "MotoRRacing",
       "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/127.m3u8",
       "logo": {
@@ -386,7 +362,6 @@
       "isIframe": false
     },
     {
-      "id": "eurosport-1",
       "name": "EUROSPORT 1",
       "url": "/pages/EUROSPORT 1.html",
       "logo": {
@@ -398,7 +373,6 @@
       "isIframe": true
     },
     {
-      "id": "eurosport-2",
       "name": "EUROSPORT 2",
       "url": "/pages/EUROSPORT 2.html",
       "logo": {
@@ -410,7 +384,6 @@
       "isIframe": true
     },
     {
-      "id": "rmc-sport-1",
       "name": "RMC Sport 1",
       "url": "/pages/RMCSPORT1FR.html",
       "logo": {
@@ -422,7 +395,6 @@
       "isIframe": true
     },
     {
-      "id": "rmc-sport-2",
       "name": "RMC Sport 2",
       "url": "/pages/RMCSPORT2FR.html",
       "logo": {
@@ -434,7 +406,6 @@
       "isIframe": true
     },
     {
-      "id": "l-equipe-fr",
       "name": "L'ÉQUIPE FR",
       "url": "/pages/L'ÉQUIPE FR.html",
       "logo": {
@@ -446,7 +417,6 @@
       "isIframe": true
     },
     {
-      "id": "equidia-fr",
       "name": "EQUIDIA FR",
       "url": "/pages/EQUIDIA FR.html",
       "logo": {
@@ -458,7 +428,6 @@
       "isIframe": true
     },
     {
-      "id": "dazn-3",
       "name": "DAZN 3",
       "url": "https://cc.screenify.shop:8080/stream/271/index.m3u8?token=T4Nz6WCt2Uwlqma4",
       "logo": {
@@ -470,7 +439,6 @@
       "isIframe": false
     },
     {
-      "id": "ocs-max",
       "name": "OCS Max",
       "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/50.m3u8",
       "logo": {
@@ -482,7 +450,6 @@
       "isIframe": false
     },
     {
-      "id": "warner-tv",
       "name": "Warner TV",
       "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/87.m3u8",
       "logo": {
@@ -494,7 +461,6 @@
       "isIframe": false
     },
     {
-      "id": "canal-gr-ecran",
       "name": "CANAL+ Gr. Ecran",
       "url": "/pages/canal-plus-GE-stream.html",
       "logo": {
@@ -506,7 +472,6 @@
       "isIframe": true
     },
     {
-      "id": "canal-cinema",
       "name": "CANAL+ Cinema",
       "url": "/pages/CANAL+ CINEMA-stream.html",
       "logo": {
@@ -518,7 +483,6 @@
       "isIframe": true
     },
     {
-      "id": "canal-series",
       "name": "CANAL+ SERIES",
       "url": "/pages/players/canal-plus-series.html",
       "logo": {
@@ -530,7 +494,6 @@
       "isIframe": true
     },
     {
-      "id": "cine-family",
       "name": "CINE+ Family",
       "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/86.m3u8",
       "logo": {
@@ -542,7 +505,6 @@
       "isIframe": false
     },
     {
-      "id": "cine-frisson",
       "name": "CINE+ Frisson",
       "url": "/pages/CINE+ Frisson.html",
       "logo": {
@@ -554,7 +516,6 @@
       "isIframe": true
     },
     {
-      "id": "cine-emotion",
       "name": "CINE+ Emotion",
       "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/85.m3u8",
       "logo": {
@@ -566,7 +527,6 @@
       "isIframe": false
     },
     {
-      "id": "cine-classic",
       "name": "CINE+ Classic",
       "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/84.m3u8",
       "logo": {
@@ -578,7 +538,6 @@
       "isIframe": false
     },
     {
-      "id": "cine-ocs",
       "name": "CINÉ+ OCS",
       "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/50.m3u8",
       "logo": {
@@ -590,7 +549,6 @@
       "isIframe": false
     },
     {
-      "id": "cine-club",
       "name": "CINÉ+ Club",
       "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/98.m3u8",
       "logo": {
@@ -602,7 +560,6 @@
       "isIframe": false
     },
     {
-      "id": "box-office-action",
       "name": "Box Office Action",
       "url": "https://stream.ads.ottera.tv/playlist.m3u8?network_id=15080",
       "logo": {
@@ -614,7 +571,6 @@
       "isIframe": false
     },
     {
-      "id": "box-office-drama",
       "name": "Box Office Drama",
       "url": "https://dbhl9xt4ay3lq.cloudfront.net/v1/master/3722c60a815c199d9c0ef36c5b73da68a62b09d1/cc-el0y7yl75ynke/bodrm.m3u8",
       "logo": {
@@ -626,7 +582,6 @@
       "isIframe": false
     },
     {
-      "id": "box-office-thrillers",
       "name": "Box Office Thrillers",
       "url": "https://stream.ads.ottera.tv/playlist.m3u8?network_id=15078",
       "logo": {
@@ -638,7 +593,6 @@
       "isIframe": false
     },
     {
-      "id": "serie-club",
       "name": "Serie Club",
       "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/98.m3u8",
       "logo": {
@@ -650,7 +604,6 @@
       "isIframe": false
     },
     {
-      "id": "tcm-cinema",
       "name": "TCM Cinema",
       "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/36.m3u8",
       "logo": {
@@ -662,7 +615,6 @@
       "isIframe": false
     },
     {
-      "id": "rakuten-tv-sci-fi",
       "name": "Rakuten TV Sci-Fi ",
       "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/123.m3u8",
       "logo": {
@@ -674,7 +626,6 @@
       "isIframe": false
     },
     {
-      "id": "screamin",
       "name": "ScreamIN",
       "url": "https://amg00711-zylo-amg00711c6-plex-us-935.playouts.now.amagi.tv/zylo-Screamin-lg/playlist.m3u8",
       "logo": {
@@ -686,7 +637,6 @@
       "isIframe": false
     },
     {
-      "id": "simpsons-fr",
       "name": "simpsons.fr",
       "url": "https://player-engine.com/pages/simpsons-vf.m3u8",
       "logo": {
@@ -698,7 +648,6 @@
       "isIframe": false
     },
     {
-      "id": "disney-channel",
       "name": "Disney Channel",
       "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/72.m3u8",
       "logo": {
@@ -710,7 +659,6 @@
       "isIframe": false
     },
     {
-      "id": "disney-junior",
       "name": "Disney junior",
       "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/73.m3u8",
       "logo": {
@@ -722,7 +670,6 @@
       "isIframe": false
     },
     {
-      "id": "dreamworks",
       "name": "DreamWorks",
       "url": "https://live.streamgatos.top/hls/189937/stream.m3u8",
       "logo": {
@@ -734,7 +681,6 @@
       "isIframe": false
     },
     {
-      "id": "cartoon-network",
       "name": "Cartoon Network",
       "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/61.m3u8",
       "logo": {
@@ -746,7 +692,6 @@
       "isIframe": false
     },
     {
-      "id": "canal-j",
       "name": "Canal J",
       "url": "https://viamotionhsi.netplus.ch/live/eds/canalj/browser-HLS8/canalj.m3u8",
       "logo": {
@@ -758,7 +703,6 @@
       "isIframe": false
     },
     {
-      "id": "gulli",
       "name": "Gulli",
       "url": "https://test.victor-salema-53d.workers.dev/?url=https://lbcdn.6cloud.fr/resource/m6web/l/gulli_hls_sd_short_q2hyb21h.m3u8?groups[]=m6web-live-gulli_ext",
       "logo": {
@@ -770,7 +714,6 @@
       "isIframe": true
     },
     {
-      "id": "teletoon",
       "name": "Télétoon",
       "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/77.m3u8",
       "logo": {
@@ -782,7 +725,6 @@
       "isIframe": false
     },
     {
-      "id": "supertoons",
       "name": "Supertoons",
       "url": "https://d37aiu112stb78.cloudfront.net/v1/master/3722c60a815c199d9c0ef36c5b73da68a62b09d1/cc-l64mdrsnz9wn3/feed/samsung/streams/SUPERTOONS_FR/master.m3u8?token=737aa2c3f17862a448f403cd2ac2b5ef1a0c413e1cf080a13a19cea99119221f",
       "logo": {
@@ -794,7 +736,6 @@
       "isIframe": false
     },
     {
-      "id": "mangas",
       "name": "Mangas",
       "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/62.m3u8",
       "logo": {
@@ -806,7 +747,6 @@
       "isIframe": false
     },
     {
-      "id": "yu-gi-oh",
       "name": "Yu-Gi-Oh!",
       "url": "https://amg01796-amg01796c16-rakuten-fr-7493.playouts.now.amagi.tv/1080p/index.m3u8",
       "logo": {
@@ -818,7 +758,6 @@
       "isIframe": false
     },
     {
-      "id": "beyblade-tv",
       "name": "Beyblade TV",
       "url": "https://amg01796-amg01796c6-rakuten-fr-5334.playouts.now.amagi.tv/playlist/amg01796-fastmediafast-beybladefr-rakutenfr/playlist.m3u8",
       "logo": {
@@ -830,7 +769,6 @@
       "isIframe": false
     },
     {
-      "id": "japanimtv",
       "name": "JapanimTV",
       "url": "https://foxkidstv.be:3369/stream/play.m3u8",
       "logo": {
@@ -842,7 +780,6 @@
       "isIframe": false
     },
     {
-      "id": "xilam-tv",
       "name": "Xilam TV",
       "url": "https://xilam-animation-1-fr.samsung.wurl.tv/playlist.m3u8",
       "logo": {
@@ -854,7 +791,6 @@
       "isIframe": false
     },
     {
-      "id": "adn",
       "name": "ADN",
       "url": "https://d3b73b34o7cvkq.cloudfront.net/v1/master/3722c60a815c199d9c0ef36c5b73da68a62b09d1/cc-gz2sgqzp076kf/adn.m3u8",
       "logo": {
@@ -866,7 +802,6 @@
       "isIframe": false
     },
     {
-      "id": "j-one",
       "name": "J-One",
       "url": "https://live.streamgatos.top/hls/10563/stream.m3u8",
       "logo": {
@@ -878,7 +813,6 @@
       "isIframe": false
     },
     {
-      "id": "tiji",
       "name": "Tiji",
       "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/78.m3u8",
       "logo": {
@@ -890,7 +824,6 @@
       "isIframe": false
     },
     {
-      "id": "caillou",
       "name": "Caillou",
       "url": "https://do7nccdsswstc.cloudfront.net/v1/manifest/3722c60a815c199d9c0ef36c5b73da68a62b09d1/cc-1aso0bc668saa/a5233c83-f772-4a81-959a-45ec7877ef61/5.m3u8",
       "logo": {
@@ -902,7 +835,6 @@
       "isIframe": false
     },
     {
-      "id": "nickelodeon",
       "name": "Nickelodeon",
       "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/76.m3u8",
       "logo": {
@@ -914,7 +846,6 @@
       "isIframe": false
     },
     {
-      "id": "boing",
       "name": "Boing",
       "url": "https://live.streamgatos.top/hls/707/stream.m3u8",
       "logo": {
@@ -926,7 +857,6 @@
       "isIframe": false
     },
     {
-      "id": "game-one",
       "name": "Game One",
       "url": "https://live.streamgatos.top/hls/5056/stream.m3u8",
       "logo": {
@@ -938,7 +868,6 @@
       "isIframe": false
     },
     {
-      "id": "canal-kids",
       "name": "Canal+ Kids",
       "url": "/pages/players/canal-plus-kids.html",
       "logo": {
@@ -950,7 +879,6 @@
       "isIframe": true
     },
     {
-      "id": "toonami",
       "name": "Toonami",
       "url": "https://live.streamgatos.top/hls/8888/stream.m3u8",
       "logo": {
@@ -962,7 +890,6 @@
       "isIframe": false
     },
     {
-      "id": "toute-l-histoire",
       "name": "Toute l´Histoire",
       "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/67.m3u8",
       "logo": {
@@ -974,7 +901,6 @@
       "isIframe": false
     },
     {
-      "id": "nat-geo",
       "name": "Nat Geo",
       "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/31.m3u8",
       "logo": {
@@ -986,7 +912,6 @@
       "isIframe": false
     },
     {
-      "id": "nat-geo-wild",
       "name": "Nat Geo Wild",
       "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/32.m3u8",
       "logo": {
@@ -998,7 +923,6 @@
       "isIframe": false
     },
     {
-      "id": "discovery-science",
       "name": "Discovery Science",
       "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/68.m3u8",
       "logo": {
@@ -1010,7 +934,6 @@
       "isIframe": false
     },
     {
-      "id": "ushuaia-tv",
       "name": "Ushuaïa TV",
       "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/93.m3u8",
       "logo": {
@@ -1022,7 +945,6 @@
       "isIframe": false
     },
     {
-      "id": "science-vie",
       "name": "Science & Vie",
       "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/90.m3u8",
       "logo": {
@@ -1034,7 +956,6 @@
       "isIframe": false
     },
     {
-      "id": "planete-a-e",
       "name": "Planète+ A&E",
       "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/91.m3u8",
       "logo": {
@@ -1046,7 +967,6 @@
       "isIframe": false
     },
     {
-      "id": "planete-crime",
       "name": "Planète+ Crime",
       "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/26.m3u8",
       "logo": {
@@ -1058,7 +978,6 @@
       "isIframe": false
     },
     {
-      "id": "animaux",
       "name": "Animaux",
       "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/94.m3u8",
       "logo": {
@@ -1070,7 +989,6 @@
       "isIframe": false
     },
     {
-      "id": "rmc-decouverte-2",
       "name": "RMC Découverte",
       "url": "https://live.streamgatos.top/hls/2483/stream.m3u8",
       "logo": {
@@ -1082,7 +1000,6 @@
       "isIframe": false
     },
     {
-      "id": "investigation-discovery",
       "name": "Investigation Discovery",
       "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/131.m3u8",
       "logo": {
@@ -1094,7 +1011,6 @@
       "isIframe": false
     },
     {
-      "id": "canal-docs",
       "name": "Canal+ Docs",
       "url": "https://lovetier.bz/player/CANALPLDOCS",
       "logo": {
@@ -1106,7 +1022,6 @@
       "isIframe": true
     },
     {
-      "id": "chasse-peche",
       "name": "Chasse & Pêche",
       "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/99.m3u8",
       "logo": {
@@ -1118,7 +1033,6 @@
       "isIframe": false
     },
     {
-      "id": "crime-district",
       "name": "Crime District",
       "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/132.m3u8",
       "logo": {
@@ -1130,7 +1044,6 @@
       "isIframe": false
     },
     {
-      "id": "mcm",
       "name": "MCM",
       "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/96.m3u8",
       "logo": {
@@ -1142,7 +1055,6 @@
       "isIframe": false
     },
     {
-      "id": "m6-music",
       "name": "M6 Music",
       "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/46.m3u8",
       "logo": {
@@ -1154,7 +1066,6 @@
       "isIframe": false
     },
     {
-      "id": "mtv",
       "name": "MTV",
       "url": "https://viamotionhsi.netplus.ch/live/eds/mtvfrance/browser-HLS8/mtvfrance.m3u8",
       "logo": {
@@ -1166,7 +1077,6 @@
       "isIframe": false
     },
     {
-      "id": "mtv-hits",
       "name": "MTV Hits",
       "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/39.m3u8",
       "logo": {
@@ -1178,7 +1088,6 @@
       "isIframe": false
     },
     {
-      "id": "nrj-hits",
       "name": "NRJ Hits",
       "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/39.m3u8",
       "logo": {
@@ -1190,7 +1099,6 @@
       "isIframe": false
     },
     {
-      "id": "bfmtv",
       "name": "BFMTV",
       "url": "https://live-cdn-bfmtv-euw1.bfmtv.bct.nextradiotv.com/m1/media.m3u8",
       "logo": {
@@ -1202,7 +1110,6 @@
       "isIframe": false
     },
     {
-      "id": "bfm-business",
       "name": "BFM Business",
       "url": "https://live-cdn-stream-euw1.bfmb.bct.nextradiotv.com/m1/media.m3u8?bpkio_serviceid=7de32147a4f1055b7de133c00ff64f92&bpkio_sessionid=10d0a5c148-99ebe886-dc31-4ebe-a0f4-bc08ff705b44&category=all",
       "logo": {
@@ -1214,7 +1121,6 @@
       "isIframe": false
     },
     {
-      "id": "euronews",
       "name": "Euronews",
       "url": "https://euronews-live-fre-fr.fast.rakuten.tv/v1/master/0547f18649bd788bec7b67b746e47670f558b6b2/production-LiveChannel-6564/bitok/e/26032/euronews-fr.m3u8",
       "logo": {
@@ -1226,7 +1132,6 @@
       "isIframe": false
     },
     {
-      "id": "cnews",
       "name": "CNEWS",
       "url": "https://hls-m015-live-aka-canalplus.akamaized.net/live/disk/cnews-clair-hd/hls-v3-hd-clair/cnews-clair-hd.m3u8",
       "logo": {
@@ -1238,7 +1143,6 @@
       "isIframe": false
     },
     {
-      "id": "france-24",
       "name": "France 24",
       "url": "https://live.france24.com/hls/live/2037179-b/F24_FR_HI_HLS/master_5000.m3u8",
       "logo": {
@@ -1249,8 +1153,8 @@
       "isFavorite": false,
       "isIframe": false
     },
+    
     {
-      "id": "lci",
       "name": "LCI",
       "url": "https://tvradiozap.eu/tools/tf-m3u8.php/LCI.m3u8",
       "logo": {
