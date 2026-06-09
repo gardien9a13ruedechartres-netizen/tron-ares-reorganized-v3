@@ -139,14 +139,14 @@
     {
       "id": "tfx",
       "name": "TFX",
-      "url": "https://poland.assistancefrancaise.com/hls/transcoder03/10/tracks-v1a1/mono.ts.m3u8",
+      "url": "https://tfx.victor-salema-53d.workers.dev/",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/TFX%20logo.svg"
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "rmc-story",
