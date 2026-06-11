@@ -115,42 +115,6 @@
 "isIframe": false
 },
 {
-"id": "canal-panda",
-"name": "CANAL PANDA",
-"url": "/pages/canal-panda.html",
-"logo": { "type": "image", "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/canal-panda-pt.png" },
-"group": "Généraliste",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "DISNEY-PIXAR",
-"name": "DISNEY PIXAR",
-"url": "/pages/disney-pixar-work.html",
-"logo": { "type": "image", "value": "https://raw.githubusercontent.com/gardien9a13ruedechartres-netizen/cmtv/refs/heads/main/disney-pixar.png" },
-"group": "Généraliste",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "SYFY",
-"name": "SYFY",
-"url": "/pages/SYFY-stream.html",
-"logo": { "type": "image", "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/argentina/syfy-ar.png" },
-"group": "Généraliste",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "STAR-COMEDY",
-"name": "STAR-COMEDY",
-"url": "/pages/STAR-COMEDY-stream.html",
-"logo": { "type": "image", "value": "https://raw.githubusercontent.com/gardien9a13ruedechartres-netizen/cmtv/refs/heads/main/logo-star.png" },
-"group": "Généraliste",
-"isFavorite": false,
-"isIframe": true
-},
-{
 "id": "fifaplus",
 "name": "FIFA+",
 "url": "https://f7ccf7fc.wurl.com/master/f36d25e7e52f1ba8d7e56eb859c636563214f541/UmFrdXRlblRWLXB0X0ZJRkFQbHVzUG9ydHVndWVzZV9ITFM/playlist.m3u8",
