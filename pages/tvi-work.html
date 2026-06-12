@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<style>
+html,
+body{
+    margin:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#000;
+}
+
+#wrap{
+    position:fixed;
+    inset:0;
+}
+
+iframe{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    border:0;
+}
+
+.controlButton{
+    position:fixed;
+    z-index:9999;
+    width:48px;
+    height:48px;
+    border:0;
+    border-radius:999px;
+    background:rgba(255,255,255,.15);
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#fff;
+    font-size:22px;
+    line-height:1;
+}
+
+.controlButton:hover{
+    background:rgba(255,255,255,.25);
+}
+
+#switchButton{
+    top:12px;
+    right:12px;
+}
+
+#refreshButton{
+    top:12px;
+    right:72px;
+}
+
+#switchButton::before{
+    content:"⇄";
+}
+
+#refreshButton::before{
+    content:"↻";
+}
+</style>
+</head>
+
+<body>
+
+<div id="wrap"></div>
+
+<button id="refreshButton" class="controlButton" title="Actualiser"></button>
+<button id="switchButton" class="controlButton" title="Changer de lecteur"></button>
+
+<script>
+const IFRAME_1_URL = 'https://tvi.victor-salema-53d.workers.dev/';
+const IFRAME_2_URL = 'https://popcdn.day/player.php?stream=TVI';
+
+const wrap = document.getElementById('wrap');
+
+let currentFrame = null;
+let currentIndex = 1;
+
+function createFrame(url){
+
+    const iframe = document.createElement('iframe');
+
+    iframe.allow =
+        'autoplay; fullscreen; picture-in-picture; encrypted-media';
+
+    iframe.allowFullscreen = true;
+
+    iframe.referrerPolicy =
+        'strict-origin-when-cross-origin';
+
+    iframe.sandbox =
+        'allow-scripts allow-same-origin allow-forms allow-presentation allow-popups';
+
+    iframe.src = url;
+
+    return iframe;
+}
+
+function destroyFrame(frame){
+
+    if(!frame) return;
+
+    try{
+
+        /*
+         Stop immédiat audio/video
+        */
+        frame.src = 'about:blank';
+
+    }catch(e){}
+
+    /*
+     Retire du DOM
+    */
+    frame.remove();
+}
+
+function getCurrentUrl(){
+
+    return currentIndex === 1
+        ? IFRAME_1_URL
+        : IFRAME_2_URL;
+}
+
+function loadFrame(index){
+
+    /*
+     Détruit totalement l'ancienne iframe
+    */
+    destroyFrame(currentFrame);
+
+    /*
+     Choisit URL
+    */
+    const url =
+        index === 1
+        ? IFRAME_1_URL
+        : IFRAME_2_URL;
+
+    /*
+     Crée nouvelle iframe
+    */
+    currentFrame = createFrame(url);
+
+    /*
+     Ajoute au DOM
+    */
+    wrap.appendChild(currentFrame);
+
+    currentIndex = index;
+}
+
+function refreshCurrentFrame(){
+
+    /*
+     Recharge totalement l'iframe actuelle
+     en la détruisant puis en la recréant
+    */
+    destroyFrame(currentFrame);
+
+    currentFrame = createFrame(getCurrentUrl());
+
+    wrap.appendChild(currentFrame);
+}
+
+/*
+ Chargement initial
+*/
+loadFrame(1);
+
+/*
+ Switch
+*/
+document
+.getElementById('switchButton')
+.addEventListener('click',()=>{
+
+    if(currentIndex === 1){
+
+        loadFrame(2);
+
+    }else{
+
+        loadFrame(1);
+    }
+});
+
+/*
+ Refresh
+*/
+document
+.getElementById('refreshButton')
+.addEventListener('click',()=>{
+
+    refreshCurrentFrame();
+});
+</script>
+
+</body>
+</html>
