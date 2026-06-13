@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
-
 <style>
 html,
 body{
@@ -28,10 +27,8 @@ iframe{
     border:0;
 }
 
-#switchButton{
+.controlButton{
     position:fixed;
-    top:12px;
-    right:12px;
     z-index:9999;
     width:48px;
     height:48px;
@@ -39,7 +36,36 @@ iframe{
     border-radius:999px;
     background:rgba(255,255,255,.15);
     backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
     cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#fff;
+    font-size:22px;
+    line-height:1;
+}
+
+.controlButton:hover{
+    background:rgba(255,255,255,.25);
+}
+
+#switchButton{
+    top:12px;
+    right:12px;
+}
+
+#refreshButton{
+    top:12px;
+    right:72px;
+}
+
+#switchButton::before{
+    content:"⇄";
+}
+
+#refreshButton::before{
+    content:"↻";
 }
 </style>
 </head>
@@ -48,12 +74,11 @@ iframe{
 
 <div id="wrap"></div>
 
-<button id="switchButton">
-
-</button>
+<button id="refreshButton" class="controlButton" title="Actualiser"></button>
+<button id="switchButton" class="controlButton" title="Changer de lecteur"></button>
 
 <script>
-const IFRAME_1_URL = 'https://tf1.victor-salema-53d.workers.dev/?url=https://cluone.dad:443/live/99F7CFCD396779DC13E1FEF9BA9F9AE8/32.m3u8';
+const IFRAME_1_URL = 'https://tf1-work.victor-salema-53d.workers.dev/';
 const IFRAME_2_URL = 'https://tf1.victor-salema-53d.workers.dev/';
 
 const wrap = document.getElementById('wrap');
@@ -100,6 +125,13 @@ function destroyFrame(frame){
     frame.remove();
 }
 
+function getCurrentUrl(){
+
+    return currentIndex === 1
+        ? IFRAME_1_URL
+        : IFRAME_2_URL;
+}
+
 function loadFrame(index){
 
     /*
@@ -128,6 +160,19 @@ function loadFrame(index){
     currentIndex = index;
 }
 
+function refreshCurrentFrame(){
+
+    /*
+     Recharge totalement l'iframe actuelle
+     en la détruisant puis en la recréant
+    */
+    destroyFrame(currentFrame);
+
+    currentFrame = createFrame(getCurrentUrl());
+
+    wrap.appendChild(currentFrame);
+}
+
 /*
  Chargement initial
 */
@@ -148,6 +193,16 @@ document
 
         loadFrame(1);
     }
+});
+
+/*
+ Refresh
+*/
+document
+.getElementById('refreshButton')
+.addEventListener('click',()=>{
+
+    refreshCurrentFrame();
 });
 </script>
 
