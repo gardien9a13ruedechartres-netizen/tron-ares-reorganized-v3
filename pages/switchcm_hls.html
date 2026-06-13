@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<style>
+html,
+body{
+    margin:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#000;
+}
+
+#wrap{
+    position:fixed;
+    inset:0;
+}
+
+iframe,
+video{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    border:0;
+    background:#000;
+}
+
+video{
+    object-fit:contain;
+}
+
+.controlButton{
+    position:fixed;
+    z-index:9999;
+    width:48px;
+    height:48px;
+    border:0;
+    border-radius:999px;
+    background:rgba(255,255,255,.15);
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#fff;
+    font-size:22px;
+    line-height:1;
+}
+
+.controlButton:hover{
+    background:rgba(255,255,255,.25);
+}
+
+#switchButton{
+    top:12px;
+    right:12px;
+}
+
+#refreshButton{
+    top:12px;
+    right:72px;
+}
+
+#switchButton::before{
+    content:"⇄";
+}
+
+#refreshButton::before{
+    content:"↻";
+}
+
+#playerInfo{
+    position:fixed;
+    z-index:9999;
+    top:72px;
+    right:12px;
+    min-width:48px;
+    padding:7px 10px;
+    border-radius:999px;
+    background:rgba(255,255,255,.15);
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+    color:#fff;
+    font-family:Arial, sans-serif;
+    font-size:13px;
+    text-align:center;
+    user-select:none;
+}
+
+#message{
+    position:fixed;
+    inset:0;
+    z-index:2;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    color:#fff;
+    font-family:Arial, sans-serif;
+    text-align:center;
+    background:#000;
+}
+
+#message.visible{
+    display:flex;
+}
+
+#messageBox{
+    max-width:560px;
+    padding:22px 24px;
+    border-radius:18px;
+    background:rgba(255,255,255,.10);
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+}
+
+#messageBox strong{
+    display:block;
+    margin-bottom:10px;
+    font-size:18px;
+}
+
+#messageBox span{
+    display:block;
+    font-size:14px;
+    line-height:1.5;
+    opacity:.9;
+}
+</style>
+</head>
+
+<body>
+
+<div id="wrap"></div>
+<div id="message">
+    <div id="messageBox">
+        <strong>Lecteur HLS non configuré</strong>
+        <span>Ajoute ton lien .m3u8 dans la constante HLS_URL pour activer cette troisième option.</span>
+    </div>
+</div>
+
+<button id="refreshButton" class="controlButton" title="Actualiser"></button>
+<button id="switchButton" class="controlButton" title="Changer de lecteur"></button>
+<div id="playerInfo"style="visibility: hidden;">1/3</div>
+
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<script>
+const IFRAME_1_URL = 'https://cm-tv.victor-salema-53d.workers.dev/';
+const IFRAME_2_URL = 'https://popcdn.day/player.php?stream=CMTVPT';
+
+/*
+ Remplace cette valeur par ton flux HLS .m3u8.
+ Exemple possible : 'stream.m3u8' ou une URL .m3u8 complète.
+*/
+const HLS_URL = 'https://plu002.myturn1.top:8088/live/agrrrrr/playlist.m3u8?id=121119&pk=55e0c5e758904f24491a24dcf7b039654e47682f5cc8226acfec022aa069037a97efe0dd35997ff317c02f8e36e20e9d2889f7ba287be187c48144df4d3b4b7a';
+
+const PLAYERS = [
+    {
+        type:'iframe',
+        label:'1/3',
+        url:IFRAME_1_URL
+    },
+    {
+        type:'iframe',
+        label:'2/3',
+        url:IFRAME_2_URL
+    },
+    {
+        type:'hls',
+        label:'HLS 3/3',
+        url:HLS_URL
+    }
+];
+
+const wrap = document.getElementById('wrap');
+const message = document.getElementById('message');
+const playerInfo = document.getElementById('playerInfo');
+
+let currentElement = null;
+let currentHls = null;
+let currentIndex = 0;
+
+function showMessage(show){
+    if(show){
+        message.classList.add('visible');
+    }else{
+        message.classList.remove('visible');
+    }
+}
+
+function createFrame(url){
+
+    const iframe = document.createElement('iframe');
+
+    iframe.allow =
+        'autoplay; fullscreen; picture-in-picture; encrypted-media';
+
+    iframe.allowFullscreen = true;
+
+    iframe.referrerPolicy =
+        'strict-origin-when-cross-origin';
+
+    iframe.sandbox =
+        'allow-scripts allow-same-origin allow-forms allow-presentation allow-popups';
+
+    iframe.src = url;
+
+    return iframe;
+}
+
+function createHlsPlayer(url){
+
+    const video = document.createElement('video');
+
+    video.controls = true;
+    video.autoplay = true;
+    video.playsInline = true;
+    video.muted = false;
+
+    if(!url || url === 'stream.m3u8'){
+        showMessage(true);
+        return video;
+    }
+
+    if(video.canPlayType('application/vnd.apple.mpegurl')){
+
+        video.src = url;
+        video.addEventListener('loadedmetadata',()=>{
+            video.play().catch(()=>{});
+        });
+
+    }else if(window.Hls && Hls.isSupported()){
+
+        currentHls = new Hls({
+            enableWorker:true,
+            lowLatencyMode:true
+        });
+
+        currentHls.loadSource(url);
+        currentHls.attachMedia(video);
+
+        currentHls.on(Hls.Events.MANIFEST_PARSED,()=>{
+            video.play().catch(()=>{});
+        });
+
+    }else{
+
+        showMessage(true);
+        message.querySelector('strong').textContent = 'HLS non supporté';
+        message.querySelector('span').textContent =
+            'Ce navigateur ne prend pas en charge ce flux HLS et hls.js n’est pas disponible.';
+    }
+
+    return video;
+}
+
+function destroyCurrentElement(){
+
+    if(currentHls){
+        try{
+            currentHls.destroy();
+        }catch(e){}
+        currentHls = null;
+    }
+
+    if(!currentElement) return;
+
+    try{
+
+        if(currentElement.tagName === 'IFRAME'){
+            currentElement.src = 'about:blank';
+        }
+
+        if(currentElement.tagName === 'VIDEO'){
+            currentElement.pause();
+            currentElement.removeAttribute('src');
+            currentElement.load();
+        }
+
+    }catch(e){}
+
+    currentElement.remove();
+    currentElement = null;
+}
+
+function loadPlayer(index){
+
+    destroyCurrentElement();
+    showMessage(false);
+
+    const player = PLAYERS[index];
+
+    if(player.type === 'iframe'){
+        currentElement = createFrame(player.url);
+    }
+
+    if(player.type === 'hls'){
+        currentElement = createHlsPlayer(player.url);
+    }
+
+    wrap.appendChild(currentElement);
+    currentIndex = index;
+    playerInfo.textContent = player.label;
+}
+
+function refreshCurrentPlayer(){
+    loadPlayer(currentIndex);
+}
+
+function switchPlayer(){
+    const nextIndex = (currentIndex + 1) % PLAYERS.length;
+    loadPlayer(nextIndex);
+}
+
+/*
+ Chargement initial
+*/
+loadPlayer(0);
+
+/*
+ Switch
+*/
+document
+.getElementById('switchButton')
+.addEventListener('click',()=>{
+    switchPlayer();
+});
+
+/*
+ Refresh
+*/
+document
+.getElementById('refreshButton')
+.addEventListener('click',()=>{
+    refreshCurrentPlayer();
+});
+</script>
+
+</body>
+</html>

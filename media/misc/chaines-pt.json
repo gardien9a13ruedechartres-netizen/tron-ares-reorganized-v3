@@ -9,7 +9,7 @@
 {
 "id": "cmtv",
 "name": "CMTV",
-"url": "/pages/switchcm.html",
+"url": "/pages/switchcm_hls.html",
 "logo": { "type": "image", "value": "/media/cmtv.png" },
 "group": "Généraliste",
 "isFavorite": false,
