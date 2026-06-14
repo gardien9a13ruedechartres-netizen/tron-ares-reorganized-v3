@@ -707,7 +707,7 @@
       },
       "group": "Jeunesse",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "disney-junior",
