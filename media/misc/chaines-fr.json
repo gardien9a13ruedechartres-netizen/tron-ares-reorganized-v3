@@ -700,7 +700,7 @@
     {
       "id": "disney-channel",
       "name": "Disney Channel",
-      "url": "https://disney-channel.victor-salema-53d.workers.dev/?src=https%3A%2F%2Fcluone.dad%3A443%2Flive%2F99F7CFCD396779DC13E1FEF9BA9F9AE8%2F22.m3u8",
+      "url": "/pages/disney-channel.html",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/2017%20Disney%20Channel%20logo.svg"
