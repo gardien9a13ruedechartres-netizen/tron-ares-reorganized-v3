@@ -72,11 +72,11 @@
 {
 "id": "cnnpt",
 "name": "CNN Portugal",
-"url": "/pages/CNN2.html",
+"url": "https://video-auth6.iol.pt/live_cnn/live_cnn/playlist.m3u8?wmsAuthSign=c2VydmVyX3RpbWU9Ni8xNS8yMDI2IDEwOjg6NTcgUE0maGFzaF92YWx1ZT1SNDJjUlF5VWZvY1NYVUhxT0pnSFlnPT0mdmFsaWRtaW51dGVzPTE0NDAmaWQ9MjdjOGE1MDMtOTA2OC00ZmE2LTkyNzItNzY3OTg4N2YwNDZk",
 "logo": { "type": "image", "value": "/media/cnn.png" },
 "group": "News",
 "isFavorite": false,
-"isIframe": true
+"isIframe": false
 },
 {
 "id": "rtp1",
