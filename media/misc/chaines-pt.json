@@ -36,11 +36,11 @@
 {
 "id": "tvif",
 "name": "TVI Ficção",
-"url": "/pages/tvi-ficcao-work.html",
+"url": "https://video-auth6.iol.pt/live_tvi_ficcao/live_tvi_ficcao/playlist.m3u8?wmsAuthSign=c2VydmVyX3RpbWU9Ni8xNS8yMDI2IDEwOjE6NDUgUE0maGFzaF92YWx1ZT1EVkp6L1Ntb0lZYVE3ZFZkN0s3ZlhBPT0mdmFsaWRtaW51dGVzPTE0NDAmaWQ9YjdiZDVmYzYtNWY0ZS00ZDkzLThjOWQtZThhNGE1ZTcwZGU4",
 "logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/commons/0/0d/TVI_Fic%C3%A7%C3%A3o_%282017%29.png" },
 "group": "Divertissement",
 "isFavorite": false,
-"isIframe": true
+"isIframe": false
 },
 {
 "id": "tvi-int",
