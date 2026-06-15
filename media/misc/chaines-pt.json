@@ -18,20 +18,20 @@
 {
 "id": "tvi",
 "name": "TVI",
-"url": "/pages/tvi-work.html",
+"url": "https://video-auth6.iol.pt/live_tvi/live_tvi/playlist.m3u8?wmsAuthSign=c2VydmVyX3RpbWU9Ni8xNS8yMDI2IDEwOjU6MjQgUE0maGFzaF92YWx1ZT1HVjRmcXg5WXl6ZlFJL1BHM2ZJUlp3PT0mdmFsaWRtaW51dGVzPTE0NDAmaWQ9NjgzMDM3ZTgtNTMyMy00MGNmLTk1YzgtODZhYzUxNWMyM2Ey",
 "logo": { "type": "image", "value": "/media/TVI.png" },
 "group": "Généraliste",
 "isFavorite": false,
-"isIframe": true
+"isIframe": false
 },
 {
 "id": "tvir",
 "name": "TVI Reality",
-"url": "/pages/tvi-reality-work.html",
+"url": "https://video-auth6.iol.pt/live_tvi_reality/live_tvi_reality/playlist.m3u8?wmsAuthSign=c2VydmVyX3RpbWU9Ni8xNS8yMDI2IDEwOjY6MTggUE0maGFzaF92YWx1ZT1qU1ZYYnVoQUhISXpFOXRYTUFINXR3PT0mdmFsaWRtaW51dGVzPTE0NDAmaWQ9OWE4YTM2YjItZjg2ZS00MzBjLTg5NjctNDBlM2ZmNTFjNTEw",
 "logo": { "type": "image", "value": "/media/tvir.jpg" },
 "group": "Divertissement",
 "isFavorite": false,
-"isIframe": true
+"isIframe": false
 },
 {
 "id": "tvif",
