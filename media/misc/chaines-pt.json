@@ -18,7 +18,7 @@
 {
 "id": "tvi",
 "name": "TVI",
-"url": "https://video-auth6.iol.pt/live_tvi/live_tvi/playlist.m3u8?wmsAuthSign=c2VydmVyX3RpbWU9Ni8xNS8yMDI2IDEwOjU6MjQgUE0maGFzaF92YWx1ZT1HVjRmcXg5WXl6ZlFJL1BHM2ZJUlp3PT0mdmFsaWRtaW51dGVzPTE0NDAmaWQ9NjgzMDM3ZTgtNTMyMy00MGNmLTk1YzgtODZhYzUxNWMyM2Ey",
+"url": "https://raw.githubusercontent.com/LITUATUI/M3UPT/refs/heads/main/M3U/TVI.m3u8",
 "logo": { "type": "image", "value": "/media/TVI.png" },
 "group": "Généraliste",
 "isFavorite": false,
@@ -27,7 +27,7 @@
 {
 "id": "tvir",
 "name": "TVI Reality",
-"url": "https://video-auth6.iol.pt/live_tvi_reality/live_tvi_reality/playlist.m3u8?wmsAuthSign=c2VydmVyX3RpbWU9Ni8xNS8yMDI2IDEwOjY6MTggUE0maGFzaF92YWx1ZT1qU1ZYYnVoQUhISXpFOXRYTUFINXR3PT0mdmFsaWRtaW51dGVzPTE0NDAmaWQ9OWE4YTM2YjItZjg2ZS00MzBjLTg5NjctNDBlM2ZmNTFjNTEw",
+"url": "https://raw.githubusercontent.com/LITUATUI/M3UPT/refs/heads/main/M3U/TVI_Reality.m3u8",
 "logo": { "type": "image", "value": "/media/tvir.jpg" },
 "group": "Divertissement",
 "isFavorite": false,
@@ -36,8 +36,17 @@
 {
 "id": "tvif",
 "name": "TVI Ficção",
-"url": "https://video-auth6.iol.pt/live_tvi_ficcao/live_tvi_ficcao/playlist.m3u8?wmsAuthSign=c2VydmVyX3RpbWU9Ni8xNS8yMDI2IDEwOjE6NDUgUE0maGFzaF92YWx1ZT1EVkp6L1Ntb0lZYVE3ZFZkN0s3ZlhBPT0mdmFsaWRtaW51dGVzPTE0NDAmaWQ9YjdiZDVmYzYtNWY0ZS00ZDkzLThjOWQtZThhNGE1ZTcwZGU4",
+"url": "https://raw.githubusercontent.com/LITUATUI/M3UPT/refs/heads/main/M3U/TVI_Ficcao.m3u8",
 "logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/commons/0/0d/TVI_Fic%C3%A7%C3%A3o_%282017%29.png" },
+"group": "Divertissement",
+"isFavorite": false,
+"isIframe": false
+},
+{
+"id": "v-mais",
+"name": "V MAIS",
+"url": "https://raw.githubusercontent.com/LITUATUI/M3UPT/refs/heads/main/M3U/Vmais_TVI.m3u8",
+"logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/pt/e/ef/V%2BTVI_Logo.png" },
 "group": "Divertissement",
 "isFavorite": false,
 "isIframe": false
@@ -72,7 +81,7 @@
 {
 "id": "cnnpt",
 "name": "CNN Portugal",
-"url": "https://video-auth6.iol.pt/live_cnn/live_cnn/playlist.m3u8?wmsAuthSign=c2VydmVyX3RpbWU9Ni8xNS8yMDI2IDEwOjg6NTcgUE0maGFzaF92YWx1ZT1SNDJjUlF5VWZvY1NYVUhxT0pnSFlnPT0mdmFsaWRtaW51dGVzPTE0NDAmaWQ9MjdjOGE1MDMtOTA2OC00ZmE2LTkyNzItNzY3OTg4N2YwNDZk",
+"url": "https://raw.githubusercontent.com/LITUATUI/M3UPT/refs/heads/main/M3U/CNN_Portugal.m3u8",
 "logo": { "type": "image", "value": "/media/cnn.png" },
 "group": "News",
 "isFavorite": false,
