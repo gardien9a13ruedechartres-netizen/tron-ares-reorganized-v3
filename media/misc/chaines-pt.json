@@ -99,7 +99,7 @@
 {
 "id": "rtp2",
 "name": "RTP2",
-"url": "/pages/rtp2.html",
+"url": "https://hlsplayers.pages.dev/player2?url=https://streaming-live.rtp.pt/liverepeater/rtp2HD.smil/playlist.m3u8",
 "logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/commons/f/f9/RTP2_logo_2016.svg" },
 "group": "Généraliste",
 "isFavorite": false,
