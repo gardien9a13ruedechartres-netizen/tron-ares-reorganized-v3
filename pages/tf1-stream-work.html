@@ -147,7 +147,7 @@ video {
 .debug {
   position: fixed;
   left: 14px;
-  bottom: 14px;
+  top: 14px;
   z-index: 25;
   max-width: min(760px, calc(100vw - 28px));
   max-height: 52vh;
@@ -156,7 +156,7 @@ video {
   padding: 10px 12px;
   border-radius: 14px;
   background: rgba(0, 0, 0, .0);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(0px);
   -webkit-backdrop-filter: blur(10px);
 }
 
@@ -229,7 +229,7 @@ video {
 <body>
   <main class="player-page">
     <section class="player-shell">
-      <video id="video" autoplay playsinline></video>
+      <video id="video" autoplay playsinline controls></video>
 
       <div class="top-controls">
         <button id="controlsButton" class="glass-button" type="button" aria-label="Afficher les contrôles">
@@ -244,7 +244,7 @@ video {
         </div>
       </div>
 
-      <div id="statusBar" class="status-bar">
+      <div id="statusBar" class="status-bar"style="visibility: hidden;" >
         <span id="statusText">Chargement du flux...</span>
       </div>
 
