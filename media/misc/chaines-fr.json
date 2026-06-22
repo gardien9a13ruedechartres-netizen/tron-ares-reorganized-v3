@@ -127,14 +127,14 @@
     {
       "id": "tmc",
       "name": "TMC",
-      "url": "https://tvradiozap.eu/tools/m3u-m3u8.php/para/TMC.m3u8",
+      "url": "https://salema-vic.github.io/Paradise/?channel=TMC.fr",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/TMC%20logo.jpg"
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "tfx",
@@ -187,14 +187,14 @@
     {
       "id": "novo19",
       "name": "novo19",
-      "url": "https://poland.assistancefrancaise.com/hls/transcoder03/8/tracks-v1a1/mono.ts.m3u8",
+      "url": "/pages/novo-19.html",
       "logo": {
         "type": "image",
         "value": "https://focus.telerama.fr/500x500/0000/00/01/clear-4138.png"
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "6ter",

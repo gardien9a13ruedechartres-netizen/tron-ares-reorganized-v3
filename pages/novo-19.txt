@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Stream4free Live - 6Ter</title>
+  <meta name="description" content="6Ter, une chaine tv du groupe m6. Stream hd en direct">
+
+  <link rel="stylesheet" href="https://vjs.zencdn.net/8.16.1/video-js.css">
+
+  <style>
+ * {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  background: #000;
+  overflow: hidden;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.player-page,
+.player-shell {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+}
+
+video {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  object-fit: fill;
+  background: #000;
+}
+  </style>
+</head>
+<body>					
+<script src="https://cdn.jsdelivr.net/npm/video.js@7.15.6/dist/video.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.16.3/shaka-player.ui.min.js"></script>
+<script src="https://www.unpkg.com/videojs-shaka@1.1.1/dist/videojs-shaka.min.js"></script>
+
+
+<div id="video-container" class="video-container">
+<div data-setup="{}" preload="auto" poster="/images/playerbackground/Novo19.jpg" class="video-js vjs-default-skin vjs-16-9 vjs-live-display vjs-big-play-centered live_player-dimensions vjs-controls-enabled vjs-workinghover vjs-v7 vjs-live vjs-playing vjs-has-started vjs-user-active" id="live_player" tabindex="-1" lang="en-gb" role="region" aria-label="Video Player"><video id="live_player_shaka_api" controls class="vjs-tech vjs-shaka" preload="auto" autoplay=""><source src="" type=""><track kind="subtitles" label="Français" srclang="fr" src="data:,WEBVTT"><track kind="captions" label="Français (Sourds et malentendants)" src="data:,WEBVTT"></video>
+
+</div>
+<script>let _0x46e;var url="https://5eb46ec-rbm-hilv-fsly.cdn.redbee.live/L6/8e2b4270/9fc956ca.isml/.mpd";_0x46e=735747^735744;let _0x_0x018;var options={"src":url,'type':"application/dash+xml"};_0x_0x018=(450650^450650)+(811108^811116);var player=videojs("reyalp_evil".split("").reverse().join(""),{"autoplay":!![],'techOrder':["akahs".split("").reverse().join("")],"shaka":{"debug":false,'configuration':{'drm':{'clearKeys':{"d49c8fa0c3a546e2ad4185d5e38611cd":"363ee79a774e401bfaa88cf22cad0099"}}}}});player['qualityPickerPlugin']();player['src'](options);</script>
+<script>var vid1=videojs('live_player');vid1.chromecast();vid1.persistvolume({namespace:"videojs-user-volume"});</script>
+  
+  
+</body>
+
+</html>
