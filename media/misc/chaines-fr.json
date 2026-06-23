@@ -115,14 +115,14 @@
     {
       "id": "cstar",
       "name": "CStar",
-      "url": "/pages/cstar.html",
+      "url": "https://workerdynamicmaster.victor-salema-53d.workers.dev/master.m3u8?ts=1782213853269",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20CStar%202016.svg"
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": false
     },
     {
       "id": "tmc",
