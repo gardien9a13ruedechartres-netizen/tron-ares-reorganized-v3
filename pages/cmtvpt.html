@@ -5,69 +5,46 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>Player HLS CMTVPT</title>
   <style>
-    :root { color-scheme: dark; }
-    * { box-sizing: border-box; }
     html, body {
       width: 100%;
       height: 100%;
-      min-height: 100dvh;
       margin: 0;
       padding: 0;
       overflow: hidden;
       background: #000;
-      -webkit-text-size-adjust: 100%;
-      overscroll-behavior: none;
-    }
-    body {
-      position: fixed;
-      inset: 0;
-      touch-action: manipulation;
     }
     video {
       position: fixed;
       inset: 0;
       width: 100vw;
       height: 100vh;
-      height: 100dvh;
-      max-width: 100%;
       object-fit: fill;
       background: #000;
     }
     #overlay {
       position: fixed;
-      left: max(12px, env(safe-area-inset-left));
-      right: max(12px, env(safe-area-inset-right));
-      bottom: max(12px, env(safe-area-inset-bottom));
+      left: 16px;
+      right: 16px;
+      bottom: 16px;
       z-index: 10;
       font-family: Arial, sans-serif;
       color: #fff;
-      background: rgba(0,0,0,.68);
+      background: rgba(0,0,0,.55);
       border: 1px solid rgba(255,255,255,.25);
-      border-radius: 12px;
+      border-radius: 10px;
       padding: 12px;
       line-height: 1.4;
-      font-size: clamp(13px, 3.5vw, 15px);
-      max-height: 42dvh;
-      overflow: auto;
-      -webkit-overflow-scrolling: touch;
     }
     #overlay.hidden { display: none; }
     button {
-      margin-top: 10px;
-      min-height: 44px;
-      padding: 11px 14px;
+      margin-top: 8px;
+      padding: 10px 14px;
       cursor: pointer;
       border: 0;
-      border-radius: 10px;
+      border-radius: 8px;
       font-weight: 700;
-      font-size: 16px;
-      touch-action: manipulation;
     }
-    code { word-break: break-word; overflow-wrap: anywhere; color: #d7f7ff; }
-    @media (orientation: landscape) and (max-height: 520px) {
-      #overlay { font-size: 12px; max-height: 55dvh; padding: 10px; }
-      button { min-height: 40px; font-size: 14px; }
-    }
+    code { word-break: break-all; color: #d7f7ff; }
   </style>
 </head>
 <body>
@@ -79,7 +56,7 @@
     <button id="playBtn">Activer lecture avec son</button>
   </div>
 
-  <script type="application/json" id="hls-data">{"url":"https://clouding.wideiptv.top/CMTVPT/index.fmp4.m3u8?token=28b790533898718b4069f331a418e2d8ed4bc25b-dd2703bce96d6b738fe871cd5c1431c6-1782424524-1782420924","urls":["https://clouding.wideiptv.top/CMTVPT/index.fmp4.m3u8?token=28b790533898718b4069f331a418e2d8ed4bc25b-dd2703bce96d6b738fe871cd5c1431c6-1782424524-1782420924"],"sourcePage":"https://gardien9a13ruedechartres-netizen.github.io/cmtv-chrome/","generatedAt":"2026-06-25T21:00:28.552Z"}</script>
+  <script type="application/json" id="hls-data">{"url":"https://clouding.wideiptv.top/CMTVPT/index.fmp4.m3u8?token=42bf9fd8e89ec1aeb9a88d1fb7f232a16f5511d7-3512ad313e7df9773ef4a54c190256b2-1782424722-1782421122","urls":["https://clouding.wideiptv.top/CMTVPT/index.fmp4.m3u8?token=42bf9fd8e89ec1aeb9a88d1fb7f232a16f5511d7-3512ad313e7df9773ef4a54c190256b2-1782424722-1782421122"],"sourcePage":"https://gardien9a13ruedechartres-netizen.github.io/cmtv-chrome/","generatedAt":"2026-06-25T21:03:46.388Z"}</script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
     const dataNode = document.getElementById('hls-data');
@@ -105,8 +82,6 @@
     video.volume = 1;
     video.autoplay = true;
     video.playsInline = true;
-    video.setAttribute('playsinline', '');
-    video.setAttribute('webkit-playsinline', '');
     video.style.objectFit = 'fill';
 
     function setMessage(text) { msg.textContent = text; }
@@ -149,8 +124,6 @@
     }
 
     playBtn.addEventListener('click', playWithSound);
-    video.addEventListener('click', playWithSound);
-    video.addEventListener('touchend', playWithSound, { passive: true });
     attachSource();
 
     console.log('URL HLS ciblée:', HLS_URL);
