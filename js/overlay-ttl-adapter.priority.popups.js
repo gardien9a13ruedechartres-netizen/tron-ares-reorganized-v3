@@ -124,8 +124,11 @@
         path === "/pages/serie-film.html" ||
         path === "/pages/switchcm-3-iframes.html" ||
         path === "/pages/cmtvpt.html" ||
+        path === "/pages/cmtvpt" ||
         path === "/pages/rtp1.html" ||
+        path === "/pages/rtp1" ||
         path === "/pages/rtp2.html" ||
+        path === "/pages/rtp2" ||
         path === "/"
     );
     } catch {
