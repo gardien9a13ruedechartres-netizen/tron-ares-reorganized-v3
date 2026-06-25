@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
   <title>Player HLS CMTVPT</title>
   <style>
     html, body {
@@ -12,6 +13,7 @@
       padding: 0;
       overflow: hidden;
       background: #000;
+      touch-action: manipulation;
     }
     video {
       position: fixed;
@@ -23,111 +25,171 @@
     }
     #overlay {
       position: fixed;
-      left: 16px;
-      right: 16px;
-      bottom: 16px;
+      left: 12px;
+      right: 12px;
+      bottom: calc(12px + env(safe-area-inset-bottom, 0px));
       z-index: 10;
       font-family: Arial, sans-serif;
       color: #fff;
-      background: rgba(0,0,0,.55);
+      background: rgba(0,0,0,.72);
       border: 1px solid rgba(255,255,255,.25);
-      border-radius: 10px;
+      border-radius: 12px;
       padding: 12px;
       line-height: 1.4;
+      box-sizing: border-box;
     }
     #overlay.hidden { display: none; }
+    #msg { margin-top: 6px; }
     button {
-      margin-top: 8px;
-      padding: 10px 14px;
+      margin-top: 10px;
+      padding: 12px 16px;
       cursor: pointer;
       border: 0;
-      border-radius: 8px;
+      border-radius: 10px;
       font-weight: 700;
+      font-size: 15px;
     }
     code { word-break: break-all; color: #d7f7ff; }
   </style>
 </head>
 <body>
-  <video id="video" controls autoplay playsinline webkit-playsinline></video>
+  <video id="video" controls autoplay muted playsinline webkit-playsinline preload="auto"></video>
   <div id="overlay">
-    <div><strong>Player HLS généré</strong></div>
+    <div><strong>Player HLS CMTVPT</strong></div>
     <div>URL ciblée : <code id="urlLabel"></code></div>
     <div id="msg">Chargement du player...</div>
-    <button id="playBtn">Activer lecture avec son</button>
+    <button id="soundBtn">Démarrer / activer le son</button>
   </div>
 
-  <script type="application/json" id="hls-data">{"url":"https://clouding.wideiptv.top/CMTVPT/index.fmp4.m3u8?token=4e267560f82ba413ec7796907f929ae5cc52dfff-9c73d4fc7c0cf5c7776e427c054d4acd-1782420599-1782416999","urls":["https://clouding.wideiptv.top/CMTVPT/index.fmp4.m3u8?token=4e267560f82ba413ec7796907f929ae5cc52dfff-9c73d4fc7c0cf5c7776e427c054d4acd-1782420599-1782416999"],"sourcePage":"https://gardien9a13ruedechartres-netizen.github.io/cmtv-chrome/","generatedAt":"2026-06-25T19:55:04.461Z"}</script>
+  <script type="application/json" id="hls-data">{"url":"https://clouding.wideiptv.top/CMTVPT/index.fmp4.m3u8?token=a0b9f455ceebf327c355bafa7ee03f3828c72b3b-cff217969599e9f338b14316e20b2a6f-1782423128-1782419528","urls":["https://clouding.wideiptv.top/CMTVPT/index.fmp4.m3u8?token=a0b9f455ceebf327c355bafa7ee03f3828c72b3b-cff217969599e9f338b14316e20b2a6f-1782423128-1782419528"],"sourcePage":"https://gardien9a13ruedechartres-netizen.github.io/cmtv-chrome/","generatedAt":"2026-06-25T20:37:12.057Z"}</script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
-    const dataNode = document.getElementById('hls-data');
-    const HLS_DATA = JSON.parse(dataNode.textContent || '{}');
-    const HLS_URL = String(HLS_DATA.url || '');
-    const ALL_TARGET_URLS = Array.isArray(HLS_DATA.urls) ? HLS_DATA.urls : [];
-    const SOURCE_PAGE = String(HLS_DATA.sourcePage || '');
-    const GENERATED_AT = String(HLS_DATA.generatedAt || '');
+    (function () {
+      'use strict';
 
-    const video = document.getElementById('video');
-    const overlay = document.getElementById('overlay');
-    const msg = document.getElementById('msg');
-    const playBtn = document.getElementById('playBtn');
-    const urlLabel = document.getElementById('urlLabel');
+      const dataNode = document.getElementById('hls-data');
+      const HLS_DATA = JSON.parse(dataNode.textContent || '{}');
+      const HLS_URL = String(HLS_DATA.url || '');
+      const ALL_TARGET_URLS = Array.isArray(HLS_DATA.urls) ? HLS_DATA.urls : [];
+      const SOURCE_PAGE = String(HLS_DATA.sourcePage || '');
+      const GENERATED_AT = String(HLS_DATA.generatedAt || '');
 
-    window.__CMTVPT_HLS_URL__ = HLS_URL;
-    window.__CMTVPT_HLS_URLS__ = ALL_TARGET_URLS;
-    window.__CMTVPT_SOURCE_PAGE__ = SOURCE_PAGE;
-    window.__CMTVPT_GENERATED_AT__ = GENERATED_AT;
+      const video = document.getElementById('video');
+      const overlay = document.getElementById('overlay');
+      const msg = document.getElementById('msg');
+      const soundBtn = document.getElementById('soundBtn');
+      const urlLabel = document.getElementById('urlLabel');
 
-    urlLabel.textContent = HLS_URL || '(aucune URL)';
-    video.muted = false;
-    video.volume = 1;
-    video.autoplay = true;
-    video.playsInline = true;
-    video.style.objectFit = 'fill';
+      let sourceAttached = false;
 
-    function setMessage(text) { msg.textContent = text; }
+      window.__CMTVPT_HLS_URL__ = HLS_URL;
+      window.__CMTVPT_HLS_URLS__ = ALL_TARGET_URLS;
+      window.__CMTVPT_SOURCE_PAGE__ = SOURCE_PAGE;
+      window.__CMTVPT_GENERATED_AT__ = GENERATED_AT;
 
-    async function playWithSound() {
-      try {
-        video.muted = false;
-        video.volume = 1;
-        await video.play();
-        overlay.classList.add('hidden');
-      } catch (error) {
+      urlLabel.textContent = HLS_URL || '(aucune URL)';
+      video.autoplay = true;
+      video.muted = true;
+      video.defaultMuted = true;
+      video.volume = 1;
+      video.playsInline = true;
+      video.setAttribute('playsinline', '');
+      video.setAttribute('webkit-playsinline', '');
+      video.style.objectFit = 'fill';
+
+      function setMessage(text) { msg.textContent = text; }
+      function showOverlay(text) {
+        if (text) setMessage(text);
         overlay.classList.remove('hidden');
-        setMessage('Lecture automatique avec son bloquée par le navigateur. Clique sur le bouton pour lancer.');
       }
-    }
+      function hideOverlay() { overlay.classList.add('hidden'); }
 
-    function attachSource() {
-      if (!HLS_URL) {
-        setMessage('Aucune URL HLS ciblée dans ce fichier.');
-        return;
+      async function tryPlayMuted() {
+        try {
+          video.muted = true;
+          video.defaultMuted = true;
+          await video.play();
+          showOverlay('Lecture démarrée en mode muet. Touche le bouton pour activer le son sur smartphone.');
+          return true;
+        } catch (error) {
+          showOverlay('Le navigateur mobile bloque le démarrage automatique. Touche le bouton pour lancer la lecture.');
+          console.warn('Autoplay mobile refusé:', error);
+          return false;
+        }
       }
-      if (window.Hls && Hls.isSupported()) {
-        const hls = new Hls({ enableWorker: true, lowLatencyMode: true });
-        hls.loadSource(HLS_URL);
-        hls.attachMedia(video);
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          setMessage('Manifest HLS chargé. Tentative autoplay avec son...');
-          playWithSound();
-        });
-        hls.on(Hls.Events.ERROR, (event, data) => {
-          console.warn('Erreur HLS:', data);
-          if (data && data.fatal) setMessage('Erreur HLS fatale. Vérifie que l’URL est encore valide et autorise la lecture depuis ce fichier HTML.');
-        });
-      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        video.src = HLS_URL;
-        video.addEventListener('loadedmetadata', playWithSound, { once: true });
-      } else {
-        setMessage('HLS.js non chargé ou HLS non supporté par ce navigateur.');
+
+      async function enableSoundFromUserGesture() {
+        try {
+          video.muted = false;
+          video.defaultMuted = false;
+          video.volume = 1;
+          await video.play();
+          hideOverlay();
+        } catch (error) {
+          showOverlay('Lecture avec son refusée. Retouche le bouton ou vérifie les autorisations du navigateur.');
+          console.warn('Lecture avec son refusée:', error);
+        }
       }
-    }
 
-    playBtn.addEventListener('click', playWithSound);
-    attachSource();
+      function attachSource() {
+        if (sourceAttached) return;
+        sourceAttached = true;
 
-    console.log('URL HLS ciblée:', HLS_URL);
-    console.log('Toutes les URLs ciblées:', ALL_TARGET_URLS.join('\n'));
+        if (!HLS_URL) {
+          showOverlay('Aucune URL HLS ciblée dans ce fichier.');
+          return;
+        }
+
+        // Smartphone / iPhone : priorité au HLS natif Safari.
+        if (video.canPlayType('application/vnd.apple.mpegurl')) {
+          video.src = HLS_URL;
+          video.addEventListener('loadedmetadata', tryPlayMuted, { once: true });
+          video.addEventListener('canplay', tryPlayMuted, { once: true });
+          video.load();
+          setMessage('Source HLS native chargée. Tentative autoplay mobile en muet...');
+          return;
+        }
+
+        // Android / Chrome / navigateurs sans HLS natif : hls.js.
+        if (window.Hls && Hls.isSupported()) {
+          const hls = new Hls({
+            enableWorker: true,
+            lowLatencyMode: true,
+            backBufferLength: 30
+          });
+          hls.loadSource(HLS_URL);
+          hls.attachMedia(video);
+          hls.on(Hls.Events.MANIFEST_PARSED, function () {
+            setMessage('Manifest HLS chargé. Tentative autoplay mobile en muet...');
+            tryPlayMuted();
+          });
+          hls.on(Hls.Events.ERROR, function (event, data) {
+            console.warn('Erreur HLS:', data);
+            if (data && data.fatal) {
+              showOverlay('Erreur HLS fatale. L’URL peut être expirée, bloquée CORS, ou inaccessible depuis ce navigateur.');
+            }
+          });
+          return;
+        }
+
+        showOverlay('HLS non supporté par ce navigateur et hls.js indisponible.');
+      }
+
+      soundBtn.addEventListener('click', enableSoundFromUserGesture);
+      document.addEventListener('touchend', function onceTouch() {
+        document.removeEventListener('touchend', onceTouch);
+        if (video.paused) tryPlayMuted();
+      }, { once: true, passive: true });
+
+      video.addEventListener('playing', function () {
+        if (!video.muted) hideOverlay();
+      });
+
+      attachSource();
+
+      console.log('URL HLS ciblée:', HLS_URL);
+      console.log('Toutes les URLs ciblées:', ALL_TARGET_URLS.join('\n'));
+    })();
   </script>
 </body>
 </html>
