@@ -123,6 +123,7 @@
         path === "/pages/wave.html" ||
         path === "/pages/serie-film.html" ||
         path === "/pages/switchcm-3-iframes.html" ||
+        path === "/pages/cmtvpt.html" ||
         path === "/"
     );
     } catch {
