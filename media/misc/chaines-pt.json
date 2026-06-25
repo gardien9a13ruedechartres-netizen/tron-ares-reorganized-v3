@@ -63,11 +63,11 @@
 {
 "id": "sic",
 "name": "SIC",
-"url": "/pages/sic.html",
+"url": "https://clouding.wideiptv.top/SIC/index.fmp4.m3u8?token=7599574ecbc33c9493ad0ec0a4f8bbdf7f1873aa-9a340bd512c41e3b50ada2b53d99b3c5-1782386709-1782383109",
 "logo": { "type": "image", "value": "/media/sic.jpg" },
 "group": "Généraliste",
 "isFavorite": false,
-"isIframe": true
+"isIframe": false
 },
 {
 "id": "sicn",
