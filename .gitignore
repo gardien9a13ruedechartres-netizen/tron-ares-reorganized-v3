@@ -1,6 +1,16 @@
 node_modules/
 .wrangler/
+.cache/
+dist/
+build/
+
 *.log
 log.txt
+
 .DS_Store
 Thumbs.db
+
+.env
+.env.local
+.env.development
+.env.production

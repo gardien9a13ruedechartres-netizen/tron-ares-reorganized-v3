@@ -5,7 +5,6 @@
   "main": "auto-deploy-cloudflare.js",
   "scripts": {
     "start": "node auto-deploy-cloudflare.js",
-    "watch:deploy": "node auto-deploy-cloudflare.js",
     "deploy": "wrangler pages deploy . --project-name tron-ares-engine"
   },
   "keywords": [
@@ -18,7 +17,6 @@
   "license": "MIT",
   "dependencies": {
     "chokidar": "^4.0.3",
-    "dotenv": "^16.4.7",
     "wrangler": "^4.14.1"
   }
 }
