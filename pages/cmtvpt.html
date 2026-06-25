@@ -56,7 +56,7 @@
     <button id="playBtn">Activer lecture avec son</button>
   </div>
 
-  <script type="application/json" id="hls-data">{"url":"https://clouding.wideiptv.top/CMTVPT/index.fmp4.m3u8?token=a583e01c4903a0352331e3cc3e6fc0ab4bc6d76e-8da93f303dfa5d73647f78d9b759c0b1-1782418290-1782414690","urls":["https://clouding.wideiptv.top/CMTVPT/index.fmp4.m3u8?token=a583e01c4903a0352331e3cc3e6fc0ab4bc6d76e-8da93f303dfa5d73647f78d9b759c0b1-1782418290-1782414690"],"sourcePage":"https://gardien9a13ruedechartres-netizen.github.io/cmtv-chrome/","generatedAt":"2026-06-25T19:16:35.195Z"}</script>
+  <script type="application/json" id="hls-data">{"url":"https://clouding.wideiptv.top/CMTVPT/index.fmp4.m3u8?token=6ea44e84159f69687778339069bcb6eb6a400fdb-db81f9eb29959becda1e876c8f35000d-1782419430-1782415830","urls":["https://clouding.wideiptv.top/CMTVPT/index.fmp4.m3u8?token=6ea44e84159f69687778339069bcb6eb6a400fdb-db81f9eb29959becda1e876c8f35000d-1782419430-1782415830"],"sourcePage":"https://gardien9a13ruedechartres-netizen.github.io/cmtv-chrome/","generatedAt":"2026-06-25T19:35:34.864Z"}</script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
     const dataNode = document.getElementById('hls-data');
@@ -84,47 +84,18 @@
     video.playsInline = true;
     video.style.objectFit = 'fill';
 
-    let hls = null;
-    let retryTimer = null;
-    let watchdogTimer = null;
-    let retryCount = 0;
-    let lastGoodAt = Date.now();
-    let lastTime = 0;
-    let restarting = false;
-
     function setMessage(text) { msg.textContent = text; }
-    function markGood() { lastGoodAt = Date.now(); }
-
-    function showRetry(reason) {
-      overlay.classList.remove('hidden');
-      setMessage('Flux perdu ou instable. Relance invisible en cours... (' + reason + ') tentative ' + retryCount);
-    }
 
     async function playWithSound() {
       try {
         video.muted = false;
         video.volume = 1;
         await video.play();
-        markGood();
         overlay.classList.add('hidden');
       } catch (error) {
         overlay.classList.remove('hidden');
-        setMessage('Lecture automatique avec son bloquée par le navigateur. Clique sur le bouton pour lancer. La reconnexion reste active.');
+        setMessage('Lecture automatique avec son bloquée par le navigateur. Clique sur le bouton pour lancer.');
       }
-    }
-
-    function cleanupPlayer() {
-      if (retryTimer) clearTimeout(retryTimer);
-      retryTimer = null;
-      if (hls) {
-        try { hls.destroy(); } catch (_) {}
-        hls = null;
-      }
-      try {
-        video.pause();
-        video.removeAttribute('src');
-        video.load();
-      } catch (_) {}
     }
 
     function attachSource() {
@@ -132,100 +103,31 @@
         setMessage('Aucune URL HLS ciblée dans ce fichier.');
         return;
       }
-      cleanupPlayer();
-      restarting = false;
       if (window.Hls && Hls.isSupported()) {
-        hls = new Hls({
-          enableWorker: true,
-          lowLatencyMode: true,
-          backBufferLength: 30,
-          liveSyncDurationCount: 3,
-          manifestLoadingTimeOut: 12000,
-          fragLoadingTimeOut: 12000,
-          levelLoadingTimeOut: 12000
-        });
+        const hls = new Hls({ enableWorker: true, lowLatencyMode: true });
         hls.loadSource(HLS_URL);
         hls.attachMedia(video);
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          retryCount = 0;
-          markGood();
           setMessage('Manifest HLS chargé. Tentative autoplay avec son...');
           playWithSound();
         });
-        hls.on(Hls.Events.FRAG_LOADED, markGood);
-        hls.on(Hls.Events.LEVEL_LOADED, markGood);
         hls.on(Hls.Events.ERROR, (event, data) => {
           console.warn('Erreur HLS:', data);
-          if (!data) return;
-          if (data.fatal) {
-            if (data.type === Hls.ErrorTypes.MEDIA_ERROR && hls) {
-              try {
-                hls.recoverMediaError();
-                markGood();
-                return;
-              } catch (_) {}
-            }
-            scheduleInvisibleReload('erreur HLS fatale');
-          }
+          if (data && data.fatal) setMessage('Erreur HLS fatale. Vérifie que l’URL est encore valide et autorise la lecture depuis ce fichier HTML.');
         });
       } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
         video.src = HLS_URL;
-        video.addEventListener('loadedmetadata', () => { retryCount = 0; markGood(); playWithSound(); }, { once: true });
+        video.addEventListener('loadedmetadata', playWithSound, { once: true });
       } else {
-        setMessage('HLS.js non chargé ou HLS non supporté par ce navigateur. Nouvelle tentative automatique...');
-        scheduleInvisibleReload('hls.js indisponible');
+        setMessage('HLS.js non chargé ou HLS non supporté par ce navigateur.');
       }
     }
 
-    function scheduleInvisibleReload(reason) {
-      if (!HLS_URL || restarting) return;
-      restarting = true;
-      retryCount += 1;
-      const delay = Math.min(30000, 3000 + retryCount * 2000);
-      showRetry(reason);
-      console.warn('Relance invisible du flux dans ' + delay + ' ms. Raison:', reason);
-      retryTimer = setTimeout(() => {
-        restarting = false;
-        attachSource();
-      }, delay);
-    }
-
-    function startWatchdog() {
-      if (watchdogTimer) clearInterval(watchdogTimer);
-      watchdogTimer = setInterval(() => {
-        if (!HLS_URL) return;
-        const now = Date.now();
-        const current = Number(video.currentTime || 0);
-        const timeMoved = Math.abs(current - lastTime) > 0.2;
-        if (timeMoved) {
-          lastTime = current;
-          markGood();
-          return;
-        }
-        const noData = video.readyState < 2;
-        const stuck = !video.paused && (now - lastGoodAt > 15000);
-        const blocked = video.error || (noData && now - lastGoodAt > 12000);
-        if (blocked || stuck) {
-          scheduleInvisibleReload(video.error ? 'erreur vidéo' : (noData ? 'pas de données vidéo' : 'lecture bloquée'));
-        }
-      }, 5000);
-    }
-
-    ['playing','timeupdate','progress','canplay','loadeddata'].forEach(name => video.addEventListener(name, markGood));
-    ['error','stalled','suspend','emptied','abort'].forEach(name => video.addEventListener(name, () => scheduleInvisibleReload('événement vidéo ' + name)));
-    video.addEventListener('waiting', () => {
-      setTimeout(() => {
-        if (Date.now() - lastGoodAt > 12000) scheduleInvisibleReload('buffer trop long');
-      }, 12000);
-    });
-
     playBtn.addEventListener('click', playWithSound);
     attachSource();
-    startWatchdog();
 
     console.log('URL HLS ciblée:', HLS_URL);
     console.log('Toutes les URLs ciblées:', ALL_TARGET_URLS.join('\n'));
-    console.log('Auto-reload invisible activé: relance HLS quand le flux tombe.');
   </script>
 </body>
 </html>
