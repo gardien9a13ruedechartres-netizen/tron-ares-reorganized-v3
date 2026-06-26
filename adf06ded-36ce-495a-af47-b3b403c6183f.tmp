@@ -56,7 +56,7 @@
     <button id="playBtn">Activer lecture avec son</button>
   </div>
 
-  <script type="application/json" id="hls-data">{"url":"https://clouding.wideiptv.top/CMTVPT/index.fmp4.m3u8?token=405a2ba58b27bcdca5fc32466e5342611d717214-a15966702fff0ae0ba0b1e7bab6b93dd-1782469402-1782465802","urls":["https://clouding.wideiptv.top/CMTVPT/index.fmp4.m3u8?token=405a2ba58b27bcdca5fc32466e5342611d717214-a15966702fff0ae0ba0b1e7bab6b93dd-1782469402-1782465802"],"sourcePage":"https://gardien9a13ruedechartres-netizen.github.io/cmtv-chrome/","generatedAt":"2026-06-26T09:28:47.143Z"}</script>
+  <script type="application/json" id="hls-data">{"url":"https://clouding.wideiptv.top/CMTVPT/index.fmp4.m3u8?token=05dc5010911f0d830f65369e192df9d8d12195fc-08b16302cf62f2a3c800b996315e33ad-1782469426-1782465826","urls":["https://clouding.wideiptv.top/CMTVPT/index.fmp4.m3u8?token=05dc5010911f0d830f65369e192df9d8d12195fc-08b16302cf62f2a3c800b996315e33ad-1782469426-1782465826"],"sourcePage":"https://gardien9a13ruedechartres-netizen.github.io/cmtv-chrome/","generatedAt":"2026-06-26T09:28:47.380Z"}</script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
     const dataNode = document.getElementById('hls-data');
