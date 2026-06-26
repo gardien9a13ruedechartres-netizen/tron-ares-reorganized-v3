@@ -1,9 +1,8 @@
 /*
-  Ares PT Overlay Router v1.0
-  Indépendant du JS principal.
-  But : quand tu cliques CMTV / RTP1 / RTP2 dans la liste PT,
-  forcer le player dans l'overlay iframe principal (#iframeOverlay > #iframeEl),
-  sans créer de panneau flottant et sans lancer 3 players en même temps.
+  Ares PT Overlay Router v1.1 Light
+  Objectif : ne PAS créer de boutons, ne PAS remplacer l'app principale.
+  Il laisse tron-ares.js gérer le clic, puis remplace seulement l'URL de l'iframe overlay
+  pour les trois chaînes PT locales générées par l'extension.
 */
 (function () {
   'use strict';
@@ -12,21 +11,23 @@
     {
       id: 'cmtvpt',
       labels: ['CMTV', 'CMTVPT'],
-      src: '/pages/cmtvpt.html'
+      href: '/pages/cmtvpt.html'
     },
     {
       id: 'rtp1',
       labels: ['RTP1'],
-      src: '/pages/rtp1.html'
+      href: '/pages/rtp1.html'
     },
     {
       id: 'rtp2',
       labels: ['RTP2'],
-      src: '/pages/rtp2.html'
+      href: '/pages/rtp2.html'
     }
   ];
 
-  const LOG_PREFIX = '[Ares PT Overlay Router]';
+  const LOG_PREFIX = '[AresPtOverlayRouter]';
+  let pendingTimer = null;
+  let lastAppliedKey = '';
 
   function norm(value) {
     return String(value || '')
@@ -37,198 +38,158 @@
       .trim();
   }
 
-  function findTargetFromText(text) {
-    const normalized = norm(text);
-    return ROUTES.find(route => route.labels.some(label => normalized.includes(norm(label)))) || null;
+  function getIframeParts() {
+    return {
+      iframeOverlay: document.getElementById('iframeOverlay'),
+      iframeEl: document.getElementById('iframeEl'),
+      videoEl: document.getElementById('videoEl')
+    };
   }
 
-  function findClickableContext(start) {
-    if (!start || !start.closest) return null;
+  function findChannelItemFromClick(event) {
+    const target = event && event.target;
+    if (!target || !target.closest) return null;
 
-    return start.closest(
-      '#iframeList .channel-card, ' +
-      '#iframeList .channel-item, ' +
-      '#iframeList .list-item, ' +
-      '#iframeList [data-url], ' +
-      '#iframeList [data-src], ' +
-      '#iframeList button, ' +
-      '#iframeList a, ' +
-      '#iframeList > *'
-    );
+    const item = target.closest('.channel-item, [data-url], [data-title], [data-name]');
+    if (!item) return null;
+
+    const iframeList = document.getElementById('iframeList');
+    if (iframeList && !iframeList.contains(item)) return null;
+
+    return item;
   }
 
-  function pauseMainVideo() {
-    const video = document.getElementById('videoEl');
-    if (!video) return;
+  function detectRouteFromItem(item) {
+    if (!item) return null;
 
-    try { video.pause(); } catch (e) {}
-    try { video.removeAttribute('src'); } catch (e) {}
-    try { video.load(); } catch (e) {}
-    try { video.classList.add('hidden'); } catch (e) {}
-    try { video.style.display = 'none'; } catch (e) {}
+    const pieces = [
+      item.getAttribute('data-title'),
+      item.getAttribute('data-name'),
+      item.getAttribute('data-url'),
+      item.textContent
+    ].filter(Boolean);
+
+    const haystack = norm(pieces.join(' '));
+
+    return ROUTES.find(route =>
+      route.labels.some(label => {
+        const n = norm(label);
+        // mot exact ou présence simple, assez strict pour RTP1/RTP2/CMTV
+        return haystack === n || haystack.includes(n);
+      })
+    ) || null;
   }
 
-  function showIframeOverlay() {
-    const overlay = document.getElementById('iframeOverlay');
-    if (!overlay) return;
+  function ensureOverlayVisible() {
+    const { iframeOverlay, videoEl } = getIframeParts();
 
-    overlay.classList.remove('hidden');
-    overlay.removeAttribute('aria-hidden');
-    overlay.style.display = '';
-    overlay.style.visibility = 'visible';
-    overlay.style.opacity = '1';
+    try { iframeOverlay && iframeOverlay.classList.remove('hidden'); } catch {}
+    try { videoEl && videoEl.pause && videoEl.pause(); } catch {}
+    try { if (videoEl) videoEl.style.visibility = 'hidden'; } catch {}
+
+    try {
+      const statusPill = document.getElementById('statusPill');
+      if (statusPill) statusPill.textContent = 'Overlay iFrame actif';
+    } catch {}
   }
 
-  function prepareIframe(iframe) {
-    iframe.setAttribute('allowfullscreen', '');
-    iframe.setAttribute('allow', 'autoplay; fullscreen; picture-in-picture; encrypted-media');
-    iframe.setAttribute('referrerpolicy', 'origin');
+  function applyIframePolicy(iframeEl) {
+    if (!iframeEl) return;
 
-    // Important : pas de sandbox ici. Ton exception overlay gère déjà les routes /pages/*.html.
-    // Si un autre script en remet un, on le retire pour ces players internes.
-    try { iframe.removeAttribute('sandbox'); } catch (e) {}
+    try {
+      iframeEl.setAttribute('allow', 'autoplay; fullscreen; picture-in-picture; encrypted-media');
+    } catch {}
 
-    iframe.style.width = '100%';
-    iframe.style.height = '100%';
-    iframe.style.border = '0';
-    iframe.style.display = 'block';
+    try {
+      iframeEl.setAttribute('allowfullscreen', '');
+    } catch {}
+
+    try {
+      iframeEl.setAttribute('referrerpolicy', 'origin');
+    } catch {}
+
+    // IMPORTANT : pour les pages locales /pages/*.html, pas de sandbox restrictive.
+    try {
+      iframeEl.removeAttribute('sandbox');
+    } catch {}
   }
 
-  function setNowPlaying(route) {
-    const title = document.getElementById('npTitle');
-    const sub = document.getElementById('npSub');
-    const badge = document.getElementById('npBadge');
-
-    if (title) title.textContent = route.labels[0];
-    if (sub) sub.textContent = 'Player PT interne';
-    if (badge) badge.textContent = 'IFRAME';
+  function buildUrl(route) {
+    // Cache-bust pour forcer le dernier fichier HTML généré/déployé.
+    const sep = route.href.includes('?') ? '&' : '?';
+    return route.href + sep + 'arespt=' + encodeURIComponent(route.id) + '&t=' + Date.now();
   }
 
-  function markSelected(route) {
-    const list = document.getElementById('iframeList');
-    if (!list) return;
+  function routeOverlay(route, reason) {
+    if (!route) return;
 
-    const wanted = route.labels.map(norm);
-
-    list.querySelectorAll('.active, .selected, .is-active').forEach(el => {
-      el.classList.remove('active', 'selected', 'is-active');
-    });
-
-    Array.from(list.children).forEach(item => {
-      const text = norm(item.textContent || '');
-      if (wanted.some(label => text.includes(label))) {
-        item.classList.add('active', 'selected');
-      }
-    });
-  }
-
-  function activateRoute(route, reason) {
-    const iframe = document.getElementById('iframeEl');
-    if (!iframe) {
-      console.warn(LOG_PREFIX, 'iframeEl introuvable. Impossible de charger', route.src);
+    const { iframeEl } = getIframeParts();
+    if (!iframeEl) {
+      console.warn(LOG_PREFIX, 'iframeEl introuvable');
       return;
     }
 
-    pauseMainVideo();
-    showIframeOverlay();
-    prepareIframe(iframe);
+    const key = route.id + ':' + Math.floor(Date.now() / 300);
+    if (lastAppliedKey === key) return;
+    lastAppliedKey = key;
 
-    const absolute = new URL(route.src, location.origin).href;
+    const finalUrl = buildUrl(route);
 
-    if (iframe.src !== absolute) {
-      iframe.src = route.src;
-    }
+    ensureOverlayVisible();
+    applyIframePolicy(iframeEl);
 
-    setNowPlaying(route);
-    markSelected(route);
+    // Stoppe l'ancien player avant d'ouvrir le nouveau.
+    try { iframeEl.src = 'about:blank'; } catch {}
 
-    window.__ARES_PT_ACTIVE_PLAYER__ = {
-      id: route.id,
-      src: route.src,
-      reason: reason || 'manual',
-      at: new Date().toISOString()
-    };
-
-    console.log(LOG_PREFIX, 'Overlay chargé:', route.id, route.src, 'raison:', reason || 'manual');
+    window.setTimeout(function () {
+      try {
+        applyIframePolicy(iframeEl);
+        iframeEl.src = finalUrl;
+        console.log(LOG_PREFIX, 'Overlay routé:', route.id, finalUrl, reason || '');
+      } catch (err) {
+        console.error(LOG_PREFIX, 'Erreur route overlay:', err);
+      }
+    }, 60);
   }
 
-  function scheduleActivate(route, reason) {
-    // Plusieurs passes pour gagner contre le JS principal s'il change iframeEl.src après le clic.
-    activateRoute(route, reason);
-    setTimeout(() => activateRoute(route, reason + ':80ms'), 80);
-    setTimeout(() => activateRoute(route, reason + ':300ms'), 300);
+  function scheduleRoute(route, reason) {
+    if (!route) return;
+    if (pendingTimer) window.clearTimeout(pendingTimer);
+
+    // On laisse d'abord tron-ares.js gérer l'UI, l'état actif et le Now Playing.
+    pendingTimer = window.setTimeout(function () {
+      pendingTimer = null;
+      routeOverlay(route, reason);
+    }, 140);
   }
 
-  function handleUserAction(event) {
-    const context = findClickableContext(event.target);
-    if (!context) return;
+  function onDocumentClick(event) {
+    const item = findChannelItemFromClick(event);
+    if (!item) return;
 
-    const text = context.textContent || '';
-    const data = [
-      context.getAttribute('data-url'),
-      context.getAttribute('data-src'),
-      context.getAttribute('href'),
-      text
-    ].filter(Boolean).join(' ');
-
-    const route = findTargetFromText(data);
+    const route = detectRouteFromItem(item);
     if (!route) return;
 
-    // On ne bloque pas le JS principal : on le laisse mettre à jour son état,
-    // puis on force simplement la bonne page player dans l'overlay.
-    scheduleActivate(route, 'click');
+    // Ne bloque pas le clic principal : on corrige seulement l'iframe juste après.
+    scheduleRoute(route, 'click liste PT');
   }
 
-  function handleKeyboard(event) {
-    if (event.key !== 'Enter' && event.key !== ' ') return;
-    handleUserAction(event);
+  function open(id) {
+    const route = ROUTES.find(r => r.id === String(id || '').toLowerCase());
+    if (!route) {
+      console.warn(LOG_PREFIX, 'Route inconnue:', id);
+      return;
+    }
+    routeOverlay(route, 'appel manuel');
   }
 
-  function protectIframeForPtPages() {
-    const iframe = document.getElementById('iframeEl');
-    if (!iframe || iframe.__aresPtRouterProtected) return;
+  document.addEventListener('click', onDocumentClick, false);
 
-    iframe.__aresPtRouterProtected = true;
+  window.AresPtOverlayRouter = {
+    version: '1.1-light',
+    routes: ROUTES.map(r => ({ id: r.id, href: r.href, labels: r.labels.slice() })),
+    open
+  };
 
-    const observer = new MutationObserver(() => {
-      const src = iframe.getAttribute('src') || '';
-      const route = ROUTES.find(r => src.includes(r.src) || src.includes(r.src.replace('.html', '')));
-      if (route) prepareIframe(iframe);
-    });
-
-    observer.observe(iframe, {
-      attributes: true,
-      attributeFilter: ['src', 'sandbox', 'allow']
-    });
-  }
-
-  function boot() {
-    document.addEventListener('click', handleUserAction, true);
-    document.addEventListener('keydown', handleKeyboard, true);
-    protectIframeForPtPages();
-
-    // API manuelle dans la console si besoin :
-    // AresPtOverlayRouter.open('rtp1')
-    window.AresPtOverlayRouter = {
-      routes: ROUTES.slice(),
-      open(idOrLabel) {
-        const key = norm(idOrLabel);
-        const route = ROUTES.find(r => norm(r.id) === key || r.labels.some(label => norm(label) === key));
-        if (!route) {
-          console.warn(LOG_PREFIX, 'Route inconnue:', idOrLabel);
-          return false;
-        }
-        scheduleActivate(route, 'api');
-        return true;
-      }
-    };
-
-    console.log(LOG_PREFIX, 'actif. Routes:', ROUTES.map(r => r.id).join(', '));
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', boot, { once: true });
-  } else {
-    boot();
-  }
+  console.log(LOG_PREFIX, 'v1.1 Light actif');
 })();
