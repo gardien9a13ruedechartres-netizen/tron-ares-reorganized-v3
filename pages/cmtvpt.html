@@ -5,23 +5,58 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>Player HLS CMTVPT</title>
   <style>
-    html, body { width:100%; height:100%; margin:0; padding:0; overflow:hidden; background:#000; }
-    video { position:fixed; inset:0; width:100vw; height:100vh; object-fit:fill; background:#000; }
-    #overlay { position:fixed; left:16px; right:16px; bottom:16px; z-index:10; font-family:Arial,sans-serif; color:#fff; background:rgba(0,0,0,.55); border:1px solid rgba(255,255,255,.25); border-radius:10px; padding:12px; line-height:1.4; }
-    #overlay.hidden { display:none; }
-    button { margin-top:8px; padding:10px 14px; cursor:pointer; border:0; border-radius:8px; font-weight:700; }
-    code { word-break:break-all; color:#d7f7ff; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #000;
+    }
+    video {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: fill;
+      background: #000;
+    }
+    #overlay {
+      position: fixed;
+      left: 16px;
+      right: 16px;
+      bottom: 16px;
+      z-index: 10;
+      font-family: Arial, sans-serif;
+      color: #fff;
+      background: rgba(0,0,0,.55);
+      border: 1px solid rgba(255,255,255,.25);
+      border-radius: 10px;
+      padding: 12px;
+      line-height: 1.4;
+    }
+    #overlay.hidden { display: none; }
+    button {
+      margin-top: 8px;
+      padding: 10px 14px;
+      cursor: pointer;
+      border: 0;
+      border-radius: 8px;
+      font-weight: 700;
+    }
+    code { word-break: break-all; color: #d7f7ff; }
   </style>
 </head>
 <body>
   <video id="video" controls autoplay playsinline webkit-playsinline></video>
   <div id="overlay">
-    <div><strong>Player HLS CMTVPT</strong></div>
+    <div><strong>Player HLS généré</strong></div>
     <div>URL ciblée : <code id="urlLabel"></code></div>
     <div id="msg">Chargement du player...</div>
     <button id="playBtn">Activer lecture avec son</button>
   </div>
-  <script type="application/json" id="hls-data">{"url":"https://clouding.wideiptv.top/CMTVPT/index.fmp4.m3u8?token=9412822a5829b8e015afcc699175e2f5da0dcc1a-6d2472434196e2b1f7672e44bc96ca4a-1782461203-1782457603","urls":["https://clouding.wideiptv.top/CMTVPT/index.fmp4.m3u8?token=9412822a5829b8e015afcc699175e2f5da0dcc1a-6d2472434196e2b1f7672e44bc96ca4a-1782461203-1782457603"],"sourcePage":"https://gardien9a13ruedechartres-netizen.github.io/cmtv-chrome/","generatedAt":"2026-06-26T07:11:48.407Z","target":"CMTVPT"}</script>
+
+  <script type="application/json" id="hls-data">{"url":"https://clouding.wideiptv.top/CMTVPT/index.fmp4.m3u8?token=06fda62031a522ff7945c02f9a3c613a8bb1e62b-e744155dea7d6963c4cb20f6a999704c-1782463326-1782459726","urls":["https://clouding.wideiptv.top/CMTVPT/index.fmp4.m3u8?token=06fda62031a522ff7945c02f9a3c613a8bb1e62b-e744155dea7d6963c4cb20f6a999704c-1782463326-1782459726"],"sourcePage":"https://gardien9a13ruedechartres-netizen.github.io/cmtv-chrome/","generatedAt":"2026-06-26T07:47:11.428Z"}</script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
     const dataNode = document.getElementById('hls-data');
@@ -30,45 +65,69 @@
     const ALL_TARGET_URLS = Array.isArray(HLS_DATA.urls) ? HLS_DATA.urls : [];
     const SOURCE_PAGE = String(HLS_DATA.sourcePage || '');
     const GENERATED_AT = String(HLS_DATA.generatedAt || '');
+
     const video = document.getElementById('video');
     const overlay = document.getElementById('overlay');
     const msg = document.getElementById('msg');
     const playBtn = document.getElementById('playBtn');
     const urlLabel = document.getElementById('urlLabel');
+
     window.__CMTVPT_HLS_URL__ = HLS_URL;
     window.__CMTVPT_HLS_URLS__ = ALL_TARGET_URLS;
     window.__CMTVPT_SOURCE_PAGE__ = SOURCE_PAGE;
     window.__CMTVPT_GENERATED_AT__ = GENERATED_AT;
+
     urlLabel.textContent = HLS_URL || '(aucune URL)';
     video.muted = false;
     video.volume = 1;
     video.autoplay = true;
     video.playsInline = true;
     video.style.objectFit = 'fill';
-    function setMessage(text){ msg.textContent = text; }
-    async function playWithSound(){
-      try { video.muted = false; video.volume = 1; await video.play(); overlay.classList.add('hidden'); }
-      catch(error){ overlay.classList.remove('hidden'); setMessage('Lecture automatique avec son bloquée par le navigateur. Clique sur le bouton pour lancer.'); }
+
+    function setMessage(text) { msg.textContent = text; }
+
+    async function playWithSound() {
+      try {
+        video.muted = false;
+        video.volume = 1;
+        await video.play();
+        overlay.classList.add('hidden');
+      } catch (error) {
+        overlay.classList.remove('hidden');
+        setMessage('Lecture automatique avec son bloquée par le navigateur. Clique sur le bouton pour lancer.');
+      }
     }
-    function attachSource(){
-      if(!HLS_URL){ setMessage('Aucune URL HLS ciblée dans ce fichier.'); return; }
-      if(window.Hls && Hls.isSupported()){
-        const hls = new Hls({ enableWorker:true, lowLatencyMode:true });
+
+    function attachSource() {
+      if (!HLS_URL) {
+        setMessage('Aucune URL HLS ciblée dans ce fichier.');
+        return;
+      }
+      if (window.Hls && Hls.isSupported()) {
+        const hls = new Hls({ enableWorker: true, lowLatencyMode: true });
         hls.loadSource(HLS_URL);
         hls.attachMedia(video);
-        hls.on(Hls.Events.MANIFEST_PARSED, () => { setMessage('Manifest HLS chargé. Tentative autoplay avec son...'); playWithSound(); });
-        hls.on(Hls.Events.ERROR, (event, data) => { console.warn('Erreur HLS:', data); if(data && data.fatal) setMessage('Erreur HLS fatale. Vérifie que l’URL est encore valide.'); });
-      } else if(video.canPlayType('application/vnd.apple.mpegurl')) {
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          setMessage('Manifest HLS chargé. Tentative autoplay avec son...');
+          playWithSound();
+        });
+        hls.on(Hls.Events.ERROR, (event, data) => {
+          console.warn('Erreur HLS:', data);
+          if (data && data.fatal) setMessage('Erreur HLS fatale. Vérifie que l’URL est encore valide et autorise la lecture depuis ce fichier HTML.');
+        });
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
         video.src = HLS_URL;
-        video.addEventListener('loadedmetadata', playWithSound, { once:true });
+        video.addEventListener('loadedmetadata', playWithSound, { once: true });
       } else {
         setMessage('HLS.js non chargé ou HLS non supporté par ce navigateur.');
       }
     }
+
     playBtn.addEventListener('click', playWithSound);
     attachSource();
-    console.log('URL HLS ciblée CMTVPT:', HLS_URL);
-    console.log('Toutes les URLs ciblées CMTVPT:', ALL_TARGET_URLS.join('\n'));
+
+    console.log('URL HLS ciblée:', HLS_URL);
+    console.log('Toutes les URLs ciblées:', ALL_TARGET_URLS.join('\n'));
   </script>
 </body>
 </html>
