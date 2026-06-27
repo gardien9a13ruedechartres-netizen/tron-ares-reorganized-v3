@@ -2,6 +2,8 @@
 
 require('dotenv').config();
 
+const fs = require('fs/promises');
+const http = require('http');
 const path = require('path');
 const { spawn, spawnSync } = require('child_process');
 const chokidar = require('chokidar');
@@ -13,6 +15,11 @@ const OPEN_NEW_SHELL = String(process.env.OPEN_NEW_SHELL || 'false').toLowerCase
 const DEBOUNCE_MS = Number(process.env.DEBOUNCE_MS || 3000);
 const POLLING_INTERVAL_MS = Number(process.env.POLLING_INTERVAL_MS || 1000);
 const GIT_CHECK_INTERVAL_MS = Number(process.env.GIT_CHECK_INTERVAL_MS || 30000);
+const LOCAL_BRIDGE_HOST = '127.0.0.1';
+const LOCAL_BRIDGE_PORT = Number(process.env.LOCAL_BRIDGE_PORT || 17383);
+const LOCAL_BRIDGE_PATH = '/cmtvpt';
+const CMTVPT_OUTPUT_FILE = path.join(PROJECT_DIR, 'pages', 'cmtvpt.html');
+const ALLOWED_EXTENSION_ORIGIN = 'chrome-extension://mkgligjoedklgioceijbjiilfknkkfok';
 
 const DEFAULT_IGNORES = [
   'node_modules',
@@ -34,6 +41,91 @@ const IGNORE_PATTERNS = Array.from(new Set([...DEFAULT_IGNORES, ...ENV_IGNORES])
 
 let timer = null;
 let deploying = false;
+
+function sendBridgeResponse(response, status, payload, origin = '') {
+  const headers = {
+    'Content-Type': 'application/json; charset=utf-8',
+    'Cache-Control': 'no-store'
+  };
+  if (origin === ALLOWED_EXTENSION_ORIGIN) {
+    headers['Access-Control-Allow-Origin'] = origin;
+    headers.Vary = 'Origin';
+  }
+  response.writeHead(status, headers);
+  response.end(JSON.stringify(payload));
+}
+
+function startLocalBridge() {
+  const server = http.createServer((request, response) => {
+    const origin = String(request.headers.origin || '');
+
+    if (request.method === 'OPTIONS') {
+      if (origin !== ALLOWED_EXTENSION_ORIGIN) {
+        sendBridgeResponse(response, 403, { ok: false, error: 'Origin refused.' });
+        return;
+      }
+      response.writeHead(204, {
+        'Access-Control-Allow-Origin': origin,
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Max-Age': '600',
+        Vary: 'Origin'
+      });
+      response.end();
+      return;
+    }
+
+    if (
+      request.method !== 'POST' ||
+      request.url !== LOCAL_BRIDGE_PATH ||
+      origin !== ALLOWED_EXTENSION_ORIGIN
+    ) {
+      sendBridgeResponse(response, 403, { ok: false, error: 'Request refused.' }, origin);
+      return;
+    }
+
+    let body = '';
+    request.setEncoding('utf8');
+    request.on('data', chunk => {
+      body += chunk;
+      if (body.length > 1024 * 1024) request.destroy();
+    });
+    request.on('end', async () => {
+      try {
+        const payload = JSON.parse(body || '{}');
+        const html = typeof payload.html === 'string' ? payload.html : '';
+        if (
+          !html.startsWith('<!doctype html>') ||
+          !html.includes('id="hls-data"') ||
+          !html.includes('/api/cmtvpt/proxy?url=')
+        ) {
+          sendBridgeResponse(response, 400, { ok: false, error: 'Invalid CMTVPT HTML.' }, origin);
+          return;
+        }
+
+        await fs.mkdir(path.dirname(CMTVPT_OUTPUT_FILE), { recursive: true });
+        await fs.writeFile(CMTVPT_OUTPUT_FILE, html, 'utf8');
+        sendBridgeResponse(response, 200, {
+          ok: true,
+          filename: 'pages/cmtvpt.html',
+          bytes: Buffer.byteLength(html, 'utf8')
+        }, origin);
+      } catch (error) {
+        sendBridgeResponse(response, 500, {
+          ok: false,
+          error: String(error && error.message || error)
+        }, origin);
+      }
+    });
+  });
+
+  server.on('error', error => {
+    console.error('Erreur pont local CMTVPT :', error.message);
+  });
+  server.listen(LOCAL_BRIDGE_PORT, LOCAL_BRIDGE_HOST, () => {
+    console.log(`Pont local CMTVPT : http://${LOCAL_BRIDGE_HOST}:${LOCAL_BRIDGE_PORT}${LOCAL_BRIDGE_PATH}`);
+  });
+}
 
 function runGitStatus() {
   const result = spawnSync('git', ['status', '--porcelain'], {
