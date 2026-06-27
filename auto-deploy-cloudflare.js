@@ -127,6 +127,10 @@ function startLocalBridge() {
 
   server.on('error', error => {
     console.error('Erreur pont local des lecteurs :', error.message);
+    if (error && error.code === 'EADDRINUSE') {
+      console.error(`Une instance est deja active sur le port ${LOCAL_BRIDGE_PORT}. Cette seconde instance va s'arreter.`);
+      process.exit(1);
+    }
   });
   server.listen(LOCAL_BRIDGE_PORT, LOCAL_BRIDGE_HOST, () => {
     console.log(`Pont local des lecteurs : http://${LOCAL_BRIDGE_HOST}:${LOCAL_BRIDGE_PORT}/{cmtvpt,rtp1,rtp2,sic}`);
