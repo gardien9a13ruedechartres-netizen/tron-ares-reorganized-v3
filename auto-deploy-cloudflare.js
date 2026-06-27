@@ -264,3 +264,4 @@ console.log(`Polling watcher : oui, toutes les ${POLLING_INTERVAL_MS} ms`);
 console.log(`Vérification Git : toutes les ${GIT_CHECK_INTERVAL_MS} ms`);
 console.log('.env est ignoré par le script pour éviter de publier tes variables locales.');
 console.log('Appuie sur Ctrl+C pour arrêter.');
+startLocalBridge();
