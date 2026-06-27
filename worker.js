@@ -1,10 +1,16 @@
 const CMTVPT_UPSTREAM_HOST = 'clouding.wideiptv.top';
 const CMTVPT_PROXY_PATH = '/api/cmtvpt/proxy';
+const ALLOWED_UPSTREAM_PATHS = [
+  '/CMTVPT/',
+  '/RTP1/',
+  '/RTP2/',
+  '/SIC/'
+];
 
 function isAllowedCmtvptUrl(url) {
   return url.protocol === 'https:' &&
     url.hostname === CMTVPT_UPSTREAM_HOST &&
-    url.pathname.startsWith('/CMTVPT/') &&
+    ALLOWED_UPSTREAM_PATHS.some(path => url.pathname.startsWith(path)) &&
     !url.username &&
     !url.password;
 }
@@ -116,7 +122,7 @@ export default {
 
     const response = await env.ASSETS.fetch(request);
 
-    if (url.pathname === '/pages/cmtvpt' || url.pathname === '/pages/cmtvpt.html') {
+    if (/^\/pages\/(?:cmtvpt|rtp1|rtp2|sic)(?:\.html)?$/i.test(url.pathname)) {
       const headers = new Headers(response.headers);
       headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
       headers.set('CDN-Cache-Control', 'no-store');

@@ -17,8 +17,12 @@ const POLLING_INTERVAL_MS = Number(process.env.POLLING_INTERVAL_MS || 1000);
 const GIT_CHECK_INTERVAL_MS = Number(process.env.GIT_CHECK_INTERVAL_MS || 30000);
 const LOCAL_BRIDGE_HOST = '127.0.0.1';
 const LOCAL_BRIDGE_PORT = Number(process.env.LOCAL_BRIDGE_PORT || 17383);
-const LOCAL_BRIDGE_PATH = '/cmtvpt';
-const CMTVPT_OUTPUT_FILE = path.join(PROJECT_DIR, 'pages', 'cmtvpt.html');
+const LOCAL_BRIDGE_OUTPUTS = new Map([
+  ['/cmtvpt', path.join(PROJECT_DIR, 'pages', 'cmtvpt.html')],
+  ['/rtp1', path.join(PROJECT_DIR, 'pages', 'rtp1.html')],
+  ['/rtp2', path.join(PROJECT_DIR, 'pages', 'rtp2.html')],
+  ['/sic', path.join(PROJECT_DIR, 'pages', 'sic.html')]
+]);
 const ALLOWED_EXTENSION_ORIGIN = 'chrome-extension://mkgligjoedklgioceijbjiilfknkkfok';
 
 const DEFAULT_IGNORES = [
@@ -77,7 +81,7 @@ function startLocalBridge() {
 
     if (
       request.method !== 'POST' ||
-      request.url !== LOCAL_BRIDGE_PATH ||
+      !LOCAL_BRIDGE_OUTPUTS.has(request.url) ||
       origin !== ALLOWED_EXTENSION_ORIGIN
     ) {
       sendBridgeResponse(response, 403, { ok: false, error: 'Request refused.' }, origin);
@@ -94,20 +98,22 @@ function startLocalBridge() {
       try {
         const payload = JSON.parse(body || '{}');
         const html = typeof payload.html === 'string' ? payload.html : '';
+        const outputFile = LOCAL_BRIDGE_OUTPUTS.get(request.url);
+        const channel = path.basename(outputFile, '.html').toUpperCase();
         if (
           !html.startsWith('<!doctype html>') ||
           !html.includes('id="hls-data"') ||
           !html.includes('/api/cmtvpt/proxy?url=')
         ) {
-          sendBridgeResponse(response, 400, { ok: false, error: 'Invalid CMTVPT HTML.' }, origin);
+          sendBridgeResponse(response, 400, { ok: false, error: `Invalid ${channel} HTML.` }, origin);
           return;
         }
 
-        await fs.mkdir(path.dirname(CMTVPT_OUTPUT_FILE), { recursive: true });
-        await fs.writeFile(CMTVPT_OUTPUT_FILE, html, 'utf8');
+        await fs.mkdir(path.dirname(outputFile), { recursive: true });
+        await fs.writeFile(outputFile, html, 'utf8');
         sendBridgeResponse(response, 200, {
           ok: true,
-          filename: 'pages/cmtvpt.html',
+          filename: `pages/${path.basename(outputFile)}`,
           bytes: Buffer.byteLength(html, 'utf8')
         }, origin);
       } catch (error) {
@@ -120,10 +126,10 @@ function startLocalBridge() {
   });
 
   server.on('error', error => {
-    console.error('Erreur pont local CMTVPT :', error.message);
+    console.error('Erreur pont local des lecteurs :', error.message);
   });
   server.listen(LOCAL_BRIDGE_PORT, LOCAL_BRIDGE_HOST, () => {
-    console.log(`Pont local CMTVPT : http://${LOCAL_BRIDGE_HOST}:${LOCAL_BRIDGE_PORT}${LOCAL_BRIDGE_PATH}`);
+    console.log(`Pont local des lecteurs : http://${LOCAL_BRIDGE_HOST}:${LOCAL_BRIDGE_PORT}/{cmtvpt,rtp1,rtp2,sic}`);
   });
 }
 
