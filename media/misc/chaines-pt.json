@@ -16,6 +16,33 @@
 "isIframe": true
 },
 {
+"id": "rtp1",
+"name": "RTP1",
+"url": "/pages/rtp1.html",
+"logo": { "type": "image", "value": "/media/rtp1.jpg" },
+"group": "Généraliste",
+"isFavorite": false,
+"isIframe": true
+},
+{
+"id": "rtp2",
+"name": "RTP2",
+"url": "/pages/rtp2.html",
+"logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/commons/f/f9/RTP2_logo_2016.svg" },
+"group": "Généraliste",
+"isFavorite": false,
+"isIframe": true
+},
+{
+"id": "rtpn",
+"name": "RTPN",
+"url": "/pages/rtpn.html",
+"logo": { "type": "image", "value": "/media/rtpn.png" },
+"group": "News",
+"isFavorite": false,
+"isIframe": true
+},
+{
 "id": "tvi",
 "name": "TVI",
 "url": "https://raw.githubusercontent.com/LITUATUI/M3UPT/refs/heads/main/M3U/TVI.m3u8",
@@ -86,33 +113,6 @@
 "group": "News",
 "isFavorite": false,
 "isIframe": false
-},
-{
-"id": "rtp1",
-"name": "RTP1",
-"url": "/pages/rtp1.html",
-"logo": { "type": "image", "value": "/media/rtp1.jpg" },
-"group": "Généraliste",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "rtp2",
-"name": "RTP2",
-"url": "/pages/rtp2.html",
-"logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/commons/f/f9/RTP2_logo_2016.svg" },
-"group": "Généraliste",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "rtpn",
-"name": "RTPN",
-"url": "/pages/rtpn.html",
-"logo": { "type": "image", "value": "/media/rtpn.png" },
-"group": "News",
-"isFavorite": false,
-"isIframe": true
 },
 {
 "id": "fifaplus",
