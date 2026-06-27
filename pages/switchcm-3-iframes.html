@@ -121,6 +121,14 @@ let currentIndex = 1;
 function createFrame(url){
 
     const iframe = document.createElement('iframe');
+    const frameUrl = new URL(url, window.location.href);
+
+    if(
+        frameUrl.origin === window.location.origin &&
+        frameUrl.pathname === '/pages/cmtvpt.html'
+    ){
+        frameUrl.searchParams.set('_ares_frame', String(Date.now()));
+    }
 
     iframe.allow =
         'autoplay; fullscreen; picture-in-picture; encrypted-media';
@@ -133,7 +141,7 @@ function createFrame(url){
     iframe.sandbox =
         'allow-scripts allow-same-origin allow-forms allow-presentation allow-popups';
 
-    iframe.src = url;
+    iframe.src = frameUrl.href;
 
     return iframe;
 }
