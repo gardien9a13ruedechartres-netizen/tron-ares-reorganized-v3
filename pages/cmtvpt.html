@@ -56,12 +56,12 @@
     <button id="playBtn">Activer lecture avec son</button>
   </div>
 
-  <script type="application/json" id="hls-data">{"url":"https://clouding.wideiptv.top/CMTVPT/index.fmp4.m3u8?token=d88c5dc281fba516d9311569f5a0796975c85348-c21ac62e91e3d4d10cf568ca0288cf64-1782563315-1782559715","urls":["https://clouding.wideiptv.top/CMTVPT/index.fmp4.m3u8?token=d88c5dc281fba516d9311569f5a0796975c85348-c21ac62e91e3d4d10cf568ca0288cf64-1782563315-1782559715"],"sourcePage":"","generatedAt":"2026-06-27T11:33:33.660Z"}</script>
+  <script type="application/json" id="hls-data">{"url":"https://clouding.wideiptv.top/CMTVPT/index.fmp4.m3u8?token=ef450089831901f86aba0e4cf468521ef59bdf0a-c6b01259967b837dd271253e65556a32-1782563453-1782559853","urls":["https://clouding.wideiptv.top/CMTVPT/index.fmp4.m3u8?token=ef450089831901f86aba0e4cf468521ef59bdf0a-c6b01259967b837dd271253e65556a32-1782563453-1782559853"],"sourcePage":"","generatedAt":"2026-06-27T11:35:51.225Z"}</script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.15"></script>
   <script>
     const dataNode = document.getElementById('hls-data');
     const HLS_DATA = JSON.parse(dataNode.textContent || '{}');
-    const HLS_URL = String(HLS_DATA.url || '');
+    let HLS_URL = String(HLS_DATA.url || '');
     const ALL_TARGET_URLS = Array.isArray(HLS_DATA.urls) ? HLS_DATA.urls : [];
     const SOURCE_PAGE = String(HLS_DATA.sourcePage || '');
     const GENERATED_AT = String(HLS_DATA.generatedAt || '');
@@ -71,6 +71,9 @@
     const msg = document.getElementById('msg');
     const playBtn = document.getElementById('playBtn');
     const urlLabel = document.getElementById('urlLabel');
+    let hlsInstance = null;
+    let retryTimer = null;
+    let retryDelayMs = 3000;
 
     window.__CMTVPT_HLS_URL__ = HLS_URL;
     window.__CMTVPT_HLS_URLS__ = ALL_TARGET_URLS;
@@ -98,22 +101,45 @@
       }
     }
 
-    function attachSource() {
+    function scheduleRecovery() {
+      if (retryTimer) return;
+      const delay = retryDelayMs;
+      retryDelayMs = Math.min(retryDelayMs * 2, 30000);
+      setMessage('Flux temporairement indisponible. Nouvelle tentative...');
+      retryTimer = setTimeout(() => {
+        retryTimer = null;
+        attachSource(HLS_URL);
+      }, delay);
+    }
+
+    function attachSource(nextUrl = HLS_URL) {
+      HLS_URL = String(nextUrl || '');
+      window.__CMTVPT_HLS_URL__ = HLS_URL;
+      urlLabel.textContent = HLS_URL || '(aucune URL)';
       if (!HLS_URL) {
         setMessage('Aucune URL HLS ciblée dans ce fichier.');
         return;
       }
+      if (hlsInstance) {
+        hlsInstance.destroy();
+        hlsInstance = null;
+      }
       if (window.Hls && Hls.isSupported()) {
-        const hls = new Hls({ enableWorker: true, lowLatencyMode: true });
-        hls.loadSource(HLS_URL);
-        hls.attachMedia(video);
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        hlsInstance = new Hls({ enableWorker: true, lowLatencyMode: true });
+        hlsInstance.loadSource(HLS_URL);
+        hlsInstance.attachMedia(video);
+        hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+          retryDelayMs = 3000;
+          if (retryTimer) {
+            clearTimeout(retryTimer);
+            retryTimer = null;
+          }
           setMessage('Manifest HLS chargé. Tentative autoplay avec son...');
           playWithSound();
         });
-        hls.on(Hls.Events.ERROR, (event, data) => {
+        hlsInstance.on(Hls.Events.ERROR, (event, data) => {
           console.warn('Erreur HLS:', data);
-          if (data && data.fatal) setMessage('Erreur HLS fatale. Vérifie que l’URL est encore valide et autorise la lecture depuis ce fichier HTML.');
+          if (data && data.fatal) scheduleRecovery();
         });
       } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
         video.src = HLS_URL;
@@ -123,8 +149,30 @@
       }
     }
 
+    async function refreshPublishedSource() {
+      if (!/^https?:$/.test(location.protocol)) return;
+      try {
+        const refreshUrl = new URL(location.href);
+        refreshUrl.searchParams.set('_hls_refresh', String(Date.now()));
+        const response = await fetch(refreshUrl, { cache: 'no-store' });
+        if (!response.ok) return;
+        const nextDocument = new DOMParser().parseFromString(await response.text(), 'text/html');
+        const nextDataNode = nextDocument.getElementById('hls-data');
+        if (!nextDataNode) return;
+        const nextData = JSON.parse(nextDataNode.textContent || '{}');
+        const nextUrl = String(nextData.url || '');
+        if (nextUrl && nextUrl !== HLS_URL) {
+          setMessage('Nouveau master detecte. Mise a jour du flux...');
+          attachSource(nextUrl);
+        }
+      } catch (error) {
+        console.warn('Verification du nouveau master impossible:', error);
+      }
+    }
+
     playBtn.addEventListener('click', playWithSound);
     attachSource();
+    setInterval(refreshPublishedSource, 20000);
 
     console.log('URL HLS ciblée:', HLS_URL);
     console.log('Toutes les URLs ciblées:', ALL_TARGET_URLS.join('\n'));
