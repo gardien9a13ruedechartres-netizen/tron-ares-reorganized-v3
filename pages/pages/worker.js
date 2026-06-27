@@ -1,9 +1,11 @@
 const UPSTREAM_HOST = 'clouding.wideiptv.top';
 const PROXY_PATH = '/api/iptv/proxy';
-
 const ALLOWED_UPSTREAM_PATHS = [
   '/CMTVPT/',
-  '/RTP1'
+  '/RTP1',
+  '/RTP2',
+  '/SIC',
+  '/TVI'
 ];
 
 function isAllowedUpstreamUrl(url) {
