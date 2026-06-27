@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node auto-deploy-cloudflare.js",
     "watch:deploy": "node auto-deploy-cloudflare.js",
-    "deploy": "wrangler pages deploy . --project-name tron-ares-engine"
+    "deploy": "wrangler deploy"
   },
   "keywords": [
     "cloudflare",
