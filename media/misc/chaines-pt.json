@@ -115,19 +115,10 @@
 "isIframe": true
 },
 {
-"id": "rtpi",
-"name": "RTPI",
-"url": "https://streaming-live.rtp.pt/liverepeater/rtpi.smil/live.m3u8",
-"logo": { "type": "image", "value": "/media/rtpi.jpg" },
-"group": "Généraliste",
-"isFavorite": false,
-"isIframe": false
-},
-{
 "id": "fifaplus",
 "name": "FIFA+",
 "url": "https://f7ccf7fc.wurl.com/master/f36d25e7e52f1ba8d7e56eb859c636563214f541/UmFrdXRlblRWLXB0X0ZJRkFQbHVzUG9ydHVndWVzZV9ITFM/playlist.m3u8",
-"logo": { "type": "image", "value": "https://www.freeshot.live/upload/source/FifaPlus-logo.png" },
+"logo": { "type": "image", "value": "https://toppng.com/uploads/preview/fifa-logo-png-hd-11659693816tfaadada2y.png" },
 "group": "Sport",
 "isFavorite": false,
 "isIframe": false
