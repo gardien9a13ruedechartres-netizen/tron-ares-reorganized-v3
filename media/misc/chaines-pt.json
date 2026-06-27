@@ -116,7 +116,7 @@
 },
 {
 "id": "rtpi",
-"name": "RTP Internacional",
+"name": "RTPI",
 "url": "https://streaming-live.rtp.pt/liverepeater/rtpi.smil/live.m3u8",
 "logo": { "type": "image", "value": "/media/rtpi.jpg" },
 "group": "International",
