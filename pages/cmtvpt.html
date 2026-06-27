@@ -56,7 +56,7 @@
     <button id="playBtn">Activer lecture avec son</button>
   </div>
 
-  <script type="application/json" id="hls-data">{"url":"https://player-engine.com/api/cmtvpt/proxy?url=https%3A%2F%2Fclouding.wideiptv.top%2FCMTVPT%2Findex.fmp4.m3u8%3Ftoken%3Df35a26100078f4d1626437d785be3ef5009616eb-360f0821780c43ff86dac1e3585f1cdd-1782604290-1782600690","upstreamUrl":"https://clouding.wideiptv.top/CMTVPT/index.fmp4.m3u8?token=f35a26100078f4d1626437d785be3ef5009616eb-360f0821780c43ff86dac1e3585f1cdd-1782604290-1782600690","urls":["https://clouding.wideiptv.top/CMTVPT/index.fmp4.m3u8?token=f35a26100078f4d1626437d785be3ef5009616eb-360f0821780c43ff86dac1e3585f1cdd-1782604290-1782600690"],"sourcePage":"https://gardien9a13ruedechartres-netizen.github.io/cmtv-chrome/","generatedAt":"2026-06-27T22:56:30.943Z"}</script>
+  <script type="application/json" id="hls-data">{"url":"https://player-engine.com/api/cmtvpt/proxy?url=https%3A%2F%2Fclouding.wideiptv.top%2FCMTVPT%2Findex.fmp4.m3u8%3Ftoken%3D369ff3c1ee85820ca12df0fb78e7c579d299fb5e-63b17fb5f95dfbca9c9acc67709554bd-1782604457-1782600857","upstreamUrl":"https://clouding.wideiptv.top/CMTVPT/index.fmp4.m3u8?token=369ff3c1ee85820ca12df0fb78e7c579d299fb5e-63b17fb5f95dfbca9c9acc67709554bd-1782604457-1782600857","urls":["https://clouding.wideiptv.top/CMTVPT/index.fmp4.m3u8?token=369ff3c1ee85820ca12df0fb78e7c579d299fb5e-63b17fb5f95dfbca9c9acc67709554bd-1782604457-1782600857"],"sourcePage":"https://gardien9a13ruedechartres-netizen.github.io/cmtv-chrome/","generatedAt":"2026-06-27T22:59:18.093Z"}</script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.15"></script>
   <script>
     const dataNode = document.getElementById('hls-data');
@@ -75,10 +75,10 @@
     let retryTimer = null;
     let retryDelayMs = 3000;
 
-    window.__CMTVPT_HLS_URL__ = HLS_URL;
-    window.__CMTVPT_HLS_URLS__ = ALL_TARGET_URLS;
-    window.__CMTVPT_SOURCE_PAGE__ = SOURCE_PAGE;
-    window.__CMTVPT_GENERATED_AT__ = GENERATED_AT;
+    window.__CHANNEL_HLS_URL__ = HLS_URL;
+    window.__CHANNEL_HLS_URLS__ = ALL_TARGET_URLS;
+    window.__CHANNEL_SOURCE_PAGE__ = SOURCE_PAGE;
+    window.__CHANNEL_GENERATED_AT__ = GENERATED_AT;
 
     urlLabel.textContent = HLS_URL || '(aucune URL)';
     video.muted = false;
@@ -114,7 +114,7 @@
 
     function attachSource(nextUrl = HLS_URL) {
       HLS_URL = String(nextUrl || '');
-      window.__CMTVPT_HLS_URL__ = HLS_URL;
+      window.__CHANNEL_HLS_URL__ = HLS_URL;
       urlLabel.textContent = HLS_URL || '(aucune URL)';
       if (!HLS_URL) {
         setMessage('Aucune URL HLS ciblée dans ce fichier.');
