@@ -1,5 +1,12 @@
 const CMTVPT_UPSTREAM_HOST = 'clouding.wideiptv.top';
 const CMTVPT_PROXY_PATH = '/api/cmtvpt/proxy';
+const WORKER_LIVE_PREFIX = '/api/worker-live/';
+const LIVE_CHANNELS = new Map([
+  ['cmtvpt', 'CMTVPT'],
+  ['rtp1', 'RTP1'],
+  ['rtp2', 'RTP2'],
+  ['sic', 'SIC']
+]);
 const ALLOWED_UPSTREAM_PATHS = [
   '/CMTVPT/',
   '/RTP1/',
@@ -36,6 +43,85 @@ function rewritePlaylist(text, upstreamUrl, publicOrigin) {
       return `URI="${makeProxyUrl(value, upstreamUrl, publicOrigin)}"`;
     });
   }).join('\n');
+}
+
+async function resolveWorkerLive(request, requestUrl, channelKey) {
+  if (request.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS'
+      }
+    });
+  }
+  if (request.method !== 'GET' && request.method !== 'HEAD') {
+    return new Response('Method not allowed', { status: 405 });
+  }
+
+  const channel = LIVE_CHANNELS.get(channelKey);
+  if (!channel) return new Response('Unknown channel', { status: 404 });
+
+  const sourceUrl = `https://popcdn.day/player.php?stream=${channel}`;
+  const source = await fetch(sourceUrl, {
+    headers: {
+      Accept: 'text/html,application/xhtml+xml',
+      'User-Agent': 'Mozilla/5.0'
+    },
+    redirect: 'follow'
+  });
+  if (!source.ok) {
+    return new Response(`Source unavailable (${source.status})`, { status: 502 });
+  }
+
+  const sourceHtml = await source.text();
+  const pattern = new RegExp(
+    `https://clouding\\.wideiptv\\.top/${channel}/embed\\.html\\?token=([^"'\\s<>&]+)`,
+    'i'
+  );
+  const match = sourceHtml.match(pattern);
+  if (!match || !match[1]) {
+    return new Response('Dynamic token unavailable', { status: 502 });
+  }
+
+  const embedUrl = match[0];
+  const embed = await fetch(embedUrl, {
+    headers: { Accept: 'text/html,application/xhtml+xml' },
+    redirect: 'follow'
+  });
+  if (!embed.ok) {
+    return new Response(`Embed activation failed (${embed.status})`, { status: 502 });
+  }
+  await embed.arrayBuffer();
+
+  const upstreamUrl = new URL(
+    `https://${CMTVPT_UPSTREAM_HOST}/${channel}/index.fmp4.m3u8`
+  );
+  upstreamUrl.searchParams.set('token', match[1]);
+  const master = await fetch(upstreamUrl, {
+    headers: { Accept: 'application/vnd.apple.mpegurl,application/x-mpegURL,*/*' },
+    redirect: 'follow'
+  });
+  const masterText = await master.text();
+  if (!master.ok || !masterText.trimStart().startsWith('#EXTM3U')) {
+    return new Response(`Master validation failed (${master.status})`, { status: 502 });
+  }
+
+  const headers = new Headers({
+    'Content-Type': 'application/vnd.apple.mpegurl',
+    'Access-Control-Allow-Origin': '*',
+    'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+    'CDN-Cache-Control': 'no-store',
+    'Cloudflare-CDN-Cache-Control': 'no-store',
+    'X-Ares-Channel': channel,
+    'X-Ares-Resolved-At': new Date().toISOString()
+  });
+  if (request.method === 'HEAD') return new Response(null, { status: 200, headers });
+
+  return new Response(
+    rewritePlaylist(masterText, upstreamUrl, requestUrl.origin),
+    { status: 200, headers }
+  );
 }
 
 async function proxyCmtvpt(request, requestUrl) {
@@ -118,6 +204,11 @@ export default {
 
     if (url.pathname === CMTVPT_PROXY_PATH) {
       return proxyCmtvpt(request, url);
+    }
+
+    const liveMatch = url.pathname.match(/^\/api\/worker-live\/([a-z0-9]+)\/master\.m3u8$/i);
+    if (liveMatch) {
+      return resolveWorkerLive(request, url, liveMatch[1].toLowerCase());
     }
 
     const response = await env.ASSETS.fetch(request);
