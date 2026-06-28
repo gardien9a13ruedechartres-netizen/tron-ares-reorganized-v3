@@ -4,8 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
-<title>Switch CM - 1 HLS + 2 iframes</title>
-
 <style>
 html,
 body{
@@ -19,21 +17,14 @@ body{
 #wrap{
     position:fixed;
     inset:0;
-    background:#000;
 }
 
-.playerFrame,
-.playerVideo{
+iframe{
     position:absolute;
     inset:0;
     width:100%;
     height:100%;
     border:0;
-    background:#000;
-}
-
-.playerVideo{
-    object-fit:contain;
 }
 
 .controlButton{
@@ -92,24 +83,6 @@ body{
     user-select:none;
 }
 
-#errorBox{
-    position:fixed;
-    left:50%;
-    bottom:24px;
-    transform:translateX(-50%);
-    z-index:9999;
-    max-width:min(92vw,720px);
-    padding:12px 16px;
-    border-radius:12px;
-    background:rgba(0,0,0,.72);
-    color:#fff;
-    font-family:Arial,Helvetica,sans-serif;
-    font-size:14px;
-    line-height:1.35;
-    display:none;
-    text-align:center;
-}
-
 #switchButton::before{
     content:"⇄";
 }
@@ -126,51 +99,74 @@ body{
 
 <button id="refreshButton" class="controlButton" title="Actualiser"></button>
 <button id="switchButton" class="controlButton" title="Changer de lecteur"></button>
-<div id="playerBadge">1/3</div>
-<div id="errorBox"></div>
-
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<div id="playerBadge" style="visibility: hidden;">1/3</div>
 
 <script>
-const HLS_1_URL = 'https://player-engine.com/api/worker-live/cmtvpt/master.m3u8';
+const IFRAME_1_URL = '/pages/cmtvpt-final.html';
 const IFRAME_2_URL = '/pages/worker-cmtvpt.html';
 const IFRAME_3_URL = '/pages/grrr.CM.html';
 
 const PLAYERS = [
-    {
-        type:'hls',
-        url:HLS_1_URL
-    },
-    {
-        type:'iframe',
-        url:IFRAME_2_URL
-    },
-    {
-        type:'iframe',
-        url:IFRAME_3_URL
-    }
+    IFRAME_1_URL,
+    IFRAME_2_URL,
+    IFRAME_3_URL
 ];
 
 const wrap = document.getElementById('wrap');
 const playerBadge = document.getElementById('playerBadge');
-const errorBox = document.getElementById('errorBox');
 
-let currentPlayer = null;
-let currentHls = null;
+let currentFrame = null;
 let currentIndex = 1;
 
-function showError(message){
-    if(!message){
-        errorBox.style.display = 'none';
-        errorBox.textContent = '';
-        return;
+function createFrame(url){
+
+    const iframe = document.createElement('iframe');
+    const frameUrl = new URL(url, window.location.href);
+
+    if(
+        frameUrl.origin === window.location.origin &&
+        frameUrl.pathname === '/pages/cmtvpt.html'
+    ){
+        frameUrl.searchParams.set('_ares_frame', String(Date.now()));
     }
 
-    errorBox.textContent = message;
-    errorBox.style.display = 'block';
+    iframe.allow =
+        'autoplay; fullscreen; picture-in-picture; encrypted-media';
+
+    iframe.allowFullscreen = true;
+
+    iframe.referrerPolicy =
+        'strict-origin-when-cross-origin';
+
+    iframe.sandbox =
+        'allow-scripts allow-same-origin allow-forms allow-presentation allow-popups';
+
+    iframe.src = frameUrl.href;
+
+    return iframe;
+}
+
+function destroyFrame(frame){
+
+    if(!frame) return;
+
+    try{
+
+        /*
+         Stop immédiat audio/video
+        */
+        frame.src = 'about:blank';
+
+    }catch(e){}
+
+    /*
+     Retire du DOM
+    */
+    frame.remove();
 }
 
 function normalizeIndex(index){
+
     const total = PLAYERS.length;
 
     if(index < 1) return total;
@@ -179,152 +175,87 @@ function normalizeIndex(index){
     return index;
 }
 
-function getCurrentPlayerConfig(){
+function getCurrentUrl(){
+
     return PLAYERS[currentIndex - 1];
 }
 
 function updatePlayerBadge(){
+
     playerBadge.textContent = currentIndex + '/' + PLAYERS.length;
 }
 
-function destroyCurrentPlayer(){
-    showError('');
+function loadFrame(index){
 
-    if(currentHls){
-        try{
-            currentHls.destroy();
-        }catch(e){}
+    /*
+     Détruit totalement l'ancienne iframe
+    */
+    destroyFrame(currentFrame);
 
-        currentHls = null;
-    }
-
-    if(currentPlayer){
-        try{
-            if(currentPlayer.tagName === 'VIDEO'){
-                currentPlayer.pause();
-                currentPlayer.removeAttribute('src');
-                currentPlayer.load();
-            }else if(currentPlayer.tagName === 'IFRAME'){
-                currentPlayer.src = 'about:blank';
-            }
-        }catch(e){}
-
-        currentPlayer.remove();
-        currentPlayer = null;
-    }
-}
-
-function createIframe(url){
-    const iframe = document.createElement('iframe');
-    const frameUrl = new URL(url, window.location.href);
-
-    iframe.className = 'playerFrame';
-    iframe.allow = 'autoplay; fullscreen; picture-in-picture; encrypted-media';
-    iframe.allowFullscreen = true;
-    iframe.referrerPolicy = 'strict-origin-when-cross-origin';
-    iframe.sandbox = 'allow-scripts allow-same-origin allow-forms allow-presentation allow-popups';
-    iframe.src = frameUrl.href;
-
-    return iframe;
-}
-
-function createHlsVideo(url){
-    const video = document.createElement('video');
-
-    video.className = 'playerVideo';
-    video.controls = true;
-    video.autoplay = true;
-    video.muted = false;
-    video.playsInline = true;
-    video.preload = 'auto';
-
-    video.addEventListener('error',()=>{
-        showError('Erreur de lecture HLS. Vérifie que le flux est actif et autorisé par le navigateur.');
-    });
-
-    if(video.canPlayType('application/vnd.apple.mpegurl')){
-        video.src = url;
-        video.play().catch(()=>{});
-        return video;
-    }
-
-    if(window.Hls && Hls.isSupported()){
-        currentHls = new Hls({
-            enableWorker:true,
-            lowLatencyMode:true,
-            backBufferLength:30
-        });
-
-        currentHls.loadSource(url);
-        currentHls.attachMedia(video);
-
-        currentHls.on(Hls.Events.MANIFEST_PARSED,()=>{
-            video.play().catch(()=>{});
-        });
-
-        currentHls.on(Hls.Events.ERROR,(event,data)=>{
-            if(data && data.fatal){
-                showError('Erreur HLS fatale. Le lecteur va tenter de récupérer le flux.');
-
-                switch(data.type){
-                    case Hls.ErrorTypes.NETWORK_ERROR:
-                        currentHls.startLoad();
-                        break;
-                    case Hls.ErrorTypes.MEDIA_ERROR:
-                        currentHls.recoverMediaError();
-                        break;
-                    default:
-                        destroyCurrentPlayer();
-                        break;
-                }
-            }
-        });
-
-        return video;
-    }
-
-    showError('Ton navigateur ne prend pas en charge ce flux HLS.');
-    return video;
-}
-
-function createPlayer(config){
-    if(config.type === 'hls'){
-        return createHlsVideo(config.url);
-    }
-
-    return createIframe(config.url);
-}
-
-function loadPlayer(index){
-    destroyCurrentPlayer();
-
+    /*
+     Sécurise l'index demandé
+    */
     currentIndex = normalizeIndex(index);
 
-    const config = getCurrentPlayerConfig();
+    /*
+     Choisit URL
+    */
+    const url = getCurrentUrl();
 
-    currentPlayer = createPlayer(config);
+    /*
+     Crée nouvelle iframe
+    */
+    currentFrame = createFrame(url);
 
-    wrap.appendChild(currentPlayer);
+    /*
+     Ajoute au DOM
+    */
+    wrap.appendChild(currentFrame);
+
+    /*
+     Met à jour l'indicateur
+    */
+    updatePlayerBadge();
+}
+
+function refreshCurrentFrame(){
+
+    /*
+     Recharge totalement l'iframe actuelle
+     en la détruisant puis en la recréant
+    */
+    destroyFrame(currentFrame);
+
+    currentFrame = createFrame(getCurrentUrl());
+
+    wrap.appendChild(currentFrame);
 
     updatePlayerBadge();
 }
 
-function refreshCurrentPlayer(){
-    loadPlayer(currentIndex);
-}
+/*
+ Chargement initial
+*/
+loadFrame(1);
 
-loadPlayer(1);
-
+/*
+ Switch 1 -> 2 -> 3 -> 1
+*/
 document
 .getElementById('switchButton')
 .addEventListener('click',()=>{
-    loadPlayer(currentIndex + 1);
+
+    loadFrame(currentIndex + 1);
 });
 
+/*
+ Refresh
+*/
 document
 .getElementById('refreshButton')
 .addEventListener('click',()=>{
-    refreshCurrentPlayer();
+
+    refreshCurrentFrame();
 });
 </script>
 
