@@ -9,7 +9,7 @@
 {
 "id": "cmtv",
 "name": "CMTV",
-"url": "/pages/switchcm-3-iframes.html",
+"url": "/pages/worker-cmtvpt.html",
 "logo": { "type": "image", "value": "/media/cmtv.png" },
 "group": "Généraliste",
 "isFavorite": false,
@@ -18,7 +18,7 @@
 {
 "id": "rtp1",
 "name": "RTP1",
-"url": "/pages/rtp1.html",
+"url": "/pages/worker-rtp1.html",
 "logo": { "type": "image", "value": "/media/rtp1.jpg" },
 "group": "Généraliste",
 "isFavorite": false,
@@ -27,7 +27,7 @@
 {
 "id": "rtp2",
 "name": "RTP2",
-"url": "/pages/rtp2.html",
+"url": "/pages/worker-rtp2.html",
 "logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/commons/f/f9/RTP2_logo_2016.svg" },
 "group": "Généraliste",
 "isFavorite": false,
@@ -90,7 +90,7 @@
 {
 "id": "sic",
 "name": "SIC",
-  "url": "/pages/sic.html",
+  "url": "/pages/worker-sic.html",
 "logo": { "type": "image", "value": "/media/sic.jpg" },
 "group": "Généraliste",
 "isFavorite": false,
