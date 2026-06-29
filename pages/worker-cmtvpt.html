@@ -70,7 +70,7 @@
   </style>
 </head>
 <body>
-  <video id="video" controls autoplay muted playsinline webkit-playsinline preload="auto"></video>
+  <video id="video" controls autoplay  playsinline webkit-playsinline preload="auto"></video>
 
   <div id="overlay">
     <div><strong>Player HLS généré</strong></div>
@@ -107,8 +107,8 @@
 
     urlLabel.textContent = HLS_URL || '(aucune URL)';
 
-    video.muted = true;
-    video.defaultMuted = true;
+    video.muted = false;
+    video.defaultMuted = false;
     video.volume = 1;
     video.autoplay = true;
     video.playsInline = true;
@@ -129,7 +129,7 @@
     async function startMutedInstant() {
       try {
         video.muted = true;
-        video.defaultMuted = true;
+        video.defaultMuted = false;
         await video.play();
       } catch (error) {
         setMessage('Lecture automatique bloquée par le navigateur.');
@@ -144,8 +144,8 @@
         await video.play();
         overlay.classList.add('hidden');
       } catch (error) {
-        video.muted = true;
-        video.defaultMuted = true;
+        video.muted = false;
+        video.defaultMuted = false;
         await startMutedInstant();
       }
     }
