@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <title>Player Worker RTP1</title>
+  <title>Player Worker CMTVPT</title>
   <style>
     html, body {
       width: 100%;
@@ -11,16 +11,26 @@
       margin: 0;
       padding: 0;
       overflow: hidden;
-      background: #000;
+      background: transparent;
     }
+
     video {
       position: fixed;
       inset: 0;
       width: 100vw;
       height: 100vh;
       object-fit: fill;
-      background: #000;
+      background: transparent;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 80ms linear;
     }
+
+    video.ready {
+      opacity: 1;
+      visibility: visible;
+    }
+
     #overlay {
       position: fixed;
       left: 16px;
@@ -34,8 +44,15 @@
       border-radius: 10px;
       padding: 12px;
       line-height: 1.4;
+      visibility: hidden;
+      pointer-events: none;
     }
-    #overlay.hidden { display: none; }
+
+    #overlay.hidden {
+      visibility: hidden;
+      pointer-events: none;
+    }
+
     button {
       margin-top: 8px;
       padding: 10px 14px;
@@ -44,16 +61,21 @@
       border-radius: 8px;
       font-weight: 700;
     }
-    code { word-break: break-all; color: #d7f7ff; }
+
+    code {
+      word-break: break-all;
+      color: #d7f7ff;
+    }
   </style>
 </head>
 <body>
-  <video id="video" controls autoplay playsinline webkit-playsinline></video>
-  <div id="overlay">
+  <video id="video" controls autoplay playsinline webkit-playsinline preload="auto"></video>
+
+  <div id="overlay" class="hidden" aria-hidden="true">
     <div><strong>Player HLS généré</strong></div>
     <div hidden>URL ciblée : <code id="urlLabel"></code></div>
     <div id="msg">Chargement du player...</div>
-    <button id="playBtn">Activer lecture avec son</button>
+    <button id="playBtn" type="button">Activer lecture avec son</button>
   </div>
 
   <script type="application/json" id="hls-data">{"url":"https://player-engine.com/api/worker-live/rtp1/master.m3u8","upstreamUrl":"","urls":["https://player-engine.com/api/worker-live/rtp1/master.m3u8"],"sourcePage":"Cloudflare Worker autonome","generatedAt":"2026-06-28T07:16:09.694Z"}</script>
@@ -71,9 +93,11 @@
     const msg = document.getElementById('msg');
     const playBtn = document.getElementById('playBtn');
     const urlLabel = document.getElementById('urlLabel');
+
     let hlsInstance = null;
     let retryTimer = null;
-    let retryDelayMs = 3000;
+    let retryDelayMs = 1500;
+    let firstFrameDisplayed = false;
 
     window.__CHANNEL_HLS_URL__ = HLS_URL;
     window.__CHANNEL_HLS_URLS__ = ALL_TARGET_URLS;
@@ -81,23 +105,64 @@
     window.__CHANNEL_GENERATED_AT__ = GENERATED_AT;
 
     urlLabel.textContent = HLS_URL || '(aucune URL)';
+
     video.muted = false;
+    video.defaultMuted = false;
     video.volume = 1;
     video.autoplay = true;
     video.playsInline = true;
+    video.controls = true;
+    video.preload = 'auto';
     video.style.objectFit = 'fill';
 
-    function setMessage(text) { msg.textContent = text; }
+    function setMessage(text) {
+      msg.textContent = text;
+    }
+
+    function keepUnmuted() {
+      video.muted = false;
+      video.defaultMuted = false;
+      if (video.volume === 0) video.volume = 1;
+    }
+
+    function hideOverlay() {
+      overlay.classList.add('hidden');
+      overlay.setAttribute('aria-hidden', 'true');
+      overlay.style.visibility = 'hidden';
+      overlay.style.pointerEvents = 'none';
+    }
+
+    function hideVideoUntilRealFrame() {
+      firstFrameDisplayed = false;
+      video.classList.remove('ready');
+      video.style.visibility = 'hidden';
+      video.style.opacity = '0';
+    }
+
+    function revealVideo() {
+      firstFrameDisplayed = true;
+      video.classList.add('ready');
+      video.style.visibility = 'visible';
+      video.style.opacity = '1';
+      hideOverlay();
+    }
+
+    function revealWhenFrameExists() {
+      if (firstFrameDisplayed) return;
+      if (video.readyState >= 2) revealVideo();
+    }
 
     async function playWithSound() {
+      keepUnmuted();
       try {
-        video.muted = false;
-        video.volume = 1;
         await video.play();
-        overlay.classList.add('hidden');
+        keepUnmuted();
+        revealWhenFrameExists();
+        hideOverlay();
       } catch (error) {
-        overlay.classList.remove('hidden');
-        setMessage('Lecture automatique avec son bloquée par le navigateur. Clique sur le bouton pour lancer.');
+        keepUnmuted();
+        hideOverlay();
+        setMessage('Autoplay avec son bloque par le navigateur. Le player reste non muet.');
       }
     }
 
@@ -105,47 +170,92 @@
       if (retryTimer) return;
       const delay = retryDelayMs;
       retryDelayMs = Math.min(retryDelayMs * 2, 30000);
+      hideVideoUntilRealFrame();
       setMessage('Flux temporairement indisponible. Nouvelle tentative...');
-      retryTimer = setTimeout(() => {
+      retryTimer = setTimeout(function () {
         retryTimer = null;
         attachSource(HLS_URL);
       }, delay);
     }
 
-    function attachSource(nextUrl = HLS_URL) {
-      HLS_URL = String(nextUrl || '');
-      window.__CHANNEL_HLS_URL__ = HLS_URL;
-      urlLabel.textContent = HLS_URL || '(aucune URL)';
-      if (!HLS_URL) {
-        setMessage('Aucune URL HLS ciblée dans ce fichier.');
-        return;
-      }
+    function clearCurrentPlayer() {
       if (hlsInstance) {
         hlsInstance.destroy();
         hlsInstance = null;
       }
+      video.removeAttribute('src');
+      video.load();
+    }
+
+    function attachSource(nextUrl) {
+      HLS_URL = String(nextUrl || HLS_URL || '');
+      window.__CHANNEL_HLS_URL__ = HLS_URL;
+      urlLabel.textContent = HLS_URL || '(aucune URL)';
+      hideOverlay();
+      hideVideoUntilRealFrame();
+      keepUnmuted();
+
+      if (!HLS_URL) {
+        setMessage('Aucune URL HLS ciblee dans ce fichier.');
+        return;
+      }
+
+      clearCurrentPlayer();
+
       if (window.Hls && Hls.isSupported()) {
-        hlsInstance = new Hls({ enableWorker: true, lowLatencyMode: true });
-        hlsInstance.loadSource(HLS_URL);
+        hlsInstance = new Hls({
+          enableWorker: true,
+          lowLatencyMode: true,
+          liveSyncDurationCount: 1,
+          liveMaxLatencyDurationCount: 3,
+          backBufferLength: 0,
+          maxBufferLength: 8
+        });
+
         hlsInstance.attachMedia(video);
-        hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
-          retryDelayMs = 3000;
+
+        hlsInstance.on(Hls.Events.MEDIA_ATTACHED, function () {
+          hlsInstance.loadSource(HLS_URL);
+        });
+
+        hlsInstance.on(Hls.Events.MANIFEST_PARSED, function () {
+          retryDelayMs = 1500;
           if (retryTimer) {
             clearTimeout(retryTimer);
             retryTimer = null;
           }
-          setMessage('Manifest HLS chargé. Tentative autoplay avec son...');
+          setMessage('Manifest HLS charge. Lecture immediate...');
           playWithSound();
         });
-        hlsInstance.on(Hls.Events.ERROR, (event, data) => {
+
+        hlsInstance.on(Hls.Events.FRAG_BUFFERED, function () {
+          revealWhenFrameExists();
+        });
+
+        hlsInstance.on(Hls.Events.ERROR, function (event, data) {
           console.warn('Erreur HLS:', data);
-          if (data && data.fatal) scheduleRecovery();
+          keepUnmuted();
+          if (!data || !data.fatal) return;
+
+          if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+            hlsInstance.startLoad();
+            scheduleRecovery();
+          } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+            hlsInstance.recoverMediaError();
+          } else {
+            scheduleRecovery();
+          }
         });
       } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
         video.src = HLS_URL;
-        video.addEventListener('loadedmetadata', playWithSound, { once: true });
+        video.addEventListener('loadeddata', function () {
+          revealWhenFrameExists();
+          playWithSound();
+        }, { once: true });
+        video.load();
+        playWithSound();
       } else {
-        setMessage('HLS.js non chargé ou HLS non supporté par ce navigateur.');
+        setMessage('HLS.js non charge ou HLS non supporte par ce navigateur.');
       }
     }
 
@@ -156,7 +266,8 @@
         refreshUrl.searchParams.set('_hls_refresh', String(Date.now()));
         const response = await fetch(refreshUrl, { cache: 'no-store' });
         if (!response.ok) return;
-        const nextDocument = new DOMParser().parseFromString(await response.text(), 'text/html');
+        const html = await response.text();
+        const nextDocument = new DOMParser().parseFromString(html, 'text/html');
         const nextDataNode = nextDocument.getElementById('hls-data');
         if (!nextDataNode) return;
         const nextData = JSON.parse(nextDataNode.textContent || '{}');
@@ -170,12 +281,18 @@
       }
     }
 
+    video.addEventListener('loadeddata', revealWhenFrameExists);
+    video.addEventListener('canplay', revealWhenFrameExists);
+    video.addEventListener('playing', revealWhenFrameExists);
+    video.addEventListener('volumechange', keepUnmuted);
     playBtn.addEventListener('click', playWithSound);
-    attachSource();
+
+    hideOverlay();
+    attachSource(HLS_URL);
     setInterval(refreshPublishedSource, 20000);
 
-    console.log('URL HLS ciblée:', HLS_URL);
-    console.log('Toutes les URLs ciblées:', ALL_TARGET_URLS.join('\n'));
+    console.log('URL HLS ciblee:', HLS_URL);
+    console.log('Toutes les URLs ciblees:', ALL_TARGET_URLS.join('\\n'));
   </script>
 </body>
 </html>
