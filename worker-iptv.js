@@ -6,14 +6,16 @@ const LIVE_CHANNELS = new Map([
   ['sport-tv-1', 'SPT1'],
   ['sport-tv-5', 'SPT5'],
   ['dazn-1', 'ELEVEN1'],
-  ['dazn-5', 'ELEVEN5']
+  ["dazn-5", "ELEVEN5"],
+  ["canalplfr", "CANALPLFR"]
 ]);
 const ALLOWED_UPSTREAM_PATHS = [
   '/BTV1/',
   '/SPT5/',
   '/SPT1/',
   '/ELEVEN1/',
-  '/ELEVEN5/'
+  '/ELEVEN5/',
+  '/CANALPLFR/'
 ];
 
 const UPSTREAM_ORIGIN = new URL(UPSTREAM_HOST).origin;
