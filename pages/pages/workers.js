@@ -1,11 +1,11 @@
-const UPSTREAM_HOST = 'clouding.wideiptv.top';
+const UPSTREAM_HOST = 'https://deviantart.lovetier.bz';
 const PROXY_PATH = '/api/iptv/proxy';
 const ALLOWED_UPSTREAM_PATHS = [
-  '/CMTVPT/',
-  '/RTP1',
-  '/RTP2',
-  '/SIC',
-  '/TVI'
+  '/BTV1/',
+  '/SPT5',
+  '/SPT1',
+  '/ELEVEN1',
+  '/ELEVEN5'
 ];
 
 function isAllowedUpstreamUrl(url) {
@@ -161,10 +161,10 @@ export default {
     const response = await env.ASSETS.fetch(request);
 
     if (
-      url.pathname === '/pages/cmtvpt' ||
-      url.pathname === '/pages/cmtvpt.html' ||
-      url.pathname === '/pages/rtp1' ||
-      url.pathname === '/pages/rtp1.html'
+      url.pathname === '/pages/BTV1' ||
+      url.pathname === '/pages/BTV1.html' ||
+      url.pathname === '/pages/SPT5' ||
+      url.pathname === '/pages/SPT5.html'
     ) {
       const headers = new Headers(response.headers);
 

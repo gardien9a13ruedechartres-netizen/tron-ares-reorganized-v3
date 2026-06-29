@@ -135,7 +135,7 @@
 {
 "id": "BTV",
 "name": "BTV",
-"url": "/pages/btv2.html",
+"url": "/pages/worker-btv.html",
 "logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/commons/d/d2/Logo_Benfica_TV.png" },
 "group": "Sport",
 "isFavorite": false,
@@ -181,7 +181,7 @@
 {
 "id": "sporttv1",
 "name": "Sport TV 1",
-"url": "/pages/Sport TV 1.html",
+"url": "/pages/worker-sport-tv-1.html",
 "logo": { "type": "image", "value": "https://cdn.brandfetch.io/idKvjRibkN/w/400/h/400/theme/dark/icon.jpeg" },
 "group": "Sport",
 "isFavorite": false,
@@ -217,7 +217,7 @@
 {
 "id": "sporttv5",
 "name": "Sport TV 5",
-"url": "/pages/Sport TV 5.html",
+"url": "/pages/worker-sport-tv-5.html",
 "logo": { "type": "image", "value": "https://cdn.brandfetch.io/idKvjRibkN/w/400/h/400/theme/dark/icon.jpeg" },
 "group": "Sport",
 "isFavorite": false,
@@ -226,7 +226,7 @@
 {
 "id": "dazn1",
 "name": "DAZN 1 PT",
-"url": "/pages/dazn 1.html",
+"url": "/pages/worker-dazn-1.html",
 "logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/commons/7/71/DAZN_logo.svg" },
 "group": "Sport",
 "isFavorite": false,
@@ -262,7 +262,7 @@
 {
 "id": "dazn5",
 "name": "DAZN 5 PT",
-"url": "/pages/dazn 5.html",
+"url": "/pages/worker-dazn-5.html",
 "logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/commons/7/71/DAZN_logo.svg" },
 "group": "Sport",
 "isFavorite": false,
