@@ -4,6 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>Player Worker CMTVPT</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
+  <link rel="preconnect" href="https://tron-ares-iptv.victor-salema-53d.workers.dev" crossorigin>
+  <link rel="dns-prefetch" href="//tron-ares-iptv.victor-salema-53d.workers.dev">
   <style>
     html, body {
       width: 100%;
@@ -23,7 +27,9 @@
       background: transparent;
       opacity: 0;
       visibility: hidden;
-      transition: opacity 80ms linear;
+      transition: opacity 45ms linear;
+      will-change: opacity;
+      transform: translateZ(0);
     }
 
     video.ready {
@@ -69,7 +75,7 @@
   </style>
 </head>
 <body>
-  <video id="video" controls autoplay playsinline webkit-playsinline preload="auto"></video>
+  <video id="video" controls autoplay playsinline webkit-playsinline preload="auto" poster="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="></video>
 
   <div id="overlay" class="hidden" aria-hidden="true">
     <div><strong>Player HLS généré</strong></div>
@@ -80,7 +86,7 @@
 <script type="application/json" id="hls-data">{"url":"https://tron-ares-iptv.victor-salema-53d.workers.dev/api/iptv/live/sport-tv-1/master.m3u8","upstreamUrl":"","urls":["https://tron-ares-iptv.victor-salema-53d.workers.dev/api/iptv/live/sport-tv-1/master.m3u8"],"sourcePage":"Cloudflare Worker IPTV autonome","generatedAt":"2026-06-29T10:30:00.000Z"}</script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.15"></script>
   
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.15"></script>
+
   <script>
     const dataNode = document.getElementById('hls-data');
     const HLS_DATA = JSON.parse(dataNode.textContent || '{}');
@@ -97,8 +103,10 @@
 
     let hlsInstance = null;
     let retryTimer = null;
-    let retryDelayMs = 1500;
+    let retryDelayMs = 700;
     let firstFrameDisplayed = false;
+    let hasEverDisplayedFrame = false;
+    let lastAttachStartedAt = 0;
 
     window.__CHANNEL_HLS_URL__ = HLS_URL;
     window.__CHANNEL_HLS_URLS__ = ALL_TARGET_URLS;
@@ -133,8 +141,14 @@
       overlay.style.pointerEvents = 'none';
     }
 
-    function hideVideoUntilRealFrame() {
+    function hideVideoUntilRealFrame(force) {
       firstFrameDisplayed = false;
+      if (hasEverDisplayedFrame && !force) {
+        video.classList.add('ready');
+        video.style.visibility = 'visible';
+        video.style.opacity = '1';
+        return;
+      }
       video.classList.remove('ready');
       video.style.visibility = 'hidden';
       video.style.opacity = '0';
@@ -142,6 +156,7 @@
 
     function revealVideo() {
       firstFrameDisplayed = true;
+      hasEverDisplayedFrame = true;
       video.classList.add('ready');
       video.style.visibility = 'visible';
       video.style.opacity = '1';
@@ -150,7 +165,15 @@
 
     function revealWhenFrameExists() {
       if (firstFrameDisplayed) return;
-      if (video.readyState >= 2) revealVideo();
+      if (video.readyState >= 2) {
+        if ('requestVideoFrameCallback' in video) {
+          video.requestVideoFrameCallback(function () {
+            revealVideo();
+          });
+        } else {
+          revealVideo();
+        }
+      }
     }
 
     async function playWithSound() {
@@ -170,8 +193,8 @@
     function scheduleRecovery() {
       if (retryTimer) return;
       const delay = retryDelayMs;
-      retryDelayMs = Math.min(retryDelayMs * 2, 30000);
-      hideVideoUntilRealFrame();
+      retryDelayMs = Math.min(retryDelayMs * 1.7, 10000);
+      hideVideoUntilRealFrame(false);
       setMessage('Flux temporairement indisponible. Nouvelle tentative...');
       retryTimer = setTimeout(function () {
         retryTimer = null;
@@ -179,13 +202,16 @@
       }, delay);
     }
 
-    function clearCurrentPlayer() {
+    function clearCurrentPlayer(options) {
+      const keepVisualFrame = options && options.keepVisualFrame;
       if (hlsInstance) {
         hlsInstance.destroy();
         hlsInstance = null;
       }
-      video.removeAttribute('src');
-      video.load();
+      if (!keepVisualFrame) {
+        video.removeAttribute('src');
+        video.load();
+      }
     }
 
     function attachSource(nextUrl) {
@@ -193,7 +219,8 @@
       window.__CHANNEL_HLS_URL__ = HLS_URL;
       urlLabel.textContent = HLS_URL || '(aucune URL)';
       hideOverlay();
-      hideVideoUntilRealFrame();
+      lastAttachStartedAt = Date.now();
+      hideVideoUntilRealFrame(hasEverDisplayedFrame ? false : true);
       keepUnmuted();
 
       if (!HLS_URL) {
@@ -201,16 +228,25 @@
         return;
       }
 
-      clearCurrentPlayer();
+      clearCurrentPlayer({ keepVisualFrame: hasEverDisplayedFrame });
 
       if (window.Hls && Hls.isSupported()) {
         hlsInstance = new Hls({
           enableWorker: true,
           lowLatencyMode: true,
+          startPosition: -1,
           liveSyncDurationCount: 1,
-          liveMaxLatencyDurationCount: 3,
+          liveMaxLatencyDurationCount: 2,
           backBufferLength: 0,
-          maxBufferLength: 8
+          liveBackBufferLength: 0,
+          maxBufferLength: 3,
+          maxMaxBufferLength: 6,
+          maxBufferHole: 0.25,
+          maxFragLookUpTolerance: 0.15,
+          maxStarvationDelay: 1,
+          maxLoadingDelay: 1,
+          manifestLoadingTimeOut: 5000,
+          fragLoadingTimeOut: 10000
         });
 
         hlsInstance.attachMedia(video);
@@ -220,16 +256,27 @@
         });
 
         hlsInstance.on(Hls.Events.MANIFEST_PARSED, function () {
-          retryDelayMs = 1500;
+          retryDelayMs = 700;
           if (retryTimer) {
             clearTimeout(retryTimer);
             retryTimer = null;
           }
           setMessage('Manifest HLS charge. Lecture immediate...');
+          try {
+            if (hlsInstance && Number.isFinite(hlsInstance.liveSyncPosition)) {
+              video.currentTime = hlsInstance.liveSyncPosition;
+            }
+          } catch (error) {
+            console.warn('Position live non appliquee:', error);
+          }
           playWithSound();
         });
 
         hlsInstance.on(Hls.Events.FRAG_BUFFERED, function () {
+          revealWhenFrameExists();
+        });
+
+        hlsInstance.on(Hls.Events.BUFFER_APPENDED, function () {
           revealWhenFrameExists();
         });
 
