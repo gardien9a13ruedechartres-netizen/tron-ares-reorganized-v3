@@ -62,7 +62,10 @@
       font-weight: 700;
     }
 
-    code { word-break: break-all; color: #d7f7ff; }
+    code {
+      word-break: break-all;
+      color: #d7f7ff;
+    }
   </style>
 </head>
 <body>
@@ -119,28 +122,47 @@
     function keepUnmuted() {
       video.muted = false;
       video.defaultMuted = false;
-      video.volume = 1;
+      if (video.volume === 0) video.volume = 1;
+    }
+
+    function hideOverlay() {
+      overlay.classList.add('hidden');
+      overlay.setAttribute('aria-hidden', 'true');
+      overlay.style.visibility = 'hidden';
+      overlay.style.pointerEvents = 'none';
+    }
+
+    function hideVideoUntilRealFrame() {
+      firstFrameDisplayed = false;
+      video.classList.remove('ready');
+      video.style.visibility = 'hidden';
+      video.style.opacity = '0';
+    }
+
+    function revealVideo() {
+      firstFrameDisplayed = true;
+      video.classList.add('ready');
+      video.style.visibility = 'visible';
+      video.style.opacity = '1';
+      hideOverlay();
     }
 
     function revealWhenFrameExists() {
       if (firstFrameDisplayed) return;
-      firstFrameDisplayed = true;
-      video.classList.add('ready');
-      overlay.classList.add('hidden');
-      overlay.setAttribute('aria-hidden', 'true');
+      if (video.readyState >= 2) revealVideo();
     }
 
     async function playWithSound() {
       keepUnmuted();
       try {
         await video.play();
-        overlay.classList.add('hidden');
-        overlay.setAttribute('aria-hidden', 'true');
+        keepUnmuted();
+        revealWhenFrameExists();
+        hideOverlay();
       } catch (error) {
         keepUnmuted();
-        overlay.classList.add('hidden');
-        overlay.setAttribute('aria-hidden', 'true');
-        console.warn('Autoplay avec son bloque par le navigateur:', error);
+        hideOverlay();
+        setMessage('Autoplay avec son bloque par le navigateur. Le player reste non muet.');
       }
     }
 
@@ -148,36 +170,37 @@
       if (retryTimer) return;
       const delay = retryDelayMs;
       retryDelayMs = Math.min(retryDelayMs * 2, 30000);
+      hideVideoUntilRealFrame();
       setMessage('Flux temporairement indisponible. Nouvelle tentative...');
-      retryTimer = setTimeout(() => {
+      retryTimer = setTimeout(function () {
         retryTimer = null;
         attachSource(HLS_URL);
       }, delay);
     }
 
-    function resetVisualStateForNewSource() {
-      firstFrameDisplayed = false;
-      video.classList.remove('ready');
-      overlay.classList.add('hidden');
-      overlay.setAttribute('aria-hidden', 'true');
-    }
-
-    function attachSource(nextUrl = HLS_URL) {
-      HLS_URL = String(nextUrl || '');
-      window.__CHANNEL_HLS_URL__ = HLS_URL;
-      urlLabel.textContent = HLS_URL || '(aucune URL)';
-      keepUnmuted();
-      resetVisualStateForNewSource();
-
-      if (!HLS_URL) {
-        setMessage('Aucune URL HLS ciblée dans ce fichier.');
-        return;
-      }
-
+    function clearCurrentPlayer() {
       if (hlsInstance) {
         hlsInstance.destroy();
         hlsInstance = null;
       }
+      video.removeAttribute('src');
+      video.load();
+    }
+
+    function attachSource(nextUrl) {
+      HLS_URL = String(nextUrl || HLS_URL || '');
+      window.__CHANNEL_HLS_URL__ = HLS_URL;
+      urlLabel.textContent = HLS_URL || '(aucune URL)';
+      hideOverlay();
+      hideVideoUntilRealFrame();
+      keepUnmuted();
+
+      if (!HLS_URL) {
+        setMessage('Aucune URL HLS ciblee dans ce fichier.');
+        return;
+      }
+
+      clearCurrentPlayer();
 
       if (window.Hls && Hls.isSupported()) {
         hlsInstance = new Hls({
@@ -186,44 +209,53 @@
           liveSyncDurationCount: 1,
           liveMaxLatencyDurationCount: 3,
           backBufferLength: 0,
-          maxBufferLength: 3,
-          maxLiveSyncPlaybackRate: 1.5
+          maxBufferLength: 8
         });
 
-        hlsInstance.loadSource(HLS_URL);
         hlsInstance.attachMedia(video);
 
-        hlsInstance.on(Hls.Events.MEDIA_ATTACHED, () => {
-          keepUnmuted();
-          playWithSound();
+        hlsInstance.on(Hls.Events.MEDIA_ATTACHED, function () {
+          hlsInstance.loadSource(HLS_URL);
         });
 
-        hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+        hlsInstance.on(Hls.Events.MANIFEST_PARSED, function () {
           retryDelayMs = 1500;
           if (retryTimer) {
             clearTimeout(retryTimer);
             retryTimer = null;
           }
-          keepUnmuted();
-          setMessage('Manifest HLS chargé. Tentative autoplay avec son...');
+          setMessage('Manifest HLS charge. Lecture immediate...');
           playWithSound();
         });
 
-        hlsInstance.on(Hls.Events.FRAG_BUFFERED, () => {
-          keepUnmuted();
-          playWithSound();
+        hlsInstance.on(Hls.Events.FRAG_BUFFERED, function () {
+          revealWhenFrameExists();
         });
 
-        hlsInstance.on(Hls.Events.ERROR, (event, data) => {
+        hlsInstance.on(Hls.Events.ERROR, function (event, data) {
           console.warn('Erreur HLS:', data);
           keepUnmuted();
-          if (data && data.fatal) scheduleRecovery();
+          if (!data || !data.fatal) return;
+
+          if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+            hlsInstance.startLoad();
+            scheduleRecovery();
+          } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+            hlsInstance.recoverMediaError();
+          } else {
+            scheduleRecovery();
+          }
         });
       } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
         video.src = HLS_URL;
-        video.addEventListener('loadedmetadata', playWithSound, { once: true });
+        video.addEventListener('loadeddata', function () {
+          revealWhenFrameExists();
+          playWithSound();
+        }, { once: true });
+        video.load();
+        playWithSound();
       } else {
-        setMessage('HLS.js non chargé ou HLS non supporté par ce navigateur.');
+        setMessage('HLS.js non charge ou HLS non supporte par ce navigateur.');
       }
     }
 
@@ -234,7 +266,8 @@
         refreshUrl.searchParams.set('_hls_refresh', String(Date.now()));
         const response = await fetch(refreshUrl, { cache: 'no-store' });
         if (!response.ok) return;
-        const nextDocument = new DOMParser().parseFromString(await response.text(), 'text/html');
+        const html = await response.text();
+        const nextDocument = new DOMParser().parseFromString(html, 'text/html');
         const nextDataNode = nextDocument.getElementById('hls-data');
         if (!nextDataNode) return;
         const nextData = JSON.parse(nextDataNode.textContent || '{}');
@@ -254,12 +287,12 @@
     video.addEventListener('volumechange', keepUnmuted);
     playBtn.addEventListener('click', playWithSound);
 
-    attachSource();
+    hideOverlay();
+    attachSource(HLS_URL);
     setInterval(refreshPublishedSource, 20000);
 
-    console.log('URL HLS ciblée:', HLS_URL);
-    console.log('Toutes les URLs ciblées:', ALL_TARGET_URLS.join('
-'));
+    console.log('URL HLS ciblee:', HLS_URL);
+    console.log('Toutes les URLs ciblees:', ALL_TARGET_URLS.join('\\n'));
   </script>
 </body>
 </html>
