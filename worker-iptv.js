@@ -1,11 +1,19 @@
 const UPSTREAM_HOST = 'https://deviantart.lovetier.bz';
 const PROXY_PATH = '/api/iptv/proxy';
+const LIVE_PREFIX = '/api/iptv/live/';
+const LIVE_CHANNELS = new Map([
+  ['btv', 'BTV1'],
+  ['sport-tv-1', 'SPT1'],
+  ['sport-tv-5', 'SPT5'],
+  ['dazn-1', 'ELEVEN1'],
+  ['dazn-5', 'ELEVEN5']
+]);
 const ALLOWED_UPSTREAM_PATHS = [
   '/BTV1/',
-  '/SPT5',
-  '/SPT1',
-  '/ELEVEN1',
-  '/ELEVEN5'
+  '/SPT5/',
+  '/SPT1/',
+  '/ELEVEN1/',
+  '/ELEVEN5/'
 ];
 
 const UPSTREAM_ORIGIN = new URL(UPSTREAM_HOST).origin;
@@ -48,6 +56,94 @@ function corsHeaders() {
     'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
     'Access-Control-Allow-Headers': 'Range'
   };
+}
+
+async function resolveIptvLive(request, requestUrl, channelKey) {
+  if (request.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: corsHeaders() });
+  }
+  if (request.method !== 'GET' && request.method !== 'HEAD') {
+    return new Response('Method not allowed', { status: 405, headers: corsHeaders() });
+  }
+
+  const channel = LIVE_CHANNELS.get(channelKey);
+  if (!channel) {
+    return new Response('Unknown channel', { status: 404, headers: corsHeaders() });
+  }
+
+  const sourceUrl = `https://lovetier.bz/player/${channel}`;
+  const source = await fetch(sourceUrl, {
+    headers: {
+      Accept: 'text/html,application/xhtml+xml',
+      'User-Agent': 'Mozilla/5.0'
+    },
+    redirect: 'follow'
+  });
+  if (!source.ok) {
+    return new Response(`Source unavailable (${source.status})`, {
+      status: 502,
+      headers: corsHeaders()
+    });
+  }
+
+  const sourceHtml = await source.text();
+  const match = sourceHtml.match(/streamUrl:\s*"([^"]+)"/i);
+  if (!match || !match[1]) {
+    return new Response('Dynamic stream URL unavailable', {
+      status: 502,
+      headers: corsHeaders()
+    });
+  }
+
+  let upstreamUrl;
+  try {
+    upstreamUrl = new URL(
+      match[1]
+        .replace(/\\\//g, '/')
+        .replace(/\\u0026/gi, '&')
+    );
+  } catch (_) {
+    return new Response('Invalid dynamic stream URL', {
+      status: 502,
+      headers: corsHeaders()
+    });
+  }
+  if (
+    !isAllowedUpstreamUrl(upstreamUrl) ||
+    upstreamUrl.pathname !== `/${channel}/index.m3u8` ||
+    !upstreamUrl.searchParams.has('token')
+  ) {
+    return new Response('Dynamic stream URL refused', {
+      status: 502,
+      headers: corsHeaders()
+    });
+  }
+
+  const master = await fetch(upstreamUrl, {
+    headers: { Accept: 'application/vnd.apple.mpegurl,application/x-mpegURL,*/*' },
+    redirect: 'follow'
+  });
+  const masterText = await master.text();
+  if (!master.ok || !masterText.trimStart().startsWith('#EXTM3U')) {
+    return new Response(`Master validation failed (${master.status})`, {
+      status: 502,
+      headers: corsHeaders()
+    });
+  }
+
+  const headers = new Headers(corsHeaders());
+  headers.set('Content-Type', 'application/vnd.apple.mpegurl');
+  headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+  headers.set('CDN-Cache-Control', 'no-store');
+  headers.set('Cloudflare-CDN-Cache-Control', 'no-store');
+  headers.set('X-Ares-Channel', channel);
+  headers.set('X-Ares-Resolved-At', new Date().toISOString());
+  if (request.method === 'HEAD') return new Response(null, { status: 200, headers });
+
+  return new Response(
+    rewritePlaylist(masterText, upstreamUrl, requestUrl.origin),
+    { status: 200, headers }
+  );
 }
 
 async function proxyIptv(request, requestUrl) {
@@ -140,26 +236,18 @@ async function proxyIptv(request, requestUrl) {
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request) {
     const url = new URL(request.url);
 
     if (url.pathname === PROXY_PATH) {
       return proxyIptv(request, url);
     }
 
-    const response = await env.ASSETS.fetch(request);
-    if (/^\/pages\/worker-(?:btv|sport-tv-[15]|dazn-[15])(?:\.html)?$/i.test(url.pathname)) {
-      const headers = new Headers(response.headers);
-      headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
-      headers.set('CDN-Cache-Control', 'no-store');
-      headers.set('Cloudflare-CDN-Cache-Control', 'no-store');
-      return new Response(response.body, {
-        status: response.status,
-        statusText: response.statusText,
-        headers
-      });
+    const liveMatch = url.pathname.match(/^\/api\/iptv\/live\/([a-z0-9-]+)\/master\.m3u8$/i);
+    if (liveMatch) {
+      return resolveIptvLive(request, url, liveMatch[1].toLowerCase());
     }
 
-    return response;
+    return new Response('Not found', { status: 404 });
   }
 };
