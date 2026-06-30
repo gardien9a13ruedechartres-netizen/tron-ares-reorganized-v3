@@ -7,7 +7,8 @@
     "start": "node auto-deploy-cloudflare.js",
     "watch:deploy": "node auto-deploy-cloudflare.js",
     "deploy": "wrangler deploy",
-    "deploy:iptv": "wrangler deploy -c wrangler-iptv.toml"
+    "deploy:iptv": "wrangler deploy -c wrangler-iptv.toml",
+    "deploy:iptv2": "wrangler deploy -c wrangler-iptv2.toml"
   },
   "keywords": [
     "cloudflare",
