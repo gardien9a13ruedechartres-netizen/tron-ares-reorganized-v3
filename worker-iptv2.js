@@ -2,10 +2,20 @@ const UPSTREAM_HOST = 'https://helpfullive.info';
 const PROXY_PATH = '/api/iptv/proxy';
 const LIVE_PREFIX = '/api/iptv/live/';
 const LIVE_CHANNELS = new Map([
-  ['6ter', '6ter']
+  ['6ter', {
+    stream: '6ter',
+    upstreamPath: '/6ter/index.m3u8',
+    referer: 'https://endirecttv.com/yayin/?kanal=196&yayin=2'
+  }],
+  ['cstar', {
+    stream: 'cstar',
+    upstreamPath: '/cstar/index.m3u8',
+    referer: 'https://endirecttv.com/yayin/?kanal=193&yayin='
+  }]
 ]);
 const ALLOWED_UPSTREAM_PATHS = [
-  '/6ter/'
+  '/6ter/',
+  '/cstar/'
 ];
 
 const UPSTREAM_ORIGIN = new URL(UPSTREAM_HOST).origin;
@@ -63,11 +73,11 @@ async function resolveIptvLive(request, requestUrl, channelKey) {
     return new Response('Unknown channel', { status: 404, headers: corsHeaders() });
   }
 
-  const sourceUrl = `https://endirecttv.com/token.php?stream=${channel}`;
+  const sourceUrl = `https://endirecttv.com/token.php?stream=${channel.stream}`;
   const source = await fetch(sourceUrl, {
     headers: {
       Accept: 'text/html,application/xhtml+xml',
-      Referer: 'https://endirecttv.com/yayin/?kanal=196&yayin=2',
+      Referer: channel.referer,
       'User-Agent': 'Mozilla/5.0'
     },
     redirect: 'follow'
@@ -103,7 +113,7 @@ async function resolveIptvLive(request, requestUrl, channelKey) {
   }
   if (
     !isAllowedUpstreamUrl(upstreamUrl) ||
-    upstreamUrl.pathname !== '/6ter/index.m3u8' ||
+    upstreamUrl.pathname !== channel.upstreamPath ||
     !upstreamUrl.searchParams.has('token')
   ) {
     return new Response('Dynamic stream URL refused', {
@@ -129,7 +139,7 @@ async function resolveIptvLive(request, requestUrl, channelKey) {
   headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
   headers.set('CDN-Cache-Control', 'no-store');
   headers.set('Cloudflare-CDN-Cache-Control', 'no-store');
-  headers.set('X-Ares-Channel', channel);
+  headers.set('X-Ares-Channel', channel.stream);
   headers.set('X-Ares-Resolved-At', new Date().toISOString());
   if (request.method === 'HEAD') return new Response(null, { status: 200, headers });
 

@@ -115,7 +115,7 @@
     {
       "id": "cstar",
       "name": "CStar",
-      "url": "/pages/cstar.html",
+      "url": "/pages/worker-cstar.html",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20CStar%202016.svg"
