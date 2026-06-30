@@ -115,14 +115,14 @@
     {
       "id": "cstar",
       "name": "CStar",
-      "url": "https://tron-ares-iptv2.victor-salema-53d.workers.dev/api/iptv/live/cstar/master.m3u8",
+      "url": "/pages/worker-cstar.html",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20CStar%202016.svg"
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "tmc",
@@ -199,14 +199,14 @@
     {
       "id": "6ter",
       "name": "6ter",
-      "url": "https://tron-ares-iptv2.victor-salema-53d.workers.dev/api/iptv/live/6ter/master.m3u8",
+      "url": "/pages/6ter.html",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%206ter%202016.svg"
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "serie-film",
