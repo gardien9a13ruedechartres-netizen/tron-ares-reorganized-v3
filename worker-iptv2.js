@@ -1,23 +1,11 @@
-const UPSTREAM_HOST = 'https://deviantart.lovetier.bz';
+const UPSTREAM_HOST = 'https://helpfullive.info';
 const PROXY_PATH = '/api/iptv/proxy';
 const LIVE_PREFIX = '/api/iptv/live/';
 const LIVE_CHANNELS = new Map([
-  ['m6fr', 'M6FR'],
-  ['6ter', '6TER'],
-  ['sport-tv-1', 'SPT1'],
-  ['sport-tv-5', 'SPT5'],
-  ['dazn-1', 'ELEVEN1'],
-  ["dazn-5", "ELEVEN5"],
-  ["canalplfr", "CANALPLFR"]
+  ['6ter', '6ter']
 ]);
 const ALLOWED_UPSTREAM_PATHS = [
-  '/M6FR/',
-  '/6TER/',
-  '/SPT5/',
-  '/SPT1/',
-  '/ELEVEN1/',
-  '/ELEVEN5/',
-  '/CANALPLFR/'
+  '/6ter/'
 ];
 
 const UPSTREAM_ORIGIN = new URL(UPSTREAM_HOST).origin;
@@ -75,10 +63,11 @@ async function resolveIptvLive(request, requestUrl, channelKey) {
     return new Response('Unknown channel', { status: 404, headers: corsHeaders() });
   }
 
-  const sourceUrl = `https://lovetier.bz/player/${channel}`;
+  const sourceUrl = `https://endirecttv.com/token.php?stream=${channel}`;
   const source = await fetch(sourceUrl, {
     headers: {
       Accept: 'text/html,application/xhtml+xml',
+      Referer: 'https://endirecttv.com/yayin/?kanal=196&yayin=2',
       'User-Agent': 'Mozilla/5.0'
     },
     redirect: 'follow'
@@ -91,7 +80,7 @@ async function resolveIptvLive(request, requestUrl, channelKey) {
   }
 
   const sourceHtml = await source.text();
-  const match = sourceHtml.match(/streamUrl:\s*"([^"]+)"/i);
+  const match = sourceHtml.match(/file\s*:\s*"([^"]+)"/i);
   if (!match || !match[1]) {
     return new Response('Dynamic stream URL unavailable', {
       status: 502,
@@ -114,7 +103,7 @@ async function resolveIptvLive(request, requestUrl, channelKey) {
   }
   if (
     !isAllowedUpstreamUrl(upstreamUrl) ||
-    upstreamUrl.pathname !== `/${channel}/index.m3u8` ||
+    upstreamUrl.pathname !== '/6ter/index.m3u8' ||
     !upstreamUrl.searchParams.has('token')
   ) {
     return new Response('Dynamic stream URL refused', {
