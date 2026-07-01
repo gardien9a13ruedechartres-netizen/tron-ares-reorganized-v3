@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <title>Player HLS CMTVPT</title>
+  <title>Player Worker DAZN 1 PT</title>
   <style>
     html, body {
       width: 100%;
@@ -21,7 +21,8 @@
       object-fit: fill;
       background: #000;
     }
-    #overlay {
+    
+  #overlay {
       position: fixed;
       left: 16px;
       right: 16px;
@@ -34,7 +35,12 @@
       border-radius: 10px;
       padding: 12px;
       line-height: 1.4;
+      visibility: hidden;
+      pointer-events: none;
     }
+
+
+
     #overlay.hidden { display: none; }
     button {
       margin-top: 8px;
@@ -51,12 +57,12 @@
   <video id="video" controls autoplay playsinline webkit-playsinline></video>
   <div id="overlay">
     <div><strong>Player HLS généré</strong></div>
-    <div>URL ciblée : <code id="urlLabel"></code></div>
+    <div hidden>URL ciblée : <code id="urlLabel"></code></div>
     <div id="msg">Chargement du player...</div>
     <button id="playBtn">Activer lecture avec son</button>
   </div>
-
-  <script type="application/json" id="hls-data">{"url":"https://player-engine.com/api/cmtvpt/proxy?url=https%3A%2F%2Fclouding.wideiptv.top%2FCMTVPT%2Findex.fmp4.m3u8%3Ftoken%3Df8f51a7ed466da92c9e75dc49700fbbf8ecfc959-5132785dfaa18195709f73646a70b69f-1782904298-1782900698","upstreamUrl":"https://clouding.wideiptv.top/CMTVPT/index.fmp4.m3u8?token=f8f51a7ed466da92c9e75dc49700fbbf8ecfc959-5132785dfaa18195709f73646a70b69f-1782904298-1782900698","urls":["https://clouding.wideiptv.top/CMTVPT/index.fmp4.m3u8?token=f8f51a7ed466da92c9e75dc49700fbbf8ecfc959-5132785dfaa18195709f73646a70b69f-1782904298-1782900698"],"sourcePage":"","generatedAt":"2026-07-01T10:16:38.035Z"}</script>
+<script type="application/json" id="hls-data">{"url":"https://tron-ares-iptv.victor-salema-53d.workers.dev/api/iptv/live/tf1fr/master.m3u8","upstreamUrl":"","urls":["https://tron-ares-iptv.victor-salema-53d.workers.dev/api/iptv/live/tf1fr/master.m3u8"],"sourcePage":"Cloudflare Worker IPTV autonome","generatedAt":"2026-06-29T10:30:00.000Z"}</script>
+  
   <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.15"></script>
   <script>
     const dataNode = document.getElementById('hls-data');

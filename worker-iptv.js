@@ -8,7 +8,11 @@ const LIVE_CHANNELS = new Map([
   ['dazn-1', 'ELEVEN1'],
   ["dazn-5", "ELEVEN5"],
   ["canalplfr", "CANALPLFR"],
-  ["m6fr", "M6FR"]
+  ["m6fr", "M6FR"],
+  ["tf1fr", "TF1FR"]
+
+
+
 ]);
 const ALLOWED_UPSTREAM_PATHS = [
   '/BTV1/',
@@ -17,7 +21,8 @@ const ALLOWED_UPSTREAM_PATHS = [
   '/ELEVEN1/',
   '/ELEVEN5/',
   '/CANALPLFR/',
-  '/M6FR/'
+  '/M6FR/',
+  '/TF1FR/'
 ];
 
 const UPSTREAM_ORIGIN = new URL(UPSTREAM_HOST).origin;
