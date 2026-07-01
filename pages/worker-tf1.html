@@ -159,30 +159,8 @@
       }
     }
 
-    async function refreshPublishedSource() {
-      if (!/^https?:$/.test(location.protocol)) return;
-      try {
-        const refreshUrl = new URL(location.href);
-        refreshUrl.searchParams.set('_hls_refresh', String(Date.now()));
-        const response = await fetch(refreshUrl, { cache: 'no-store' });
-        if (!response.ok) return;
-        const nextDocument = new DOMParser().parseFromString(await response.text(), 'text/html');
-        const nextDataNode = nextDocument.getElementById('hls-data');
-        if (!nextDataNode) return;
-        const nextData = JSON.parse(nextDataNode.textContent || '{}');
-        const nextUrl = String(nextData.url || '');
-        if (nextUrl && nextUrl !== HLS_URL) {
-          setMessage('Nouveau master detecte. Mise a jour du flux...');
-          attachSource(nextUrl);
-        }
-      } catch (error) {
-        console.warn('Verification du nouveau master impossible:', error);
-      }
-    }
-
     playBtn.addEventListener('click', playWithSound);
     attachSource();
-    setInterval(refreshPublishedSource, 20000);
 
     console.log('URL HLS ciblée:', HLS_URL);
     console.log('Toutes les URLs ciblées:', ALL_TARGET_URLS.join('\n'));
