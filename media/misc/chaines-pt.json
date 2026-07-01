@@ -9,7 +9,7 @@
 {
 "id": "cmtv",
 "name": "CMTV",
-"url": "/pages/worker-cmtvpt.html",
+"url": "/pages/worker-iptv.html?channel=cmtvpt",
 "logo": { "type": "image", "value": "/media/cmtv.png" },
 "group": "Généraliste",
 "isFavorite": false,
@@ -18,7 +18,7 @@
 {
 "id": "rtp1",
 "name": "RTP1",
-"url": "/pages/worker-rtp1.html",
+"url": "/pages/worker-iptv.html?channel=rtp1",
 "logo": { "type": "image", "value": "/media/rtp1.jpg" },
 "group": "Généraliste",
 "isFavorite": false,
@@ -27,7 +27,7 @@
 {
 "id": "rtp2",
 "name": "RTP2",
-"url": "/pages/worker-rtp2.html",
+"url": "/pages/worker-iptv.html?channel=rtp2",
 "logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/commons/f/f9/RTP2_logo_2016.svg" },
 "group": "Généraliste",
 "isFavorite": false,
@@ -90,7 +90,7 @@
 {
 "id": "sic",
 "name": "SIC",
-  "url": "/pages/worker-sic.html",
+"url": "/pages/worker-iptv.html?channel=sic",
 "logo": { "type": "image", "value": "/media/sic.jpg" },
 "group": "Généraliste",
 "isFavorite": false,
@@ -135,7 +135,7 @@
 {
 "id": "BTV",
 "name": "BTV",
-"url": "/pages/worker-btv.html",
+"url": "/pages/worker-iptv.html?channel=btv",
 "logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/commons/d/d2/Logo_Benfica_TV.png" },
 "group": "Sport",
 "isFavorite": false,
@@ -181,7 +181,7 @@
 {
 "id": "sporttv1",
 "name": "Sport TV 1",
-"url": "/pages/worker-sport-tv-1.html",
+"url": "/pages/worker-iptv.html?channel=sport-tv-1",
 "logo": { "type": "image", "value": "https://cdn.brandfetch.io/idKvjRibkN/w/400/h/400/theme/dark/icon.jpeg" },
 "group": "Sport",
 "isFavorite": false,
@@ -217,7 +217,7 @@
 {
 "id": "sporttv5",
 "name": "Sport TV 5",
-"url": "/pages/worker-sport-tv-5.html",
+"url": "/pages/worker-iptv.html?channel=sport-tv-5",
 "logo": { "type": "image", "value": "https://cdn.brandfetch.io/idKvjRibkN/w/400/h/400/theme/dark/icon.jpeg" },
 "group": "Sport",
 "isFavorite": false,
@@ -226,7 +226,7 @@
 {
 "id": "dazn1",
 "name": "DAZN 1 PT",
-"url": "/pages/worker-dazn-1.html",
+"url": "/pages/worker-iptv.html?channel=dazn-1",
 "logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/commons/7/71/DAZN_logo.svg" },
 "group": "Sport",
 "isFavorite": false,
@@ -262,7 +262,7 @@
 {
 "id": "dazn5",
 "name": "DAZN 5 PT",
-"url": "/pages/worker-dazn-5.html",
+"url": "/pages/worker-iptv.html?channel=dazn-5",
 "logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/commons/7/71/DAZN_logo.svg" },
 "group": "Sport",
 "isFavorite": false,

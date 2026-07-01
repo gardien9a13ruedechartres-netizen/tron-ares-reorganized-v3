@@ -7,7 +7,7 @@
     {
       "id": "TF1",
       "name": "TF1",
-      "url": "/pages/worker-tf1.html",
+      "url": "/pages/worker-iptv.html?channel=tf1fr",
       "logo": {
         "type": "image",
         "value": "/media/image/tf1.webp"
@@ -79,7 +79,7 @@
     {
       "id": "m6",
       "name": "M6",
-      "url": "/pages/worker-m6fr.html",
+      "url": "/pages/worker-iptv.html?channel=m6fr",
       "logo": {
         "type": "image",
         "value": "https://focus.telerama.fr/500x500/0000/00/01/clear-118.png"

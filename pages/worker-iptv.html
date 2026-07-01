@@ -65,17 +65,18 @@
     <div id="msg">Chargement du player...</div>
     <button id="playBtn">Activer lecture avec son</button>
   </div>
-<script type="application/json" id="channel-data">{"canalplfr":"CANAL+","sport-tv-2":"Sport TV 2","sport-tv-3":"Sport TV 3","sport-tv-4":"Sport TV 4","sport-tv-plus":"Sport TV +","dazn-2":"DAZN 2 PT","dazn-3":"DAZN 3 PT","dazn-4":"DAZN 4 PT","canal-11":"Canal 11","a-bola":"A Bola TV","sporting":"Sporting TV","bein-sports-1":"beIN SPORTS 1","bein-sports-2":"beIN SPORTS 2","bein-sports-3":"beIN SPORTS 3","canal-foot":"CANAL+ Foot","canal-sport":"CANAL+ Sport","canal-sport-360":"CANAL+ Sport 360","canal-docs":"CANAL+ Docs","eurosport-1":"EUROSPORT 1","eurosport-2":"EUROSPORT 2","l-equipe":"L'Equipe","equidia":"EQUIDIA","rmc-sport-1":"RMC Sport 1","rmc-sport-2":"RMC Sport 2"}</script>
+<script type="application/json" id="channel-data">{"cmtvpt":"CMTV","rtp1":"RTP1","rtp2":"RTP2","sic":"SIC","btv":"BTV","sport-tv-1":"Sport TV 1","sport-tv-2":"Sport TV 2","sport-tv-3":"Sport TV 3","sport-tv-4":"Sport TV 4","sport-tv-5":"Sport TV 5","sport-tv-plus":"Sport TV +","dazn-1":"DAZN 1 PT","dazn-2":"DAZN 2 PT","dazn-3":"DAZN 3 PT","dazn-4":"DAZN 4 PT","dazn-5":"DAZN 5 PT","canal-11":"Canal 11","a-bola":"A Bola TV","sporting":"Sporting TV","tf1fr":"TF1","m6fr":"M6","canalplfr":"CANAL+","bein-sports-1":"beIN SPORTS 1","bein-sports-2":"beIN SPORTS 2","bein-sports-3":"beIN SPORTS 3","canal-foot":"CANAL+ Foot","canal-sport":"CANAL+ Sport","canal-sport-360":"CANAL+ Sport 360","canal-docs":"CANAL+ Docs","eurosport-1":"EUROSPORT 1","eurosport-2":"EUROSPORT 2","l-equipe":"L'Equipe","equidia":"EQUIDIA","rmc-sport-1":"RMC Sport 1","rmc-sport-2":"RMC Sport 2"}</script>
   
   <script src="https://cdn.jsdelivr.net/npm/hls.js@1.6.16"></script>
   <script>
     const channels = JSON.parse(document.getElementById('channel-data').textContent || '{}');
     const channelKey = new URLSearchParams(location.search).get('channel') || '';
     const channelName = String(channels[channelKey] || '');
-    const workerOrigin = 'https://tron-ares-iptv.victor-salema-53d.workers.dev';
-    let HLS_URL = channelName
-      ? `${workerOrigin}/api/iptv/live/${channelKey}/master.m3u8`
-      : '';
+    const wideIptvChannels = new Set(['cmtvpt', 'rtp1', 'rtp2', 'sic']);
+    const workerUrl = wideIptvChannels.has(channelKey)
+      ? `https://player-engine.com/api/worker-live/${channelKey}/master.m3u8`
+      : `https://tron-ares-iptv.victor-salema-53d.workers.dev/api/iptv/live/${channelKey}/master.m3u8`;
+    let HLS_URL = channelName ? workerUrl : '';
     const ALL_TARGET_URLS = HLS_URL ? [HLS_URL] : [];
     const SOURCE_PAGE = 'Cloudflare Worker IPTV autonome';
     const GENERATED_AT = '';
