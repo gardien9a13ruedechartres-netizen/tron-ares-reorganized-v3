@@ -126,7 +126,7 @@
 {
 "id": "canal11",
 "name": "Canal 11",
-"url": "/pages/canal11.html",
+"url": "/pages/worker-iptv.html?channel=canal-11",
 "logo": { "type": "image", "value": "https://www.zupimages.net/up/24/13/qj99.jpg" },
 "group": "Sport",
 "isFavorite": false,
@@ -144,7 +144,7 @@
 {
 "id": "SCP",
 "name": "SCP",
-"url": "/pages/scp.html",
+"url": "/pages/worker-iptv.html?channel=sporting",
 "logo": { "type": "image", "value": "https://pplware.sapo.pt/wp-content/uploads/2017/06/scp_00.jpg" },
 "group": "Sport",
 "isFavorite": false,
@@ -162,7 +162,7 @@
 {
 "id": "abola",
 "name": "A Bola TV",
-"url": "/pages/abola.html",
+"url": "/pages/worker-iptv.html?channel=a-bola",
 "logo": { "type": "image", "value": "https://www.telesatellite.com/images/actu/a/abolatv.jpg" },
 "group": "Sport",
 "isFavorite": false,
@@ -171,7 +171,7 @@
 {
 "id": "sporttv+",
 "name": "Sport TV +",
-"url": "/pages/sport tv +.html",
+"url": "/pages/worker-iptv.html?channel=sport-tv-plus",
 "logo": { "type": "image", "value": "https://cdn.jsdelivr.net/gh/imagesloads/images@main/img_1a740cf3fae8c219.png" },
 "group": "Sport",
 "isFavorite": false,
@@ -190,7 +190,7 @@
 {
 "id": "sporttv2",
 "name": "Sport TV 2",
-"url": "/pages/Sport TV 2.html",
+"url": "/pages/worker-iptv.html?channel=sport-tv-2",
 "logo": { "type": "image", "value": "https://cdn.brandfetch.io/idKvjRibkN/w/400/h/400/theme/dark/icon.jpeg" },
 "group": "Sport",
 "isFavorite": false,
@@ -199,7 +199,7 @@
 {
 "id": "sporttv3",
 "name": "Sport TV 3",
-"url": "/pages/Sport TV 3.html",
+"url": "/pages/worker-iptv.html?channel=sport-tv-3",
 "logo": { "type": "image", "value": "https://cdn.brandfetch.io/idKvjRibkN/w/400/h/400/theme/dark/icon.jpeg" },
 "group": "Sport",
 "isFavorite": false,
@@ -208,7 +208,7 @@
 {
 "id": "sporttv4",
 "name": "Sport TV 4",
-"url": "/pages/Sport TV 4.html",
+"url": "/pages/worker-iptv.html?channel=sport-tv-4",
 "logo": { "type": "image", "value": "https://cdn.brandfetch.io/idKvjRibkN/w/400/h/400/theme/dark/icon.jpeg" },
 "group": "Sport",
 "isFavorite": false,
@@ -235,7 +235,7 @@
 {
 "id": "dazn2",
 "name": "DAZN 2 PT",
-"url": "/pages/dazn 2.html",
+"url": "/pages/worker-iptv.html?channel=dazn-2",
 "logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/commons/7/71/DAZN_logo.svg" },
 "group": "Sport",
 "isFavorite": false,
@@ -244,7 +244,7 @@
 {
 "id": "dazn3",
 "name": "DAZN 3 PT",
-"url": "/pages/dazn 3.html",
+"url": "/pages/worker-iptv.html?channel=dazn-3",
 "logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/commons/7/71/DAZN_logo.svg" },
 "group": "Sport",
 "isFavorite": false,
@@ -253,7 +253,7 @@
 {
 "id": "dazn4",
 "name": "DAZN 4 PT",
-"url": "/pages/dazn 4.html",
+"url": "/pages/worker-iptv.html?channel=dazn-4",
 "logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/commons/7/71/DAZN_logo.svg" },
 "group": "Sport",
 "isFavorite": false,

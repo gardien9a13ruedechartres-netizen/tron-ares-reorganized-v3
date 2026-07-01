@@ -9,10 +9,30 @@ const LIVE_CHANNELS = new Map([
   ["dazn-5", "ELEVEN5"],
   ["canalplfr", "CANALPLFR"],
   ["m6fr", "M6FR"],
-  ["tf1fr", "TF1FR"]
-
-
-
+  ["tf1fr", "TF1FR"],
+  ["sport-tv-2", "SPT2"],
+  ["sport-tv-3", "SPT3"],
+  ["sport-tv-4", "SPT4"],
+  ["sport-tv-plus", "SPTPlus"],
+  ["dazn-2", "ELEVEN2"],
+  ["dazn-3", "ELEVEN3"],
+  ["dazn-4", "ELEVEN4"],
+  ["canal-11", "Canal11"],
+  ["a-bola", "ABOLA"],
+  ["sporting", "SPORTING"],
+  ["bein-sports-1", "BEINSPORT1FR"],
+  ["bein-sports-2", "BEINSPORT2FR"],
+  ["bein-sports-3", "BEINSPORT3FR"],
+  ["canal-foot", "FOOTPLUSFR"],
+  ["canal-sport", "CANALSPORTFR"],
+  ["canal-sport-360", "CANALS360"],
+  ["canal-docs", "CANALPLDOCS"],
+  ["eurosport-1", "Euro1FR"],
+  ["eurosport-2", "Euro2FR"],
+  ["l-equipe", "EQUIPEFR"],
+  ["equidia", "ER1FR"],
+  ["rmc-sport-1", "RMCSPORT1FR"],
+  ["rmc-sport-2", "RMCSPORT2FR"]
 ]);
 const ALLOWED_UPSTREAM_PATHS = [
   '/BTV1/',
@@ -22,7 +42,30 @@ const ALLOWED_UPSTREAM_PATHS = [
   '/ELEVEN5/',
   '/CANALPLFR/',
   '/M6FR/',
-  '/TF1FR/'
+  '/TF1FR/',
+  '/SPT2/',
+  '/SPT3/',
+  '/SPT4/',
+  '/SPTPlus/',
+  '/ELEVEN2/',
+  '/ELEVEN3/',
+  '/ELEVEN4/',
+  '/Canal11/',
+  '/ABOLA/',
+  '/SPORTING/',
+  '/BEINSPORT1FR/',
+  '/BEINSPORT2FR/',
+  '/BEINSPORT3FR/',
+  '/FOOTPLUSFR/',
+  '/CANALSPORTFR/',
+  '/CANALS360/',
+  '/CANALPLDOCS/',
+  '/Euro1FR/',
+  '/Euro2FR/',
+  '/EQUIPEFR/',
+  '/ER1FR/',
+  '/RMCSPORT1FR/',
+  '/RMCSPORT2FR/'
 ];
 
 const UPSTREAM_ORIGIN = new URL(UPSTREAM_HOST).origin;

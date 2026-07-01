@@ -55,7 +55,7 @@
     {
       "id": "canal",
       "name": "CANAL+",
-      "url": "/pages/canalplfr.html",
+      "url": "/pages/worker-iptv.html?channel=canalplfr",
       "logo": {
         "type": "image",
         "value": "https://www.freeshot.live/upload/source/Canal+France_logo.png"
@@ -244,7 +244,7 @@
     {
       "id": "bein-sports-1",
       "name": "beIN SPORTS 1",
-      "url": "/pages/BEINSPORT1FR.html",
+      "url": "/pages/worker-iptv.html?channel=bein-sports-1",
       "logo": {
         "type": "image",
         "value": "media/image/bein-sports-1.webp"
@@ -256,7 +256,7 @@
     {
       "id": "bein-sports-2",
       "name": "beIN SPORTS 2",
-      "url": "/pages/BEINSPORT2FR.html",
+      "url": "/pages/worker-iptv.html?channel=bein-sports-2",
       "logo": {
         "type": "image",
         "value": "media/image/bein-sports-2.webp"
@@ -268,7 +268,7 @@
     {
       "id": "bein-sports-3",
       "name": "beIN SPORTS 3",
-      "url": "/pages/BEINSPORT3FR.html",
+      "url": "/pages/worker-iptv.html?channel=bein-sports-3",
       "logo": {
         "type": "image",
         "value": "media/image/bein-sports-3.webp"
@@ -292,7 +292,7 @@
     {
       "id": "canal-sport-360",
       "name": "CANAL+ Sport 360",
-      "url": "/pages/CANALS360.html",
+      "url": "/pages/worker-iptv.html?channel=canal-sport-360",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Canal%2BSport%20360.png"
@@ -304,7 +304,7 @@
     {
       "id": "canal-foot",
       "name": "CANAL+ Foot",
-      "url": "/pages/CANAL+ Foot.html",
+      "url": "/pages/worker-iptv.html?channel=canal-foot",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Foot%2B%20%28logo%2C%202011-%29.svg"
@@ -316,7 +316,7 @@
     {
       "id": "canal-sport",
       "name": "CANAL+ Sport",
-      "url": "/pages/CANAL+ Sport.html",
+      "url": "/pages/worker-iptv.html?channel=canal-sport",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Canal%2B%20Sport%20Logo%202013.png"
@@ -388,7 +388,7 @@
     {
       "id": "eurosport-1",
       "name": "EUROSPORT 1",
-      "url": "/pages/EUROSPORT 1.html",
+      "url": "/pages/worker-iptv.html?channel=eurosport-1",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Eurosport%20Logo%20%282011-2015%29.svg"
@@ -400,7 +400,7 @@
     {
       "id": "eurosport-2",
       "name": "EUROSPORT 2",
-      "url": "/pages/EUROSPORT 2.html",
+      "url": "/pages/worker-iptv.html?channel=eurosport-2",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Eurosport%202%20Logo%20%282011-2015%29.svg"
@@ -412,7 +412,7 @@
     {
       "id": "rmc-sport-1",
       "name": "RMC Sport 1",
-      "url": "/pages/RMCSPORT1FR.html",
+      "url": "/pages/worker-iptv.html?channel=rmc-sport-1",
       "logo": {
         "type": "image",
         "value": "https://witv.team/images/logo/rmc-sport-1-logo-b.png"
@@ -424,7 +424,7 @@
     {
       "id": "rmc-sport-2",
       "name": "RMC Sport 2",
-      "url": "/pages/RMCSPORT2FR.html",
+      "url": "/pages/worker-iptv.html?channel=rmc-sport-2",
       "logo": {
         "type": "image",
         "value": "https://witv.team/images/logo/rmc-sport-2-logo-b.png"
@@ -436,7 +436,7 @@
     {
       "id": "l-equipe-fr",
       "name": "L'ÉQUIPE FR",
-      "url": "/pages/L'ÉQUIPE FR.html",
+      "url": "/pages/worker-iptv.html?channel=l-equipe",
       "logo": {
         "type": "image",
         "value": "https://focus.telerama.fr/500x500/0000/00/01/clear-1401.png"
@@ -448,7 +448,7 @@
     {
       "id": "equidia-fr",
       "name": "EQUIDIA FR",
-      "url": "/pages/EQUIDIA FR.html",
+      "url": "/pages/worker-iptv.html?channel=equidia",
       "logo": {
         "type": "image",
         "value": "https://focus.telerama.fr/500x500/0000/00/01/clear-64.png"
@@ -1096,7 +1096,7 @@
     {
       "id": "canal-docs",
       "name": "Canal+ Docs",
-      "url": "https://lovetier.bz/player/CANALPLDOCS",
+      "url": "/pages/worker-iptv.html?channel=canal-docs",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Canal%2B%20Docs.png"

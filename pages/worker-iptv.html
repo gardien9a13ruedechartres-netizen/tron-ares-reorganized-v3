@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
+  <link rel="preconnect" href="https://tron-ares-iptv.victor-salema-53d.workers.dev" crossorigin>
+  <link rel="dns-prefetch" href="//tron-ares-iptv.victor-salema-53d.workers.dev">
+  <title>Player Worker IPTV</title>
+  <style>
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #000;
+    }
+    video {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: fill;
+      background: #000;
+    }
+    
+  #overlay {
+      position: fixed;
+      left: 16px;
+      right: 16px;
+      bottom: 16px;
+      z-index: 10;
+      font-family: Arial, sans-serif;
+      color: #fff;
+      background: rgba(0,0,0,.55);
+      border: 1px solid rgba(255,255,255,.25);
+      border-radius: 10px;
+      padding: 12px;
+      line-height: 1.4;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+
+
+    #overlay.hidden { display: none; }
+    button {
+      margin-top: 8px;
+      padding: 10px 14px;
+      cursor: pointer;
+      border: 0;
+      border-radius: 8px;
+      font-weight: 700;
+    }
+    code { word-break: break-all; color: #d7f7ff; }
+  </style>
+</head>
+<body>
+  <video id="video" controls autoplay playsinline webkit-playsinline></video>
+  <div id="overlay">
+    <div><strong>Player HLS généré</strong></div>
+    <div hidden>URL ciblée : <code id="urlLabel"></code></div>
+    <div id="msg">Chargement du player...</div>
+    <button id="playBtn">Activer lecture avec son</button>
+  </div>
+<script type="application/json" id="channel-data">{"canalplfr":"CANAL+","sport-tv-2":"Sport TV 2","sport-tv-3":"Sport TV 3","sport-tv-4":"Sport TV 4","sport-tv-plus":"Sport TV +","dazn-2":"DAZN 2 PT","dazn-3":"DAZN 3 PT","dazn-4":"DAZN 4 PT","canal-11":"Canal 11","a-bola":"A Bola TV","sporting":"Sporting TV","bein-sports-1":"beIN SPORTS 1","bein-sports-2":"beIN SPORTS 2","bein-sports-3":"beIN SPORTS 3","canal-foot":"CANAL+ Foot","canal-sport":"CANAL+ Sport","canal-sport-360":"CANAL+ Sport 360","canal-docs":"CANAL+ Docs","eurosport-1":"EUROSPORT 1","eurosport-2":"EUROSPORT 2","l-equipe":"L'Equipe","equidia":"EQUIDIA","rmc-sport-1":"RMC Sport 1","rmc-sport-2":"RMC Sport 2"}</script>
+  
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.6.16"></script>
+  <script>
+    const channels = JSON.parse(document.getElementById('channel-data').textContent || '{}');
+    const channelKey = new URLSearchParams(location.search).get('channel') || '';
+    const channelName = String(channels[channelKey] || '');
+    const workerOrigin = 'https://tron-ares-iptv.victor-salema-53d.workers.dev';
+    let HLS_URL = channelName
+      ? `${workerOrigin}/api/iptv/live/${channelKey}/master.m3u8`
+      : '';
+    const ALL_TARGET_URLS = HLS_URL ? [HLS_URL] : [];
+    const SOURCE_PAGE = 'Cloudflare Worker IPTV autonome';
+    const GENERATED_AT = '';
+    document.title = channelName ? `Player Worker ${channelName}` : 'Chaine IPTV inconnue';
+
+    const video = document.getElementById('video');
+    const overlay = document.getElementById('overlay');
+    const msg = document.getElementById('msg');
+    const playBtn = document.getElementById('playBtn');
+    const urlLabel = document.getElementById('urlLabel');
+    let hlsInstance = null;
+    let retryTimer = null;
+    let retryDelayMs = 3000;
+
+    window.__CHANNEL_HLS_URL__ = HLS_URL;
+    window.__CHANNEL_HLS_URLS__ = ALL_TARGET_URLS;
+    window.__CHANNEL_SOURCE_PAGE__ = SOURCE_PAGE;
+    window.__CHANNEL_GENERATED_AT__ = GENERATED_AT;
+
+    urlLabel.textContent = HLS_URL || '(aucune URL)';
+    video.muted = false;
+    video.volume = 1;
+    video.autoplay = true;
+    video.playsInline = true;
+    video.style.objectFit = 'fill';
+
+    function setMessage(text) { msg.textContent = text; }
+
+    async function playWithSound() {
+      try {
+        video.muted = false;
+        video.volume = 1;
+        await video.play();
+        overlay.classList.add('hidden');
+      } catch (error) {
+        overlay.classList.remove('hidden');
+        setMessage('Lecture automatique avec son bloquée par le navigateur. Clique sur le bouton pour lancer.');
+      }
+    }
+
+    function scheduleRecovery() {
+      if (retryTimer) return;
+      const delay = retryDelayMs;
+      retryDelayMs = Math.min(retryDelayMs * 2, 30000);
+      setMessage('Flux temporairement indisponible. Nouvelle tentative...');
+      retryTimer = setTimeout(() => {
+        retryTimer = null;
+        attachSource(HLS_URL);
+      }, delay);
+    }
+
+    function attachSource(nextUrl = HLS_URL) {
+      HLS_URL = String(nextUrl || '');
+      window.__CHANNEL_HLS_URL__ = HLS_URL;
+      urlLabel.textContent = HLS_URL || '(aucune URL)';
+      if (!HLS_URL) {
+        setMessage('Aucune URL HLS ciblée dans ce fichier.');
+        return;
+      }
+      if (hlsInstance) {
+        hlsInstance.destroy();
+        hlsInstance = null;
+      }
+      if (window.Hls && Hls.isSupported()) {
+        hlsInstance = new Hls({ enableWorker: true, lowLatencyMode: true });
+        hlsInstance.loadSource(HLS_URL);
+        hlsInstance.attachMedia(video);
+        hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+          retryDelayMs = 3000;
+          if (retryTimer) {
+            clearTimeout(retryTimer);
+            retryTimer = null;
+          }
+          setMessage('Manifest HLS chargé. Tentative autoplay avec son...');
+          playWithSound();
+        });
+        hlsInstance.on(Hls.Events.ERROR, (event, data) => {
+          console.warn('Erreur HLS:', data);
+          if (data && data.fatal) scheduleRecovery();
+        });
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = HLS_URL;
+        video.addEventListener('loadedmetadata', playWithSound, { once: true });
+      } else {
+        setMessage('HLS.js non chargé ou HLS non supporté par ce navigateur.');
+      }
+    }
+
+    playBtn.addEventListener('click', playWithSound);
+    attachSource();
+
+    console.log('URL HLS ciblée:', HLS_URL);
+    console.log('Toutes les URLs ciblées:', ALL_TARGET_URLS.join('\n'));
+  </script>
+</body>
+</html>
