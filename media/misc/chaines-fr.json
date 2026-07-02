@@ -343,7 +343,7 @@
       "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/100.m3u8",
       "logo": {
         "type": "image",
-        "value": "https://witv.team/images/logo/golf+.png"
+        "value": "https://thumb.canalplus.pro/bran/unsafe/435x243/filters:quality(90)/image/5f5f638902dc0/uploads/media/golf+.png"
       },
       "group": "Sports",
       "isFavorite": false,
@@ -355,7 +355,7 @@
       "url": "https://tennischannel-int-samsunguk.amagi.tv/playlist720_p.m3u8",
       "logo": {
         "type": "image",
-        "value": "https://witv.team/images/logo/tennis.png"
+        "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Tennis%20Channel%20logo.svg"
       },
       "group": "Sports",
       "isFavorite": false,
@@ -415,7 +415,7 @@
       "url": "/pages/worker-iptv.html?channel=rmc-sport-1",
       "logo": {
         "type": "image",
-        "value": "https://witv.team/images/logo/rmc-sport-1-logo-b.png"
+        "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20RMC%20Sport%201%202018.svg"
       },
       "group": "Sports",
       "isFavorite": false,
@@ -427,7 +427,7 @@
       "url": "/pages/worker-iptv.html?channel=rmc-sport-2",
       "logo": {
         "type": "image",
-        "value": "https://witv.team/images/logo/rmc-sport-2-logo-b.png"
+        "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20RMC%20Sport%202%202018.svg"
       },
       "group": "Sports",
       "isFavorite": false,
@@ -655,7 +655,7 @@
       "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/36.m3u8",
       "logo": {
         "type": "image",
-        "value": "https://witv.team/images/logo/tcm-cinema-hd-logo.png"
+        "value": "https://commons.wikimedia.org/wiki/Special:FilePath/TCM%20Cin%C3%A9ma%20logo%202019.png"
       },
       "group": "Cinema",
       "isFavorite": false,
@@ -667,7 +667,7 @@
       "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/123.m3u8",
       "logo": {
         "type": "image",
-        "value": "https://witv.team/images/logo/racksc.jpeg"
+        "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Rakuten%20TV%20logo.svg"
       },
       "group": "Cinema",
       "isFavorite": false,

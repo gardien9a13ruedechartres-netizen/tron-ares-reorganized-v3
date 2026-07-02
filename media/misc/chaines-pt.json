@@ -182,7 +182,7 @@
 "id": "sporttv1",
 "name": "Sport TV 1",
 "url": "/pages/worker-iptv.html?channel=sport-tv-1",
-"logo": { "type": "image", "value": "https://cdn.brandfetch.io/idKvjRibkN/w/400/h/400/theme/dark/icon.jpeg" },
+"logo": { "type": "image", "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Sport%20TV1%20%282023%29.svg" },
 "group": "Sport",
 "isFavorite": false,
 "isIframe": true
@@ -191,7 +191,7 @@
 "id": "sporttv2",
 "name": "Sport TV 2",
 "url": "/pages/worker-iptv.html?channel=sport-tv-2",
-"logo": { "type": "image", "value": "https://cdn.brandfetch.io/idKvjRibkN/w/400/h/400/theme/dark/icon.jpeg" },
+"logo": { "type": "image", "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Sport%20TV2%20%282023%29.svg" },
 "group": "Sport",
 "isFavorite": false,
 "isIframe": true
@@ -200,7 +200,7 @@
 "id": "sporttv3",
 "name": "Sport TV 3",
 "url": "/pages/worker-iptv.html?channel=sport-tv-3",
-"logo": { "type": "image", "value": "https://cdn.brandfetch.io/idKvjRibkN/w/400/h/400/theme/dark/icon.jpeg" },
+"logo": { "type": "image", "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Sport%20TV3%20%282023%29.svg" },
 "group": "Sport",
 "isFavorite": false,
 "isIframe": true
@@ -209,7 +209,7 @@
 "id": "sporttv4",
 "name": "Sport TV 4",
 "url": "/pages/worker-iptv.html?channel=sport-tv-4",
-"logo": { "type": "image", "value": "https://cdn.brandfetch.io/idKvjRibkN/w/400/h/400/theme/dark/icon.jpeg" },
+"logo": { "type": "image", "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Sport%20TV4%20%282023%29.svg" },
 "group": "Sport",
 "isFavorite": false,
 "isIframe": true
@@ -218,7 +218,7 @@
 "id": "sporttv5",
 "name": "Sport TV 5",
 "url": "/pages/worker-iptv.html?channel=sport-tv-5",
-"logo": { "type": "image", "value": "https://cdn.brandfetch.io/idKvjRibkN/w/400/h/400/theme/dark/icon.jpeg" },
+"logo": { "type": "image", "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Sport%20TV5%20%282023%29.svg" },
 "group": "Sport",
 "isFavorite": false,
 "isIframe": true
