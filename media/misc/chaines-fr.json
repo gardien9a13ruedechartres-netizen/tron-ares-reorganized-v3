@@ -607,7 +607,7 @@
       "url": "https://stream.ads.ottera.tv/playlist.m3u8?network_id=15080",
       "logo": {
         "type": "image",
-        "value": "https://tvpdotcomdynamiclogopeu.samsungcloud.tv/resize?url=https://tvpnlogopeu.samsungcloud.tv/platform/image/sourcelogo/vc/00/02/34/FR370000288_20250415T020853SQUARE.png"
+        "value": "/media/box-office-action.png"
       },
       "group": "Cinema",
       "isFavorite": false,
@@ -619,7 +619,7 @@
       "url": "https://dbhl9xt4ay3lq.cloudfront.net/v1/master/3722c60a815c199d9c0ef36c5b73da68a62b09d1/cc-el0y7yl75ynke/bodrm.m3u8",
       "logo": {
         "type": "image",
-        "value": "https://tvpdotcomdynamiclogopeu.samsungcloud.tv/resize?url=https://tvpnlogopeu.samsungcloud.tv/platform/image/sourcelogo/vc/00/02/34/FR3700003N4_20250610T011321SQUARE.png"
+        "value": "/media/box-office-drama.png"
       },
       "group": "Cinema",
       "isFavorite": false,
@@ -631,7 +631,7 @@
       "url": "https://stream.ads.ottera.tv/playlist.m3u8?network_id=15078",
       "logo": {
         "type": "image",
-        "value": "https://tvpdotcomdynamiclogopeu.samsungcloud.tv/resize?url=https://tvpnlogopeu.samsungcloud.tv/platform/image/sourcelogo/vc/00/02/34/FR3700001AG_20251028T011454SQUARE.png"
+        "value": "/media/box-office-thrillers.png"
       },
       "group": "Cinema",
       "isFavorite": false,
@@ -859,7 +859,7 @@
       "url": "https://d3b73b34o7cvkq.cloudfront.net/v1/master/3722c60a815c199d9c0ef36c5b73da68a62b09d1/cc-gz2sgqzp076kf/adn.m3u8",
       "logo": {
         "type": "image",
-        "value": "https://tvpnlogopeu.samsungcloud.tv/platform/image/sourcelogo/vc/00/02/34/FRBD5100001ZA_20240214T035741SQUARE.png_20240214035742.png"
+        "value": "/media/adn.png"
       },
       "group": "Jeunesse",
       "isFavorite": false,
@@ -895,7 +895,7 @@
       "url": "https://do7nccdsswstc.cloudfront.net/v1/manifest/3722c60a815c199d9c0ef36c5b73da68a62b09d1/cc-1aso0bc668saa/a5233c83-f772-4a81-959a-45ec7877ef61/5.m3u8",
       "logo": {
         "type": "image",
-        "value": "https://tvpnlogopeu.samsungcloud.tv/platform/image/sourcelogo/vc/00/02/34/FR4800002NE_20250121T012923SQUARE.png"
+        "value": "/media/caillou.png"
       },
       "group": "Jeunesse",
       "isFavorite": false,
