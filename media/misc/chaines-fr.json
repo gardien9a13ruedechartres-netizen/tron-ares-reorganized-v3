@@ -91,7 +91,7 @@
     {
       "id": "arte",
       "name": "Arte",
-      "url": "https://artesimulcast.akamaized.net/hls/live/2031003/artelive_fr/index.m3u8",
+      "url": "/pages/worker-iptv.html?channel=artefr",
       "logo": {
         "type": "image",
         "value": "/media/image/arte.webp"
@@ -1228,7 +1228,7 @@
     {
       "id": "cnews",
       "name": "CNEWS",
-      "url": "https://hls-m015-live-aka-canalplus.akamaized.net/live/disk/cnews-clair-hd/hls-v3-hd-clair/cnews-clair-hd.m3u8",
+      "url": "/pages/worker-iptv.html?channel=cnewsfr",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Canal%20News%20logo.svg"

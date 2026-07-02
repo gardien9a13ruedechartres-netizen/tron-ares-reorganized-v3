@@ -32,7 +32,9 @@ const LIVE_CHANNELS = new Map([
   ["l-equipe", "EQUIPEFR"],
   ["equidia", "ER1FR"],
   ["rmc-sport-1", "RMCSPORT1FR"],
-  ["rmc-sport-2", "RMCSPORT2FR"]
+  ["rmc-sport-2", "RMCSPORT2FR"],
+  ["artefr", "ARTEFR"],
+  ["cnewsfr", "CNEWSFR"]
 ]);
 const ALLOWED_UPSTREAM_PATHS = [
   '/BTV1/',
@@ -65,14 +67,18 @@ const ALLOWED_UPSTREAM_PATHS = [
   '/EQUIPEFR/',
   '/ER1FR/',
   '/RMCSPORT1FR/',
-  '/RMCSPORT2FR/'
+  '/RMCSPORT2FR/',
+  '/ARTEFR/',
+  '/CNEWSFR/'
 ];
 
 const UPSTREAM_ORIGIN = new URL(UPSTREAM_HOST).origin;
 
 function isAllowedUpstreamUrl(url) {
   return url.origin === UPSTREAM_ORIGIN &&
-    ALLOWED_UPSTREAM_PATHS.some(path => url.pathname.startsWith(path)) &&
+    ALLOWED_UPSTREAM_PATHS.some(path =>
+      url.pathname.toLowerCase().startsWith(path.toLowerCase())
+    ) &&
     !url.username &&
     !url.password;
 }
@@ -162,7 +168,7 @@ async function resolveIptvLive(request, requestUrl, channelKey) {
   }
   if (
     !isAllowedUpstreamUrl(upstreamUrl) ||
-    upstreamUrl.pathname !== `/${channel}/index.m3u8` ||
+    upstreamUrl.pathname.toLowerCase() !== `/${channel}/index.m3u8`.toLowerCase() ||
     !upstreamUrl.searchParams.has('token')
   ) {
     return new Response('Dynamic stream URL refused', {
