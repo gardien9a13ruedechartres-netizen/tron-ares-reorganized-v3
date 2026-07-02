@@ -98,7 +98,7 @@
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "w9",
@@ -1235,7 +1235,7 @@
       },
       "group": "Info",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "france-24",
