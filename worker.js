@@ -5,13 +5,17 @@ const LIVE_CHANNELS = new Map([
   ['cmtvpt', 'CMTVPT'],
   ['rtp1', 'RTP1'],
   ['rtp2', 'RTP2'],
-  ['sic', 'SIC']
+  ['sic', 'SIC'],
+  ['porto-canal', 'PortoCanal'],
+  ['rtp-africa', 'RTPAfrica']
 ]);
 const ALLOWED_UPSTREAM_PATHS = [
   '/CMTVPT/',
   '/RTP1/',
   '/RTP2/',
-  '/SIC/'
+  '/SIC/',
+  '/PortoCanal/',
+  '/RTPAfrica/'
 ];
 
 function isAllowedCmtvptUrl(url) {
@@ -206,7 +210,7 @@ export default {
       return proxyCmtvpt(request, url);
     }
 
-    const liveMatch = url.pathname.match(/^\/api\/worker-live\/([a-z0-9]+)\/master\.m3u8$/i);
+    const liveMatch = url.pathname.match(/^\/api\/worker-live\/([a-z0-9-]+)\/master\.m3u8$/i);
     if (liveMatch) {
       return resolveWorkerLive(request, url, liveMatch[1].toLowerCase());
     }

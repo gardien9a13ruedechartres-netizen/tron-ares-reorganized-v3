@@ -43,6 +43,15 @@
 "isIframe": true
 },
 {
+"id": "rtp-africa",
+"name": "RTP África",
+"url": "/pages/worker-iptv.html?channel=rtp-africa",
+"logo": { "type": "image", "value": "https://commons.wikimedia.org/wiki/Special:FilePath/RTP%20%C3%81frica%202026.svg" },
+"group": "Generalista",
+"isFavorite": false,
+"isIframe": true
+},
+{
 "id": "tvi",
 "name": "TVI",
 "url": "https://raw.githubusercontent.com/LITUATUI/M3UPT/refs/heads/main/M3U/TVI.m3u8",
@@ -153,8 +162,26 @@
 {
 "id": "PORTO canal",
 "name": "PORTO canal",
-"url": "",
+"url": "/pages/worker-iptv.html?channel=porto-canal",
 "logo": { "type": "image", "value": "https://www.freeshot.live/upload/source/Porto-Canal-logo.png" },
+"group": "Sport",
+"isFavorite": false,
+"isIframe": true
+},
+{
+"id": "eurosport1pt",
+"name": "Eurosport 1 PT",
+"url": "/pages/worker-iptv.html?channel=eurosport-1-pt",
+"logo": { "type": "image", "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Eurosport%20Logo%20%282011-2015%29.svg" },
+"group": "Sport",
+"isFavorite": false,
+"isIframe": true
+},
+{
+"id": "eurosport2pt",
+"name": "Eurosport 2 PT",
+"url": "/pages/worker-iptv.html?channel=eurosport-2-pt",
+"logo": { "type": "image", "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Eurosport%202%20Logo%20%282011-2015%29.svg" },
 "group": "Sport",
 "isFavorite": false,
 "isIframe": true

@@ -34,7 +34,9 @@ const LIVE_CHANNELS = new Map([
   ["rmc-sport-1", "RMCSPORT1FR"],
   ["rmc-sport-2", "RMCSPORT2FR"],
   ["artefr", "ARTEFR"],
-  ["cnewsfr", "CNEWSFR"]
+  ["cnewsfr", "CNEWSFR"],
+  ["eurosport-1-pt", "EURO1PT"],
+  ["eurosport-2-pt", "EURO2PT"]
 ]);
 const ALLOWED_UPSTREAM_PATHS = [
   '/BTV1/',
@@ -69,7 +71,9 @@ const ALLOWED_UPSTREAM_PATHS = [
   '/RMCSPORT1FR/',
   '/RMCSPORT2FR/',
   '/ARTEFR/',
-  '/CNEWSFR/'
+  '/CNEWSFR/',
+  '/EURO1PT/',
+  '/EURO2PT/'
 ];
 
 const UPSTREAM_ORIGIN = new URL(UPSTREAM_HOST).origin;
