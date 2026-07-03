@@ -1136,17 +1136,71 @@ function guessCastStreamType(url) {
   return chrome.cast.media.StreamType.BUFFERED;
 }
 
+const CAST_WIDEIPTV_CHANNELS = new Set([
+  'cmtvpt',
+  'rtp1',
+  'rtp2',
+  'sic',
+  'porto-canal',
+  'rtp-africa',
+]);
+
+function resolveCastMediaUrl(entry) {
+  if (!entry || !entry.url) return { ok:false, reason:'Aucun flux en cours.' };
+
+  const sourceUrl = String(entry.url).trim();
+  const channelId = String(entry.id || '').trim().toLowerCase();
+
+  if (entry.castUrl && /^https:\/\//i.test(String(entry.castUrl))) {
+    return { ok:true, url:String(entry.castUrl) };
+  }
+
+  let pageUrl;
+  try {
+    pageUrl = new URL(sourceUrl, window.location.origin);
+  } catch {
+    pageUrl = null;
+  }
+
+  if (pageUrl && pageUrl.origin === window.location.origin) {
+    if (pageUrl.pathname.toLowerCase() === '/pages/worker-iptv.html') {
+      const channel = String(pageUrl.searchParams.get('channel') || '').trim().toLowerCase();
+      if (!channel) return { ok:false, reason:'Chaine Worker inconnue.' };
+
+      const url = CAST_WIDEIPTV_CHANNELS.has(channel)
+        ? `https://player-engine.com/api/worker-live/${encodeURIComponent(channel)}/master.m3u8`
+        : `https://tron-ares-iptv.victor-salema-53d.workers.dev/api/iptv/live/${encodeURIComponent(channel)}/master.m3u8`;
+      return { ok:true, url };
+    }
+
+    if (pageUrl.pathname.toLowerCase() === '/pages/worker-cstar.html') {
+      return {
+        ok:true,
+        url:'https://tron-ares-iptv2.victor-salema-53d.workers.dev/api/iptv/live/cstar/master.m3u8',
+      };
+    }
+
+    if (pageUrl.pathname.toLowerCase() === '/pages/worker-6ter.html' || channelId === '6ter') {
+      return { ok:false, reason:'6TER n’est pas compatible Chromecast.' };
+    }
+  }
+
+  if (entry.isIframe || activePlaybackMode === 'iframe') {
+    return { ok:false, reason:'Cette page ne fournit pas de flux direct compatible Chromecast.' };
+  }
+
+  if (isYoutubeUrl(sourceUrl)) {
+    return { ok:false, reason:'YouTube ne peut pas etre caste par ce lecteur.' };
+  }
+
+  return { ok:true, url:sourceUrl };
+}
+
 function buildCastLoadRequest() {
-  if (!currentEntry || !currentEntry.url) {
-    return { ok:false, reason:'Aucun flux en cours.' };
-  }
+  const resolved = resolveCastMediaUrl(currentEntry);
+  if (!resolved.ok) return resolved;
 
-  // iFrame / YouTube : pas casterable via Default Media Receiver
-  if (currentEntry.isIframe || isYoutubeUrl(currentEntry.url) || activePlaybackMode === 'iframe') {
-    return { ok:false, reason:'Ce contenu (iFrame/YouTube) ne peut pas être casté directement.' };
-  }
-
-  const url = String(currentEntry.url);
+  const url = resolved.url;
 
   // Fichiers locaux / blob
   if (/^(blob:|file:|data:)/i.test(url)) {
