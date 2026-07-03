@@ -1054,6 +1054,7 @@ const CAST = {
   sessionState: null,
   isConnected: false,
   lastLoadedUrl: null,
+  startupToken: 0,
 };
 
 function _castHasFramework() {
@@ -1262,7 +1263,7 @@ function buildCastLoadRequest() {
   return { ok:true, request:req, url };
 }
 
-async function castLoadCurrentEntry(silent = false) {
+async function castLoadCurrentEntry(silent = false, force = false) {
   if (!_castHasFramework() || !CAST.frameworkReady) {
     if (!silent) setStatus('Chromecast indisponible');
     return false;
@@ -1283,7 +1284,7 @@ async function castLoadCurrentEntry(silent = false) {
   }
 
   // Évite de recharger la même URL en boucle
-  if (CAST.lastLoadedUrl === built.url && silent) return true;
+  if (CAST.lastLoadedUrl === built.url && silent && !force) return true;
 
   try {
     await session.loadMedia(built.request);
