@@ -1302,6 +1302,36 @@ async function castLoadCurrentEntry(silent = false, force = false) {
   }
 }
 
+function castSessionHasMedia(session) {
+  try {
+    const media = session && session.getMediaSession();
+    if (!media) return false;
+    return media.playerState === chrome.cast.media.PlayerState.PLAYING ||
+           media.playerState === chrome.cast.media.PlayerState.BUFFERING ||
+           media.playerState === chrome.cast.media.PlayerState.PAUSED;
+  } catch {
+    return false;
+  }
+}
+
+async function startCastWithRecovery() {
+  const token = ++CAST.startupToken;
+  const delays = [300, 1200, 3000];
+
+  for (let attempt = 0; attempt < delays.length; attempt += 1) {
+    await new Promise(resolve => setTimeout(resolve, delays[attempt]));
+    if (token !== CAST.startupToken || !CAST.isConnected) return;
+
+    const session = cast.framework.CastContext.getInstance().getCurrentSession();
+    if (!session || castSessionHasMedia(session)) return;
+
+    const loaded = await castLoadCurrentEntry(true, attempt > 0);
+    if (!loaded && attempt === delays.length - 1) {
+      setStatus('Chromecast : impossible de diffuser ce flux');
+    }
+  }
+}
+
 // Bind UI
 if (castLauncher) {
   updateCastButtonUI(); // état initial
@@ -1353,7 +1383,10 @@ CAST.frameworkReady = true;
 
         // Si session connectée, on tente de diffuser le flux courant
         if (CAST.isConnected) {
-          castLoadCurrentEntry(true);
+          startCastWithRecovery();
+        } else {
+          CAST.startupToken += 1;
+          CAST.lastLoadedUrl = null;
         }
       }
     );
