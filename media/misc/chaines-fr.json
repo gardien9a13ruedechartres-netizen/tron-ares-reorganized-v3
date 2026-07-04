@@ -666,8 +666,8 @@
       "name": "SYFY HD",
       "url": "https://cluone.dad:443/live/99F7CFCD396779DC13E1FEF9BA9F9AE8/12.m3u8",
       "logo": {
-        "type": "ihttps://witv.football/images/logo/syfy-logo.pngmage",
-        "value": ""
+        "type": "image",
+        "value": "https://witv.football/images/logo/syfy-logo.png"
       },
       "group": "Cinema",
       "isFavorite": false,
