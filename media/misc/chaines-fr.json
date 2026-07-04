@@ -496,14 +496,14 @@
     {
       "id": "canal-gr-ecran",
       "name": "CANAL+ Gr. Ecran",
-      "url": "/pages/canal-plus-GE-stream.html",
+      "url": "https://cluone.dad:443/live/99F7CFCD396779DC13E1FEF9BA9F9AE8/28.m3u8",
       "logo": {
         "type": "image",
         "value": "media/image/canal-plus-grand-ecran.webp"
       },
       "group": "Cinema",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": false
     },
     {
       "id": "canal-cinema",
