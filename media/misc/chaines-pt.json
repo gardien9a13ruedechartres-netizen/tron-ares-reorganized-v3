@@ -294,6 +294,15 @@
 "group": "Sport",
 "isFavorite": false,
 "isIframe": true
+},
+{
+"id": "Record",
+"name": "RECORD",
+"url": "/pages/worker-iptv.html?channel=RecordEuropa",
+"logo": { "type": "image", "value": "https://www.freeshot.live/upload/source/RecordTV-logo.png" },
+"group": "Sport",
+"isFavorite": false,
+"isIframe": true
 }
 ]
 }
