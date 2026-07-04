@@ -1144,6 +1144,7 @@ const CAST_WIDEIPTV_CHANNELS = new Set([
   'sic',
   'porto-canal',
   'rtp-africa',
+  'record-europa',
 ]);
 
 function resolveCastMediaUrl(entry) {

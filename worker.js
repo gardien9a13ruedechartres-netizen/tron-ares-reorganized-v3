@@ -7,7 +7,8 @@ const LIVE_CHANNELS = new Map([
   ['rtp2', 'RTP2'],
   ['sic', 'SIC'],
   ['porto-canal', 'PortoCanal'],
-  ['rtp-africa', 'RTPAfrica']
+  ['rtp-africa', 'RTPAfrica'],
+  ['record-europa', 'RecordEuropa']
 ]);
 const ALLOWED_UPSTREAM_PATHS = [
   '/CMTVPT/',
@@ -15,7 +16,8 @@ const ALLOWED_UPSTREAM_PATHS = [
   '/RTP2/',
   '/SIC/',
   '/PortoCanal/',
-  '/RTPAfrica/'
+  '/RTPAfrica/',
+  '/RecordEuropa/'
 ];
 
 function isAllowedCmtvptUrl(url) {

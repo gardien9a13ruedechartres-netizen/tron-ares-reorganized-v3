@@ -36,8 +36,7 @@ const LIVE_CHANNELS = new Map([
   ["artefr", "ARTEFR"],
   ["cnewsfr", "CNEWSFR"],
   ["eurosport-1-pt", "EURO1PT"],
-  ["eurosport-2-pt", "EURO2PT"],
-  ["RecordEuropa", "RECORDEUROPA"]
+  ["eurosport-2-pt", "EURO2PT"]
 ]);
 const ALLOWED_UPSTREAM_PATHS = [
   '/BTV1/',
@@ -74,8 +73,7 @@ const ALLOWED_UPSTREAM_PATHS = [
   '/ARTEFR/',
   '/CNEWSFR/',
   '/EURO1PT/',
-  '/EURO2PT/',
-  '/RECORDEUROPA/'
+  '/EURO2PT/'
 
 ];
 
