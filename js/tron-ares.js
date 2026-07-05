@@ -1145,6 +1145,11 @@ const CAST_WIDEIPTV_CHANNELS = new Set([
   'porto-canal',
   'rtp-africa',
   'record-europa',
+  'tvi',
+  'tvi-reality',
+  'tvi-ficcao',
+  'v-plus-tvi',
+  'cnn-portugal',
 ]);
 
 function resolveCastMediaUrl(entry) {

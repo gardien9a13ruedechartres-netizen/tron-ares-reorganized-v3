@@ -8,7 +8,12 @@ const LIVE_CHANNELS = new Map([
   ['sic', 'SIC'],
   ['porto-canal', 'PortoCanal'],
   ['rtp-africa', 'RTPAfrica'],
-  ['record-europa', 'RecordEuropa']
+  ['record-europa', 'RecordEuropa'],
+  ['tvi', 'TVI'],
+  ['tvi-reality', 'TVIReality'],
+  ['tvi-ficcao', 'TVI_Ficcao'],
+  ['v-plus-tvi', 'VPlusTVI'],
+  ['cnn-portugal', 'CNN-PT']
 ]);
 const ALLOWED_UPSTREAM_PATHS = [
   '/CMTVPT/',
@@ -17,7 +22,12 @@ const ALLOWED_UPSTREAM_PATHS = [
   '/SIC/',
   '/PortoCanal/',
   '/RTPAfrica/',
-  '/RecordEuropa/'
+  '/RecordEuropa/',
+  '/TVI/',
+  '/TVIReality/',
+  '/TVI_Ficcao/',
+  '/VPlusTVI/',
+  '/CNN-PT/'
 ];
 
 function isAllowedCmtvptUrl(url) {

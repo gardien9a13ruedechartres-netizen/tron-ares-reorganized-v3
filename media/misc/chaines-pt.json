@@ -63,29 +63,29 @@
 {
 "id": "tvir",
 "name": "TVI Reality",
-"url": "https://raw.githubusercontent.com/LITUATUI/M3UPT/refs/heads/main/M3U/TVI_Reality.m3u8",
+"url": "/pages/worker-iptv.html?channel=tvi-reality",
 "logo": { "type": "image", "value": "/media/tvir.jpg" },
 "group": "Divertissement",
 "isFavorite": false,
-"isIframe": false
+"isIframe": true
 },
 {
 "id": "tvif",
 "name": "TVI Ficção",
-"url": "https://raw.githubusercontent.com/LITUATUI/M3UPT/refs/heads/main/M3U/TVI_Ficcao.m3u8",
+"url": "/pages/worker-iptv.html?channel=tvi-ficcao",
 "logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/commons/0/0d/TVI_Fic%C3%A7%C3%A3o_%282017%29.png" },
 "group": "Divertissement",
 "isFavorite": false,
-"isIframe": false
+"isIframe": true
 },
 {
 "id": "v-mais",
 "name": "V MAIS",
-"url": "https://raw.githubusercontent.com/LITUATUI/M3UPT/refs/heads/main/M3U/Vmais_TVI.m3u8",
+"url": "/pages/worker-iptv.html?channel=v-plus-tvi",
 "logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/pt/e/ef/V%2BTVI_Logo.png" },
 "group": "Divertissement",
 "isFavorite": false,
-"isIframe": false
+"isIframe": true
 },
 {
 "id": "tvi-int",
@@ -117,11 +117,11 @@
 {
 "id": "cnnpt",
 "name": "CNN Portugal",
-"url": "https://raw.githubusercontent.com/LITUATUI/M3UPT/refs/heads/main/M3U/CNN_Portugal.m3u8",
+"url": "/pages/worker-iptv.html?channel=cnn-portugal",
 "logo": { "type": "image", "value": "/media/cnn.png" },
 "group": "News",
 "isFavorite": false,
-"isIframe": false
+"isIframe": true
 },
 {
 "id": "fifaplus",

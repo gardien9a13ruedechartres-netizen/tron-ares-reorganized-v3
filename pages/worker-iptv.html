@@ -71,6 +71,10 @@
   <script>
     const channels = JSON.parse(document.getElementById('channel-data').textContent || '{}');
     channels['record-europa'] = channels.recordeuropa || 'RECORD EUROPA';
+    channels['tvi-reality'] = 'TVI Reality';
+    channels['tvi-ficcao'] = 'TVI Ficcao';
+    channels['v-plus-tvi'] = 'V+ TVI';
+    channels['cnn-portugal'] = 'CNN Portugal';
     const channelKey = new URLSearchParams(location.search).get('channel') || '';
     const channelName = String(channels[channelKey] || '');
     const wideIptvChannels = new Set([
@@ -80,7 +84,12 @@
       'sic',
       'porto-canal',
       'rtp-africa',
-      'record-europa'
+      'record-europa',
+      'tvi',
+      'tvi-reality',
+      'tvi-ficcao',
+      'v-plus-tvi',
+      'cnn-portugal'
     ]);
     const workerUrl = wideIptvChannels.has(channelKey)
       ? `https://player-engine.com/api/worker-live/${channelKey}/master.m3u8`
