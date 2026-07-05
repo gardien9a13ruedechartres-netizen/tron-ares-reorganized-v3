@@ -76,6 +76,7 @@
     channels['v-plus-tvi'] = 'V+ TVI';
     channels['cnn-portugal'] = 'CNN Portugal';
     channels['tvi-internacional'] = 'TVI Internacional';
+    channels['sic-noticias'] = 'SIC Noticias';
     const channelKey = new URLSearchParams(location.search).get('channel') || '';
     const channelName = String(channels[channelKey] || '');
     const wideIptvChannels = new Set([
@@ -91,7 +92,8 @@
       'tvi-ficcao',
       'v-plus-tvi',
       'cnn-portugal',
-      'tvi-internacional'
+      'tvi-internacional',
+      'sic-noticias'
     ]);
     const workerUrl = wideIptvChannels.has(channelKey)
       ? `https://player-engine.com/api/worker-live/${channelKey}/master.m3u8`

@@ -14,7 +14,8 @@ const LIVE_CHANNELS = new Map([
   ['tvi-ficcao', 'TVI_Ficcao'],
   ['v-plus-tvi', 'VPlusTVI'],
   ['cnn-portugal', 'CNN-PT'],
-  ['tvi-internacional', 'TVI-INT']
+  ['tvi-internacional', 'TVI-INT'],
+  ['sic-noticias', 'SIC-NOTICIAS']
 ]);
 const ALLOWED_UPSTREAM_PATHS = [
   '/CMTVPT/',
@@ -29,7 +30,8 @@ const ALLOWED_UPSTREAM_PATHS = [
   '/TVI_Ficcao/',
   '/VPlusTVI/',
   '/CNN-PT/',
-  '/TVI-INT/'
+  '/TVI-INT/',
+  '/SIC-NOTICIAS/'
 ];
 
 function isAllowedCmtvptUrl(url) {

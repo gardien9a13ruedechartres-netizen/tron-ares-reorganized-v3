@@ -108,7 +108,7 @@
 {
 "id": "sicn",
 "name": "SIC Notícias",
-"url": "/pages/sicn.html",
+"url": "/pages/worker-iptv.html?channel=sic-noticias",
 "logo": { "type": "image", "value": "/media/SICN.webp" },
 "group": "News",
 "isFavorite": false,

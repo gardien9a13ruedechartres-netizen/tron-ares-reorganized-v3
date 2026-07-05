@@ -1151,6 +1151,7 @@ const CAST_WIDEIPTV_CHANNELS = new Set([
   'v-plus-tvi',
   'cnn-portugal',
   'tvi-internacional',
+  'sic-noticias',
 ]);
 
 function resolveCastMediaUrl(entry) {
