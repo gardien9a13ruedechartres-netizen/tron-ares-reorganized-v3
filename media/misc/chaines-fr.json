@@ -79,7 +79,7 @@
     {
       "id": "m6",
       "name": "M6",
-      "url": "/pages/worker-iptv.html?channel=m6fr",
+      "url": "/pages/worker-m6fr.html",
       "logo": {
         "type": "image",
         "value": "https://focus.telerama.fr/500x500/0000/00/01/clear-118.png"

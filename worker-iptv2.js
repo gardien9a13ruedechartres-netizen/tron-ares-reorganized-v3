@@ -11,11 +11,17 @@ const LIVE_CHANNELS = new Map([
     stream: 'cstar',
     upstreamPath: '/cstar/index.m3u8',
     referer: 'https://endirecttv.com/yayin/?kanal=193&yayin='
+  }],
+  ['m6', {
+    stream: 'm6',
+    upstreamPath: '/m6/index.m3u8',
+    referer: 'https://endirecttv.com/yayin/?kanal=185&yayin='
   }]
 ]);
 const ALLOWED_UPSTREAM_PATHS = [
   '/6ter/',
-  '/cstar/'
+  '/cstar/',
+  '/m6/'
 ];
 
 const UPSTREAM_ORIGIN = new URL(UPSTREAM_HOST).origin;

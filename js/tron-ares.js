@@ -1189,6 +1189,13 @@ function resolveCastMediaUrl(entry) {
       };
     }
 
+    if (pageUrl.pathname.toLowerCase() === '/pages/worker-m6fr.html') {
+      return {
+        ok:true,
+        url:'https://tron-ares-iptv2.victor-salema-53d.workers.dev/api/iptv/live/m6/master.m3u8',
+      };
+    }
+
     if (pageUrl.pathname.toLowerCase() === '/pages/worker-6ter.html' || channelId === '6ter') {
       return { ok:false, reason:'6TER n’est pas compatible Chromecast.' };
     }
