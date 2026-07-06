@@ -760,14 +760,14 @@
     {
       "id": "gulli",
       "name": "Gulli",
-      "url": "https://gulli.victor-salema-53d.workers.dev/",
+      "url": "https://sr-m6web.live.6cloud.fr/out/v1/6play/6play-gulli/cmaf_q2hyb21h/hls-short-sd.m3u8",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Gulli%20logo%202023.png"
       },
       "group": "Jeunesse",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": false
     },
     {
       "id": "teletoon",
