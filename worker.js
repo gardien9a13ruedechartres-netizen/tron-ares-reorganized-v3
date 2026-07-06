@@ -1,6 +1,17 @@
+import { parse } from 'devalue';
+
 const CMTVPT_UPSTREAM_HOST = 'clouding.wideiptv.top';
 const CMTVPT_PROXY_PATH = '/api/cmtvpt/proxy';
 const WORKER_LIVE_PREFIX = '/api/worker-live/';
+const SPORTTV_EPG_PATH = '/api/sporttv-epg';
+const SPORTTV_GUIDE_URL = 'https://www.sporttv.pt/guia';
+const SPORTTV_CHANNELS = new Map([
+  [727, 'sport-tv-1'],
+  [728, 'sport-tv-2'],
+  [729, 'sport-tv-3'],
+  [5406, 'sport-tv-4'],
+  [5422, 'sport-tv-5']
+]);
 const LIVE_CHANNELS = new Map([
   ['cmtvpt', 'CMTVPT'],
   ['rtp1', 'RTP1'],
@@ -49,6 +60,100 @@ function makeProxyUrl(value, baseUrl, publicOrigin) {
     return `${publicOrigin}${CMTVPT_PROXY_PATH}?url=${encodeURIComponent(upstream.href)}`;
   } catch (_) {
     return value;
+  }
+}
+
+function programSummary(item) {
+  const startsAt = Number(item.data);
+  const duration = Number(item.duracao);
+  if (!Number.isFinite(startsAt) || !Number.isFinite(duration)) return null;
+
+  return {
+    title: String(item.descricao || item.evento?.nome || '').trim(),
+    subtitle: String(item.agregador2?.nome || item.evento?.nome || '').trim(),
+    startsAt: new Date(startsAt).toISOString(),
+    endsAt: new Date(startsAt + duration).toISOString(),
+    live: String(item.tipoEmissao || '').toUpperCase() === 'DIRETO',
+    image: typeof item.imagem === 'string' ? item.imagem : ''
+  };
+}
+
+async function resolveSportTvEpg(request) {
+  const cors = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+    'Content-Type': 'application/json; charset=utf-8',
+    'Cache-Control': 'public, max-age=300, stale-if-error=86400'
+  };
+
+  if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
+  if (request.method !== 'GET' && request.method !== 'HEAD') {
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers: cors });
+  }
+
+  try {
+    const guide = await fetch(SPORTTV_GUIDE_URL, {
+      headers: {
+        Accept: 'text/html,application/xhtml+xml',
+        'User-Agent': 'Mozilla/5.0'
+      },
+      cf: { cacheEverything: true, cacheTtl: 300 }
+    });
+    if (!guide.ok) throw new Error(`Guide unavailable (${guide.status})`);
+
+    const html = await guide.text();
+    const payloadMatch = html.match(
+      /<script[^>]+id=["']__NUXT_DATA__["'][^>]*>([\s\S]*?)<\/script>/i
+    );
+    if (!payloadMatch) throw new Error('Nuxt guide payload unavailable');
+
+    const identity = value => value;
+    const payload = parse(payloadMatch[1], {
+      Reactive: identity,
+      Ref: identity,
+      ShallowReactive: identity,
+      ShallowRef: identity,
+      EmptyRef: () => undefined,
+      NuxtError: identity
+    });
+
+    const schedules = Object.values(payload?.data || {}).find(value =>
+      Array.isArray(value) &&
+      value.length > 100 &&
+      value.some(item => item?.canal?.id && item?.data && item?.duracao)
+    );
+    if (!schedules) throw new Error('Sport TV schedules unavailable');
+
+    const now = Date.now();
+    const channels = {};
+
+    for (const [channelId, key] of SPORTTV_CHANNELS) {
+      const items = schedules
+        .filter(item => Number(item?.canal?.id) === channelId)
+        .sort((a, b) => Number(a.data) - Number(b.data));
+      const current = items.find(item =>
+        Number(item.data) <= now && now < Number(item.data) + Number(item.duracao)
+      );
+      const next = items.find(item => Number(item.data) > now);
+
+      channels[key] = {
+        name: String(current?.canal?.nome || next?.canal?.nome || key),
+        current: current ? programSummary(current) : null,
+        next: next ? programSummary(next) : null
+      };
+    }
+
+    const body = JSON.stringify({
+      source: SPORTTV_GUIDE_URL,
+      updatedAt: new Date().toISOString(),
+      channels
+    });
+    return new Response(request.method === 'HEAD' ? null : body, { status: 200, headers: cors });
+  } catch (error) {
+    return new Response(
+      JSON.stringify({ error: 'Sport TV guide unavailable', detail: String(error?.message || error) }),
+      { status: 502, headers: { ...cors, 'Cache-Control': 'no-store' } }
+    );
   }
 }
 
@@ -221,6 +326,10 @@ async function proxyCmtvpt(request, requestUrl) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+
+    if (url.pathname === SPORTTV_EPG_PATH) {
+      return resolveSportTvEpg(request);
+    }
 
     if (url.pathname === CMTVPT_PROXY_PATH) {
       return proxyCmtvpt(request, url);
