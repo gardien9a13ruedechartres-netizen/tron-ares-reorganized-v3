@@ -27,8 +27,15 @@
       names: ['RTP2'],
       urls: ['/pages/rtp2.html'],
       preferredUrl: '/pages/rtp2.html'
+    },
+    {
+      id: 'rtp3',
+      names: ['RTP2'],
+      urls: ['/pages/rtp2.html'],
+      preferredUrl: '/pages/rtp2.html'
     }
-  ];
+
+];
 
   function normalizeText(value) {
     return String(value || '')
