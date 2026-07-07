@@ -129,7 +129,7 @@
         path === "/pages/rtp1" ||
         path === "/pages/rtp2.html" ||
         path === "/pages/rtp2" ||
-        path === "/pages/serie-film?type=external&provider" ||
+        path === "/pages/serie-film?q=matrix" ||
         path === "/"
     );
     } catch {
