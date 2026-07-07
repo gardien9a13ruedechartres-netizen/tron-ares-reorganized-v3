@@ -4952,7 +4952,13 @@ prevBtn?.addEventListener('click', playPrev);
 
     const tab = getActiveTabKey ? getActiveTabKey() : '';
     const overlayOpen = !iframeOverlay.classList.contains('hidden');
-    const shouldCatch = overlayOpen;
+    const url = String(currentEntry?.url || '');
+    const shouldCatch = overlayOpen && (
+      tab === 'iframes' ||
+      /\/pages\/worker-/i.test(url) ||
+      /\/pages\/worker-iptv/i.test(url) ||
+      /\/pages\/(?:cmtvpt|rtp1|rtp2|sic|worker-tf1|worker-6ter|worker-cstar|worker-m6fr)(?:\.html)?(?:[?#]|$)/i.test(url)
+    );
     catcher.style.pointerEvents = shouldCatch ? 'auto' : 'none';
   }
 
