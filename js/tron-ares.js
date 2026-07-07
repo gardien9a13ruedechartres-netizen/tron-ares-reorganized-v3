@@ -3932,6 +3932,17 @@ currentEntry = entry;
   // Met à jour tout de suite l'affichage des contrôles pistes (évite tout clignotement)
   updateTrackControlsVisibility();
   updateNowPlayingCounter();
+
+  if (/\/pages\/serie-film(?:\.html)?(?:[?#]|$)/i.test(String(entry.url || ''))) {
+    try {
+      const directUrl = new URL('/pages/serie-film', window.location.origin);
+      window.location.assign(directUrl.href);
+    } catch {
+      window.location.href = '/pages/serie-film';
+    }
+    return;
+  }
+
   activePlaybackMode = 'stream';
   externalFallbackTried = false;
   // Si on était en mode OFFLINE, on repasse en lecture normale
