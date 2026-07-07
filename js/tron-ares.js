@@ -4906,13 +4906,12 @@ nextBtn?.addEventListener('click', playNext);
 prevBtn?.addEventListener('click', playPrev);
 
 // Mouse wheel channel zapping.
-// Plain wheel over native video remains volume control; Shift+wheel on video zaps.
+// Wheel over the player always switches channels.
 (function initWheelChannelZapping() {
   const WHEEL_ZAP_COOLDOWN_MS = 520;
   const WHEEL_ZAP_MIN_DELTA = 18;
   let lastWheelZapAt = 0;
   let wiredIframeWheelDocument = null;
-  let shiftWheelHeld = false;
   let iframeWheelCatcher = null;
 
   function shouldIgnoreWheelZapTarget(target) {
@@ -4953,16 +4952,13 @@ prevBtn?.addEventListener('click', playPrev);
 
     const tab = getActiveTabKey ? getActiveTabKey() : '';
     const overlayOpen = !iframeOverlay.classList.contains('hidden');
-    const shouldCatch = overlayOpen && (shiftWheelHeld || currentListType === 'iframe' || tab === 'iframes');
+    const shouldCatch = overlayOpen;
     catcher.style.pointerEvents = shouldCatch ? 'auto' : 'none';
   }
 
   function onWheelZap(event) {
     if (!event || Math.abs(event.deltaY || 0) < WHEEL_ZAP_MIN_DELTA) return;
     if (shouldIgnoreWheelZapTarget(event.target)) return;
-
-    const isNativeVideoTarget = videoEl && (event.target === videoEl || videoEl.contains(event.target));
-    if (isNativeVideoTarget && !event.shiftKey) return;
 
     const now = Date.now();
     if (now - lastWheelZapAt < WHEEL_ZAP_COOLDOWN_MS) {
@@ -4999,20 +4995,6 @@ prevBtn?.addEventListener('click', playPrev);
     refreshIframeWheelCatcher();
   });
   document.getElementById('nowPlaying')?.addEventListener('wheel', onWheelZap, { passive: false });
-
-  window.addEventListener('keydown', (event) => {
-    if (event.key === 'Shift') {
-      shiftWheelHeld = true;
-      refreshIframeWheelCatcher();
-    }
-  }, true);
-
-  window.addEventListener('keyup', (event) => {
-    if (event.key === 'Shift') {
-      shiftWheelHeld = false;
-      refreshIframeWheelCatcher();
-    }
-  }, true);
 
   document.addEventListener('click', (event) => {
     if (event.target && event.target.closest && event.target.closest('.tab-btn')) {
@@ -11103,216 +11085,6 @@ if(bEl) bEl.textContent = data.overview || 'Synopsis non disponible.';
   try { ensureProStreamUrlUi(); } catch {}
   try { updateRecognizedInfo(); } catch {}
 })();
-
-
-// ================================
-// WHEEL VOLUME FOR #videoEl ONLY
-// ================================
-(function () {
-  const DEFAULT_VOLUME = 0.5;
-  const VOLUME_STEP = 0.05;
-  const OVERLAY_HIDE_DELAY = 850;
-
-  function injectVideoElWheelStyles() {
-    if (document.getElementById('videoElWheelVolumeStyles')) return;
-
-    const style = document.createElement('style');
-    style.id = 'videoElWheelVolumeStyles';
-    style.textContent = `
-      .videoel-volume-overlay{
-        position:absolute;
-        left:50%;
-        bottom:22px;
-        transform:translateX(-50%) translateY(8px);
-        min-width:140px;
-        max-width:min(70vw,260px);
-        padding:10px 14px;
-        border-radius:14px;
-        border:1px solid rgba(0,229,255,.28);
-        background:rgba(2,10,20,.78);
-        color:rgba(255,255,255,.96);
-        box-shadow:0 0 16px rgba(0,229,255,.16), inset 0 0 18px rgba(0,0,0,.45);
-        backdrop-filter:blur(8px);
-        -webkit-backdrop-filter:blur(8px);
-        pointer-events:none;
-        opacity:0;
-        transition:opacity 160ms ease, transform 160ms ease;
-        z-index:8;
-      }
-
-      .videoel-volume-overlay.show{
-        opacity:1;
-        transform:translateX(-50%) translateY(0);
-      }
-
-      .videoel-volume-overlay.muted{
-        border-color:rgba(255,145,0,.35);
-        box-shadow:0 0 18px rgba(255,145,0,.18), inset 0 0 18px rgba(0,0,0,.45);
-      }
-
-      .videoel-volume-overlay-top{
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        gap:10px;
-        margin-bottom:8px;
-        font-size:12px;
-        line-height:1;
-      }
-
-      .videoel-volume-overlay-label{
-        letter-spacing:.08em;
-        text-transform:uppercase;
-        color:rgba(255,255,255,.78);
-      }
-
-      .videoel-volume-overlay-value{
-        font-weight:700;
-        color:rgba(255,255,255,.98);
-      }
-
-      .videoel-volume-overlay-bar{
-        position:relative;
-        height:8px;
-        border-radius:999px;
-        overflow:hidden;
-        background:rgba(255,255,255,.10);
-        box-shadow:inset 0 0 10px rgba(0,0,0,.35);
-      }
-
-      .videoel-volume-overlay-fill{
-        height:100%;
-        width:0%;
-        border-radius:inherit;
-        background:linear-gradient(
-          90deg,
-          rgba(0,229,255,.85),
-          rgba(255,145,0,.92)
-        );
-        box-shadow:0 0 10px rgba(0,229,255,.22), 0 0 16px rgba(255,145,0,.18);
-        transition:width 120ms ease;
-      }
-    `;
-    document.head.appendChild(style);
-  }
-
-  function clamp(value, min, max) {
-    return Math.min(max, Math.max(min, value));
-  }
-
-  function initVideoElWheelVolume() {
-    const videoEl = document.getElementById('videoEl');
-    if (!videoEl || videoEl._videoElWheelReady) return;
-
-    videoEl._videoElWheelReady = true;
-
-    const host = videoEl.parentElement || videoEl;
-    const hostStyle = window.getComputedStyle(host);
-
-    if (hostStyle.position === 'static') {
-      host.style.position = 'relative';
-    }
-
-    let overlay = host.querySelector('.videoel-volume-overlay');
-
-    if (!overlay) {
-      overlay = document.createElement('div');
-      overlay.className = 'videoel-volume-overlay';
-      overlay.setAttribute('aria-hidden', 'true');
-      overlay.innerHTML = `
-        <div class="videoel-volume-overlay-top">
-          <span class="videoel-volume-overlay-label">Volume</span>
-          <span class="videoel-volume-overlay-value">50%</span>
-        </div>
-        <div class="videoel-volume-overlay-bar">
-          <div class="videoel-volume-overlay-fill"></div>
-        </div>
-      `;
-      host.appendChild(overlay);
-    }
-
-    const valueEl = overlay.querySelector('.videoel-volume-overlay-value');
-    const fillEl = overlay.querySelector('.videoel-volume-overlay-fill');
-
-    let hideTimer = null;
-
-    function applyDefaultVolume() {
-      if (videoEl._videoElDefaultVolumeApplied) return;
-      videoEl._videoElDefaultVolumeApplied = true;
-
-      try {
-        videoEl.volume = DEFAULT_VOLUME;
-        videoEl.muted = false;
-      } catch (e) {}
-    }
-
-    function renderOverlay(forceShow) {
-      const normalized = videoEl.muted ? 0 : clamp(Number(videoEl.volume) || 0, 0, 1);
-      const percent = Math.round(normalized * 100);
-
-      valueEl.textContent = percent === 0 ? 'Muet' : `${percent}%`;
-      fillEl.style.width = `${percent}%`;
-      overlay.classList.toggle('muted', percent === 0);
-
-      if (forceShow) {
-        overlay.classList.add('show');
-        clearTimeout(hideTimer);
-        hideTimer = setTimeout(() => {
-          overlay.classList.remove('show');
-        }, OVERLAY_HIDE_DELAY);
-      }
-    }
-
-    function onWheel(event) {
-      event.preventDefault();
-
-      let nextVolume = videoEl.muted ? 0 : (Number(videoEl.volume) || 0);
-
-      if (event.deltaY > 0) {
-        nextVolume -= VOLUME_STEP;
-      } else {
-        nextVolume += VOLUME_STEP;
-      }
-
-      nextVolume = clamp(nextVolume, 0, 1);
-
-      videoEl.volume = nextVolume;
-      videoEl.muted = nextVolume === 0;
-
-      renderOverlay(true);
-    }
-
-    applyDefaultVolume();
-    renderOverlay(false);
-
-    videoEl.addEventListener('loadedmetadata', function () {
-      applyDefaultVolume();
-      renderOverlay(false);
-    });
-
-    videoEl.addEventListener('play', function () {
-      applyDefaultVolume();
-    });
-
-    videoEl.addEventListener('volumechange', function () {
-      renderOverlay(false);
-    });
-
-    videoEl.addEventListener('wheel', onWheel, { passive: false });
-  }
-
-  function bootVideoElWheelVolume() {
-    injectVideoElWheelStyles();
-    initVideoElWheelVolume();
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', bootVideoElWheelVolume, { once: true });
-  } else {
-    bootVideoElWheelVolume();
-  }
-})();
-
 
 
 // --- fullscreen subsearch-card positioning ---
