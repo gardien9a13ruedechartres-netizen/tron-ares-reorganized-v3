@@ -4911,12 +4911,50 @@ prevBtn?.addEventListener('click', playPrev);
   const WHEEL_ZAP_COOLDOWN_MS = 520;
   const WHEEL_ZAP_MIN_DELTA = 18;
   let lastWheelZapAt = 0;
+  let wiredIframeWheelDocument = null;
+  let shiftWheelHeld = false;
+  let iframeWheelCatcher = null;
 
   function shouldIgnoreWheelZapTarget(target) {
-    if (!target || !(target instanceof Element)) return false;
+    if (!target || typeof target.closest !== 'function') return false;
     if (target.closest('input, textarea, select, button, [contenteditable="true"]')) return true;
     if (target.closest('#streamUrlOverlay:not(.hidden), #subtitleSearchOverlay:not(.hidden), #showcaseOverlay:not(.hidden)')) return true;
     return false;
+  }
+
+  function syncWheelZapListType() {
+    const tab = getActiveTabKey ? getActiveTabKey() : '';
+    if (tab === 'channels') currentListType = 'channels';
+    else if (tab === 'fr') currentListType = 'fr';
+    else if (tab === 'iframes') currentListType = 'iframe';
+    else if (tab === 'favorites') currentListType = 'favorites';
+  }
+
+  function ensureIframeWheelCatcher() {
+    if (iframeWheelCatcher || !iframeOverlay) return iframeWheelCatcher;
+
+    iframeWheelCatcher = document.createElement('div');
+    iframeWheelCatcher.setAttribute('aria-hidden', 'true');
+    iframeWheelCatcher.style.cssText = [
+      'position:absolute',
+      'inset:0',
+      'z-index:3',
+      'background:transparent',
+      'pointer-events:none'
+    ].join(';');
+    iframeOverlay.appendChild(iframeWheelCatcher);
+    iframeWheelCatcher.addEventListener('wheel', onWheelZap, { passive: false });
+    return iframeWheelCatcher;
+  }
+
+  function refreshIframeWheelCatcher() {
+    const catcher = ensureIframeWheelCatcher();
+    if (!catcher || !iframeOverlay) return;
+
+    const tab = getActiveTabKey ? getActiveTabKey() : '';
+    const overlayOpen = !iframeOverlay.classList.contains('hidden');
+    const shouldCatch = overlayOpen && (shiftWheelHeld || currentListType === 'iframe' || tab === 'iframes');
+    catcher.style.pointerEvents = shouldCatch ? 'auto' : 'none';
   }
 
   function onWheelZap(event) {
@@ -4936,14 +4974,54 @@ prevBtn?.addEventListener('click', playPrev);
     event.preventDefault();
     event.stopPropagation();
 
+    syncWheelZapListType();
     if (event.deltaY > 0) playNext();
     else playPrev();
+    setTimeout(refreshIframeWheelCatcher, 0);
+  }
+
+  function wireCurrentIframeWheel() {
+    if (!iframeEl) return;
+    let doc = null;
+    try { doc = iframeEl.contentDocument || iframeEl.contentWindow?.document || null; } catch { doc = null; }
+    if (!doc || doc === wiredIframeWheelDocument) return;
+
+    wiredIframeWheelDocument = doc;
+    try { doc.addEventListener('wheel', onWheelZap, { passive: false }); } catch {}
+    try { iframeEl.contentWindow?.addEventListener('wheel', onWheelZap, { passive: false }); } catch {}
   }
 
   playerContainer?.addEventListener('wheel', onWheelZap, { passive: false });
   iframeOverlay?.addEventListener('wheel', onWheelZap, { passive: false });
   iframeEl?.addEventListener('wheel', onWheelZap, { passive: false });
+  iframeEl?.addEventListener('load', () => {
+    wireCurrentIframeWheel();
+    refreshIframeWheelCatcher();
+  });
   document.getElementById('nowPlaying')?.addEventListener('wheel', onWheelZap, { passive: false });
+
+  window.addEventListener('keydown', (event) => {
+    if (event.key === 'Shift') {
+      shiftWheelHeld = true;
+      refreshIframeWheelCatcher();
+    }
+  }, true);
+
+  window.addEventListener('keyup', (event) => {
+    if (event.key === 'Shift') {
+      shiftWheelHeld = false;
+      refreshIframeWheelCatcher();
+    }
+  }, true);
+
+  document.addEventListener('click', (event) => {
+    if (event.target && event.target.closest && event.target.closest('.tab-btn')) {
+      setTimeout(refreshIframeWheelCatcher, 0);
+    }
+  }, true);
+
+  playerContainer?.addEventListener('mouseenter', refreshIframeWheelCatcher);
+  ensureIframeWheelCatcher();
 })();
 
 // FX
