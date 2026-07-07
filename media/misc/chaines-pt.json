@@ -36,7 +36,7 @@
 {
 "id": "rtpn",
 "name": "RTPN",
-"url": "/pages/rtpn.html",
+"url": "/pages/worker-iptv?channel=rtp3",
 "logo": { "type": "image", "value": "/media/rtpn.png" },
 "group": "News",
 "isFavorite": false,
