@@ -4954,6 +4954,7 @@ prevBtn?.addEventListener('click', playPrev);
     const overlayOpen = !iframeOverlay.classList.contains('hidden');
     const url = String(currentEntry?.url || '');
     const shouldCatch = overlayOpen && (
+      (!!currentEntry?.isIframe && !/\/pages\/serie-film(?:\.html)?(?:[?#]|$)/i.test(url)) ||
       tab === 'iframes' ||
       /\/pages\/worker-/i.test(url) ||
       /\/pages\/worker-iptv/i.test(url) ||
