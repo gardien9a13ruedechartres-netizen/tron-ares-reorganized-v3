@@ -211,7 +211,7 @@
     {
       "id": "serie-film",
       "name": "serie-film",
-      "url": "/pages/serie-film.html",
+      "url": "/pages/serie-film",
       "logo": {
         "type": "image",
         "value": "https://cdn.jsdelivr.net/gh/imagesloads/images@main/img_1a8b19085214ccd5.png",

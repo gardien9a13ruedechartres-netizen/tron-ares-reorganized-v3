@@ -5,6 +5,14 @@ const CMTVPT_PROXY_PATH = '/api/cmtvpt/proxy';
 const WORKER_LIVE_PREFIX = '/api/worker-live/';
 const SPORTTV_EPG_PATH = '/api/sporttv-epg';
 const SPORTTV_GUIDE_URL = 'https://www.sporttv.pt/guia';
+const WAVEWATCH_ORIGIN = 'https://lecteur-wavewatch-universal-stable.victor-salema-53d.workers.dev';
+const WAVEWATCH_PROXY_PATHS = new Set([
+  '/api/search',
+  '/api/timeline',
+  '/api/next',
+  '/api/tmdb/browse',
+  '/sse'
+]);
 const SPORTTV_CHANNELS = new Map([
   [727, 'sport-tv-1'],
   [728, 'sport-tv-2'],
@@ -323,9 +331,156 @@ async function proxyCmtvpt(request, requestUrl) {
   });
 }
 
+async function resolveSerieFilmPage(request, url) {
+  const upstreamUrl = new URL('/', WAVEWATCH_ORIGIN);
+  upstreamUrl.search = url.search;
+
+  const upstream = await fetch(upstreamUrl, {
+    headers: {
+      'Accept': 'text/html',
+      'User-Agent': request.headers.get('User-Agent') || 'Mozilla/5.0'
+    }
+  });
+
+  let html = await upstream.text();
+  html = html
+    .replace(/href="\/style\.css"/g, `href="${WAVEWATCH_ORIGIN}/style.css"`)
+    .replace(/src="\/app\.js"/g, `src="${WAVEWATCH_ORIGIN}/app.js"`)
+    .replace('</body>', `<script>
+(function(){
+  var lastSearchInput = null;
+  function getSearchInput(){ return document.getElementById('titleSearch'); }
+  function rememberSearchInput(input){
+    if (!input) return;
+    lastSearchInput = input;
+    setTimeout(function(){ try { input.focus(); } catch (_) {} }, 0);
+  }
+  function emitInput(input){
+    try { input.dispatchEvent(new Event('input', { bubbles: true })); } catch (_) {}
+  }
+  function replaceSelection(input, value){
+    var start = typeof input.selectionStart === 'number' ? input.selectionStart : input.value.length;
+    var end = typeof input.selectionEnd === 'number' ? input.selectionEnd : start;
+    input.value = input.value.slice(0, start) + value + input.value.slice(end);
+    var next = start + value.length;
+    try { input.setSelectionRange(next, next); } catch (_) {}
+    emitInput(input);
+  }
+  document.addEventListener('pointerdown', function(event){
+    var target = event.target && event.target.closest ? event.target.closest('#titleSearch') : null;
+    if (target) rememberSearchInput(target);
+  }, true);
+  document.addEventListener('focusin', function(event){
+    if (event.target && event.target.id === 'titleSearch') lastSearchInput = event.target;
+  }, true);
+  document.addEventListener('keydown', function(event){
+    var input = lastSearchInput || getSearchInput();
+    if (!input || document.activeElement === input) return;
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
+
+    if (event.key === 'Backspace') {
+      event.preventDefault();
+      input.focus();
+      var start = typeof input.selectionStart === 'number' ? input.selectionStart : input.value.length;
+      var end = typeof input.selectionEnd === 'number' ? input.selectionEnd : start;
+      if (start !== end) {
+        replaceSelection(input, '');
+      } else if (start > 0) {
+        input.value = input.value.slice(0, start - 1) + input.value.slice(end);
+        try { input.setSelectionRange(start - 1, start - 1); } catch (_) {}
+        emitInput(input);
+      }
+      return;
+    }
+
+    if (event.key === 'Delete') {
+      event.preventDefault();
+      input.focus();
+      var s = typeof input.selectionStart === 'number' ? input.selectionStart : input.value.length;
+      var e = typeof input.selectionEnd === 'number' ? input.selectionEnd : s;
+      if (s !== e) replaceSelection(input, '');
+      else if (s < input.value.length) {
+        input.value = input.value.slice(0, s) + input.value.slice(s + 1);
+        try { input.setSelectionRange(s, s); } catch (_) {}
+        emitInput(input);
+      }
+      return;
+    }
+
+    if (event.key && event.key.length === 1) {
+      event.preventDefault();
+      input.focus();
+      replaceSelection(input, event.key);
+    }
+  }, true);
+  if (window.top !== window) {
+    setInterval(function(){
+      var input = lastSearchInput || getSearchInput();
+      if (!input) return;
+      var active = document.activeElement;
+      var activeIsEditable = active && (
+        active.tagName === 'INPUT' ||
+        active.tagName === 'TEXTAREA' ||
+        active.isContentEditable
+      );
+      if (!activeIsEditable && (lastSearchInput || input.value)) {
+        try { input.focus(); } catch (_) {}
+      }
+    }, 180);
+  }
+})();
+</script></body>`);
+
+  return new Response(html, {
+    status: upstream.status,
+    statusText: upstream.statusText,
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+      'CDN-Cache-Control': 'no-store',
+      'Cloudflare-CDN-Cache-Control': 'no-store',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    }
+  });
+}
+
+async function proxyWavewatchRequest(request, url) {
+  const upstreamUrl = new URL(url.pathname + url.search, WAVEWATCH_ORIGIN);
+  const headers = new Headers(request.headers);
+  headers.set('Host', new URL(WAVEWATCH_ORIGIN).host);
+
+  const upstream = await fetch(upstreamUrl, {
+    method: request.method,
+    headers,
+    body: request.method === 'GET' || request.method === 'HEAD' ? undefined : request.body,
+    redirect: 'follow'
+  });
+
+  const responseHeaders = new Headers(upstream.headers);
+  responseHeaders.set('Access-Control-Allow-Origin', '*');
+  responseHeaders.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+  responseHeaders.set('CDN-Cache-Control', 'no-store');
+  responseHeaders.set('Cloudflare-CDN-Cache-Control', 'no-store');
+
+  return new Response(upstream.body, {
+    status: upstream.status,
+    statusText: upstream.statusText,
+    headers: responseHeaders
+  });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+
+    if (/^\/pages\/serie-film(?:\.html)?$/i.test(url.pathname)) {
+      return resolveSerieFilmPage(request, url);
+    }
+
+    if (WAVEWATCH_PROXY_PATHS.has(url.pathname)) {
+      return proxyWavewatchRequest(request, url);
+    }
 
     if (url.pathname === SPORTTV_EPG_PATH) {
       return resolveSportTvEpg(request);

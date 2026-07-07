@@ -3933,16 +3933,6 @@ currentEntry = entry;
   updateTrackControlsVisibility();
   updateNowPlayingCounter();
 
-  if (/\/pages\/serie-film(?:\.html)?(?:[?#]|$)/i.test(String(entry.url || ''))) {
-    try {
-      const directUrl = new URL('/pages/serie-film', window.location.origin);
-      window.location.assign(directUrl.href);
-    } catch {
-      window.location.href = '/pages/serie-film';
-    }
-    return;
-  }
-
   activePlaybackMode = 'stream';
   externalFallbackTried = false;
   // Si on était en mode OFFLINE, on repasse en lecture normale
@@ -5022,6 +5012,255 @@ prevBtn?.addEventListener('click', playPrev);
 
   playerContainer?.addEventListener('mouseenter', refreshIframeWheelCatcher);
   ensureIframeWheelCatcher();
+})();
+
+// Serie-film runs as an embedded same-origin page. Some browsers return keyboard
+// focus to the parent iframe after typing; keep search editing usable.
+(function initSerieFilmKeyboardBridge() {
+  function isSerieFilmOverlayActive() {
+    return !!currentEntry &&
+      /\/pages\/serie-film(?:\.html)?(?:[?#]|$)/i.test(String(currentEntry.url || '')) &&
+      iframeOverlay &&
+      !iframeOverlay.classList.contains('hidden') &&
+      iframeEl &&
+      document.activeElement === iframeEl;
+  }
+
+  function getSerieFilmSearchInput() {
+    try {
+      return iframeEl?.contentDocument?.getElementById('titleSearch') || null;
+    } catch {
+      return null;
+    }
+  }
+
+  function emitSerieFilmInput(input) {
+    try { input.dispatchEvent(new Event('input', { bubbles: true })); } catch {}
+  }
+
+  function replaceSerieFilmSelection(input, value) {
+    const start = typeof input.selectionStart === 'number' ? input.selectionStart : input.value.length;
+    const end = typeof input.selectionEnd === 'number' ? input.selectionEnd : start;
+    input.value = input.value.slice(0, start) + value + input.value.slice(end);
+    const next = start + value.length;
+    try { input.setSelectionRange(next, next); } catch {}
+    emitSerieFilmInput(input);
+  }
+
+  document.addEventListener('keydown', (event) => {
+    if (!isSerieFilmOverlayActive()) return;
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
+
+    const input = getSerieFilmSearchInput();
+    if (!input) return;
+
+    if (event.key === 'Backspace') {
+      event.preventDefault();
+      const start = typeof input.selectionStart === 'number' ? input.selectionStart : input.value.length;
+      const end = typeof input.selectionEnd === 'number' ? input.selectionEnd : start;
+      if (start !== end) {
+        replaceSerieFilmSelection(input, '');
+      } else if (start > 0) {
+        input.value = input.value.slice(0, start - 1) + input.value.slice(end);
+        try { input.setSelectionRange(start - 1, start - 1); } catch {}
+        emitSerieFilmInput(input);
+      }
+      try { input.focus(); } catch {}
+      return;
+    }
+
+    if (event.key === 'Delete') {
+      event.preventDefault();
+      const start = typeof input.selectionStart === 'number' ? input.selectionStart : input.value.length;
+      const end = typeof input.selectionEnd === 'number' ? input.selectionEnd : start;
+      if (start !== end) replaceSerieFilmSelection(input, '');
+      else if (start < input.value.length) {
+        input.value = input.value.slice(0, start) + input.value.slice(start + 1);
+        try { input.setSelectionRange(start, start); } catch {}
+        emitSerieFilmInput(input);
+      }
+      try { input.focus(); } catch {}
+      return;
+    }
+
+    if (event.key && event.key.length === 1) {
+      event.preventDefault();
+      replaceSerieFilmSelection(input, event.key);
+      try { input.focus(); } catch {}
+    }
+  }, true);
+})();
+
+// Native parent-side search field for serie-film. The embedded player can lose
+// keyboard focus in Chrome; this field mirrors edits into the player search.
+(function initSerieFilmSearchBridge() {
+  let bridge = null;
+  let bridgeInput = null;
+  let bridgeButton = null;
+  let syncTimer = null;
+
+  function isSerieFilmEntry(entry) {
+    return /\/pages\/serie-film(?:\.html)?(?:[?#]|$)/i.test(String(entry?.url || ''));
+  }
+
+  function isActive() {
+    return !!currentEntry &&
+      isSerieFilmEntry(currentEntry) &&
+      iframeOverlay &&
+      !iframeOverlay.classList.contains('hidden');
+  }
+
+  function childSearchInput() {
+    try { return document.getElementById('iframeEl')?.contentDocument?.getElementById('titleSearch') || null; } catch { return null; }
+  }
+
+  function childSearchButton() {
+    try { return document.getElementById('iframeEl')?.contentDocument?.getElementById('searchBtn') || null; } catch { return null; }
+  }
+
+  function emitChildInput(input) {
+    try { input.dispatchEvent(new Event('input', { bubbles: true })); } catch {}
+  }
+
+  function syncToChild() {
+    const input = childSearchInput();
+    if (!input || !bridgeInput) return;
+    if (input.value !== bridgeInput.value) {
+      input.value = bridgeInput.value;
+      emitChildInput(input);
+    }
+  }
+
+  function syncFromChild() {
+    const input = childSearchInput();
+    if (!input || !bridgeInput) return;
+    if (document.activeElement !== bridgeInput && bridgeInput.value !== input.value) {
+      bridgeInput.value = input.value;
+    }
+  }
+
+  function runSearch() {
+    const value = String(bridgeInput?.value || '').trim();
+    const nextUrl = value
+      ? '/pages/serie-film?q=' + encodeURIComponent(value)
+      : '/pages/serie-film';
+    const frame = document.getElementById('iframeEl');
+    if (frame) frame.src = nextUrl;
+  }
+
+  function ensureBridge() {
+    if (bridge || !iframeOverlay) return;
+
+    bridge = document.createElement('div');
+    bridge.className = 'serie-film-search-bridge';
+    bridge.style.cssText = [
+      'position:absolute',
+      'top:14px',
+      'left:14px',
+      'z-index:8',
+      'display:none',
+      'align-items:center',
+      'gap:8px',
+      'pointer-events:auto'
+    ].join(';');
+
+    bridgeInput = document.createElement('input');
+    bridgeInput.type = 'search';
+    bridgeInput.autocomplete = 'off';
+    bridgeInput.placeholder = 'Rechercher un titre...';
+    bridgeInput.style.cssText = [
+      'width:296px',
+      'height:36px',
+      'padding:0 12px',
+      'border-radius:6px',
+      'border:1px solid rgba(255,255,255,.18)',
+      'background:rgba(0,0,0,.72)',
+      'color:#fff',
+      'font:14px Arial,sans-serif',
+      'outline:none'
+    ].join(';');
+
+    bridgeButton = document.createElement('button');
+    bridgeButton.type = 'button';
+    bridgeButton.textContent = 'OK';
+    bridgeButton.style.cssText = [
+      'height:36px',
+      'padding:0 14px',
+      'border:0',
+      'border-radius:7px',
+      'background:#d9424f',
+      'color:#fff',
+      'font:700 13px Arial,sans-serif',
+      'cursor:pointer'
+    ].join(';');
+
+    bridgeInput.addEventListener('input', syncToChild);
+    bridgeInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Backspace') {
+        event.preventDefault();
+        const start = typeof bridgeInput.selectionStart === 'number' ? bridgeInput.selectionStart : bridgeInput.value.length;
+        const end = typeof bridgeInput.selectionEnd === 'number' ? bridgeInput.selectionEnd : start;
+        if (start !== end) {
+          bridgeInput.value = bridgeInput.value.slice(0, start) + bridgeInput.value.slice(end);
+          try { bridgeInput.setSelectionRange(start, start); } catch {}
+        } else if (start > 0) {
+          bridgeInput.value = bridgeInput.value.slice(0, start - 1) + bridgeInput.value.slice(end);
+          try { bridgeInput.setSelectionRange(start - 1, start - 1); } catch {}
+        }
+        syncToChild();
+        return;
+      }
+      if (event.key === 'Delete') {
+        event.preventDefault();
+        const start = typeof bridgeInput.selectionStart === 'number' ? bridgeInput.selectionStart : bridgeInput.value.length;
+        const end = typeof bridgeInput.selectionEnd === 'number' ? bridgeInput.selectionEnd : start;
+        if (start !== end) {
+          bridgeInput.value = bridgeInput.value.slice(0, start) + bridgeInput.value.slice(end);
+          try { bridgeInput.setSelectionRange(start, start); } catch {}
+        } else if (start < bridgeInput.value.length) {
+          bridgeInput.value = bridgeInput.value.slice(0, start) + bridgeInput.value.slice(start + 1);
+          try { bridgeInput.setSelectionRange(start, start); } catch {}
+        }
+        syncToChild();
+        return;
+      }
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        runSearch();
+      }
+    });
+    bridgeButton.addEventListener('click', runSearch);
+
+    bridge.append(bridgeInput, bridgeButton);
+    iframeOverlay.appendChild(bridge);
+  }
+
+  function updateBridge() {
+    ensureBridge();
+    if (!bridge) return;
+
+    const active = isActive();
+    bridge.style.display = active ? 'flex' : 'none';
+
+    if (syncTimer) {
+      clearInterval(syncTimer);
+      syncTimer = null;
+    }
+
+    if (active) {
+      syncFromChild();
+      syncTimer = setInterval(syncFromChild, 400);
+    }
+  }
+
+  iframeEl?.addEventListener('load', () => setTimeout(updateBridge, 250));
+  document.addEventListener('click', (event) => {
+    if (event.target && event.target.closest && event.target.closest('.channel-item, .tab-btn')) {
+      setTimeout(updateBridge, 350);
+    }
+  }, true);
+  document.addEventListener('visibilitychange', updateBridge);
+  setInterval(updateBridge, 1500);
 })();
 
 // FX
