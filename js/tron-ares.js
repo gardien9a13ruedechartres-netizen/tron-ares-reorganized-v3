@@ -4905,6 +4905,47 @@ fullPageBtn?.addEventListener('click', () => {
 nextBtn?.addEventListener('click', playNext);
 prevBtn?.addEventListener('click', playPrev);
 
+// Mouse wheel channel zapping.
+// Plain wheel over native video remains volume control; Shift+wheel on video zaps.
+(function initWheelChannelZapping() {
+  const WHEEL_ZAP_COOLDOWN_MS = 520;
+  const WHEEL_ZAP_MIN_DELTA = 18;
+  let lastWheelZapAt = 0;
+
+  function shouldIgnoreWheelZapTarget(target) {
+    if (!target || !(target instanceof Element)) return false;
+    if (target.closest('input, textarea, select, button, [contenteditable="true"]')) return true;
+    if (target.closest('#streamUrlOverlay:not(.hidden), #subtitleSearchOverlay:not(.hidden), #showcaseOverlay:not(.hidden)')) return true;
+    return false;
+  }
+
+  function onWheelZap(event) {
+    if (!event || Math.abs(event.deltaY || 0) < WHEEL_ZAP_MIN_DELTA) return;
+    if (shouldIgnoreWheelZapTarget(event.target)) return;
+
+    const isNativeVideoTarget = videoEl && (event.target === videoEl || videoEl.contains(event.target));
+    if (isNativeVideoTarget && !event.shiftKey) return;
+
+    const now = Date.now();
+    if (now - lastWheelZapAt < WHEEL_ZAP_COOLDOWN_MS) {
+      event.preventDefault();
+      return;
+    }
+
+    lastWheelZapAt = now;
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (event.deltaY > 0) playNext();
+    else playPrev();
+  }
+
+  playerContainer?.addEventListener('wheel', onWheelZap, { passive: false });
+  iframeOverlay?.addEventListener('wheel', onWheelZap, { passive: false });
+  iframeEl?.addEventListener('wheel', onWheelZap, { passive: false });
+  document.getElementById('nowPlaying')?.addEventListener('wheel', onWheelZap, { passive: false });
+})();
+
 // FX
 fxToggleBtn?.addEventListener('click', () => {
   const active = appShell?.classList.toggle('fx-boost');
