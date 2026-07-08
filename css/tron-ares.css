@@ -855,6 +855,11 @@ video { object-fit: fill; }
   pointer-events: auto;
 }
 
+#iframeOverlay.serie-film-overlay-active #iframeOverlayBoostCurtain{
+  display: none !important;
+  pointer-events: none !important;
+}
+
 /* Grille lumineuse */
 
 .player-grid-lines::before,

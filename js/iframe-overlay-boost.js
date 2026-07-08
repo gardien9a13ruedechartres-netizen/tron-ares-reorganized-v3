@@ -125,6 +125,10 @@
       return !!el && !el.classList.contains('hidden');
     }
 
+    function isSerieFilmUrl(url) {
+      return /\/pages\/serie-film(?:\.html)?(?:[?#]|$)/i.test(String(url || ''));
+    }
+
     function likelyIframeListItem(item) {
       if (!item) return false;
       if (item.dataset.type === 'iframe') return true;
@@ -177,7 +181,8 @@
 
     function maybeShowCurtain() {
       const src = (iframeEl.getAttribute('src') || '').trim();
-      if (!isVisible(iframeOverlay) || !src || src === 'about:blank') {
+      iframeOverlay.classList.toggle('serie-film-overlay-active', isSerieFilmUrl(src));
+      if (!isVisible(iframeOverlay) || !src || src === 'about:blank' || isSerieFilmUrl(src)) {
         hideCurtain();
         return;
       }
@@ -256,6 +261,7 @@
 
     iframeEl.addEventListener('load', function () {
       maybeShowCurtain();
+      if (isSerieFilmUrl(iframeEl.getAttribute('src') || iframeEl.src || '')) return;
       window.setTimeout(nudgeFocus, 90);
     });
 
