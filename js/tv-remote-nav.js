@@ -39,6 +39,14 @@
   let currentIndex = -1;
   let mutationQueued = false;
 
+  function isSerieFilmOverlayActive() {
+    const overlay = document.getElementById('iframeOverlay');
+    const iframe = document.getElementById('iframeEl');
+    if (!overlay || overlay.classList.contains('hidden') || !iframe) return false;
+    const src = iframe.getAttribute('src') || iframe.src || '';
+    return /\/pages\/serie-film(?:\.html)?(?:[?#]|$)/i.test(String(src));
+  }
+
   function injectStyle() {
     if (document.getElementById(STYLE_ID)) return;
 
@@ -374,6 +382,10 @@
 
     requestAnimationFrame(() => {
       mutationQueued = false;
+      if (isSerieFilmOverlayActive()) {
+        cleanupFocusClass();
+        return;
+      }
       const activeStillValid =
         document.activeElement &&
         focusables.includes(document.activeElement) &&
@@ -388,6 +400,10 @@
   }
 
   document.addEventListener('focusin', (event) => {
+    if (isSerieFilmOverlayActive()) {
+      cleanupFocusClass();
+      return;
+    }
     const el = event.target;
     if (!el || !focusables.includes(el)) return;
 
@@ -397,6 +413,8 @@
   });
 
   document.addEventListener('keydown', (event) => {
+    if (isSerieFilmOverlayActive()) return;
+
     const key = event.key;
 
     if (isTypingContext()) {
