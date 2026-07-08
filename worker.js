@@ -229,9 +229,10 @@ async function resolveWorkerLive(request, requestUrl, channelKey) {
   }
   await embed.arrayBuffer();
 
-  const upstreamUrl = new URL(
-    `https://${CMTVPT_UPSTREAM_HOST}/${channel}/index.fmp4.m3u8`
-  );
+  const upstreamPath = channel === 'RTP3'
+    ? `/${channel}/tracks-a1/index.fmp4.m3u8`
+    : `/${channel}/index.fmp4.m3u8`;
+  const upstreamUrl = new URL(`https://${CMTVPT_UPSTREAM_HOST}${upstreamPath}`);
   upstreamUrl.searchParams.set('token', match[1]);
   const master = await fetch(upstreamUrl, {
     headers: { Accept: 'application/vnd.apple.mpegurl,application/x-mpegURL,*/*' },
