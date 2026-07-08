@@ -346,7 +346,20 @@ async function resolveSerieFilmPage(request, url) {
   let html = await upstream.text();
   html = html
     .replace(/href="\/style\.css"/g, `href="${WAVEWATCH_ORIGIN}/style.css"`)
-    .replace(/src="\/app\.js"/g, `src="${WAVEWATCH_ORIGIN}/app.js"`);
+    .replace(/src="\/app\.js"/g, `src="${WAVEWATCH_ORIGIN}/app.js"`)
+    .replace('</head>', `<style>
+.search-panel::before{display:none!important;opacity:0!important;pointer-events:none!important}
+.search-panel .search-row,.search-panel .search-info,.search-panel .search-results{
+  opacity:1!important;
+  transform:none!important;
+  pointer-events:auto!important;
+}
+.search-input{
+  user-select:text!important;
+  -webkit-user-select:text!important;
+  pointer-events:auto!important;
+}
+</style></head>`);
 
   return new Response(html, {
     status: upstream.status,
