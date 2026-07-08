@@ -359,7 +359,34 @@ async function resolveSerieFilmPage(request, url) {
   -webkit-user-select:text!important;
   pointer-events:auto!important;
 }
-</style></head>`);
+body.ares-playback-active .search-panel:not(:hover):not(:focus-within)::before{
+  display:flex!important;
+  opacity:.42!important;
+  transform:none!important;
+}
+body.ares-playback-active .search-panel:not(:hover):not(:focus-within) .search-row,
+body.ares-playback-active .search-panel:not(:hover):not(:focus-within) .search-info,
+body.ares-playback-active .search-panel:not(:hover):not(:focus-within) .search-results{
+  opacity:0!important;
+  transform:translateY(-8px)!important;
+  pointer-events:none!important;
+}
+</style><script>
+(function(){
+  function updateSearchPanelMode(){
+    var video = document.getElementById('videoEl');
+    var embed = document.getElementById('embedFrame');
+    var videoActive = !!(video && video.style.display !== 'none' && video.currentTime > 0 && !video.paused);
+    var embedActive = !!(embed && embed.style.display !== 'none' && embed.src && embed.src !== 'about:blank');
+    document.body.classList.toggle('ares-playback-active', videoActive || embedActive);
+  }
+  document.addEventListener('play', updateSearchPanelMode, true);
+  document.addEventListener('pause', updateSearchPanelMode, true);
+  document.addEventListener('timeupdate', updateSearchPanelMode, true);
+  setInterval(updateSearchPanelMode, 700);
+})();
+</script>
+</head>`);
 
   return new Response(html, {
     status: upstream.status,
