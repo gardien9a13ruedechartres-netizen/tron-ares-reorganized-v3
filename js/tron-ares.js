@@ -4699,6 +4699,24 @@ function autoplayFirstInList(listType) {
 // Onglets
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
+    if (btn.id === 'serieFilmQuickBtn') {
+      playEntryAsOverlay({
+        id: 'serie-film',
+        name: 'serie-film',
+        url: '/pages/serie-film',
+        logo: {
+          type: 'image',
+          value: 'https://cdn.jsdelivr.net/gh/imagesloads/images@main/img_1a8b19085214ccd5.png'
+        },
+        group: 'Séries / Films',
+        isIframe: true
+      });
+      refreshActiveListsUI();
+      updateNowPlayingCounter();
+      updateTrackControlsVisibility();
+      return;
+    }
+
     const prevTab = document.querySelector('.tab-btn.active')?.dataset?.tab || '';
 
     // ✅ Même action que le bouton "⤺ Retour diffusion" du Radio Overlay
