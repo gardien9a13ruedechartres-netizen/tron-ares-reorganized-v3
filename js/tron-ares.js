@@ -4915,6 +4915,16 @@ prevBtn?.addEventListener('click', playPrev);
   let wiredIframeWheelDocument = null;
   let iframeWheelCatcher = null;
 
+  function isSerieFilmOverlayUrl(url) {
+    return /\/pages\/serie-film(?:\.html)?(?:[?#]|$)/i.test(String(url || ''));
+  }
+
+  function isSerieFilmOverlayActive() {
+    return !!iframeOverlay &&
+      !iframeOverlay.classList.contains('hidden') &&
+      isSerieFilmOverlayUrl(currentEntry?.url);
+  }
+
   function shouldIgnoreWheelZapTarget(target) {
     if (!target || typeof target.closest !== 'function') return false;
     if (target.closest('input, textarea, select, button, [contenteditable="true"]')) return true;
@@ -4955,7 +4965,7 @@ prevBtn?.addEventListener('click', playPrev);
     const overlayOpen = !iframeOverlay.classList.contains('hidden');
     const url = String(currentEntry?.url || '');
     const shouldCatch = overlayOpen && (
-      (!!currentEntry?.isIframe && !/\/pages\/serie-film(?:\.html)?(?:[?#]|$)/i.test(url)) ||
+      (!!currentEntry?.isIframe && !isSerieFilmOverlayUrl(url)) ||
       tab === 'iframes' ||
       /\/pages\/worker-/i.test(url) ||
       /\/pages\/worker-iptv/i.test(url) ||
@@ -4966,6 +4976,7 @@ prevBtn?.addEventListener('click', playPrev);
 
   function onWheelZap(event) {
     if (!event || Math.abs(event.deltaY || 0) < WHEEL_ZAP_MIN_DELTA) return;
+    if (isSerieFilmOverlayActive()) return;
     if (shouldIgnoreWheelZapTarget(event.target)) return;
 
     const now = Date.now();
@@ -4986,6 +4997,10 @@ prevBtn?.addEventListener('click', playPrev);
 
   function wireCurrentIframeWheel() {
     if (!iframeEl) return;
+    if (isSerieFilmOverlayUrl(currentEntry?.url)) {
+      wiredIframeWheelDocument = null;
+      return;
+    }
     let doc = null;
     try { doc = iframeEl.contentDocument || iframeEl.contentWindow?.document || null; } catch { doc = null; }
     if (!doc || doc === wiredIframeWheelDocument) return;

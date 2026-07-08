@@ -846,12 +846,13 @@ video { object-fit: fill; }
   display: flex;
   align-items: center;
   gap: 8px;
-  pointer-events: auto;
+  pointer-events: none;
 }
 .iframe-overlay-controls .btn{
   background: rgba(2, 10, 20, 0.78);
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
+  pointer-events: auto;
 }
 
 /* Grille lumineuse */
