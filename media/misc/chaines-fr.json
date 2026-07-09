@@ -199,14 +199,14 @@
     {
       "id": "6ter",
       "name": "6ter",
-      "url": "/pages/worker-6ter.html",
+      "url": "https://tron-ares-iptv2.victor-salema-53d.workers.dev/api/iptv/live/6ter/master.m3u8",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%206ter%202016.svg"
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": false
     },
     {
       "id": "fifa",
