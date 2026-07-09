@@ -20,8 +20,8 @@ const LIVE_CHANNELS = new Map([
   ['m6', {
     stream: 'm6',
     upstreamPath: '/m6/index.m3u8',
-    referer: 'https://endirecttv.com/yayin/?kanal=185&yayin='https://endirecttv.com/yayin/?kanal=187&yayin=
-  }]
+    referer: 'https://endirecttv.com/yayin/?kanal=185&yayin='  
+}]
 ]);
 const ALLOWED_UPSTREAM_PATHS = [
   '/6ter/',
