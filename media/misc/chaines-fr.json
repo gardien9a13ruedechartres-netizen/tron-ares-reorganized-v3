@@ -115,14 +115,14 @@
     {
       "id": "cstar",
       "name": "CStar",
-      "url": "/pages/worker-cstar.html",
+      "url": "https://tron-ares-iptv2.victor-salema-53d.workers.dev/api/iptv/live/cstar/master.m3u8",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20CStar%202016.svg"
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": false
     },
     {
       "id": "tmc",
