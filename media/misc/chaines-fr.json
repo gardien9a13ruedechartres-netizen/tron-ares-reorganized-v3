@@ -103,7 +103,7 @@
     {
       "id": "w9",
       "name": "W9",
-      "url": "https://origin-m6web.live.6cloud.fr/out/v1/6play/6play-w9/cmaf_q2hyb21h/hls-short-hd.m3u8",
+      "url": "https://tron-ares-iptv2.victor-salema-53d.workers.dev/api/iptv/live/w9/master.m3u8",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/W9-Logo.svg"
