@@ -335,7 +335,7 @@
 "id": "discovery-pt",
 "name": "Discovery PT",
 "url": "/pages/worker-iptv.html?channel=discovery-pt",
-"logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/fr/8/88/Discovery_Channel_Logo_2008.png" },
+"logo": { "type": "image", "value": "https://cdn.jsdelivr.net/gh/imagesloads/images@main/img_f3aea22ba48bd5da.png" },
 "group": "Documentarios",
 "isFavorite": false,
 "isIframe": true
@@ -344,7 +344,7 @@
 "id": "tcv-int",
 "name": "TCV Internacional",
 "url": "/pages/worker-iptv.html?channel=tcv-int",
-"logo": { "type": "image", "value": "https://www.freeshot.live/upload/source/TCV-logo.png" },
+"logo": { "type": "image", "value": "https://cdn.jsdelivr.net/gh/imagesloads/images@main/img_43acca95f234ef0a.png" },
 "group": "Généraliste",
 "isFavorite": false,
 "isIframe": true
