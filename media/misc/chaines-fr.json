@@ -7,14 +7,14 @@
     {
       "id": "TF1",
       "name": "TF1",
-      "url": "/pages/worker-iptv?channel=tf1fr",
+      "url": "https://raw.githubusercontent.com/Paradise-91/ParaTV/main/streams/p5szln46qik4/hpZ8uPShW95SypbI.m3u8",
       "logo": {
         "type": "image",
         "value": "/media/image/tf1.webp"
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": false
     },
     {
       "id": "TF1sf",
