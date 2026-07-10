@@ -19,14 +19,14 @@
     {
       "id": "TF1sf",
       "name": "TF1sf",
-      "url": "https://player-universel.victor-salema-53d.workers.dev/?https://raw.githubusercontent.com/Paradise-91/ParaTV/main/streams/p5szln46qik4/DSgr49vAaBSpwGF.m3u8",
+      "url": "https://raw.githubusercontent.com/Paradise-91/ParaTV/main/streams/p5szln46qik4/DSgr49vAaBSpwGF.m3u8",
       "logo": {
         "type": "image",
         "value": "https://upload.wikimedia.org/wikipedia/fr/thumb/4/4b/TF1_S%C3%A9ries_Films_logo_2020.svg/330px-TF1_S%C3%A9ries_Films_logo_2020.svg.png"
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": false
     },
     {
       "id": "france-2",
