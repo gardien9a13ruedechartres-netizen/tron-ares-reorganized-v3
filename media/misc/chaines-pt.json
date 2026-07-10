@@ -326,7 +326,7 @@
 "id": "historia-pt",
 "name": "História PT",
 "url": "/pages/worker-iptv.html?channel=historia-pt",
-"logo": { "type": "image", "value": "https://www.freeshot.live/upload/source/CanalHistoria-logo.png" },
+"logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/commons/0/07/Historia_2022_logo.webp" },
 "group": "Documentarios",
 "isFavorite": false,
 "isIframe": true
@@ -335,7 +335,7 @@
 "id": "discovery-pt",
 "name": "Discovery PT",
 "url": "/pages/worker-iptv.html?channel=discovery-pt",
-"logo": { "type": "image", "value": "https://www.freeshot.live/upload/source/DiscoveryChannel-logo.png" },
+"logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/fr/8/88/Discovery_Channel_Logo_2008.png" },
 "group": "Documentarios",
 "isFavorite": false,
 "isIframe": true
