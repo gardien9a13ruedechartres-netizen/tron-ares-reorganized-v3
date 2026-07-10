@@ -318,7 +318,7 @@
 "name": "RECORD",
 "url": "/pages/worker-iptv.html?channel=record-europa",
 "logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/commons/5/58/Logomarca_da_Record_%282023%29.webp" },
-"group": "Sport",
+"group": "Généraliste",
 "isFavorite": false,
 "isIframe": true
 }
