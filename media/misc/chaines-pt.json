@@ -52,6 +52,24 @@
 "isIframe": true
 },
 {
+"id": "odisseia-pt",
+"name": "Odisseia PT",
+"url": "/pages/worker-iptv.html?channel=odisseia-pt",
+"logo": { "type": "image", "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Odisseia%20logo.svg" },
+"group": "Documentarios",
+"isFavorite": false,
+"isIframe": true
+},
+{
+"id": "national-geographic-pt",
+"name": "National Geographic PT",
+"url": "/pages/worker-iptv.html?channel=national-geographic-pt",
+"logo": { "type": "image", "value": "https://commons.wikimedia.org/wiki/Special:FilePath/National%20Geographic%20Channel.svg" },
+"group": "Documentarios",
+"isFavorite": false,
+"isIframe": true
+},
+{
 "id": "tvi",
 "name": "TVI",
 "url": "/pages/worker-iptv.html?channel=tvi",
