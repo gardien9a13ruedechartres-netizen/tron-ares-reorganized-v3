@@ -7,7 +7,7 @@
     {
       "id": "TF1",
       "name": "TF1",
-      "url": "https://raw.githubusercontent.com/Paradise-91/ParaTV/main/streams/p5szln46qik4/hpZ8uPShW95SypbI.m3u8",
+      "url": "https://tvradiozap.eu/tools/m3u-m3u8.php/para/tf1.m3u8",
       "logo": {
         "type": "image",
         "value": "/media/image/tf1.webp"
@@ -19,7 +19,7 @@
     {
       "id": "TF1sf",
       "name": "TF1sf",
-      "url": "https://raw.githubusercontent.com/Paradise-91/ParaTV/main/streams/p5szln46qik4/DSgr49vAaBSpwGF.m3u8",
+      "url": "https://tvradiozap.eu/tools/m3u-m3u8.php/para/tf1seriesfilms.m3u8",
       "logo": {
         "type": "image",
         "value": "https://upload.wikimedia.org/wikipedia/fr/thumb/4/4b/TF1_S%C3%A9ries_Films_logo_2020.svg/330px-TF1_S%C3%A9ries_Films_logo_2020.svg.png"
