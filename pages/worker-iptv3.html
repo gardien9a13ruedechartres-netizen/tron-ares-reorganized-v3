@@ -76,8 +76,9 @@
     const channelKey = String(params.get('channel') || 'cmtv').toLowerCase();
     const channelName = channels[channelKey] || '';
     const workerBase = 'https://tron-ares-iptv3.victor-salema-53d.workers.dev/api/iptv/live';
-    let HLS_URL = channelName ? `${workerBase}/${encodeURIComponent(channelKey)}/master.m3u8` : '';
-    const ALL_TARGET_URLS = HLS_URL ? [HLS_URL] : [];
+    const BASE_HLS_URL = channelName ? `${workerBase}/${encodeURIComponent(channelKey)}/master.m3u8` : '';
+    let HLS_URL = BASE_HLS_URL;
+    const ALL_TARGET_URLS = BASE_HLS_URL ? [BASE_HLS_URL] : [];
     const SOURCE_PAGE = 'Cloudflare Worker IPTV3 autonome';
     const GENERATED_AT = '';
     document.title = channelName ? `Player Worker IPTV3 ${channelName}` : 'Chaine IPTV3 inconnue';
@@ -90,6 +91,8 @@
     let hlsInstance = null;
     let retryTimer = null;
     let retryDelayMs = 3000;
+    let stallTimer = null;
+    let stallRecoveryCount = 0;
 
     window.__CHANNEL_HLS_URL__ = HLS_URL;
     window.__CHANNEL_HLS_URLS__ = ALL_TARGET_URLS;
@@ -117,6 +120,21 @@
       }
     }
 
+    function withRefresh(url) {
+      if (!url) return '';
+      const next = new URL(url, location.href);
+      next.searchParams.set('_hls_refresh', String(Date.now()));
+      return next.href;
+    }
+
+    function clearStallRecovery() {
+      if (stallTimer) {
+        clearTimeout(stallTimer);
+        stallTimer = null;
+      }
+      stallRecoveryCount = 0;
+    }
+
     function scheduleRecovery() {
       if (retryTimer) return;
       const delay = retryDelayMs;
@@ -124,8 +142,26 @@
       setMessage('Flux temporairement indisponible. Nouvelle tentative...');
       retryTimer = setTimeout(() => {
         retryTimer = null;
-        attachSource(HLS_URL);
+        attachSource(withRefresh(BASE_HLS_URL || HLS_URL));
       }, delay);
+    }
+
+    function scheduleStallRecovery() {
+      if (!HLS_URL || stallTimer) return;
+      stallTimer = setTimeout(() => {
+        stallTimer = null;
+        stallRecoveryCount += 1;
+        if (hlsInstance && stallRecoveryCount <= 2) {
+          console.warn('Recovery HLS apres bufferStalledError:', stallRecoveryCount);
+          hlsInstance.recoverMediaError();
+          hlsInstance.startLoad(-1);
+          playWithSound();
+          return;
+        }
+        console.warn('Rechargement du master apres blocage persistant');
+        stallRecoveryCount = 0;
+        attachSource(withRefresh(BASE_HLS_URL || HLS_URL));
+      }, 4500);
     }
 
     function attachSource(nextUrl = HLS_URL) {
@@ -147,6 +183,7 @@
         hlsInstance.attachMedia(video);
         hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
           retryDelayMs = 3000;
+          clearStallRecovery();
           if (retryTimer) {
             clearTimeout(retryTimer);
             retryTimer = null;
@@ -156,6 +193,7 @@
         });
         hlsInstance.on(Hls.Events.ERROR, (event, data) => {
           console.warn('Erreur HLS:', data);
+          if (data && data.details === Hls.ErrorDetails.BUFFER_STALLED_ERROR) scheduleStallRecovery();
           if (data && data.fatal) scheduleRecovery();
         });
       } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
@@ -168,6 +206,12 @@
     }
 
     playBtn.addEventListener('click', playWithSound);
+    video.addEventListener('waiting', scheduleStallRecovery);
+    video.addEventListener('stalled', scheduleStallRecovery);
+    video.addEventListener('playing', clearStallRecovery);
+    video.addEventListener('timeupdate', () => {
+      if (!video.paused && video.readyState >= 3) clearStallRecovery();
+    });
     attachSource();
 
     console.log('URL HLS ciblee:', HLS_URL);
