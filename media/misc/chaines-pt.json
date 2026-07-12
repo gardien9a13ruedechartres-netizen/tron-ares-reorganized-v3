@@ -226,8 +226,8 @@
 {
 "id": "sporttv1",
 "name": "Sport TV 1",
-"url": "/pages/worker-iptv.html?channel=sport-tv-1",
-"logo": { "type": "image", "value": "/media/sport-tv-1.png" },
+"url": "/pages/worker-iptv3.html?channel=sport-tv-1",
+"logo": { "type": "image", "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/sport-tv-1-pt.png" },
 "group": "Sport",
 "isFavorite": false,
 "isIframe": true
@@ -262,8 +262,8 @@
 {
 "id": "sporttv5",
 "name": "Sport TV 5",
-"url": "/pages/worker-iptv.html?channel=sport-tv-5",
-"logo": { "type": "image", "value": "/media/sport-tv-5.png" },
+"url": "/pages/worker-iptv3.html?channel=sport-tv-5",
+"logo": { "type": "image", "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/sport-tv-5-pt.png" },
 "group": "Sport",
 "isFavorite": false,
 "isIframe": true

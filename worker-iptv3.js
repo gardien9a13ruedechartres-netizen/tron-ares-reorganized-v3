@@ -18,7 +18,19 @@ const LIVE_CHANNELS = new Map([
   ['btv', { search: 'BTV', exact: 'BTV', country: 'Portugal', prefer: ['HD', null, 'FHD'], fallbackIds: [
     { id: '419434034c29c7a3c7b07-c30c1297e6e5ce', name: 'BTV', quality: 'HD', source: 'basic' },
     { id: '2434383426cedb9a7f8182-853d5b7284c58b', name: 'BTV (BENFICA)', quality: null, source: 'cable' }
-  ] }],  ['disney-pixar', { search: 'DISNEY+ PIXAR', exact: 'DISNEY+ PIXAR', country: 'Portugal', prefer: [null, 'HD', 'FHD'], fallbackIds: [
+  ] }],  ['sport-tv-1', { search: 'SPORT TV 1', exact: 'SPORT TV 1', country: 'Portugal', prefer: ['HD', null, 'FHD'], fallbackIds: [
+    { id: '3966581533812bd3be6382-2dee5e113ca360', name: 'SPORT TV 1', quality: 'HD', source: 'basic' },
+    { id: '211283081051caac7287c4-b0c19770b7972b', name: 'SPORT TV 1 (BACKUP)', quality: 'HD', source: 'basic' },
+    { id: '10004270647c8377fd8313-31e3d5c4614739', name: 'SPORT TV 1', quality: null, source: 'basic' },
+    { id: '34289402226976c68b9b9e-bf2069844244ff', name: 'SPORT TV 1', quality: null, source: 'cable' },
+    { id: '14386289065b08d49bfc3e-61a6d716bcbe83', name: 'SPORT TV 1 (BACKUP)', quality: null, source: 'basic' }
+  ] }],
+  ['sport-tv-5', { search: 'SPORT TV 5', exact: 'SPORT TV 5', country: 'Portugal', prefer: [null, 'HD', 'FHD'], fallbackIds: [
+    { id: '34583288246e0a0ec6fc0f-7f7f9c6e6c2f38', name: 'SPORT TV 5', quality: null, source: 'basic' },
+    { id: '12763267051751832c99d9-e96250d7d887f8', name: 'SPORT TV 5 (BACKUP)', quality: null, source: 'basic' },
+    { id: '9711041268146231bc411-77fb597e2397df', name: 'SPORT TV 5', quality: null, source: 'cable' }
+  ] }],
+  ['disney-pixar', { search: 'DISNEY+ PIXAR', exact: 'DISNEY+ PIXAR', country: 'Portugal', prefer: [null, 'HD', 'FHD'], fallbackIds: [
     { id: '1616464273e04bb68a8a1c-ed3fcb510db31f', name: 'DISNEY+ PIXAR', quality: null, source: 'cable' }
   ] }],
   ['canal-panda', { search: 'CANAL PANDA', exact: 'CANAL PANDA', country: 'Portugal', prefer: [null, 'HD', 'FHD'], fallbackIds: [
