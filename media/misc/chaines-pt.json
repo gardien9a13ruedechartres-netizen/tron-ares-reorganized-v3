@@ -314,6 +314,15 @@
 "isIframe": true
 },
 {
+"id": "canal panda",
+"name": "CANAL PANDA",
+"url": "/pages/worker-iptv3?channel=canal-panda",
+"logo": { "type": "image", "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/canal-panda-pt.png" },
+"group": "Généraliste",
+"isFavorite": false,
+"isIframe": true
+},
+{
 "id": "Record",
 "name": "RECORD",
 "url": "/pages/worker-iptv.html?channel=record-europa",

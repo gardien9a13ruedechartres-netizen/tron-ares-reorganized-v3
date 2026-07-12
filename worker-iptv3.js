@@ -15,7 +15,10 @@ const LIVE_CHANNELS = new Map([
     { id: '384601660517fa3552a29f-6816b5893e5bcc', name: 'CM TV', quality: null, source: 'basic' },
     { id: '805844173b05e1a81e31d-579768661fe265', name: 'CM TV', quality: null, source: 'cable' }
   ] }],
-  ['CANAL PANDA', { search: 'CANAL PANDA', exact: 'CANAL PANDA', country: 'Portugal', prefer: [null, 'HD', 'FHD'] }],
+  ['canal-panda', { search: 'CANAL PANDA', exact: 'CANAL PANDA', country: 'Portugal', prefer: [null, 'HD', 'FHD'], fallbackIds: [
+    { id: '4002241315e5ee10f4b753-97c7a8325393c2', name: 'CANAL PANDA', quality: null, source: 'basic' },
+    { id: '26958390437906a5f4ba97-d22b5eb462d646', name: 'CANAL PANDA', quality: null, source: 'cable' }
+  ] }],
   ['m6', { search: 'M6', exact: 'M6', country: 'France', prefer: ['FHD', 'HD', null] }]
 ]);
 
