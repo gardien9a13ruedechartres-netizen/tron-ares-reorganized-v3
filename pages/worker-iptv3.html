@@ -80,9 +80,20 @@
     const channelKey = String(params.get('channel') || 'cmtv').toLowerCase();
     const channelName = channels[channelKey] || '';
     const workerBase = 'https://tron-ares-iptv3.victor-salema-53d.workers.dev/api/iptv/live';
+    const legacyWorkerBase = 'https://tron-ares-iptv.victor-salema-53d.workers.dev/api/iptv/live';
+    const legacyWideBase = 'https://player-engine.com/api/worker-live';
+    const fallbackUrls = {
+      cmtv: `${legacyWideBase}/cmtvpt/master.m3u8`,
+      btv: `${legacyWorkerBase}/btv/master.m3u8`,
+      'sport-tv-1': `${legacyWorkerBase}/sport-tv-1/master.m3u8`,
+      'sport-tv-5': `${legacyWorkerBase}/sport-tv-5/master.m3u8`,
+      m6: `${legacyWorkerBase}/m6fr/master.m3u8`
+    };
     const BASE_HLS_URL = channelName ? `${workerBase}/${encodeURIComponent(channelKey)}/master.m3u8` : '';
+    const FALLBACK_HLS_URL = fallbackUrls[channelKey] || '';
     let HLS_URL = BASE_HLS_URL;
-    const ALL_TARGET_URLS = BASE_HLS_URL ? [BASE_HLS_URL] : [];
+    let sourceMode = 'primary';
+    const ALL_TARGET_URLS = [BASE_HLS_URL, FALLBACK_HLS_URL].filter(Boolean);
     const SOURCE_PAGE = 'Cloudflare Worker IPTV3 autonome';
     const GENERATED_AT = '';
     document.title = channelName ? `Player Worker IPTV3 ${channelName}` : 'Chaine IPTV3 inconnue';
@@ -100,6 +111,7 @@
 
     window.__CHANNEL_HLS_URL__ = HLS_URL;
     window.__CHANNEL_HLS_URLS__ = ALL_TARGET_URLS;
+    window.__CHANNEL_SOURCE_MODE__ = sourceMode;
     window.__CHANNEL_SOURCE_PAGE__ = SOURCE_PAGE;
     window.__CHANNEL_GENERATED_AT__ = GENERATED_AT;
 
@@ -139,6 +151,28 @@
       stallRecoveryCount = 0;
     }
 
+    function sourceModeFor(url) {
+      return FALLBACK_HLS_URL && String(url || '').startsWith(FALLBACK_HLS_URL) ? 'fallback' : 'primary';
+    }
+
+    function currentBaseUrl() {
+      return sourceMode === 'fallback' ? FALLBACK_HLS_URL : BASE_HLS_URL;
+    }
+
+    function switchToFallback(reason) {
+      if (!FALLBACK_HLS_URL || sourceMode === 'fallback') return false;
+      console.warn('Bascule vers worker-iptv stable:', reason);
+      sourceMode = 'fallback';
+      retryDelayMs = 3000;
+      clearStallRecovery();
+      attachSource(withRefresh(FALLBACK_HLS_URL));
+      return true;
+    }
+
+    function reloadCurrentSource() {
+      attachSource(withRefresh(currentBaseUrl() || HLS_URL));
+    }
+
     function scheduleRecovery() {
       if (retryTimer) return;
       const delay = retryDelayMs;
@@ -146,7 +180,7 @@
       setMessage('Flux temporairement indisponible. Nouvelle tentative...');
       retryTimer = setTimeout(() => {
         retryTimer = null;
-        attachSource(withRefresh(BASE_HLS_URL || HLS_URL));
+        if (!switchToFallback('network-error')) reloadCurrentSource();
       }, delay);
     }
 
@@ -164,13 +198,15 @@
         }
         console.warn('Rechargement du master apres blocage persistant');
         stallRecoveryCount = 0;
-        attachSource(withRefresh(BASE_HLS_URL || HLS_URL));
+        if (!switchToFallback('persistent-stall')) reloadCurrentSource();
       }, 4500);
     }
 
     function attachSource(nextUrl = HLS_URL) {
       HLS_URL = String(nextUrl || '');
+      sourceMode = sourceModeFor(HLS_URL);
       window.__CHANNEL_HLS_URL__ = HLS_URL;
+      window.__CHANNEL_SOURCE_MODE__ = sourceMode;
       urlLabel.textContent = HLS_URL || '(aucune URL)';
       if (!HLS_URL) {
         setMessage('Chaine inconnue pour worker-iptv3.');
