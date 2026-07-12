@@ -6,9 +6,15 @@ const sourceCache = new Map();
 
 const LIVE_CHANNELS = new Map([
   ['6ter', { search: '6TER', exact: '6TER', country: 'France', prefer: ['FHD', 'HD', null] }],
-  ['cstar', { search: 'C STAR', exact: 'C STAR', country: 'France', prefer: ['FHD', 'HD', null] }],
+  ['cstar', { search: 'C STAR', exact: 'C STAR', country: 'France', prefer: ['FHD', 'HD', null], fallbackIds: [
+    { id: '3480426017c3f2b3e10a98-4eb0ab5a31ab6c', name: 'C STAR', quality: 'FHD', source: 'satellite' },
+    { id: '3166346130b6b8b30bb9d2-eda28228a50465', name: 'C STAR', quality: null, source: 'cable' }
+  ] }],
   ['w9', { search: 'W9', exact: 'W9', country: 'France', prefer: ['HD', 'FHD', null] }],
-  ['cmtv', { search: 'CM TV', exact: 'CM TV', country: 'Portugal', prefer: [null, 'HD', 'FHD'] }],
+  ['cmtv', { search: 'CM TV', exact: 'CM TV', country: 'Portugal', prefer: [null, 'HD', 'FHD'], fallbackIds: [
+    { id: '384601660517fa3552a29f-6816b5893e5bcc', name: 'CM TV', quality: null, source: 'basic' },
+    { id: '805844173b05e1a81e31d-579768661fe265', name: 'CM TV', quality: null, source: 'cable' }
+  ] }],
   ['CANAL PANDA', { search: 'CANAL PANDA', exact: 'CANAL PANDA', country: 'Portugal', prefer: [null, 'HD', 'FHD'] }],
   ['m6', { search: 'M6', exact: 'M6', country: 'France', prefer: ['FHD', 'HD', null] }]
 ]);
@@ -126,6 +132,10 @@ async function findChannelMatches(channel) {
   const matches = (data.channels || [])
     .filter(item => String(item.name || '').toLowerCase() === channel.exact.toLowerCase())
     .sort((a, b) => qualityRank(channel, b) - qualityRank(channel, a));
+
+  if (!matches.length && Array.isArray(channel.fallbackIds)) {
+    return [...channel.fallbackIds].sort((a, b) => qualityRank(channel, b) - qualityRank(channel, a));
+  }
 
   if (!matches.length) throw new Error('channel not found');
   return matches;
