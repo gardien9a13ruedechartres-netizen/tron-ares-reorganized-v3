@@ -26,8 +26,7 @@ const LIVE_CHANNELS = new Map([
     { id: '34289402226976c68b9b9e-bf2069844244ff', name: 'SPORT TV 1', quality: null, source: 'cable' },
     { id: '14386289065b08d49bfc3e-61a6d716bcbe83', name: 'SPORT TV 1 (BACKUP)', quality: null, source: 'basic' }
   ] }],
-  ['sport-tv-5', { search: 'SPORT TV 5', exact: 'SPORT TV 5', country: 'Portugal', prefer: [null, 'HD', 'FHD'], fallbackIds: [
-    { id: '34583288246e0a0ec6fc0f-7f7f9c6e6c2f38', name: 'SPORT TV 5', quality: null, source: 'basic' },
+  ['sport-tv-5', { search: 'SPORT TV 5', exact: 'SPORT TV 5', country: 'Portugal', prefer: [null, 'HD', 'FHD'], excludeIds: ['34583288246e0a0ec6fc0f-7f7f9c6e6c2f38'], fallbackIds: [
     { id: '12763267051751832c99d9-e96250d7d887f8', name: 'SPORT TV 5 (BACKUP)', quality: null, source: 'basic' },
     { id: '9711041268146231bc411-77fb597e2397df', name: 'SPORT TV 5', quality: null, source: 'cable' }
   ] }],
@@ -151,8 +150,10 @@ async function findChannelMatches(channel) {
   if (!response.ok) throw new Error(`channels ${response.status}`);
 
   const data = await response.json();
+  const excluded = new Set(channel.excludeIds || []);
   const matches = (data.channels || [])
     .filter(item => String(item.name || '').toLowerCase() === channel.exact.toLowerCase())
+    .filter(item => !excluded.has(String(item.id || '')))
     .sort((a, b) => qualityRank(channel, b) - qualityRank(channel, a));
 
   if (!matches.length && Array.isArray(channel.fallbackIds)) {
