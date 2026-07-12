@@ -13,7 +13,7 @@
 "logo": { "type": "image", "value": "/media/cmtv.png" },
 "group": "Généraliste",
 "isFavorite": false,
-"isIframe": false
+"isIframe": true
 },
 {
 "id": "rtp1",
