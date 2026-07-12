@@ -5,7 +5,7 @@ const LIVE_CHANNELS = new Map([
   ['6ter', { search: '6TER', exact: '6TER', country: 'France', prefer: ['FHD', 'HD', null] }],
   ['cstar', { search: 'C STAR', exact: 'C STAR', country: 'France', prefer: ['FHD', 'HD', null] }],
   ['w9', { search: 'W9', exact: 'W9', country: 'France', prefer: ['HD', 'FHD', null] }],
-  ['cmtv', { search: 'cmtv', exact: 'cmtv', country: 'Portugal', prefer: ['HD', 'FHD', null] }],
+  ['CM TV', { search: 'CM TV', exact: 'CM TV', country: 'Portugal', prefer: ['HD', 'FHD', null] }],
   ['m6', { search: 'M6', exact: 'M6', country: 'France', prefer: ['FHD', 'HD', null] }]
 ]);
 
