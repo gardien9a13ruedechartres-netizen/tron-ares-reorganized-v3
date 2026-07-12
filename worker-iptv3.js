@@ -15,7 +15,10 @@ const LIVE_CHANNELS = new Map([
     { id: '384601660517fa3552a29f-6816b5893e5bcc', name: 'CM TV', quality: null, source: 'basic' },
     { id: '805844173b05e1a81e31d-579768661fe265', name: 'CM TV', quality: null, source: 'cable' }
   ] }],
-  ['disney-pixar', { search: 'DISNEY+ PIXAR', exact: 'DISNEY+ PIXAR', country: 'Portugal', prefer: [null, 'HD', 'FHD'], fallbackIds: [
+  ['btv', { search: 'BTV', exact: 'BTV', country: 'Portugal', prefer: ['HD', null, 'FHD'], fallbackIds: [
+    { id: '419434034c29c7a3c7b07-c30c1297e6e5ce', name: 'BTV', quality: 'HD', source: 'basic' },
+    { id: '2434383426cedb9a7f8182-853d5b7284c58b', name: 'BTV (BENFICA)', quality: null, source: 'cable' }
+  ] }],  ['disney-pixar', { search: 'DISNEY+ PIXAR', exact: 'DISNEY+ PIXAR', country: 'Portugal', prefer: [null, 'HD', 'FHD'], fallbackIds: [
     { id: '1616464273e04bb68a8a1c-ed3fcb510db31f', name: 'DISNEY+ PIXAR', quality: null, source: 'cable' }
   ] }],
   ['canal-panda', { search: 'CANAL PANDA', exact: 'CANAL PANDA', country: 'Portugal', prefer: [null, 'HD', 'FHD'], fallbackIds: [

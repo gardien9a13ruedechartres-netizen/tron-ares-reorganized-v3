@@ -160,10 +160,10 @@
 "isIframe": true
 },
 {
-"id": "BTV",
+"id": "btv",
 "name": "BTV",
-"url": "/pages/worker-iptv.html?channel=btv",
-"logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/commons/d/d2/Logo_Benfica_TV.png" },
+"url": "/pages/worker-iptv3.html?channel=btv",
+"logo": { "type": "image", "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/btv-hd-pt.png" },
 "group": "Sport",
 "isFavorite": false,
 "isIframe": true
