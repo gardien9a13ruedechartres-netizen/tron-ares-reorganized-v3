@@ -1,5 +1,8 @@
 const LIVEWATCH_ORIGIN = 'https://livewatch.top';
 const PROXY_PATH = '/api/iptv/proxy';
+const SOURCE_CACHE_TTL_MS = 120000;
+const SOURCE_TEST_TIMEOUT_MS = 5000;
+const sourceCache = new Map();
 
 const LIVE_CHANNELS = new Map([
   ['6ter', { search: '6TER', exact: '6TER', country: 'France', prefer: ['FHD', 'HD', null] }],
@@ -14,7 +17,7 @@ function corsHeaders() {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
     'Access-Control-Allow-Headers': 'Range, Accept, Content-Type',
-    'Access-Control-Expose-Headers': 'Content-Length, Content-Range, Accept-Ranges, X-Ares-Channel, X-Ares-Source-Id'
+    'Access-Control-Expose-Headers': 'Content-Length, Content-Range, Accept-Ranges, X-Ares-Channel, X-Ares-Source-Id, X-Ares-Source-Type, X-Ares-Source-Quality, X-Ares-Detection'
   };
 }
 
@@ -76,16 +79,37 @@ function hlsContentType(pathname, fallback) {
   return fallback || 'application/octet-stream';
 }
 
-function qualityRank(channel, item) {
-  const quality = item?.quality ?? null;
-  const source = String(item?.source || '').toLowerCase();
-  const preferred = channel.prefer.indexOf(quality);
-  const qualityScore = preferred >= 0 ? (100 - preferred) : 0;
-  const sourceScore = source === 'basic' ? 20 : source === 'satellite' ? 10 : source === 'cable' ? 5 : 0;
-  return qualityScore + sourceScore;
+function sourcePreferenceScore(source) {
+  const normalized = String(source || '').toLowerCase();
+  if (normalized === 'basic') return 20;
+  if (normalized === 'satellite') return 10;
+  if (normalized === 'cable') return 5;
+  return 0;
 }
 
-async function findChannel(channel) {
+function qualityRank(channel, item) {
+  const quality = item?.quality ?? null;
+  const preferred = channel.prefer.indexOf(quality);
+  const qualityScore = preferred >= 0 ? (100 - preferred) : 0;
+  return qualityScore + sourcePreferenceScore(item?.source);
+}
+
+function timeoutSignal(ms) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort('timeout'), ms);
+  return { signal: controller.signal, cancel: () => clearTimeout(timer) };
+}
+
+async function fetchTextWithTimeout(url, options = {}, timeoutMs = SOURCE_TEST_TIMEOUT_MS) {
+  const timeout = timeoutSignal(timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: timeout.signal });
+  } finally {
+    timeout.cancel();
+  }
+}
+
+async function findChannelMatches(channel) {
   const apiUrl = new URL('/api/channels', LIVEWATCH_ORIGIN);
   apiUrl.searchParams.set('country', channel.country);
   apiUrl.searchParams.set('limit', '20');
@@ -103,7 +127,68 @@ async function findChannel(channel) {
     .sort((a, b) => qualityRank(channel, b) - qualityRank(channel, a));
 
   if (!matches.length) throw new Error('channel not found');
-  return matches[0];
+  return matches;
+}
+
+function prioritizeCandidates(channelKey, matches) {
+  const cached = sourceCache.get(channelKey);
+  if (!cached || cached.expiresAt <= Date.now()) return matches;
+
+  return [...matches].sort((a, b) => {
+    if (a.id === cached.id) return -1;
+    if (b.id === cached.id) return 1;
+    return 0;
+  });
+}
+
+async function resolveCandidate(candidate) {
+  const streamUrl = new URL(`/api/stream/${encodeURIComponent(candidate.id)}`, LIVEWATCH_ORIGIN);
+  const streamResponse = await fetchTextWithTimeout(streamUrl, {
+    headers: livewatchHeaders('application/json,text/plain,*/*'),
+    redirect: 'follow'
+  });
+  if (!streamResponse.ok) throw new Error(`stream ${streamResponse.status}`);
+
+  const streamData = await streamResponse.json();
+  const upstreamUrl = new URL(streamData.proxy_url, LIVEWATCH_ORIGIN);
+  if (!isAllowedLivewatchUrl(upstreamUrl)) throw new Error('dynamic stream URL refused');
+
+  const startedAt = Date.now();
+  const master = await fetchTextWithTimeout(upstreamUrl, {
+    headers: livewatchHeaders('application/vnd.apple.mpegurl,application/x-mpegURL,*/*'),
+    redirect: 'follow'
+  });
+  const latencyMs = Date.now() - startedAt;
+  const masterText = await master.text();
+  if (!master.ok || !masterText.trimStart().startsWith('#EXTM3U')) {
+    throw new Error(`master ${master.status}`);
+  }
+
+  return { candidate, upstreamUrl, masterText, latencyMs };
+}
+
+async function selectWorkingSource(channelKey, channel) {
+  const matches = prioritizeCandidates(channelKey, await findChannelMatches(channel));
+  const failures = [];
+
+  for (const candidate of matches.slice(0, 5)) {
+    try {
+      const resolved = await resolveCandidate(candidate);
+      sourceCache.set(channelKey, {
+        id: candidate.id,
+        expiresAt: Date.now() + SOURCE_CACHE_TTL_MS
+      });
+      return {
+        ...resolved,
+        detection: failures.length ? `fallback-after-${failures.length}-failure` : 'validated-primary'
+      };
+    } catch (error) {
+      failures.push(`${candidate.id}:${error.message}`);
+    }
+  }
+
+  sourceCache.delete(channelKey);
+  throw new Error(`no valid source (${failures.join(', ')})`);
 }
 
 async function resolveIptvLive(request, requestUrl, channelKey) {
@@ -116,38 +201,10 @@ async function resolveIptvLive(request, requestUrl, channelKey) {
   if (!channel) return new Response('Unknown channel', { status: 404, headers: corsHeaders() });
 
   let selected;
-  let streamData;
   try {
-    selected = await findChannel(channel);
-    const streamUrl = new URL(`/api/stream/${encodeURIComponent(selected.id)}`, LIVEWATCH_ORIGIN);
-    const streamResponse = await fetch(streamUrl, {
-      headers: livewatchHeaders('application/json,text/plain,*/*'),
-      redirect: 'follow'
-    });
-    if (!streamResponse.ok) throw new Error(`stream ${streamResponse.status}`);
-    streamData = await streamResponse.json();
+    selected = await selectWorkingSource(channelKey, channel);
   } catch (error) {
     return new Response(`Dynamic stream URL unavailable (${error.message})`, { status: 502, headers: corsHeaders() });
-  }
-
-  let upstreamUrl;
-  try {
-    upstreamUrl = new URL(streamData.proxy_url, LIVEWATCH_ORIGIN);
-  } catch (_) {
-    return new Response('Invalid dynamic stream URL', { status: 502, headers: corsHeaders() });
-  }
-
-  if (!isAllowedLivewatchUrl(upstreamUrl)) {
-    return new Response('Dynamic stream URL refused', { status: 502, headers: corsHeaders() });
-  }
-
-  const master = await fetch(upstreamUrl, {
-    headers: livewatchHeaders('application/vnd.apple.mpegurl,application/x-mpegURL,*/*'),
-    redirect: 'follow'
-  });
-  const masterText = await master.text();
-  if (!master.ok || !masterText.trimStart().startsWith('#EXTM3U')) {
-    return new Response(`Master validation failed (${master.status})`, { status: 502, headers: corsHeaders() });
   }
 
   const headers = new Headers(corsHeaders());
@@ -156,11 +213,14 @@ async function resolveIptvLive(request, requestUrl, channelKey) {
   headers.set('CDN-Cache-Control', 'no-store');
   headers.set('Cloudflare-CDN-Cache-Control', 'no-store');
   headers.set('X-Ares-Channel', channelKey);
-  headers.set('X-Ares-Source-Id', selected.id);
+  headers.set('X-Ares-Source-Id', selected.candidate.id);
+  headers.set('X-Ares-Source-Type', String(selected.candidate.source || 'unknown'));
+  headers.set('X-Ares-Source-Quality', String(selected.candidate.quality || 'auto'));
+  headers.set('X-Ares-Detection', `${selected.detection}; latency=${selected.latencyMs}ms`);
   headers.set('X-Ares-Resolved-At', new Date().toISOString());
   if (request.method === 'HEAD') return new Response(null, { status: 200, headers });
 
-  return new Response(rewritePlaylist(masterText, upstreamUrl, requestUrl.origin), { status: 200, headers });
+  return new Response(rewritePlaylist(selected.masterText, selected.upstreamUrl, requestUrl.origin), { status: 200, headers });
 }
 
 async function proxyIptv(request, requestUrl) {
