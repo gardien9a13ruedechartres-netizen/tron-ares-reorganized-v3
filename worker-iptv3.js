@@ -18,7 +18,8 @@ const LIVE_CHANNELS = new Map([
   ['btv', { search: 'BTV', exact: 'BTV', country: 'Portugal', prefer: ['HD', null, 'FHD'], fallbackIds: [
     { id: '419434034c29c7a3c7b07-c30c1297e6e5ce', name: 'BTV', quality: 'HD', source: 'basic' },
     { id: '2434383426cedb9a7f8182-853d5b7284c58b', name: 'BTV (BENFICA)', quality: null, source: 'cable' }
-  ] }],  ['sport-tv-1', { search: 'SPORT TV 1', exact: 'SPORT TV 1', country: 'Portugal', prefer: ['HD', null, 'FHD'], fallbackIds: [
+  ] }],
+  ['sport-tv-1', { search: 'SPORT TV 1', exact: 'SPORT TV 1', country: 'Portugal', prefer: ['HD', null, 'FHD'], fallbackIds: [
     { id: '3966581533812bd3be6382-2dee5e113ca360', name: 'SPORT TV 1', quality: 'HD', source: 'basic' },
     { id: '211283081051caac7287c4-b0c19770b7972b', name: 'SPORT TV 1 (BACKUP)', quality: 'HD', source: 'basic' },
     { id: '10004270647c8377fd8313-31e3d5c4614739', name: 'SPORT TV 1', quality: null, source: 'basic' },
