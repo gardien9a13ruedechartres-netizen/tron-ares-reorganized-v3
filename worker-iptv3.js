@@ -59,8 +59,15 @@ function rewritePlaylist(text, upstreamUrl, publicOrigin) {
 }
 
 function hlsContentType(pathname, fallback) {
+  const type = String(fallback || '').split(';')[0].trim().toLowerCase();
+  if (type.includes('mpegurl') || type.includes('x-mpegurl')) return 'application/vnd.apple.mpegurl';
+  if (type.includes('mp2t')) return 'video/mp2t';
+  if (type.includes('iso.segment')) return 'video/iso.segment';
+  if (type.includes('mp4')) return 'video/mp4';
+  if (type.includes('aac')) return 'audio/aac';
+
   const lower = pathname.toLowerCase();
-  if (lower.endsWith('.m3u8') || pathname === '/api/hls') return 'application/vnd.apple.mpegurl';
+  if (lower.endsWith('.m3u8')) return 'application/vnd.apple.mpegurl';
   if (lower.endsWith('.ts')) return 'video/mp2t';
   if (lower.endsWith('.m4s')) return 'video/iso.segment';
   if (lower.endsWith('.mp4')) return 'video/mp4';
