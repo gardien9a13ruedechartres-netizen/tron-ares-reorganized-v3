@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
+  <link rel="preconnect" href="https://tron-ares-iptv3.victor-salema-53d.workers.dev" crossorigin>
+  <link rel="dns-prefetch" href="//tron-ares-iptv3.victor-salema-53d.workers.dev">
+  <title>Player Worker IPTV3</title>
+  <style>
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #000;
+    }
+    video {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: fill;
+      background: #000;
+    }
+    #overlay {
+      position: fixed;
+      left: 16px;
+      right: 16px;
+      bottom: 16px;
+      z-index: 10;
+      font-family: Arial, sans-serif;
+      color: #fff;
+      background: rgba(0,0,0,.55);
+      border: 1px solid rgba(255,255,255,.25);
+      border-radius: 10px;
+      padding: 12px;
+      line-height: 1.4;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    #overlay.hidden { display: none; }
+    button {
+      margin-top: 8px;
+      padding: 10px 14px;
+      cursor: pointer;
+      border: 0;
+      border-radius: 8px;
+      font-weight: 700;
+      pointer-events: auto;
+    }
+    code { word-break: break-all; color: #d7f7ff; }
+  </style>
+</head>
+<body>
+  <video id="video" controls autoplay playsinline webkit-playsinline></video>
+  <div id="overlay">
+    <div><strong>Player HLS genere</strong></div>
+    <div hidden>URL ciblee : <code id="urlLabel"></code></div>
+    <div id="msg">Chargement du player...</div>
+    <button id="playBtn">Activer lecture avec son</button>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.6.16"></script>
+  <script>
+    const channels = {
+      cmtv: 'CMTV',
+      '6ter': '6ter',
+      cstar: 'CStar',
+      w9: 'W9',
+      m6: 'M6'
+    };
+    const params = new URLSearchParams(location.search);
+    const channelKey = String(params.get('channel') || 'cmtv').toLowerCase();
+    const channelName = channels[channelKey] || '';
+    const workerBase = 'https://tron-ares-iptv3.victor-salema-53d.workers.dev/api/iptv/live';
+    let HLS_URL = channelName ? `${workerBase}/${encodeURIComponent(channelKey)}/master.m3u8` : '';
+    const ALL_TARGET_URLS = HLS_URL ? [HLS_URL] : [];
+    const SOURCE_PAGE = 'Cloudflare Worker IPTV3 autonome';
+    const GENERATED_AT = '';
+    document.title = channelName ? `Player Worker IPTV3 ${channelName}` : 'Chaine IPTV3 inconnue';
+
+    const video = document.getElementById('video');
+    const overlay = document.getElementById('overlay');
+    const msg = document.getElementById('msg');
+    const playBtn = document.getElementById('playBtn');
+    const urlLabel = document.getElementById('urlLabel');
+    let hlsInstance = null;
+    let retryTimer = null;
+    let retryDelayMs = 3000;
+
+    window.__CHANNEL_HLS_URL__ = HLS_URL;
+    window.__CHANNEL_HLS_URLS__ = ALL_TARGET_URLS;
+    window.__CHANNEL_SOURCE_PAGE__ = SOURCE_PAGE;
+    window.__CHANNEL_GENERATED_AT__ = GENERATED_AT;
+
+    urlLabel.textContent = HLS_URL || '(aucune URL)';
+    video.muted = false;
+    video.volume = 1;
+    video.autoplay = true;
+    video.playsInline = true;
+    video.style.objectFit = 'fill';
+
+    function setMessage(text) { msg.textContent = text; }
+
+    async function playWithSound() {
+      try {
+        video.muted = false;
+        video.volume = 1;
+        await video.play();
+        overlay.classList.add('hidden');
+      } catch (error) {
+        overlay.classList.remove('hidden');
+        setMessage('Lecture automatique avec son bloquee par le navigateur. Clique sur le bouton pour lancer.');
+      }
+    }
+
+    function scheduleRecovery() {
+      if (retryTimer) return;
+      const delay = retryDelayMs;
+      retryDelayMs = Math.min(retryDelayMs * 2, 30000);
+      setMessage('Flux temporairement indisponible. Nouvelle tentative...');
+      retryTimer = setTimeout(() => {
+        retryTimer = null;
+        attachSource(HLS_URL);
+      }, delay);
+    }
+
+    function attachSource(nextUrl = HLS_URL) {
+      HLS_URL = String(nextUrl || '');
+      window.__CHANNEL_HLS_URL__ = HLS_URL;
+      urlLabel.textContent = HLS_URL || '(aucune URL)';
+      if (!HLS_URL) {
+        setMessage('Chaine inconnue pour worker-iptv3.');
+        overlay.classList.remove('hidden');
+        return;
+      }
+      if (hlsInstance) {
+        hlsInstance.destroy();
+        hlsInstance = null;
+      }
+      if (window.Hls && Hls.isSupported()) {
+        hlsInstance = new Hls({ enableWorker: true, lowLatencyMode: true });
+        hlsInstance.loadSource(HLS_URL);
+        hlsInstance.attachMedia(video);
+        hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+          retryDelayMs = 3000;
+          if (retryTimer) {
+            clearTimeout(retryTimer);
+            retryTimer = null;
+          }
+          setMessage('Manifest HLS charge. Tentative autoplay avec son...');
+          playWithSound();
+        });
+        hlsInstance.on(Hls.Events.ERROR, (event, data) => {
+          console.warn('Erreur HLS:', data);
+          if (data && data.fatal) scheduleRecovery();
+        });
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = HLS_URL;
+        video.addEventListener('loadedmetadata', playWithSound, { once: true });
+      } else {
+        setMessage('HLS.js non charge ou HLS non supporte par ce navigateur.');
+        overlay.classList.remove('hidden');
+      }
+    }
+
+    playBtn.addEventListener('click', playWithSound);
+    attachSource();
+
+    console.log('URL HLS ciblee:', HLS_URL);
+    console.log('Toutes les URLs ciblees:', ALL_TARGET_URLS.join('\n'));
+  </script>
+</body>
+</html>

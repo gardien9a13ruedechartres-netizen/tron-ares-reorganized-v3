@@ -9,11 +9,11 @@
 {
 "id": "cmtv",
 "name": "CMTV",
-"url": "/pages/worker-iptv.html?channel=cmtvpt",
+"url": "https://tron-ares-iptv3.victor-salema-53d.workers.dev/api/iptv/live/cmtv/master.m3u8",
 "logo": { "type": "image", "value": "/media/cmtv.png" },
 "group": "Généraliste",
 "isFavorite": false,
-"isIframe": true
+"isIframe": false
 },
 {
 "id": "rtp1",
