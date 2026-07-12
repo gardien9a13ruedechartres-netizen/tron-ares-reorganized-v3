@@ -79,14 +79,14 @@
     {
       "id": "m6",
       "name": "M6",
-      "url": "/pages/worker-iptv?channel=m6fr",
+      "url": "https://tron-ares-iptv3.victor-salema-53d.workers.dev/api/iptv/live/m6/master.m3u8",
       "logo": {
         "type": "image",
         "value": "https://focus.telerama.fr/500x500/0000/00/01/clear-118.png"
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": false
     },
     {
       "id": "arte",
@@ -103,7 +103,7 @@
     {
       "id": "w9",
       "name": "W9",
-      "url": "https://tron-ares-iptv2.victor-salema-53d.workers.dev/api/iptv/live/w9/master.m3u8",
+      "url": "https://tron-ares-iptv3.victor-salema-53d.workers.dev/api/iptv/live/w9/master.m3u8",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/W9-Logo.svg"
@@ -115,7 +115,7 @@
     {
       "id": "cstar",
       "name": "CStar",
-      "url": "https://tron-ares-iptv2.victor-salema-53d.workers.dev/api/iptv/live/cstar/master.m3u8",
+      "url": "https://tron-ares-iptv3.victor-salema-53d.workers.dev/api/iptv/live/cstar/master.m3u8",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20CStar%202016.svg"
@@ -199,7 +199,7 @@
     {
       "id": "6ter",
       "name": "6ter",
-      "url": "https://embed-work.victor-salema-53d.workers.dev/?src=https://livewatch.top/api/hls?t=MTc4Mzg4MTc0MXx8aHR0cHM6Ly9zaG91dXJ2a2k3anRmYXgubmdvbHBka3lvY3RqY2RkeHNobGk0NjlyLm9yZy9zdW5zaGluZS9FZTVhRUk5Q1VpdHFrYnZWOW5CT1NMQXB3M3kwV0Y3VVhBbTNNYlVhWGFUUXdYbTNOSGUtbEVBRzBIcUlUM3h2OFRMNVhsZlhkV01obTJ1a2l1NFYyTGdrNGVyc1ZjNnBUd0VHN1ZSeGkyTlRwamM5djEzOXE0MUVJMVg2SFVHa0liZ05MaVdZTmxfRU01el9GdUFSRWFNLUdEMEgwWkhYLTYzQWhIOVVCRW0tTV9ncVR5ZTBvOVQ1SGVCbTVaX0NCMFNILXRNTnA0eVVZOWJjTVZhM3NhZ3Y2bWduX3NiTkxPbjZoZmc2M0FqZjR4cDlXREJLVU9DSHhtMHFxWjNGYld4dnloOHZjV2NicFJOOWtJWEQwUS9obHMvaW5kZXgubTN1OHx8jOq0JXd9aX93KfNQzpdbNA",
+      "url": "https://tron-ares-iptv3.victor-salema-53d.workers.dev/api/iptv/live/6ter/master.m3u8",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%206ter%202016.svg"
