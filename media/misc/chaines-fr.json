@@ -199,14 +199,14 @@
     {
       "id": "6ter",
       "name": "6ter",
-      "url": "https://tron-ares-iptv2.victor-salema-53d.workers.dev/api/iptv/live/6ter/master.m3u8",
+      "url": "https://hlsplayers.pages.dev/player2?url=https://livewatch.top/api/hls?t=MTc4Mzg4MTc0MXx8aHR0cHM6Ly9zaG91dXJ2a2k3anRmYXgubmdvbHBka3lvY3RqY2RkeHNobGk0NjlyLm9yZy9zdW5zaGluZS9FZTVhRUk5Q1VpdHFrYnZWOW5CT1NMQXB3M3kwV0Y3VVhBbTNNYlVhWGFUUXdYbTNOSGUtbEVBRzBIcUlUM3h2OFRMNVhsZlhkV01obTJ1a2l1NFYyTGdrNGVyc1ZjNnBUd0VHN1ZSeGkyTlRwamM5djEzOXE0MUVJMVg2SFVHa0liZ05MaVdZTmxfRU01el9GdUFSRWFNLUdEMEgwWkhYLTYzQWhIOVVCRW0tTV9ncVR5ZTBvOVQ1SGVCbTVaX0NCMFNILXRNTnA0eVVZOWJjTVZhM3NhZ3Y2bWduX3NiTkxPbjZoZmc2M0FqZjR4cDlXREJLVU9DSHhtMHFxWjNGYld4dnloOHZjV2NicFJOOWtJWEQwUS9obHMvaW5kZXgubTN1OHx8jOq0JXd9aX93KfNQzpdbNA",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%206ter%202016.svg"
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "fifa",
