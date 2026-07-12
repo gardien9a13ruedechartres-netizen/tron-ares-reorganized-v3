@@ -314,9 +314,18 @@
 "isIframe": true
 },
 {
+"id": "disney-pixar",
+"name": "DISNEY+ PIXAR",
+"url": "/pages/worker-iptv3.html?channel=disney-pixar",
+"logo": { "type": "image", "value": "/media/logo-ares.png" },
+"group": "Jeunesse",
+"isFavorite": false,
+"isIframe": true
+},
+{
 "id": "canal panda",
 "name": "CANAL PANDA",
-"url": "/pages/worker-iptv3?channel=canal-panda",
+"url": "/pages/worker-iptv3.html?channel=canal-panda",
 "logo": { "type": "image", "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/canal-panda-pt.png" },
 "group": "Généraliste",
 "isFavorite": false,

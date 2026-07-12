@@ -15,9 +15,8 @@ const LIVE_CHANNELS = new Map([
     { id: '384601660517fa3552a29f-6816b5893e5bcc', name: 'CM TV', quality: null, source: 'basic' },
     { id: '805844173b05e1a81e31d-579768661fe265', name: 'CM TV', quality: null, source: 'cable' }
   ] }],
-  ["disney+ pixar", { search: "DISNEY+ PIXAR", exact: "DISNEY+ PIXAR", country: "Portugal", prefer: [null, "HD", "FHD"], fallbackIds: [
-    { id: "1616464273e04bb68a8a1c-ed3fcb510db31f", name: "CM TV", quality: null, source: "cable" },
-    { id: "1616464273e04bb68a8a1c-ed3fcb510db31f", name: "CM TV", quality: null, source: "cable" }
+  ['disney-pixar', { search: 'DISNEY+ PIXAR', exact: 'DISNEY+ PIXAR', country: 'Portugal', prefer: [null, 'HD', 'FHD'], fallbackIds: [
+    { id: '1616464273e04bb68a8a1c-ed3fcb510db31f', name: 'DISNEY+ PIXAR', quality: null, source: 'cable' }
   ] }],
   ['canal-panda', { search: 'CANAL PANDA', exact: 'CANAL PANDA', country: 'Portugal', prefer: [null, 'HD', 'FHD'], fallbackIds: [
     { id: '4002241315e5ee10f4b753-97c7a8325393c2', name: 'CANAL PANDA', quality: null, source: 'basic' },
