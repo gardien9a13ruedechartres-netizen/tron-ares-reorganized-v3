@@ -1,0 +1,956 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
+  <link rel="preconnect" href="https://tron-ares-iptv3.victor-salema-53d.workers.dev" crossorigin>
+  <link rel="dns-prefetch" href="//tron-ares-iptv3.victor-salema-53d.workers.dev">
+  <title>Player Worker IPTV3</title>
+  <style>
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #000;
+    }
+    video {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: fill;
+      background: #000;
+    }
+    video::-webkit-media-controls,
+    video::-webkit-media-controls-panel,
+    video::-webkit-media-controls-enclosure {
+      display: none !important;
+      opacity: 0 !important;
+      visibility: hidden !important;
+    }
+    .player-controls {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 10px;
+      padding: 18px 16px calc(12px + env(safe-area-inset-bottom));
+      color: #f9fafb;
+      background: linear-gradient(to top,
+        rgba(0, 0, 0, .88) 0%,
+        rgba(0, 0, 0, .74) 48%,
+        rgba(0, 0, 0, .38) 78%,
+        rgba(0, 0, 0, 0) 100%);
+      font-family: Arial, sans-serif;
+      box-sizing: border-box;
+      pointer-events: auto;
+      transition: opacity .18s ease, transform .18s ease, visibility .18s ease;
+    }
+    .player-controls.is-hidden {
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(18px);
+      pointer-events: none;
+    }
+    .controls-top,
+    .controls-bottom {
+      display: flex;
+      align-items: center;
+      width: 100%;
+    }
+    .controls-top {
+      padding: 0 2px;
+    }
+    .controls-bottom {
+      gap: 10px;
+      min-height: 34px;
+    }
+    .player-controls button {
+      margin: 0;
+      min-height: 0;
+      padding: 0;
+      color: #fff;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    .control-icon {
+      width: 32px;
+      height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 18px;
+      line-height: 1;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .08);
+      border: 1px solid rgba(255, 255, 255, .14);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      transition: background .18s ease, border-color .18s ease, transform .18s ease;
+    }
+    .control-icon:hover,
+    .control-icon:focus-visible {
+      background: rgba(255, 255, 255, .16);
+      border-color: rgba(255, 255, 255, .26);
+      transform: scale(1.03);
+      outline: none;
+    }
+    .control-label {
+      display: inline-block;
+      transform: translateY(-1px);
+      pointer-events: none;
+    }
+    .control-time {
+      min-width: 92px;
+      font-size: 13px;
+      font-variant-numeric: tabular-nums;
+      color: rgba(255, 255, 255, .92);
+      white-space: nowrap;
+    }
+    .control-spacer {
+      flex: 1;
+      min-width: 8px;
+    }
+    .control-live-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 50px;
+      height: 24px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: #cf202f;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      box-shadow: 0 0 0 1px rgba(255,255,255,.12) inset;
+    }
+    .control-live-badge[hidden] {
+      display: none !important;
+    }
+    .control-volume {
+      width: min(18vw, 112px);
+    }
+    .control-seek,
+    .control-volume {
+      appearance: none;
+      -webkit-appearance: none;
+      background: transparent;
+      accent-color: #fff;
+    }
+    .control-seek {
+      width: 100%;
+      margin: 0;
+    }
+    .control-seek::-webkit-slider-runnable-track,
+    .control-volume::-webkit-slider-runnable-track {
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .35);
+    }
+    .control-seek::-moz-range-track,
+    .control-volume::-moz-range-track {
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .35);
+    }
+    .control-seek::-webkit-slider-thumb,
+    .control-volume::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      margin-top: -5px;
+      border-radius: 50%;
+      border: 0;
+      background: #fff;
+      box-shadow: 0 1px 4px rgba(0,0,0,.45);
+    }
+    .control-seek::-moz-range-thumb,
+    .control-volume::-moz-range-thumb {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 0;
+      background: #fff;
+      box-shadow: 0 1px 4px rgba(0,0,0,.45);
+    }
+    .control-seek.is-disabled,
+    .player-controls.is-live .control-seek {
+      opacity: .5;
+    }
+    .control-seek:disabled {
+      cursor: default;
+    }
+    @media (max-width: 520px) {
+      .player-controls {
+        gap: 8px;
+        padding: 16px 10px calc(10px + env(safe-area-inset-bottom));
+      }
+      .controls-bottom {
+        gap: 8px;
+      }
+      .control-time {
+        min-width: 72px;
+        font-size: 11px;
+      }
+      .control-volume {
+        width: 74px;
+      }
+      .control-live-badge {
+        min-width: 42px;
+        padding: 0 8px;
+        font-size: 10px;
+      }
+    }
+    #overlay {
+      position: fixed;
+      left: 16px;
+      right: 16px;
+      bottom: 16px;
+      z-index: 10;
+      font-family: Arial, sans-serif;
+      color: #fff;
+      background: rgba(0,0,0,.55);
+      border: 1px solid rgba(255,255,255,.25);
+      border-radius: 10px;
+      padding: 12px;
+      line-height: 1.4;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    #overlay.hidden { display: none; }
+    button {
+      margin-top: 8px;
+      padding: 10px 14px;
+      cursor: pointer;
+      border: 0;
+      border-radius: 8px;
+      font-weight: 700;
+      pointer-events: auto;
+    }
+    code { word-break: break-all; color: #d7f7ff; }
+
+    #loadingOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background: #000;
+      font-family: Arial, sans-serif;
+      color: #f9fafb;
+      transition: opacity .35s ease, visibility .35s ease;
+    }
+    #loadingOverlay.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .loader-content {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: min(360px, 82vw);
+      text-align: center;
+    }
+    .loader-logo {
+      width: 156px;
+      max-width: 46vw;
+      height: 156px;
+      max-height: 30vh;
+      object-fit: contain;
+      margin-bottom: 26px;
+      filter: drop-shadow(0 8px 26px rgba(0,0,0,.9));
+      animation: logoPulse 1.6s ease-in-out infinite;
+    }
+    .loader-logo-badge {
+      width: 156px;
+      max-width: 46vw;
+      height: 156px;
+      max-height: 30vh;
+      margin-bottom: 26px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      border: 2px solid rgba(96,165,250,.62);
+      background: radial-gradient(circle at 35% 25%, rgba(96,165,250,.28), rgba(0,12,24,.92) 62%);
+      color: #eaf6ff;
+      font-size: clamp(24px, 8vw, 44px);
+      font-weight: 800;
+      letter-spacing: 0;
+      text-shadow: 0 3px 18px rgba(0,0,0,.9);
+      box-shadow: 0 0 32px rgba(59,130,246,.35);
+      animation: logoPulse 1.6s ease-in-out infinite;
+    }
+    .pro-spinner {
+      width: 66px;
+      height: 66px;
+      border-radius: 50%;
+      border: 5px solid rgba(255,255,255,.14);
+      border-top-color: #3b82f6;
+      border-right-color: #60a5fa;
+      animation: spin .9s linear infinite;
+      margin-bottom: 18px;
+    }
+    .loader-progress-wrap {
+      width: 260px;
+      max-width: 72vw;
+      height: 8px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255,255,255,.14);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
+      margin-bottom: 10px;
+    }
+    .loader-progress-fill {
+      width: 0%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #2563eb, #60a5fa, #93c5fd);
+      box-shadow: 0 0 18px rgba(59,130,246,.75);
+      transition: width .35s ease;
+    }
+    .loader-progress-text {
+      min-height: 18px;
+      margin-bottom: 14px;
+      color: #bfdbfe;
+      font-size: 13px;
+      font-weight: 700;
+      text-shadow: 0 2px 12px rgba(0,0,0,.85);
+    }
+    .loading-text {
+      font-size: 18px;
+      font-weight: 600;
+      color: #e5e7eb;
+      text-shadow: 0 2px 14px rgba(0,0,0,.85);
+    }
+    .dots::after {
+      content: "";
+      display: inline-block;
+      width: 24px;
+      animation: dots 1.4s infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes logoPulse { 0%,100% { transform: scale(1); opacity: .92; } 50% { transform: scale(1.045); opacity: 1; } }
+    @keyframes dots { 0% { content: ""; } 33% { content: "."; } 66% { content: ".."; } 100% { content: "..."; } }
+  </style>
+</head>
+<body>
+  <video id="video" controls autoplay playsinline webkit-playsinline></video>
+  <div id="playerControls" class="player-controls" aria-label="Controles du lecteur">
+    <div class="controls-top">
+      <input id="controlSeek" class="control-seek" type="range" min="0" max="100" step="0.1" value="100" aria-label="Position de lecture">
+    </div>
+    <div class="controls-bottom">
+      <button id="controlPlay" class="control-icon" type="button" aria-label="Pause" title="Pause">
+        <span id="controlPlayIcon" class="control-label" aria-hidden="true">❚❚</span>
+      </button>
+      <div id="controlTime" class="control-time">Direct</div>
+      <button id="controlMute" class="control-icon" type="button" aria-label="Couper le son" title="Couper le son">
+        <span id="controlMuteIcon" class="control-label" aria-hidden="true">🔊</span>
+      </button>
+      <input id="controlVolume" class="control-volume" type="range" min="0" max="1" step="0.05" value="1" aria-label="Volume">
+      <div id="controlLive" class="control-live-badge" hidden>Direct</div>
+      <div class="control-spacer" aria-hidden="true"></div>
+      <button id="controlFullscreen" class="control-icon" type="button" aria-label="Plein écran" title="Plein écran">
+        <span id="controlFullscreenIcon" class="control-label" aria-hidden="true">⛶</span>
+      </button>
+    </div>
+  </div>
+  <div id="loadingOverlay">
+    <div class="loader-content">
+      <img id="loadingLogo" class="loader-logo" alt="">
+      <div id="loadingLogoBadge" class="loader-logo-badge"></div>
+      <div class="pro-spinner"></div>
+      <div class="loader-progress-wrap" aria-hidden="true">
+        <div id="loadingProgressFill" class="loader-progress-fill"></div>
+      </div>
+      <div id="loadingProgressText" class="loader-progress-text">Initialisation... 0%</div>
+      <div class="loading-text">Chargement du flux<span class="dots"></span></div>
+    </div>
+  </div>
+  <div id="overlay">
+    <div><strong>Player HLS genere</strong></div>
+    <div hidden>URL ciblee : <code id="urlLabel"></code></div>
+    <div id="msg">Chargement du player...</div>
+    <button id="playBtn">Activer lecture avec son</button>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.6.16"></script>
+  <script>
+    const channels = {
+      tf1: 'TF1',
+      'canal-plus': 'CANAL+',
+      'canal-gr-ecran': 'CANAL+ Gr. Ecran',
+      'canal-cinema': 'CANAL+ Cinema',
+      'canal-series': 'CANAL+ SERIES',
+      cmtv: 'CMTV',
+      btv: 'BTV',
+      'sport-tv-1': 'Sport TV 1',
+      'sport-tv-5': 'Sport TV 5',
+      'canal-panda': 'Canal Panda',
+      'disney-pixar': 'Disney+ Pixar',
+      '6ter': '6ter',
+      cstar: 'CStar',
+      w9: 'W9',
+      "golf": "GOLF +",
+      "auto-moto": "AUTO MOTO",
+      "l-equipe-fr": "L'ÉQUIPE FR",
+      "ocs-max": "OCS Max",
+      "warner-tv": "Warner TV",
+      "cine-frisson": "CINE+ Frisson",
+      "cine-emotion": "CINE+ Emotion",
+      "cine-classic": "CINE+ Classic",
+      "cine-club": "CINÉ+ Club",
+      "serie-club": "Serie Club",
+      "tcm-cinema": "TCM Cinema",
+      "disney-plus-fr": "DISNEY+ France",
+      "disney-junior": "Disney junior",
+      "cartoon-network": "Cartoon Network",
+      "canal-j": "Canal J",
+      "teletoon": "Télétoon",
+      "mangas": "Mangas",
+      "j-one": "J-One",
+      "tiji": "Tiji",
+      "nickelodeon": "Nickelodeon",
+      "boing": "Boing",
+      "game-one": "Game One",
+      "toonami": "Toonami",
+      "toute-l-histoire": "Toute l´Histoire",
+      "nat-geo": "Nat Geo",
+      "nat-geo-wild": "Nat Geo Wild",
+      "discovery-science": "Discovery Science",
+      "ushuaia-tv": "Ushuaïa TV",
+      "science-vie": "Science & Vie",
+      "planete-crime": "Planète+ Crime",
+      "animaux": "Animaux",
+      "rmc-decouverte-2": "RMC Découverte",
+      "investigation-discovery": "Investigation Discovery",
+      "chasse-peche": "Chasse & Pêche",
+      "crime-district": "Crime District",
+      "mcm": "MCM",
+      "m6-music": "M6 Music",
+      "mtv": "MTV",
+      "mtv-hits": "MTV Hits",
+      "nrj-hits": "NRJ Hits",
+      "bfm-business": "BFM Business",
+      m6: 'M6'
+    };
+    const channelLogos = {
+      "6ter": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%206ter%202016.svg",
+      animaux: "/media/image/animaux.webp",
+      "auto-moto": "/media/image/automoto.webp",
+      "bfm-business": "https://commons.wikimedia.org/wiki/Special:FilePath/BFM%20Business%20logo%202023.png",
+      boing: "https://commons.wikimedia.org/wiki/Special:FilePath/Boing%20-%20Logo%202016.svg",
+      btv: "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/btv-hd-pt.png",
+      "canal-panda": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/canal-panda-pt.png",
+      "canal-plus": "https://www.freeshot.live/upload/source/Canal+France_logo.png",
+      "canal-gr-ecran": "/media/image/canal-plus-grand-ecran.webp",
+      "canal-cinema": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20Canal%2B%20Cin%C3%A9ma%202009.svg",
+      "canal-series": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20Canal%2B%20S%C3%A9ries%202013.svg",
+      "canal-j": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/france/canal-j-fr.png",
+      "cartoon-network": "https://commons.wikimedia.org/wiki/Special:FilePath/Cartoon%20Network%201992-2004.svg",
+      "chasse-peche": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20Chasse%20et%20P%C3%AAche%202011.png",
+      "cine-classic": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20Cin%C3%A9%2B%20Classic%202011.svg",
+      "cine-club": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20Cin%C3%A9%2B%20Club%202011.svg",
+      "cine-emotion": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20Cin%C3%A9%2B%20Emotion%202011.svg",
+      "cine-frisson": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20Cin%C3%A9%2B%20Frisson%202011.svg",
+      cmtv: "/media/cmtv.png",
+      "crime-district": "https://commons.wikimedia.org/wiki/Special:FilePath/Crime%20district.jpg",
+      cstar: "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20CStar%202016.svg",
+      "discovery-science": "https://commons.wikimedia.org/wiki/Special:FilePath/Discovery%20Science%20-%20Logo%202012.svg",
+      "disney-plus-fr": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/united-kingdom/disney-plus-uk.png",
+      "disney-junior": "/media/image/disney-junior.webp",
+      "disney-pixar": "/media/disney-pixar.png",
+      "game-one": "https://commons.wikimedia.org/wiki/Special:FilePath/One%20Hand%20Clapping%20%28Logo%29.png",
+      golf: "https://thumb.canalplus.pro/bran/unsafe/435x243/filters:quality(90)/image/5f5f638902dc0/uploads/media/golf+.png",
+      "investigation-discovery": "https://commons.wikimedia.org/wiki/Special:FilePath/Investigation%20Discovery%20Logo%202018.svg",
+      "j-one": "https://commons.wikimedia.org/wiki/Special:FilePath/Karakteristieke%20boerderij%2C%20Aldlansdyk%20in%20Cornjum%2002.jpg",
+      "l-equipe-fr": "https://focus.telerama.fr/500x500/0000/00/01/clear-1401.png",
+      m6: "https://focus.telerama.fr/500x500/0000/00/01/clear-118.png",
+      "m6-music": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo-M6music.svg",
+      mangas: "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20Manga%20Plaza.png",
+      mcm: "https://commons.wikimedia.org/wiki/Special:FilePath/MCM%20logo.svg",
+      mtv: "https://commons.wikimedia.org/wiki/Special:FilePath/MTV%202021%20%28brand%20version%29.svg",
+      "mtv-hits": "https://commons.wikimedia.org/wiki/Special:FilePath/MTV%20Hits%202021.svg",
+      "nat-geo": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20Nat%20Geo%20Wild.svg",
+      "nat-geo-wild": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20Nat%20Geo%20Wild.svg",
+      nickelodeon: "https://commons.wikimedia.org/wiki/Special:FilePath/Amphiprion%20ocellaris%20%28Clown%20anemonefish%29%20by%20Nick%20Hobgood.jpg",
+      "nrj-hits": "https://commons.wikimedia.org/wiki/Special:FilePath/NRJ%20HITES%202017%20logo.png",
+      "ocs-max": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20OCS%20Max%202012.svg",
+      "planete-crime": "https://commons.wikimedia.org/wiki/Special:FilePath/PLAN%C3%88TE%2B%20ci.png",
+      "rmc-decouverte-2": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20RMC%20D%C3%A9couverte%202017.svg",
+      "science-vie": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20La%20Science%20et%20la%20Vie%20%281938-1940%29.svg",
+      "serie-club": "/media/image/serie-club.webp",
+      "sport-tv-1": "/media/sport-tv-1.png",
+      "sport-tv-5": "/media/sport-tv-5.png",
+      "tcm-cinema": "https://commons.wikimedia.org/wiki/Special:FilePath/TCM%20Cin%C3%A9ma%20logo%202019.png",
+      teletoon: "https://commons.wikimedia.org/wiki/Special:FilePath/T%C3%A9l%C3%A9toon%2B%20Logo%202011.svg",
+      tf1: "/media/image/tf1.webp",
+      tiji: "https://commons.wikimedia.org/wiki/Special:FilePath/%D0%9B%D0%BE%D0%B3%D0%BE%D1%82%D0%B8%D0%BF%20%D1%82%D0%B5%D0%BB%D0%B5%D0%BA%D0%B0%D0%BD%D0%B0%D0%BB%D0%B0%20Tiji%20%D1%81%202019.png",
+      toonami: "https://commons.wikimedia.org/wiki/Special:FilePath/Toonami%202022%20Logo.png",
+      "toute-l-histoire": "/media/image/toute-l-histoire.webp",
+      "ushuaia-tv": "https://commons.wikimedia.org/wiki/Special:FilePath/Ushuaia%20tv%20logo%20V2-RVB.jpg",
+      w9: "https://commons.wikimedia.org/wiki/Special:FilePath/W9-Logo.svg",
+      "warner-tv": "/media/image/warner-tv.webp"
+    };
+    const params = new URLSearchParams(location.search);
+    const channelKey = String(params.get('channel') || 'cmtv').toLowerCase();
+    const channelName = channels[channelKey] || '';
+    const workerBase = 'https://tron-ares-iptv3.victor-salema-53d.workers.dev/api/iptv/live';
+    const legacyWorkerBase = 'https://tron-ares-iptv.victor-salema-53d.workers.dev/api/iptv/live';
+    const legacyWideBase = 'https://player-engine.com/api/worker-live';
+    const fallbackUrls = {
+      cmtv: `${legacyWideBase}/cmtvpt/master.m3u8`,
+      btv: `${legacyWorkerBase}/btv/master.m3u8`,
+      'sport-tv-1': `${legacyWorkerBase}/sport-tv-1/master.m3u8`,
+      'sport-tv-5': `${legacyWorkerBase}/sport-tv-5/master.m3u8`,
+      m6: `${legacyWorkerBase}/m6fr/master.m3u8`
+    };
+    const BASE_HLS_URL = channelName ? `${workerBase}/${encodeURIComponent(channelKey)}/master.m3u8` : '';
+    const FALLBACK_HLS_URL = fallbackUrls[channelKey] || '';
+    let HLS_URL = BASE_HLS_URL;
+    let sourceMode = 'primary';
+    const ALL_TARGET_URLS = [BASE_HLS_URL, FALLBACK_HLS_URL].filter(Boolean);
+    const SOURCE_PAGE = 'Cloudflare Worker IPTV3 autonome';
+    const GENERATED_AT = '';
+    document.title = channelName ? `Player Worker IPTV3 ${channelName}` : 'Chaine IPTV3 inconnue';
+
+    const video = document.getElementById('video');
+    const overlay = document.getElementById('overlay');
+    const msg = document.getElementById('msg');
+    const playBtn = document.getElementById('playBtn');
+    const urlLabel = document.getElementById('urlLabel');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const loadingLogo = document.getElementById('loadingLogo');
+    const loadingLogoBadge = document.getElementById('loadingLogoBadge');
+    const loadingProgressFill = document.getElementById('loadingProgressFill');
+    const loadingProgressText = document.getElementById('loadingProgressText');
+    const playerControls = document.getElementById('playerControls');
+    const controlSeek = document.getElementById('controlSeek');
+    const controlPlay = document.getElementById('controlPlay');
+    const controlPlayIcon = document.getElementById('controlPlayIcon');
+    const controlMute = document.getElementById('controlMute');
+    const controlMuteIcon = document.getElementById('controlMuteIcon');
+    const controlVolume = document.getElementById('controlVolume');
+    const controlTime = document.getElementById('controlTime');
+    const controlLive = document.getElementById('controlLive');
+    const controlFullscreen = document.getElementById('controlFullscreen');
+    const controlFullscreenIcon = document.getElementById('controlFullscreenIcon');
+    let hlsInstance = null;
+    let retryTimer = null;
+    let retryDelayMs = 3000;
+    let loaderProgressTimer = null;
+    let lastLoaderProgress = 0;
+    let stallTimer = null;
+    let stallRecoveryCount = 0;
+    let controlsIdleTimer = null;
+    let isDraggingSeek = false;
+
+    window.__CHANNEL_HLS_URL__ = HLS_URL;
+    window.__CHANNEL_HLS_URLS__ = ALL_TARGET_URLS;
+    window.__CHANNEL_SOURCE_MODE__ = sourceMode;
+    window.__CHANNEL_SOURCE_PAGE__ = SOURCE_PAGE;
+    window.__CHANNEL_GENERATED_AT__ = GENERATED_AT;
+
+    urlLabel.textContent = HLS_URL || '(aucune URL)';
+    video.muted = false;
+    video.volume = 1;
+    video.autoplay = true;
+    video.playsInline = true;
+    video.style.objectFit = 'fill';
+
+    function keepNativeControlsVisible() {
+      video.controls = false;
+      video.removeAttribute('controls');
+      video.disablePictureInPicture = false;
+      video.style.pointerEvents = 'auto';
+      showPlayerControls();
+      updatePlayerControls();
+    }
+
+    keepNativeControlsVisible();
+
+    function showPlayerControls(keepVisible = false) {
+      playerControls.hidden = false;
+      playerControls.classList.remove('is-hidden');
+      clearTimeout(controlsIdleTimer);
+      if (!keepVisible && !video.paused) {
+        controlsIdleTimer = setTimeout(() => {
+          if (!video.paused) playerControls.classList.add('is-hidden');
+        }, 2600);
+      }
+    }
+
+    function formatTime(value) {
+      const seconds = Math.max(0, Math.floor(Number(value) || 0));
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      const rest = String(seconds % 60).padStart(2, '0');
+      return hours > 0
+        ? hours + ':' + String(minutes).padStart(2, '0') + ':' + rest
+        : minutes + ':' + rest;
+    }
+
+    function isSeekableMedia() {
+      return Number.isFinite(video.duration) && video.duration > 0 && video.duration !== Infinity;
+    }
+
+    function syncFullscreenButton() {
+      const isFullscreen = !!document.fullscreenElement;
+      controlFullscreen.setAttribute('aria-label', isFullscreen ? 'Quitter le plein écran' : 'Plein écran');
+      controlFullscreen.title = isFullscreen ? 'Quitter le plein écran' : 'Plein écran';
+      controlFullscreenIcon.textContent = isFullscreen ? '🗗' : '⛶';
+    }
+
+    function updatePlayerControls() {
+      if (!controlPlay) return;
+      const isPaused = video.paused;
+      const isMuted = video.muted || video.volume === 0;
+      const seekable = isSeekableMedia();
+
+      controlPlay.setAttribute('aria-label', isPaused ? 'Lecture' : 'Pause');
+      controlPlay.title = isPaused ? 'Lecture' : 'Pause';
+      controlPlayIcon.textContent = isPaused ? '▶' : '❚❚';
+
+      controlMute.setAttribute('aria-label', isMuted ? 'Activer le son' : 'Couper le son');
+      controlMute.title = isMuted ? 'Activer le son' : 'Couper le son';
+      controlMuteIcon.textContent = isMuted ? '🔇' : '🔊';
+      controlVolume.value = String(isMuted ? 0 : video.volume);
+
+      playerControls.classList.toggle('is-live', !seekable);
+      controlSeek.disabled = !seekable;
+      controlSeek.classList.toggle('is-disabled', !seekable);
+      controlLive.hidden = seekable;
+
+      if (seekable) {
+        const duration = Math.max(0, Number(video.duration) || 0);
+        const currentTime = Math.max(0, Math.min(Number(video.currentTime) || 0, duration));
+        if (!isDraggingSeek && duration > 0) {
+          controlSeek.value = String((currentTime / duration) * 100);
+        }
+        controlTime.textContent = formatTime(currentTime) + ' / ' + formatTime(duration);
+      } else {
+        if (!isDraggingSeek) controlSeek.value = '100';
+        controlTime.textContent = 'Direct';
+      }
+
+      syncFullscreenButton();
+    }
+
+    async function togglePlayback() {
+      showPlayerControls(true);
+      if (video.paused) await playWithSound();
+      else video.pause();
+      updatePlayerControls();
+    }
+
+    function toggleMute() {
+      showPlayerControls(true);
+      video.muted = !video.muted;
+      if (!video.muted && video.volume === 0) video.volume = 1;
+      updatePlayerControls();
+    }
+
+    async function toggleFullscreen() {
+      try {
+        if (document.fullscreenElement) await document.exitFullscreen();
+        else await document.documentElement.requestFullscreen();
+      } catch (error) {
+        console.warn('Plein ecran indisponible:', error);
+      }
+    }
+
+    function bindControl(element, handler) {
+      let handledPointer = false;
+      element.addEventListener('pointerup', event => {
+        handledPointer = true;
+        event.preventDefault();
+        event.stopPropagation();
+        handler();
+      });
+      element.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (handledPointer) {
+          handledPointer = false;
+          return;
+        }
+        handler();
+      });
+    }
+
+    bindControl(controlPlay, togglePlayback);
+    bindControl(controlMute, toggleMute);
+    controlVolume.addEventListener('input', () => {
+      showPlayerControls(true);
+      video.volume = Number(controlVolume.value);
+      video.muted = video.volume === 0;
+      updatePlayerControls();
+    });
+    controlSeek.addEventListener('input', () => {
+      if (!isSeekableMedia()) return;
+      showPlayerControls(true);
+      isDraggingSeek = true;
+      const duration = Math.max(0, Number(video.duration) || 0);
+      const targetTime = duration * (Number(controlSeek.value) / 100);
+      controlTime.textContent = formatTime(targetTime) + ' / ' + formatTime(duration);
+    });
+    const commitSeek = () => {
+      if (!isSeekableMedia()) return;
+      const duration = Math.max(0, Number(video.duration) || 0);
+      video.currentTime = duration * (Number(controlSeek.value) / 100);
+      isDraggingSeek = false;
+      updatePlayerControls();
+    };
+    controlSeek.addEventListener('change', commitSeek);
+    controlSeek.addEventListener('pointerup', commitSeek);
+    controlSeek.addEventListener('touchend', commitSeek, { passive: true });
+    bindControl(controlFullscreen, toggleFullscreen);
+    ['click', 'dblclick', 'pointerdown'].forEach(eventName => {
+      playerControls.addEventListener(eventName, event => {
+        showPlayerControls(true);
+        event.stopPropagation();
+      });
+    });
+    ['mousemove', 'pointermove', 'pointerdown', 'touchstart', 'click', 'keydown'].forEach(eventName => {
+      window.addEventListener(eventName, () => showPlayerControls(), { passive: true, capture: true });
+      document.addEventListener(eventName, () => showPlayerControls(), { passive: true, capture: true });
+      document.body.addEventListener(eventName, () => showPlayerControls(), { passive: true, capture: true });
+      video.addEventListener(eventName, () => showPlayerControls(), { passive: true, capture: true });
+    });
+
+    function channelInitials() {
+      const label = String(channelName || channelKey || 'TV').replace(/[^a-z0-9+]+/gi, ' ').trim();
+      const parts = label.split(/\s+/).filter(Boolean);
+      if (!parts.length) return 'TV';
+      if (parts.length === 1) return parts[0].slice(0, 4).toUpperCase();
+      return parts.slice(0, 3).map(part => part[0]).join('').toUpperCase();
+    }
+
+    function setLoaderLogo() {
+      const src = channelLogos[channelKey] || '';
+      const initials = channelInitials();
+      loadingLogoBadge.textContent = initials;
+      if (!src) {
+        loadingLogo.removeAttribute('src');
+        loadingLogo.style.display = 'none';
+        loadingLogoBadge.style.display = 'flex';
+        return;
+      }
+      loadingLogoBadge.style.display = 'none';
+      loadingLogo.style.display = 'block';
+      loadingLogo.alt = channelName || initials;
+      loadingLogo.onerror = () => {
+        loadingLogo.style.display = 'none';
+        loadingLogoBadge.style.display = 'flex';
+      };
+      loadingLogo.src = src;
+    }
+
+    function setLoadingProgress(value, label) {
+      const safeValue = Math.max(0, Math.min(100, Math.round(Number(value) || 0)));
+      lastLoaderProgress = Math.max(lastLoaderProgress, safeValue);
+      loadingProgressFill.style.width = lastLoaderProgress + '%';
+      loadingProgressText.textContent = (label || 'Chargement du flux') + '... ' + lastLoaderProgress + '%';
+    }
+
+    function startLoader(label) {
+      loadingOverlay.classList.remove('hidden');
+      clearInterval(loaderProgressTimer);
+      lastLoaderProgress = 0;
+      setLoaderLogo();
+      setLoadingProgress(4, label || 'Initialisation');
+      loaderProgressTimer = setInterval(() => {
+        if (loadingOverlay.classList.contains('hidden')) return;
+        if (lastLoaderProgress < 72) setLoadingProgress(lastLoaderProgress + 1, 'Chargement du flux');
+      }, 420);
+    }
+
+    function hideLoader(label) {
+      setLoadingProgress(100, label || 'Flux pret');
+      clearInterval(loaderProgressTimer);
+      loaderProgressTimer = null;
+      setTimeout(() => loadingOverlay.classList.add('hidden'), 180);
+    }
+
+    function setMessage(text) { msg.textContent = text; }
+
+    async function playWithSound() {
+      keepNativeControlsVisible();
+      try {
+        video.muted = false;
+        video.volume = 1;
+        await video.play();
+        keepNativeControlsVisible();
+        overlay.classList.add('hidden');
+        hideLoader('Flux actif');
+      } catch (error) {
+        hideLoader('Pret a demarrer');
+        overlay.classList.remove('hidden');
+        setMessage('Lecture automatique avec son bloquee par le navigateur. Clique sur le bouton pour lancer.');
+      }
+    }
+
+    function withRefresh(url) {
+      if (!url) return '';
+      const next = new URL(url, location.href);
+      next.searchParams.set('_hls_refresh', String(Date.now()));
+      return next.href;
+    }
+
+    function clearStallRecovery() {
+      if (stallTimer) {
+        clearTimeout(stallTimer);
+        stallTimer = null;
+      }
+      stallRecoveryCount = 0;
+    }
+
+    function sourceModeFor(url) {
+      return FALLBACK_HLS_URL && String(url || '').startsWith(FALLBACK_HLS_URL) ? 'fallback' : 'primary';
+    }
+
+    function currentBaseUrl() {
+      return sourceMode === 'fallback' ? FALLBACK_HLS_URL : BASE_HLS_URL;
+    }
+
+    function switchToFallback(reason) {
+      if (!FALLBACK_HLS_URL || sourceMode === 'fallback') return false;
+      console.warn('Bascule vers worker-iptv stable:', reason);
+      sourceMode = 'fallback';
+      retryDelayMs = 3000;
+      clearStallRecovery();
+      attachSource(withRefresh(FALLBACK_HLS_URL));
+      return true;
+    }
+
+    function reloadCurrentSource() {
+      attachSource(withRefresh(currentBaseUrl() || HLS_URL));
+    }
+
+    function scheduleRecovery() {
+      if (retryTimer) return;
+      const delay = retryDelayMs;
+      retryDelayMs = Math.min(retryDelayMs * 2, 30000);
+      setMessage('Flux temporairement indisponible. Nouvelle tentative...');
+      retryTimer = setTimeout(() => {
+        retryTimer = null;
+        if (!switchToFallback('network-error')) reloadCurrentSource();
+      }, delay);
+    }
+
+    function scheduleStallRecovery() {
+      if (!HLS_URL || stallTimer) return;
+      stallTimer = setTimeout(() => {
+        stallTimer = null;
+        stallRecoveryCount += 1;
+        if (hlsInstance && stallRecoveryCount <= 2) {
+          console.warn('Recovery HLS apres bufferStalledError:', stallRecoveryCount);
+          hlsInstance.recoverMediaError();
+          hlsInstance.startLoad(-1);
+          playWithSound();
+          return;
+        }
+        console.warn('Rechargement du master apres blocage persistant');
+        stallRecoveryCount = 0;
+        if (!switchToFallback('persistent-stall')) reloadCurrentSource();
+      }, 4500);
+    }
+
+    function attachSource(nextUrl = HLS_URL) {
+      keepNativeControlsVisible();
+      HLS_URL = String(nextUrl || '');
+      sourceMode = sourceModeFor(HLS_URL);
+      window.__CHANNEL_HLS_URL__ = HLS_URL;
+      window.__CHANNEL_SOURCE_MODE__ = sourceMode;
+      urlLabel.textContent = HLS_URL || '(aucune URL)';
+      if (!HLS_URL) {
+        hideLoader('Aucune source');
+        setMessage('Chaine inconnue pour worker-iptv3.');
+        overlay.classList.remove('hidden');
+        return;
+      }
+      if (hlsInstance) {
+        hlsInstance.destroy();
+        hlsInstance = null;
+      }
+      startLoader(sourceMode === 'fallback' ? 'Connexion secours' : 'Connexion HLS');
+      if (window.Hls && Hls.isSupported()) {
+        hlsInstance = new Hls({ enableWorker: true, lowLatencyMode: true });
+        hlsInstance.loadSource(HLS_URL);
+        hlsInstance.attachMedia(video);
+        hlsInstance.on(Hls.Events.MEDIA_ATTACHED, () => { keepNativeControlsVisible(); setLoadingProgress(58, 'Media attache'); });
+        hlsInstance.on(Hls.Events.FRAG_LOADED, () => setLoadingProgress(88, 'Segments video recus'));
+        hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+          retryDelayMs = 3000;
+          clearStallRecovery();
+          if (retryTimer) {
+            clearTimeout(retryTimer);
+            retryTimer = null;
+          }
+          setLoadingProgress(76, 'Manifest charge');
+          setMessage('Manifest HLS charge. Tentative autoplay avec son...');
+          playWithSound();
+        });
+        hlsInstance.on(Hls.Events.ERROR, (event, data) => {
+          console.warn('Erreur HLS:', data);
+          if (data && data.details === Hls.ErrorDetails.BUFFER_STALLED_ERROR) scheduleStallRecovery();
+          if (data && data.fatal) scheduleRecovery();
+        });
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = HLS_URL;
+        setLoadingProgress(58, 'Media natif');
+        video.addEventListener('loadedmetadata', () => { setLoadingProgress(95, 'Presque pret'); playWithSound(); }, { once: true });
+      } else {
+        hideLoader('Erreur lecteur');
+        setMessage('HLS.js non charge ou HLS non supporte par ce navigateur.');
+        hideLoader('Erreur lecteur');
+        overlay.classList.remove('hidden');
+      }
+    }
+
+    playBtn.addEventListener('click', playWithSound);
+    video.addEventListener('loadedmetadata', () => { keepNativeControlsVisible(); setLoadingProgress(95, 'Presque pret'); updatePlayerControls(); });
+    video.addEventListener('durationchange', updatePlayerControls);
+    video.addEventListener('canplay', () => { keepNativeControlsVisible(); hideLoader('Flux pret'); updatePlayerControls(); });
+    video.addEventListener('playing', () => { keepNativeControlsVisible(); hideLoader('Flux actif'); updatePlayerControls(); });
+    video.addEventListener('pause', () => { showPlayerControls(true); updatePlayerControls(); });
+    video.addEventListener('volumechange', updatePlayerControls);
+    video.addEventListener('waiting', scheduleStallRecovery);
+    video.addEventListener('stalled', scheduleStallRecovery);
+    video.addEventListener('playing', clearStallRecovery);
+    video.addEventListener('seeking', updatePlayerControls);
+    video.addEventListener('seeked', () => { isDraggingSeek = false; updatePlayerControls(); });
+    video.addEventListener('timeupdate', () => {
+      updatePlayerControls();
+      if (!video.paused && video.readyState >= 3) clearStallRecovery();
+    });
+    document.addEventListener('fullscreenchange', updatePlayerControls);
+    attachSource();
+
+    console.log('URL HLS ciblee:', HLS_URL);
+    console.log('Toutes les URLs ciblees:', ALL_TARGET_URLS.join('\n'));
+  </script>
+</body>
+</html>
