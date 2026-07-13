@@ -28,9 +28,9 @@
     video::-webkit-media-controls,
     video::-webkit-media-controls-panel,
     video::-webkit-media-controls-enclosure {
-      display: flex !important;
-      opacity: 1 !important;
-      visibility: visible !important;
+      display: none !important;
+      opacity: 0 !important;
+      visibility: hidden !important;
     }
     .player-controls {
       position: fixed;
@@ -401,8 +401,8 @@
     video.style.objectFit = 'fill';
 
     function keepNativeControlsVisible() {
-      video.controls = true;
-      video.setAttribute('controls', '');
+      video.controls = false;
+      video.removeAttribute('controls');
       video.disablePictureInPicture = false;
       video.style.pointerEvents = 'auto';
       showPlayerControls();
@@ -462,23 +462,45 @@
       }
     }
 
-    controlPlay.addEventListener('click', togglePlayback);
-    controlMute.addEventListener('click', toggleMute);
+    function bindControl(element, handler) {
+      let handledPointer = false;
+      element.addEventListener('pointerup', event => {
+        handledPointer = true;
+        event.preventDefault();
+        event.stopPropagation();
+        handler();
+      });
+      element.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (handledPointer) {
+          handledPointer = false;
+          return;
+        }
+        handler();
+      });
+    }
+
+    bindControl(controlPlay, togglePlayback);
+    bindControl(controlMute, toggleMute);
     controlVolume.addEventListener('input', () => {
       showPlayerControls(true);
       video.volume = Number(controlVolume.value);
       video.muted = video.volume === 0;
       updatePlayerControls();
     });
-    controlFullscreen.addEventListener('click', toggleFullscreen);
+    bindControl(controlFullscreen, toggleFullscreen);
     ['click', 'dblclick', 'pointerdown'].forEach(eventName => {
       playerControls.addEventListener(eventName, event => {
         showPlayerControls(true);
         event.stopPropagation();
       });
     });
-    ['mousemove', 'pointermove', 'touchstart', 'click'].forEach(eventName => {
-      document.addEventListener(eventName, () => showPlayerControls(), { passive: true });
+    ['mousemove', 'pointermove', 'pointerdown', 'touchstart', 'click', 'keydown'].forEach(eventName => {
+      window.addEventListener(eventName, () => showPlayerControls(), { passive: true, capture: true });
+      document.addEventListener(eventName, () => showPlayerControls(), { passive: true, capture: true });
+      document.body.addEventListener(eventName, () => showPlayerControls(), { passive: true, capture: true });
+      video.addEventListener(eventName, () => showPlayerControls(), { passive: true, capture: true });
     });
 
     function channelInitials() {
