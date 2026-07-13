@@ -9,6 +9,13 @@ const LIVE_CHANNELS = new Map([
     { id: "2913521200ae11151a1fc4-b5746bd2522e5c", name: "TF1", quality: "FHD", source: "satellite" },
     { id: "1334669376bf508b8ed995-e1dc32893923cf", name: "TF1", quality: null, source: "cable" } 
   ] }], 
+  ['canal-plus', { search: 'CANAL+', exact: 'CANAL+', country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: '1839597702d549646f5393-2ac8f134e5cc3d', name: 'CANAL+', quality: null, source: 'cable' },
+    { id: '6981957d8c5d6ef6ebe-00e248dcf7e873', name: 'CANAL+', quality: null, source: 'satellite' },
+    { id: '298747715234a3a02669b8-699fafb82ad92d', name: 'CANAL+', quality: 'FHD', source: 'basic' },
+    { id: '1860727909951701e97ea9-0552c051c6ab52', name: 'CANAL+', quality: 'HD', source: 'basic' },
+    { id: '2421698062be5948a928f5-92450af7cf51c2', name: 'CANAL+', quality: '4K', source: 'basic' }
+  ] }],
   ['6ter', { search: '6TER', exact: '6TER', country: 'France', prefer: ['FHD', 'HD', null] }],
   ['cstar', { search: 'C STAR', exact: 'C STAR', country: 'France', prefer: ['FHD', 'HD', null], fallbackIds: [
     { id: '3480426017c3f2b3e10a98-4eb0ab5a31ab6c', name: 'C STAR', quality: 'FHD', source: 'satellite' },
@@ -111,7 +118,12 @@ function hlsContentType(pathname, fallback) {
   return fallback || 'application/octet-stream';
 }
 
-function sourcePreferenceScore(source) {
+function sourcePreferenceScore(source, channel) {
+  if (Array.isArray(channel?.sourcePrefer)) {
+    const index = channel.sourcePrefer.indexOf(String(source || '').toLowerCase());
+    return index >= 0 ? (30 - index * 10) : 0;
+  }
+
   const normalized = String(source || '').toLowerCase();
   if (normalized === 'basic') return 20;
   if (normalized === 'satellite') return 10;
@@ -123,7 +135,7 @@ function qualityRank(channel, item) {
   const quality = item?.quality ?? null;
   const preferred = channel.prefer.indexOf(quality);
   const qualityScore = preferred >= 0 ? (100 - preferred) : 0;
-  return qualityScore + sourcePreferenceScore(item?.source);
+  return qualityScore + sourcePreferenceScore(item?.source, channel);
 }
 
 function timeoutSignal(ms) {

@@ -55,7 +55,7 @@
     {
       "id": "canal",
       "name": "CANAL+",
-      "url": "/pages/worker-iptv.html?channel=canalplfr",
+      "url": "/pages/worker-iptv3.html?channel=canal-plus",
       "logo": {
         "type": "image",
         "value": "https://www.freeshot.live/upload/source/Canal+France_logo.png"
