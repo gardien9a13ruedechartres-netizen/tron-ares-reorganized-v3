@@ -5,7 +5,7 @@ const SOURCE_TEST_TIMEOUT_MS = 5000;
 const sourceCache = new Map();
 
 const LIVE_CHANNELS = new Map([
-    ["tf1", { search: "TF1", exact: "TF1", country: "France", prefer: ["FHD", "HD", null], fallbackIds: [
+    ["tf1", { search: "TF1", exact: "TF1", country: "France", prefer: [null, "HD", "FHD"], sourcePrefer: ["satellite", "cable", "basic"], fallbackIds: [
     { id: "2913521200ae11151a1fc4-b5746bd2522e5c", name: "TF1", quality: "FHD", source: "satellite" },
     { id: "1334669376bf508b8ed995-e1dc32893923cf", name: "TF1", quality: null, source: "cable" } 
   ] }], 
