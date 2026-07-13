@@ -55,10 +55,132 @@
       font-weight: 700;
     }
     code { word-break: break-all; color: #d7f7ff; }
+
+    #loadingOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background: #000;
+      font-family: Arial, sans-serif;
+      color: #f9fafb;
+      transition: opacity .35s ease, visibility .35s ease;
+    }
+    #loadingOverlay.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .loader-content {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: min(360px, 82vw);
+      text-align: center;
+    }
+    .loader-logo {
+      width: 156px;
+      max-width: 46vw;
+      height: 156px;
+      max-height: 30vh;
+      object-fit: contain;
+      margin-bottom: 26px;
+      filter: drop-shadow(0 8px 26px rgba(0,0,0,.9));
+      animation: logoPulse 1.6s ease-in-out infinite;
+    }
+    .loader-logo-badge {
+      width: 156px;
+      max-width: 46vw;
+      height: 156px;
+      max-height: 30vh;
+      margin-bottom: 26px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      border: 2px solid rgba(96,165,250,.62);
+      background: radial-gradient(circle at 35% 25%, rgba(96,165,250,.28), rgba(0,12,24,.92) 62%);
+      color: #eaf6ff;
+      font-size: clamp(24px, 8vw, 44px);
+      font-weight: 800;
+      letter-spacing: 0;
+      text-shadow: 0 3px 18px rgba(0,0,0,.9);
+      box-shadow: 0 0 32px rgba(59,130,246,.35);
+      animation: logoPulse 1.6s ease-in-out infinite;
+    }
+    .pro-spinner {
+      width: 66px;
+      height: 66px;
+      border-radius: 50%;
+      border: 5px solid rgba(255,255,255,.14);
+      border-top-color: #3b82f6;
+      border-right-color: #60a5fa;
+      animation: spin .9s linear infinite;
+      margin-bottom: 18px;
+    }
+    .loader-progress-wrap {
+      width: 260px;
+      max-width: 72vw;
+      height: 8px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255,255,255,.14);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
+      margin-bottom: 10px;
+    }
+    .loader-progress-fill {
+      width: 0%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #2563eb, #60a5fa, #93c5fd);
+      box-shadow: 0 0 18px rgba(59,130,246,.75);
+      transition: width .35s ease;
+    }
+    .loader-progress-text {
+      min-height: 18px;
+      margin-bottom: 14px;
+      color: #bfdbfe;
+      font-size: 13px;
+      font-weight: 700;
+      text-shadow: 0 2px 12px rgba(0,0,0,.85);
+    }
+    .loading-text {
+      font-size: 18px;
+      font-weight: 600;
+      color: #e5e7eb;
+      text-shadow: 0 2px 14px rgba(0,0,0,.85);
+    }
+    .dots::after {
+      content: "";
+      display: inline-block;
+      width: 24px;
+      animation: dots 1.4s infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes logoPulse { 0%,100% { transform: scale(1); opacity: .92; } 50% { transform: scale(1.045); opacity: 1; } }
+    @keyframes dots { 0% { content: ""; } 33% { content: "."; } 66% { content: ".."; } 100% { content: "..."; } }
   </style>
 </head>
 <body>
   <video id="video" controls autoplay playsinline webkit-playsinline></video>
+  <div id="loadingOverlay">
+    <div class="loader-content">
+      <img id="loadingLogo" class="loader-logo" alt="">
+      <div id="loadingLogoBadge" class="loader-logo-badge"></div>
+      <div class="pro-spinner"></div>
+      <div class="loader-progress-wrap" aria-hidden="true">
+        <div id="loadingProgressFill" class="loader-progress-fill"></div>
+      </div>
+      <div id="loadingProgressText" class="loader-progress-text">Initialisation... 0%</div>
+      <div class="loading-text">Chargement du flux<span class="dots"></span></div>
+    </div>
+  </div>
   <div id="overlay">
     <div><strong>Player HLS généré</strong></div>
     <div hidden>URL ciblée : <code id="urlLabel"></code></div>
@@ -83,6 +205,23 @@
     channels['cnn-portugal'] = 'CNN Portugal';
     channels['tvi-internacional'] = 'TVI Internacional';
     channels['sic-noticias'] = 'SIC Noticias';
+    const channelLogos = {
+      cmtvpt: '/media/cmtv.png',
+      rtp1: 'https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/rtp-1-pt.png',
+      rtp2: 'https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/rtp-2-pt.png',
+      rtp3: 'https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/rtp-3-pt.png',
+      sic: 'https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/sic-pt.png',
+      tvi: 'https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/tvi-pt.png',
+      btv: 'https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/btv-hd-pt.png',
+      'sport-tv-1': '/media/sport-tv-1.png',
+      'sport-tv-2': '/media/sport-tv-2.png',
+      'sport-tv-3': '/media/sport-tv-3.png',
+      'sport-tv-4': '/media/sport-tv-4.png',
+      'sport-tv-5': '/media/sport-tv-5.png',
+      'tf1fr': '/media/image/tf1.webp',
+      'm6fr': 'https://focus.telerama.fr/500x500/0000/00/01/clear-118.png',
+      'artefr': '/media/image/arte.webp'
+    };
     const channelKey = new URLSearchParams(location.search).get('channel') || '';
     const channelName = String(channels[channelKey] || '');
     const wideIptvChannels = new Set([
@@ -121,9 +260,16 @@
     const msg = document.getElementById('msg');
     const playBtn = document.getElementById('playBtn');
     const urlLabel = document.getElementById('urlLabel');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const loadingLogo = document.getElementById('loadingLogo');
+    const loadingLogoBadge = document.getElementById('loadingLogoBadge');
+    const loadingProgressFill = document.getElementById('loadingProgressFill');
+    const loadingProgressText = document.getElementById('loadingProgressText');
     let hlsInstance = null;
     let retryTimer = null;
     let retryDelayMs = 3000;
+    let loaderProgressTimer = null;
+    let lastLoaderProgress = 0;
 
     window.__CHANNEL_HLS_URL__ = HLS_URL;
     window.__CHANNEL_HLS_URLS__ = ALL_TARGET_URLS;
@@ -137,6 +283,61 @@
     video.playsInline = true;
     video.style.objectFit = 'fill';
 
+
+    function channelInitials() {
+      const label = String(channelName || channelKey || 'TV').replace(/[^a-z0-9+]+/gi, ' ').trim();
+      const parts = label.split(/\s+/).filter(Boolean);
+      if (!parts.length) return 'TV';
+      if (parts.length === 1) return parts[0].slice(0, 4).toUpperCase();
+      return parts.slice(0, 3).map(part => part[0]).join('').toUpperCase();
+    }
+
+    function setLoaderLogo() {
+      const src = channelLogos[channelKey] || '';
+      const initials = channelInitials();
+      loadingLogoBadge.textContent = initials;
+      if (!src) {
+        loadingLogo.removeAttribute('src');
+        loadingLogo.style.display = 'none';
+        loadingLogoBadge.style.display = 'flex';
+        return;
+      }
+      loadingLogoBadge.style.display = 'none';
+      loadingLogo.style.display = 'block';
+      loadingLogo.alt = channelName || initials;
+      loadingLogo.onerror = () => {
+        loadingLogo.style.display = 'none';
+        loadingLogoBadge.style.display = 'flex';
+      };
+      loadingLogo.src = src;
+    }
+
+    function setLoadingProgress(value, label) {
+      const safeValue = Math.max(0, Math.min(100, Math.round(Number(value) || 0)));
+      lastLoaderProgress = Math.max(lastLoaderProgress, safeValue);
+      loadingProgressFill.style.width = lastLoaderProgress + '%';
+      loadingProgressText.textContent = (label || 'Chargement du flux') + '... ' + lastLoaderProgress + '%';
+    }
+
+    function startLoader(label) {
+      loadingOverlay.classList.remove('hidden');
+      clearInterval(loaderProgressTimer);
+      lastLoaderProgress = 0;
+      setLoaderLogo();
+      setLoadingProgress(4, label || 'Initialisation');
+      loaderProgressTimer = setInterval(() => {
+        if (loadingOverlay.classList.contains('hidden')) return;
+        if (lastLoaderProgress < 72) setLoadingProgress(lastLoaderProgress + 1, 'Chargement du flux');
+      }, 420);
+    }
+
+    function hideLoader(label) {
+      setLoadingProgress(100, label || 'Flux pret');
+      clearInterval(loaderProgressTimer);
+      loaderProgressTimer = null;
+      setTimeout(() => loadingOverlay.classList.add('hidden'), 180);
+    }
+
     function setMessage(text) { msg.textContent = text; }
 
     async function playWithSound() {
@@ -145,7 +346,9 @@
         video.volume = 1;
         await video.play();
         overlay.classList.add('hidden');
+        hideLoader('Flux actif');
       } catch (error) {
+        hideLoader('Pret a demarrer');
         overlay.classList.remove('hidden');
         setMessage('Lecture automatique avec son bloquée par le navigateur. Clique sur le bouton pour lancer.');
       }
@@ -167,6 +370,7 @@
       window.__CHANNEL_HLS_URL__ = HLS_URL;
       urlLabel.textContent = HLS_URL || '(aucune URL)';
       if (!HLS_URL) {
+        hideLoader('Aucune source');
         setMessage('Aucune URL HLS ciblée dans ce fichier.');
         return;
       }
@@ -174,16 +378,20 @@
         hlsInstance.destroy();
         hlsInstance = null;
       }
+      startLoader('Connexion HLS');
       if (window.Hls && Hls.isSupported()) {
         hlsInstance = new Hls({ enableWorker: true, lowLatencyMode: true });
         hlsInstance.loadSource(HLS_URL);
         hlsInstance.attachMedia(video);
+        hlsInstance.on(Hls.Events.MEDIA_ATTACHED, () => setLoadingProgress(58, 'Media attache'));
+        hlsInstance.on(Hls.Events.FRAG_LOADED, () => setLoadingProgress(88, 'Segments video recus'));
         hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
           retryDelayMs = 3000;
           if (retryTimer) {
             clearTimeout(retryTimer);
             retryTimer = null;
           }
+          setLoadingProgress(76, 'Manifest charge');
           setMessage('Manifest HLS chargé. Tentative autoplay avec son...');
           playWithSound();
         });
@@ -193,13 +401,18 @@
         });
       } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
         video.src = HLS_URL;
-        video.addEventListener('loadedmetadata', playWithSound, { once: true });
+        setLoadingProgress(58, 'Media natif');
+        video.addEventListener('loadedmetadata', () => { setLoadingProgress(95, 'Presque pret'); playWithSound(); }, { once: true });
       } else {
+        hideLoader('Erreur lecteur');
         setMessage('HLS.js non chargé ou HLS non supporté par ce navigateur.');
       }
     }
 
     playBtn.addEventListener('click', playWithSound);
+    video.addEventListener('loadedmetadata', () => setLoadingProgress(95, 'Presque pret'));
+    video.addEventListener('canplay', () => hideLoader('Flux pret'));
+    video.addEventListener('playing', () => hideLoader('Flux actif'));
     attachSource();
 
     console.log('URL HLS ciblée:', HLS_URL);
