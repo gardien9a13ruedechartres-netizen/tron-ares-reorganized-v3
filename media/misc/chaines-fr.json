@@ -7,14 +7,14 @@
     {
       "id": "TF1",
       "name": "TF1",
-      "url": "https://tvradiozap.eu/tools/m3u-m3u8.php/para/tf1.m3u8",
+      "url": "/pages/worker-iptv3.html?channel=tf1",
       "logo": {
         "type": "image",
         "value": "/media/image/tf1.webp"
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "TF1sf",

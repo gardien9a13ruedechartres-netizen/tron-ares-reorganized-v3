@@ -5,6 +5,7 @@ const SOURCE_TEST_TIMEOUT_MS = 5000;
 const sourceCache = new Map();
 
 const LIVE_CHANNELS = new Map([
+  ['tf1', { search: 'TF1', exact: 'TF1', country: 'France', prefer: ['FHD', 'HD', null] }],
   ['6ter', { search: '6TER', exact: '6TER', country: 'France', prefer: ['FHD', 'HD', null] }],
   ['cstar', { search: 'C STAR', exact: 'C STAR', country: 'France', prefer: ['FHD', 'HD', null], fallbackIds: [
     { id: '3480426017c3f2b3e10a98-4eb0ab5a31ab6c', name: 'C STAR', quality: 'FHD', source: 'satellite' },
