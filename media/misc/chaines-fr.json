@@ -677,6 +677,18 @@
       "isIframe": false
     },
     {
+      "id": "disney-plus-fr",
+      "name": "DISNEY+ France",
+      "url": "/pages/worker-iptv3.html?channel=disney-plus-fr",
+      "logo": {
+        "type": "image",
+        "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/united-kingdom/disney-plus-uk.png"
+      },
+      "group": "Jeunesse",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
       "id": "disney-channel",
       "name": "Disney Channel",
       "url": "/pages/disney-channel.html",

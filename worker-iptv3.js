@@ -119,6 +119,9 @@ const LIVE_CHANNELS = new Map([
     { id: "2451805128d0f9045d041b-ed47dcec34444c", name: "TCM CINEMA", quality: null, source: "satellite" },
     { id: "3637294135d561d9540c1c-933813a71d3ece", name: "TCM CINEMA", quality: null, source: "basic" }
   ] }],
+  ["disney-plus-fr", { search: "DISNEY+", exact: "DISNEY+", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['satellite', 'cable', 'basic'], fallbackIds: [
+    { id: "23220966391db224d00af9-fe6a45e22b5077", name: "DISNEY+", quality: null, source: "satellite" }
+  ] }],
   ["disney-junior", { search: "DISNEY JUNIOR", exact: "DISNEY JUNIOR", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
     { id: "3351330853ba2b580d385f-08df3f69cbcec0", name: "DISNEY JUNIOR", quality: null, source: "satellite" },
     { id: "357894050d7f96e94e22f-7dea5cea101754", name: "DISNEY JUNIOR", quality: "FHD", source: "satellite" },
