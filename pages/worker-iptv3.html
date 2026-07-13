@@ -569,6 +569,8 @@
     let stallRecoveryCount = 0;
     let controlsIdleTimer = null;
     let isDraggingSeek = false;
+    let currentSourceId = '';
+    const failedSourceIds = new Set();
 
     window.__CHANNEL_HLS_URL__ = HLS_URL;
     window.__CHANNEL_HLS_URLS__ = ALL_TARGET_URLS;
@@ -828,6 +830,9 @@
     function withRefresh(url) {
       if (!url) return '';
       const next = new URL(url, location.href);
+      if (String(url).startsWith(BASE_HLS_URL) && failedSourceIds.size) {
+        next.searchParams.set('skip', Array.from(failedSourceIds).join(','));
+      }
       next.searchParams.set('_hls_refresh', String(Date.now()));
       return next.href;
     }
@@ -852,9 +857,21 @@
       if (!FALLBACK_HLS_URL || sourceMode === 'fallback') return false;
       console.warn('Bascule vers worker-iptv stable:', reason);
       sourceMode = 'fallback';
+      currentSourceId = '';
       retryDelayMs = 3000;
       clearStallRecovery();
       attachSource(withRefresh(FALLBACK_HLS_URL));
+      return true;
+    }
+
+    function switchToNextPrimarySource(reason) {
+      if (sourceMode !== 'primary' || !BASE_HLS_URL || !currentSourceId) return false;
+      failedSourceIds.add(currentSourceId);
+      console.warn('Source IPTV3 ignoree apres erreur:', currentSourceId, reason);
+      currentSourceId = '';
+      retryDelayMs = 3000;
+      clearStallRecovery();
+      attachSource(withRefresh(BASE_HLS_URL));
       return true;
     }
 
@@ -869,7 +886,7 @@
       setMessage('Flux temporairement indisponible. Nouvelle tentative...');
       retryTimer = setTimeout(() => {
         retryTimer = null;
-        if (!switchToFallback('network-error')) reloadCurrentSource();
+        if (!switchToNextPrimarySource('network-error') && !switchToFallback('network-error')) reloadCurrentSource();
       }, delay);
     }
 
@@ -887,11 +904,24 @@
         }
         console.warn('Rechargement du master apres blocage persistant');
         stallRecoveryCount = 0;
-        if (!switchToFallback('persistent-stall')) reloadCurrentSource();
+        if (!switchToNextPrimarySource('persistent-stall') && !switchToFallback('persistent-stall')) reloadCurrentSource();
       }, 4500);
     }
 
-    function attachSource(nextUrl = HLS_URL) {
+    async function captureCurrentSourceId(url) {
+      currentSourceId = '';
+      if (!url || sourceModeFor(url) !== 'primary') return;
+      try {
+        const response = await fetch(url, { method: 'HEAD', cache: 'no-store' });
+        currentSourceId = response.headers.get('X-Ares-Source-Id') || '';
+        window.__CHANNEL_SOURCE_ID__ = currentSourceId;
+        if (currentSourceId) console.log('Source IPTV3 active:', currentSourceId, response.headers.get('X-Ares-Source-Type') || '');
+      } catch (error) {
+        console.warn('Lecture des headers source impossible:', error);
+      }
+    }
+
+    async function attachSource(nextUrl = HLS_URL) {
       keepNativeControlsVisible();
       HLS_URL = String(nextUrl || '');
       sourceMode = sourceModeFor(HLS_URL);
@@ -909,6 +939,7 @@
         hlsInstance = null;
       }
       startLoader(sourceMode === 'fallback' ? 'Connexion secours' : 'Connexion HLS');
+      await captureCurrentSourceId(HLS_URL);
       if (window.Hls && Hls.isSupported()) {
         hlsInstance = new Hls({ enableWorker: true, lowLatencyMode: true });
         hlsInstance.loadSource(HLS_URL);

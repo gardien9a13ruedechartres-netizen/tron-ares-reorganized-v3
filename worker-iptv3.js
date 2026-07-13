@@ -1,4 +1,5 @@
 const LIVEWATCH_ORIGIN = 'https://livewatch.top';
+const LOVETIER_ORIGIN = 'https://deviantart.lovetier.bz';
 const PROXY_PATH = '/api/iptv/proxy';
 const SOURCE_CACHE_TTL_MS = 120000;
 const SOURCE_TEST_TIMEOUT_MS = 5000;
@@ -8,6 +9,8 @@ const LIVE_CHANNELS = new Map([
     ["tf1", { search: "TF1", exact: "TF1", country: "France", prefer: [null, "HD", "FHD"], sourcePrefer: ["satellite", "cable", "basic"], fallbackIds: [
     { id: "2913521200ae11151a1fc4-b5746bd2522e5c", name: "TF1", quality: "FHD", source: "satellite" },
     { id: "1334669376bf508b8ed995-e1dc32893923cf", name: "TF1", quality: null, source: "cable" } 
+  ], staticFallbacks: [
+    { id: "lovetier-tf1fr", name: "TF1 Lovetier", quality: null, source: "lovetier", url: `${LOVETIER_ORIGIN}/TF1FR/index.m3u8` }
   ] }], 
   ['canal-plus', { search: 'CANAL+', exact: 'CANAL+', country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
     { id: '1839597702d549646f5393-2ac8f134e5cc3d', name: 'CANAL+', quality: null, source: 'cable' },
@@ -274,6 +277,16 @@ function livewatchHeaders(accept = '*/*') {
   };
 }
 
+function upstreamHeaders(url, accept = '*/*') {
+  const headers = {
+    Accept: accept,
+    'User-Agent': 'Mozilla/5.0'
+  };
+  if (url.origin === LIVEWATCH_ORIGIN) headers.Referer = `${LIVEWATCH_ORIGIN}/`;
+  if (url.origin === LOVETIER_ORIGIN) headers.Referer = `${LOVETIER_ORIGIN}/`;
+  return headers;
+}
+
 function isAllowedLivewatchUrl(url) {
   return url.origin === LIVEWATCH_ORIGIN &&
     url.pathname === '/api/hls' &&
@@ -282,10 +295,21 @@ function isAllowedLivewatchUrl(url) {
     !url.password;
 }
 
+function isAllowedLovetierUrl(url) {
+  return url.origin === LOVETIER_ORIGIN &&
+    url.pathname.startsWith('/TF1FR/') &&
+    !url.username &&
+    !url.password;
+}
+
+function isAllowedProxyUrl(url) {
+  return isAllowedLivewatchUrl(url) || isAllowedLovetierUrl(url);
+}
+
 function makeProxyUrl(value, baseUrl, publicOrigin) {
   try {
     const upstream = new URL(value, baseUrl);
-    if (!isAllowedLivewatchUrl(upstream)) return value;
+    if (!isAllowedProxyUrl(upstream)) return value;
     return `${publicOrigin}${PROXY_PATH}?url=${encodeURIComponent(upstream.href)}`;
   } catch (_) {
     return value;
@@ -359,7 +383,7 @@ async function fetchTextWithTimeout(url, options = {}, timeoutMs = SOURCE_TEST_T
   }
 }
 
-async function findChannelMatches(channel) {
+async function findChannelMatches(channel, skipIds = new Set()) {
   const apiUrl = new URL('/api/channels', LIVEWATCH_ORIGIN);
   apiUrl.searchParams.set('country', channel.country);
   apiUrl.searchParams.set('limit', '20');
@@ -376,19 +400,22 @@ async function findChannelMatches(channel) {
   const matches = (data.channels || [])
     .filter(item => String(item.name || '').toLowerCase() === channel.exact.toLowerCase())
     .filter(item => !excluded.has(String(item.id || '')))
+    .filter(item => !skipIds.has(String(item.id || '')))
     .sort((a, b) => qualityRank(channel, b) - qualityRank(channel, a));
 
   if (!matches.length && Array.isArray(channel.fallbackIds)) {
-    return [...channel.fallbackIds].sort((a, b) => qualityRank(channel, b) - qualityRank(channel, a));
+    return [...channel.fallbackIds]
+      .filter(item => !skipIds.has(String(item.id || '')))
+      .sort((a, b) => qualityRank(channel, b) - qualityRank(channel, a));
   }
 
   if (!matches.length) throw new Error('channel not found');
   return matches;
 }
 
-function prioritizeCandidates(channelKey, matches) {
+function prioritizeCandidates(channelKey, matches, skipIds = new Set()) {
   const cached = sourceCache.get(channelKey);
-  if (!cached || cached.expiresAt <= Date.now()) return matches;
+  if (!cached || cached.expiresAt <= Date.now() || skipIds.has(cached.id)) return matches;
 
   return [...matches].sort((a, b) => {
     if (a.id === cached.id) return -1;
@@ -423,9 +450,40 @@ async function resolveCandidate(candidate) {
   return { candidate, upstreamUrl, masterText, latencyMs };
 }
 
-async function selectWorkingSource(channelKey, channel) {
-  const matches = prioritizeCandidates(channelKey, await findChannelMatches(channel));
+async function resolveStaticFallback(fallback) {
+  const upstreamUrl = new URL(fallback.url);
+  if (!isAllowedProxyUrl(upstreamUrl)) throw new Error('static fallback URL refused');
+
+  const startedAt = Date.now();
+  const master = await fetchTextWithTimeout(upstreamUrl, {
+    headers: upstreamHeaders(upstreamUrl, 'application/vnd.apple.mpegurl,application/x-mpegURL,*/*'),
+    redirect: 'follow'
+  });
+  const latencyMs = Date.now() - startedAt;
+  const masterText = await master.text();
+  if (!master.ok || !masterText.trimStart().startsWith('#EXTM3U')) {
+    throw new Error(`static master ${master.status}`);
+  }
+
+  return { candidate: fallback, upstreamUrl, masterText, latencyMs };
+}
+
+function parseSkipIds(requestUrl) {
+  return new Set(String(requestUrl.searchParams.get('skip') || '')
+    .split(',')
+    .map(value => value.trim())
+    .filter(Boolean));
+}
+
+async function selectWorkingSource(channelKey, channel, skipIds = new Set()) {
+  let matches = [];
   const failures = [];
+
+  try {
+    matches = prioritizeCandidates(channelKey, await findChannelMatches(channel, skipIds), skipIds);
+  } catch (error) {
+    failures.push(`livewatch-search:${error.message}`);
+  }
 
   for (const candidate of matches.slice(0, 5)) {
     try {
@@ -443,6 +501,20 @@ async function selectWorkingSource(channelKey, channel) {
     }
   }
 
+  for (const fallback of channel.staticFallbacks || []) {
+    if (skipIds.has(String(fallback.id || ''))) continue;
+    try {
+      const resolved = await resolveStaticFallback(fallback);
+      sourceCache.delete(channelKey);
+      return {
+        ...resolved,
+        detection: failures.length ? `static-fallback-after-${failures.length}-failure` : 'static-fallback'
+      };
+    } catch (error) {
+      failures.push(`${fallback.id}:${error.message}`);
+    }
+  }
+
   sourceCache.delete(channelKey);
   throw new Error(`no valid source (${failures.join(', ')})`);
 }
@@ -456,9 +528,10 @@ async function resolveIptvLive(request, requestUrl, channelKey) {
   const channel = LIVE_CHANNELS.get(channelKey);
   if (!channel) return new Response('Unknown channel', { status: 404, headers: corsHeaders() });
 
+  const skipIds = parseSkipIds(requestUrl);
   let selected;
   try {
-    selected = await selectWorkingSource(channelKey, channel);
+    selected = await selectWorkingSource(channelKey, channel, skipIds);
   } catch (error) {
     return new Response(`Dynamic stream URL unavailable (${error.message})`, { status: 502, headers: corsHeaders() });
   }
@@ -497,17 +570,17 @@ async function proxyIptv(request, requestUrl) {
     return new Response('Invalid upstream URL', { status: 400, headers: corsHeaders() });
   }
 
-  if (!isAllowedLivewatchUrl(upstreamUrl)) {
+  if (!isAllowedProxyUrl(upstreamUrl)) {
     return new Response('Upstream not allowed', { status: 403, headers: corsHeaders() });
   }
 
-  const upstreamHeaders = new Headers(livewatchHeaders(request.headers.get('Accept') || '*/*'));
+  const headersForUpstream = new Headers(upstreamHeaders(upstreamUrl, request.headers.get('Accept') || '*/*'));
   const range = request.headers.get('Range');
-  if (range) upstreamHeaders.set('Range', range);
+  if (range) headersForUpstream.set('Range', range);
 
   const upstream = await fetch(upstreamUrl, {
     method: request.method,
-    headers: upstreamHeaders,
+    headers: headersForUpstream,
     redirect: 'follow'
   });
 
