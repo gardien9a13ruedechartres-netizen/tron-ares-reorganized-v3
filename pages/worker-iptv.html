@@ -25,6 +25,13 @@
       object-fit: fill;
       background: #000;
     }
+    video::-webkit-media-controls,
+    video::-webkit-media-controls-panel,
+    video::-webkit-media-controls-enclosure {
+      display: flex !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+    }
     
   #overlay {
       position: fixed;
@@ -316,6 +323,14 @@
     video.playsInline = true;
     video.style.objectFit = 'fill';
 
+    function keepNativeControlsVisible() {
+      video.controls = true;
+      video.setAttribute('controls', '');
+      video.disablePictureInPicture = false;
+      video.style.pointerEvents = 'auto';
+    }
+
+    keepNativeControlsVisible();
 
     function channelInitials() {
       const label = String(channelName || channelKey || 'TV').replace(/[^a-z0-9+]+/gi, ' ').trim();
@@ -374,10 +389,12 @@
     function setMessage(text) { msg.textContent = text; }
 
     async function playWithSound() {
+      keepNativeControlsVisible();
       try {
         video.muted = false;
         video.volume = 1;
         await video.play();
+        keepNativeControlsVisible();
         overlay.classList.add('hidden');
         hideLoader('Flux actif');
       } catch (error) {
@@ -399,6 +416,7 @@
     }
 
     function attachSource(nextUrl = HLS_URL) {
+      keepNativeControlsVisible();
       HLS_URL = String(nextUrl || '');
       window.__CHANNEL_HLS_URL__ = HLS_URL;
       urlLabel.textContent = HLS_URL || '(aucune URL)';
@@ -416,7 +434,7 @@
         hlsInstance = new Hls({ enableWorker: true, lowLatencyMode: true });
         hlsInstance.loadSource(HLS_URL);
         hlsInstance.attachMedia(video);
-        hlsInstance.on(Hls.Events.MEDIA_ATTACHED, () => setLoadingProgress(58, 'Media attache'));
+        hlsInstance.on(Hls.Events.MEDIA_ATTACHED, () => { keepNativeControlsVisible(); setLoadingProgress(58, 'Media attache'); });
         hlsInstance.on(Hls.Events.FRAG_LOADED, () => setLoadingProgress(88, 'Segments video recus'));
         hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
           retryDelayMs = 3000;
@@ -443,9 +461,9 @@
     }
 
     playBtn.addEventListener('click', playWithSound);
-    video.addEventListener('loadedmetadata', () => setLoadingProgress(95, 'Presque pret'));
-    video.addEventListener('canplay', () => hideLoader('Flux pret'));
-    video.addEventListener('playing', () => hideLoader('Flux actif'));
+    video.addEventListener('loadedmetadata', () => { keepNativeControlsVisible(); setLoadingProgress(95, 'Presque pret'); });
+    video.addEventListener('canplay', () => { keepNativeControlsVisible(); hideLoader('Flux pret'); });
+    video.addEventListener('playing', () => { keepNativeControlsVisible(); hideLoader('Flux actif'); });
     attachSource();
 
     console.log('URL HLS ciblée:', HLS_URL);
