@@ -319,14 +319,14 @@
     {
       "id": "golf",
       "name": "GOLF +",
-      "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/100.m3u8",
+      "url": "/pages/worker-iptv3.html?channel=golf",
       "logo": {
         "type": "image",
         "value": "https://thumb.canalplus.pro/bran/unsafe/435x243/filters:quality(90)/image/5f5f638902dc0/uploads/media/golf+.png"
       },
       "group": "Sports",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "tennis-channel",
@@ -343,14 +343,14 @@
     {
       "id": "auto-moto",
       "name": "AUTO MOTO",
-      "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/49.m3u8",
+      "url": "/pages/worker-iptv3.html?channel=auto-moto",
       "logo": {
         "type": "image",
         "value": "media/image/automoto.webp"
       },
       "group": "Sports",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "motorracing",
@@ -415,7 +415,7 @@
     {
       "id": "l-equipe-fr",
       "name": "L'ÉQUIPE FR",
-      "url": "/pages/worker-iptv.html?channel=l-equipe",
+      "url": "/pages/worker-iptv3.html?channel=l-equipe-fr",
       "logo": {
         "type": "image",
         "value": "https://focus.telerama.fr/500x500/0000/00/01/clear-1401.png"
@@ -451,26 +451,26 @@
     {
       "id": "ocs-max",
       "name": "OCS Max",
-      "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/50.m3u8",
+      "url": "/pages/worker-iptv3.html?channel=ocs-max",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20OCS%20Max%202012.svg"
       },
       "group": "Cinema",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "warner-tv",
       "name": "Warner TV",
-      "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/87.m3u8",
+      "url": "/pages/worker-iptv3.html?channel=warner-tv",
       "logo": {
         "type": "image",
         "value": "media/image/warner-tv.webp"
       },
       "group": "Cinema",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "canal-gr-ecran",
@@ -523,7 +523,7 @@
     {
       "id": "cine-frisson",
       "name": "CINE+ Frisson",
-      "url": "/pages/CINE+ Frisson.html",
+      "url": "/pages/worker-iptv3.html?channel=cine-frisson",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20Cin%C3%A9%2B%20Frisson%202011.svg"
@@ -535,26 +535,26 @@
     {
       "id": "cine-emotion",
       "name": "CINE+ Emotion",
-      "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/85.m3u8",
+      "url": "/pages/worker-iptv3.html?channel=cine-emotion",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20Cin%C3%A9%2B%20Emotion%202011.svg"
       },
       "group": "Cinema",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "cine-classic",
       "name": "CINE+ Classic",
-      "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/84.m3u8",
+      "url": "/pages/worker-iptv3.html?channel=cine-classic",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20Cin%C3%A9%2B%20Classic%202011.svg"
       },
       "group": "Cinema",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "cine-ocs",
@@ -571,14 +571,14 @@
     {
       "id": "cine-club",
       "name": "CINÉ+ Club",
-      "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/98.m3u8",
+      "url": "/pages/worker-iptv3.html?channel=cine-club",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20Cin%C3%A9%2B%20Club%202011.svg"
       },
       "group": "Cinema",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "box-office-action",
@@ -619,26 +619,26 @@
     {
       "id": "serie-club",
       "name": "Serie Club",
-      "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/98.m3u8",
+      "url": "/pages/worker-iptv3.html?channel=serie-club",
       "logo": {
         "type": "image",
         "value": "media/image/serie-club.webp"
       },
       "group": "Cinema",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "tcm-cinema",
       "name": "TCM Cinema",
-      "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/36.m3u8",
+      "url": "/pages/worker-iptv3.html?channel=tcm-cinema",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/TCM%20Cin%C3%A9ma%20logo%202019.png"
       },
       "group": "Cinema",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "syfy hd",
@@ -691,14 +691,14 @@
     {
       "id": "disney-junior",
       "name": "Disney junior",
-      "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/73.m3u8",
+      "url": "/pages/worker-iptv3.html?channel=disney-junior",
       "logo": {
         "type": "image",
         "value": "media/image/disney-junior.webp"
       },
       "group": "Jeunesse",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "dreamworks",
@@ -715,14 +715,14 @@
     {
       "id": "cartoon-network",
       "name": "Cartoon Network",
-      "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/61.m3u8",
+      "url": "/pages/worker-iptv3.html?channel=cartoon-network",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Cartoon%20Network%201992-2004.svg"
       },
       "group": "Jeunesse",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "canal-j",
@@ -751,14 +751,14 @@
     {
       "id": "teletoon",
       "name": "Télétoon",
-      "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/77.m3u8",
+      "url": "/pages/worker-iptv3.html?channel=teletoon",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/T%C3%A9l%C3%A9toon%2B%20Logo%202011.svg"
       },
       "group": "Jeunesse",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "supertoons",
@@ -775,14 +775,14 @@
     {
       "id": "mangas",
       "name": "Mangas",
-      "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/62.m3u8",
+      "url": "/pages/worker-iptv3.html?channel=mangas",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20Manga%20Plaza.png"
       },
       "group": "Jeunesse",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "yu-gi-oh",
@@ -847,26 +847,26 @@
     {
       "id": "j-one",
       "name": "J-One",
-      "url": "https://live.streamgatos.top/hls/10563/stream.m3u8",
+      "url": "/pages/worker-iptv3.html?channel=j-one",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Karakteristieke%20boerderij%2C%20Aldlansdyk%20in%20Cornjum%2002.jpg"
       },
       "group": "Jeunesse",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "tiji",
       "name": "Tiji",
-      "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/78.m3u8",
+      "url": "/pages/worker-iptv3.html?channel=tiji",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/%D0%9B%D0%BE%D0%B3%D0%BE%D1%82%D0%B8%D0%BF%20%D1%82%D0%B5%D0%BB%D0%B5%D0%BA%D0%B0%D0%BD%D0%B0%D0%BB%D0%B0%20Tiji%20%D1%81%202019.png"
       },
       "group": "Jeunesse",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "caillou",
@@ -883,38 +883,38 @@
     {
       "id": "nickelodeon",
       "name": "Nickelodeon",
-      "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/76.m3u8",
+      "url": "/pages/worker-iptv3.html?channel=nickelodeon",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Amphiprion%20ocellaris%20%28Clown%20anemonefish%29%20by%20Nick%20Hobgood.jpg"
       },
       "group": "Jeunesse",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "boing",
       "name": "Boing",
-      "url": "https://live.streamgatos.top/hls/707/stream.m3u8",
+      "url": "/pages/worker-iptv3.html?channel=boing",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Boing%20-%20Logo%202016.svg"
       },
       "group": "Jeunesse",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "game-one",
       "name": "Game One",
-      "url": "https://live.streamgatos.top/hls/5056/stream.m3u8",
+      "url": "/pages/worker-iptv3.html?channel=game-one",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/One%20Hand%20Clapping%20%28Logo%29.png"
       },
       "group": "Jeunesse",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "canal-kids",
@@ -931,86 +931,86 @@
     {
       "id": "toonami",
       "name": "Toonami",
-      "url": "https://live.streamgatos.top/hls/8888/stream.m3u8",
+      "url": "/pages/worker-iptv3.html?channel=toonami",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Toonami%202022%20Logo.png"
       },
       "group": "Jeunesse",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "toute-l-histoire",
       "name": "Toute l´Histoire",
-      "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/67.m3u8",
+      "url": "/pages/worker-iptv3.html?channel=toute-l-histoire",
       "logo": {
         "type": "image",
         "value": "media/image/toute-l-histoire.webp"
       },
       "group": "Documentaire",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "nat-geo",
       "name": "Nat Geo",
-      "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/31.m3u8",
+      "url": "/pages/worker-iptv3.html?channel=nat-geo",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20Nat%20Geo%20Wild.svg"
       },
       "group": "Documentaire",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "nat-geo-wild",
       "name": "Nat Geo Wild",
-      "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/32.m3u8",
+      "url": "/pages/worker-iptv3.html?channel=nat-geo-wild",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20Nat%20Geo%20Wild.svg"
       },
       "group": "Documentaire",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "discovery-science",
       "name": "Discovery Science",
-      "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/68.m3u8",
+      "url": "/pages/worker-iptv3.html?channel=discovery-science",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Discovery%20Science%20-%20Logo%202012.svg"
       },
       "group": "Documentaire",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "ushuaia-tv",
       "name": "Ushuaïa TV",
-      "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/93.m3u8",
+      "url": "/pages/worker-iptv3.html?channel=ushuaia-tv",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Ushuaia%20tv%20logo%20V2-RVB.jpg"
       },
       "group": "Documentaire",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "science-vie",
       "name": "Science & Vie",
-      "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/90.m3u8",
+      "url": "/pages/worker-iptv3.html?channel=science-vie",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20La%20Science%20et%20la%20Vie%20%281938-1940%29.svg"
       },
       "group": "Documentaire",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "planete-a-e",
@@ -1027,50 +1027,50 @@
     {
       "id": "planete-crime",
       "name": "Planète+ Crime",
-      "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/26.m3u8",
+      "url": "/pages/worker-iptv3.html?channel=planete-crime",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/PLAN%C3%88TE%2B%20ci.png"
       },
       "group": "Documentaire",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "animaux",
       "name": "Animaux",
-      "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/94.m3u8",
+      "url": "/pages/worker-iptv3.html?channel=animaux",
       "logo": {
         "type": "image",
         "value": "media/image/animaux.webp"
       },
       "group": "Documentaire",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "rmc-decouverte-2",
       "name": "RMC Découverte",
-      "url": "https://live.streamgatos.top/hls/2483/stream.m3u8",
+      "url": "/pages/worker-iptv3.html?channel=rmc-decouverte-2",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20RMC%20D%C3%A9couverte%202017.svg"
       },
       "group": "Documentaire",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "investigation-discovery",
       "name": "Investigation Discovery",
-      "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/131.m3u8",
+      "url": "/pages/worker-iptv3.html?channel=investigation-discovery",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Investigation%20Discovery%20Logo%202018.svg"
       },
       "group": "Documentaire",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "canal-docs",
@@ -1087,86 +1087,86 @@
     {
       "id": "chasse-peche",
       "name": "Chasse & Pêche",
-      "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/99.m3u8",
+      "url": "/pages/worker-iptv3.html?channel=chasse-peche",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20Chasse%20et%20P%C3%AAche%202011.png"
       },
       "group": "Documentaire",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "crime-district",
       "name": "Crime District",
-      "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/132.m3u8",
+      "url": "/pages/worker-iptv3.html?channel=crime-district",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Crime%20district.jpg"
       },
       "group": "Documentaire",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "mcm",
       "name": "MCM",
-      "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/96.m3u8",
+      "url": "/pages/worker-iptv3.html?channel=mcm",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/MCM%20logo.svg"
       },
       "group": "Musique",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "m6-music",
       "name": "M6 Music",
-      "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/46.m3u8",
+      "url": "/pages/worker-iptv3.html?channel=m6-music",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo-M6music.svg"
       },
       "group": "Musique",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "mtv",
       "name": "MTV",
-      "url": "https://viamotionhsi.netplus.ch/live/eds/mtvfrance/browser-HLS8/mtvfrance.m3u8",
+      "url": "/pages/worker-iptv3.html?channel=mtv",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/MTV%202021%20%28brand%20version%29.svg"
       },
       "group": "Musique",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "mtv-hits",
       "name": "MTV Hits",
-      "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/39.m3u8",
+      "url": "/pages/worker-iptv3.html?channel=mtv-hits",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/MTV%20Hits%202021.svg"
       },
       "group": "Musique",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "nrj-hits",
       "name": "NRJ Hits",
-      "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/39.m3u8",
+      "url": "/pages/worker-iptv3.html?channel=nrj-hits",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/NRJ%20HITES%202017%20logo.png"
       },
       "group": "Musique",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "bfmtv",
@@ -1183,14 +1183,14 @@
     {
       "id": "bfm-business",
       "name": "BFM Business",
-      "url": "https://live-cdn-stream-euw1.bfmb.bct.nextradiotv.com/m1/media.m3u8?bpkio_serviceid=7de32147a4f1055b7de133c00ff64f92&bpkio_sessionid=10d0a5c148-99ebe886-dc31-4ebe-a0f4-bc08ff705b44&category=all",
+      "url": "/pages/worker-iptv3.html?channel=bfm-business",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/BFM%20Business%20logo%202023.png"
       },
       "group": "Info",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "euronews",

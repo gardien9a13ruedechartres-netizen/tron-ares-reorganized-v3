@@ -48,6 +48,183 @@ const LIVE_CHANNELS = new Map([
     { id: '4002241315e5ee10f4b753-97c7a8325393c2', name: 'CANAL PANDA', quality: null, source: 'basic' },
     { id: '26958390437906a5f4ba97-d22b5eb462d646', name: 'CANAL PANDA', quality: null, source: 'cable' }
   ] }],
+  ["golf", { search: "GOLF+", exact: "GOLF+ CHANNEL", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: "780950104a5cb52c94aa2-88d30a5c48d027", name: "GOLF+ CHANNEL", quality: null, source: "satellite" },
+    { id: "28324561ced12307fdbb-735096274b0694", name: "GOLF+ CHANNEL", quality: "FHD", source: "satellite" }
+  ] }],
+  ["auto-moto", { search: "AUTO MOTO", exact: "AUTO MOTO", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: "1110040958c161c4e38ce9-8d51147a271203", name: "AUTO MOTO", quality: "HD", source: "satellite" }
+  ] }],
+  ["l-equipe-fr", { search: "L EQUIPE", exact: "L EQUIPE", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: "1064699189d6dd5dc4d422-856d62582d1513", name: "L EQUIPE", quality: null, source: "cable" },
+    { id: "38373319428576fb860cef-802f251211ffb1", name: "L EQUIPE", quality: null, source: "satellite" },
+    { id: "2241995657d1acf374577f-439b1c3988b027", name: "L EQUIPE", quality: null, source: "basic" }
+  ] }],
+  ["ocs-max", { search: "OCS MAX", exact: "OCS MAX", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: "636734800c64cceb42cf-7325d09036ee4e", name: "OCS MAX", quality: null, source: "cable" },
+    { id: "42064702927b26fcd04aa-894a8129a06e33", name: "OCS MAX", quality: null, source: "satellite" },
+    { id: "2561627199a0669a101b1e-f9e6cde850e4ab", name: "OCS MAX", quality: "FHD", source: "satellite" },
+    { id: "151053255430b682f860-71fa30e2ad1689", name: "OCS MAX", quality: "HD", source: "satellite" }
+  ] }],
+  ["warner-tv", { search: "WARNER TV", exact: "WARNER TV", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: "30593609059ce1103aec2e-59f2068cdb0b85", name: "WARNER TV", quality: null, source: "cable" },
+    { id: "2978100125aecff8327cf5-ec0eb76b33ec19", name: "WARNER TV", quality: null, source: "satellite" },
+    { id: "48836462992d6cf6baccf-2dfa35b36b8332", name: "WARNER TV NEXT", quality: null, source: "cable" }
+  ] }],
+  ["cine-frisson", { search: "CINE+ FRISSON", exact: "CINE+ FRISSON", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: "3654122461b46665c82b8f-2f4675d52df5dc", name: "CINE+ FRISSON", quality: null, source: "cable" }
+  ] }],
+  ["cine-emotion", { search: "CINE+ EMOTION", exact: "CINE+ EMOTION", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: "7546769060ce35541f305-b64237317fb59f", name: "CINE+ EMOTION", quality: null, source: "cable" },
+    { id: "4012587463c5d0adb0620e-d6461b78095980", name: "CINE+ EMOTION", quality: null, source: "satellite" },
+    { id: "2737270354dc417dc353b0-3bb897e9f0e140", name: "CINE+ EMOTION", quality: "FHD", source: "satellite" },
+    { id: "135614661597d2792a4429-800be2a83171eb", name: "CINE+ EMOTION", quality: "FHD", source: "basic" }
+  ] }],
+  ["cine-classic", { search: "CINE+ CLASSIC", exact: "CINE+ CLASSIC", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: "826335846cd94062fe98-4fb202719f29f1", name: "CINE+ CLASSIC", quality: null, source: "cable" },
+    { id: "3342642717ab7f2fad50a4-3c594b794f9dee", name: "CINE+ CLASSIC", quality: null, source: "satellite" },
+    { id: "581219766ec0c08526620-4c53cd2db97ebc", name: "CINE+ CLASSIC", quality: "FHD", source: "satellite" },
+    { id: "3677483481c601971abf79-b7fe08230b1502", name: "CINE+ CLASSIC", quality: "HD", source: "satellite" }
+  ] }],
+  ["cine-club", { search: "CINE+ CLUB", exact: "CINE+ CLUB", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: "1800537483f21c95207e51-a7e1f948aac95f", name: "CINE+ CLUB", quality: null, source: "cable" },
+    { id: "176726491979039c050819-b15b40089b122f", name: "CINE+ CLUB", quality: null, source: "satellite" },
+    { id: "5870248549e97edf632cd-1ff1e3a667c107", name: "CINE+ CLUB", quality: "HD", source: "satellite" },
+    { id: "26514025573f474a0abd81-740408c1c368cf", name: "CINE+ CLUB", quality: "FHD", source: "basic" }
+  ] }],
+  ["serie-club", { search: "SERIE CLUB", exact: "SERIE CLUB", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: "1534887525bcb2cc0c943a-0f014dfb9a8451", name: "SERIE CLUB", quality: null, source: "cable" }
+  ] }],
+  ["tcm-cinema", { search: "TCM CINEMA", exact: "TCM CINEMA", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: "2451805128d0f9045d041b-ed47dcec34444c", name: "TCM CINEMA", quality: null, source: "satellite" },
+    { id: "3637294135d561d9540c1c-933813a71d3ece", name: "TCM CINEMA", quality: null, source: "basic" }
+  ] }],
+  ["disney-junior", { search: "DISNEY JUNIOR", exact: "DISNEY JUNIOR", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: "3351330853ba2b580d385f-08df3f69cbcec0", name: "DISNEY JUNIOR", quality: null, source: "satellite" },
+    { id: "357894050d7f96e94e22f-7dea5cea101754", name: "DISNEY JUNIOR", quality: "FHD", source: "satellite" },
+    { id: "1244883752934afb7348d0-710962f0dc7de6", name: "DISNEY JUNIOR", quality: null, source: "basic" },
+    { id: "4039125784a8c6af55cefd-1089d3f4d65646", name: "DISNEY JUNIOR (BACKUP)", quality: null, source: "basic" }
+  ] }],
+  ["cartoon-network", { search: "CARTOON NETWORK", exact: "CARTOON NETWORK", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: "278630331931d4f590a721-11a3e66f138ae4", name: "CARTOON NETWORK", quality: null, source: "cable" },
+    { id: "2127297858581f62f0bf4c-eef3410f1d1bfb", name: "CARTOON NETWORK", quality: "FHD", source: "satellite" },
+    { id: "3047805633546dcf9fb24b-e949024146d5d8", name: "CARTOON NETWORK", quality: null, source: "basic" },
+    { id: "2078762115ee0894e1e157-adbd239d277f15", name: "CARTOON NETWORK", quality: "4K", source: "basic" }
+  ] }],
+  ["teletoon", { search: "TELETOON", exact: "TELETOON+", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: "2382507077306dedae7ff3-e03c9b3620ee1a", name: "TELETOON+", quality: null, source: "cable" },
+    { id: "231278062503478eaef59f-1363b3bc9b6a6e", name: "TELETOON+", quality: null, source: "satellite" },
+    { id: "1143042553bb95572793be-4a7357659fbfc8", name: "TELETOON +1", quality: null, source: "cable" }
+  ] }],
+  ["mangas", { search: "MANGAS", exact: "MANGAS", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: "139408412ba8e0ae7a800-af3111e493d466", name: "MANGAS", quality: null, source: "satellite" },
+    { id: "3781018265a0de3a4a5f34-cb323ba5b11df7", name: "MANGAS", quality: null, source: "basic" },
+    { id: "401237472a1e90e56167a-e5d148a48b2e03", name: "MANGAS", quality: "HD", source: "basic" }
+  ] }],
+  ["j-one", { search: "J-ONE", exact: "J-ONE", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: "874035777bcae83ee8339-448ec8df936ca1", name: "J-ONE", quality: null, source: "basic" }
+  ] }],
+  ["tiji", { search: "TIJI", exact: "TIJI", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: "381228029420ab3e3544f6-b7ace7d491d7aa", name: "TIJI", quality: "FHD", source: "satellite" },
+    { id: "61014295140065dfc1ba9-42df2ea83b0598", name: "TIJI", quality: "HD", source: "satellite" },
+    { id: "12869143765e4bc62e1bc-a831bfc016195f", name: "TIJI", quality: null, source: "basic" }
+  ] }],
+  ["nickelodeon", { search: "NICKELODEON", exact: "NICKELODEON", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: "280381887053bd39b0c65f-f0abfafee5bc9c", name: "NICKELODEON", quality: null, source: "cable" },
+    { id: "2881806872c3195b245695-8f25ba9085fc8e", name: "NICKELODEON", quality: null, source: "satellite" },
+    { id: "2600378206c4151e6fe1dd-7e83c87ae047f4", name: "NICKELODEON JUNIOR", quality: null, source: "cable" },
+    { id: "2786840044bbf88bfbe8f7-6c830fd8cea545", name: "NICKELODEON +1", quality: null, source: "cable" }
+  ] }],
+  ["boing", { search: "BOING", exact: "BOING", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: "69130693e2582f2056fe-1367813e7d7947", name: "BOING", quality: null, source: "basic" }
+  ] }],
+  ["game-one", { search: "GAME ONE", exact: "GAME ONE", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: "22141630554906bb2fc4a4-615863c6daad76", name: "GAME ONE", quality: null, source: "cable" },
+    { id: "1479966396202ff806f8d8-cbf2e8251593f3", name: "GAME ONE", quality: null, source: "satellite" }
+  ] }],
+  ["toonami", { search: "TOONAMI", exact: "TOONAMI", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: "4132905048a27f69176a77-f271550b92fa28", name: "TOONAMI", quality: null, source: "cable" }
+  ] }],
+  ["toute-l-histoire", { search: "TOUTE L'HISTOIRE", exact: "TOUTE L HISTOIRE", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: "22335450950012aecee2ea-0f5f79eca55d8f", name: "TOUTE L HISTOIRE", quality: null, source: "satellite" },
+    { id: "31946318574d1657fbd437-c09eeedf8b9fdb", name: "TOUTE L HISTOIRE", quality: "HD", source: "satellite" }
+  ] }],
+  ["nat-geo", { search: "NAT GEO", exact: "NAT GEO", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: "13411697827c093b9217a6-d306fbe39a12c6", name: "NAT GEO", quality: null, source: "cable" },
+    { id: "2662111844aff3a550d3f7-7ba789afe7e146", name: "NAT GEO", quality: "FHD", source: "satellite" }
+  ] }],
+  ["nat-geo-wild", { search: "NAT GEO WILD", exact: "NAT GEO WILD", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: "4163250572cb7f669550a4-3d0d5a84418865", name: "NAT GEO WILD", quality: null, source: "cable" },
+    { id: "12578909822641fbc02dc3-c31972024bfa81", name: "NAT GEO WILD", quality: null, source: "satellite" },
+    { id: "295899358126aff7725d18-fdee8f20c90503", name: "NAT GEO WILD", quality: "FHD", source: "satellite" },
+    { id: "4087509269bc6b8e5313a4-bcff710cb1d8ee", name: "NAT GEO WILD", quality: "HD", source: "satellite" }
+  ] }],
+  ["discovery-science", { search: "DISCOVERY SCIENCE", exact: "DISCOVERY SCIENCE", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: "27011456832d97fd3f96b1-a853c618061161", name: "DISCOVERY SCIENCE", quality: null, source: "satellite" },
+    { id: "13916241181642741e7fb7-fdaacb46707245", name: "DISCOVERY SCIENCE", quality: null, source: "basic" }
+  ] }],
+  ["ushuaia-tv", { search: "USHUAIA", exact: "USHUAIA", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['satellite', 'basic', 'cable'], fallbackIds: [
+    { id: "4274246496cae3eb6b9282-fd0a6c4baf6755", name: "USHUAIA", quality: null, source: "satellite" },
+    { id: "7377560460dce594183e5-ad52d57e270076", name: "USHUAIA", quality: "FHD", source: "satellite" },
+    { id: "814473941476083b06ccb-aa495a509760c4", name: "USHUAIA", quality: "HD", source: "satellite" },
+    { id: "30343651343100cf58d048-49ae141343babb", name: "USHUAIA TV", quality: "HD", source: "basic" }
+  ] }],
+  ["science-vie", { search: "SCIENCE & VIE", exact: "SCIENCE & VIE", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: "38619424749a7f941cb30-54abd9ba33e71b", name: "SCIENCE & VIE", quality: null, source: "satellite" },
+    { id: "152357533f67555e62908-aa5ee95724bef2", name: "SCIENCE & VIE TV", quality: null, source: "cable" }
+  ] }],
+  ["planete-crime", { search: "PLANETE+ CRIME", exact: "PLANETE+ CRIME", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: "18698414995fd862423d6-6f3ef08a42e1bc", name: "PLANETE+ CRIME", quality: null, source: "satellite" },
+    { id: "3552349294e8f1f6a1d376-8e3ce7fd7b5016", name: "PLANETE+ CRIME", quality: "HD", source: "satellite" }
+  ] }],
+  ["animaux", { search: "ANIMAUX", exact: "ANIMAUX", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: "23092519062e4569443ea7-6ca1f439632427", name: "ANIMAUX", quality: null, source: "cable" },
+    { id: "2474469311465ad21db7be-9cded0c55031b8", name: "ANIMAUX", quality: null, source: "satellite" },
+    { id: "155306235421d782ab66e0-d7ecc20b2eb620", name: "ANIMAUX", quality: null, source: "basic" }
+  ] }],
+  ["rmc-decouverte-2", { search: "RMC DECOUVERTE", exact: "RMC DECOUVERTE", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: "26066150769be8b83ee804-af017e71349872", name: "RMC DECOUVERTE", quality: null, source: "satellite" }
+  ] }],
+  ["investigation-discovery", { search: "INVESTIGATION DISCOVERY", exact: "INVESTIGATION DISCOVERY", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: "286307272239f45a9230cb-3b4db1b78f26f3", name: "INVESTIGATION DISCOVERY", quality: null, source: "cable" }
+  ] }],
+  ["chasse-peche", { search: "CHASSE & PECHE", exact: "CHASSE & PECHE", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: "30277092126bc746a51a20-d17faee3c160af", name: "CHASSE & PECHE", quality: null, source: "cable" },
+    { id: "2674834370a1cac4b77989-e6c20205a967e8", name: "CHASSE & PECHE", quality: null, source: "satellite" }
+  ] }],
+  ["crime-district", { search: "CRIME DISTRICT", exact: "CRIME DISTRICT", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: "233249952949b217798c9e-4beb79d74324a1", name: "CRIME DISTRICT", quality: null, source: "cable" },
+    { id: "26863556070010417e6d9d-8989a74e7c7b85", name: "CRIME DISTRICT", quality: null, source: "satellite" }
+  ] }],
+  ["mcm", { search: "MCM", exact: "MCM", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: "855739216dd3b63b126bc-2ebedcfec45012", name: "MCM", quality: null, source: "satellite" },
+    { id: "33400096800b79d7bb9d9-5ca9814ebe0f2f", name: "MCM", quality: "HD", source: "satellite" },
+    { id: "8696880859ab59a847a37-1acc146d4bb3d4", name: "MCM POP", quality: null, source: "cable" },
+    { id: "33487111745e397d403417-d2c67332238dbd", name: "MCM TOP", quality: null, source: "cable" }
+  ] }],
+  ["m6-music", { search: "M6 MUSIC", exact: "M6 MUSIC", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: "4154285296f902b73b0d28-87a81f8557de0d", name: "M6 MUSIC", quality: null, source: "cable" },
+    { id: "7435919714613b22a77d1-a6d54f4daab9d6", name: "M6 MUSIC", quality: null, source: "satellite" },
+    { id: "285936085861281a838c2f-9ae29e33139ec9", name: "M6 MUSIC", quality: "HD", source: "basic" },
+    { id: "38871521898e03f2cfd86d-baee3d9fb1aa96", name: "M6 MUSIC (BACKUP)", quality: null, source: "satellite" }
+  ] }],
+  ["mtv", { search: "MTV", exact: "MTV", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: "987897824424746e378ce-28029f74c62f46", name: "MTV", quality: null, source: "satellite" },
+    { id: "131724335525762423a972-63da2e4425c6be", name: "MTV", quality: "FHD", source: "satellite" },
+    { id: "808220806e13753a10c7c-3a533f91f48d29", name: "MTV FRANCE", quality: null, source: "cable" },
+    { id: "84149442655bf9ba0d47b-28fa7a18187594", name: "MTV FRANCE", quality: null, source: "satellite" }
+  ] }],
+  ["mtv-hits", { search: "MTV HITS", exact: "MTV HITS", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: "2301201739cd8e74158e09-96f25fb704ee3b", name: "MTV HITS", quality: null, source: "satellite" },
+    { id: "199610210545959c828fd6-c5f21ab7eb0770", name: "MTV HITS SD", quality: null, source: "basic" }
+  ] }],
+  ["nrj-hits", { search: "NRJ HITS", exact: "NRJ HITS", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: "730920094046c7f17c984-7c2374b1edf467", name: "NRJ HITS", quality: null, source: "satellite" },
+    { id: "3639203183127ef9073e5d-80087061989ddf", name: "NRJ HITS", quality: "HD", source: "basic" }
+  ] }],
+  ["bfm-business", { search: "BFM BUSINESS", exact: "BFM BUSINESS", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: "1945266328e8e437e6162d-e36c345412b4b4", name: "BFM BUSINESS", quality: null, source: "cable" }
+  ] }],
   ['m6', { search: 'M6', exact: 'M6', country: 'France', prefer: ['FHD', 'HD', null] }]
 ]);
 
