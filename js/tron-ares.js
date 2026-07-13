@@ -478,16 +478,23 @@ let stallWatchdogIntervalId = null;
 let lastProgressTs = 0;
 
 // Retour automatique silencieux vers la source principale LiveWatch.
-// Générique : fonctionne pour toute entrée possédant workerFailoverChain,
-// y compris les futures chaînes ajoutées avec un secours.
+// Le retour est confirmé par un manifeste, une playlist média et un vrai segment.
+// Une temporisation minimale et un backoff évitent les oscillations répétées.
 const WORKER_PRIMARY_RECOVERY_INITIAL_DELAY_MS = 60000;
-const WORKER_PRIMARY_RECOVERY_INTERVAL_MS = 60000;
-const WORKER_PRIMARY_RECOVERY_TIMEOUT_MS = 8000;
+const WORKER_PRIMARY_RECOVERY_SUCCESS_INTERVAL_MS = 45000;
+const WORKER_PRIMARY_RECOVERY_TIMEOUT_MS = 15000;
 const WORKER_PRIMARY_RECOVERY_REQUIRED_SUCCESSES = 2;
+const WORKER_PRIMARY_RECOVERY_MIN_FALLBACK_MS = 120000;
+const WORKER_PRIMARY_RECOVERY_BACKOFF_MS = Object.freeze([60000, 120000, 300000, 600000]);
 let workerPrimaryRecoveryTimerId = null;
 let workerPrimaryRecoveryGeneration = 0;
 let workerPrimaryRecoveryInFlight = false;
 let workerPrimaryRecoverySuccesses = 0;
+let workerPrimaryRecoveryFailures = 0;
+
+// Indices de santé du flux courant utilisés par le watchdog.
+let recentHlsIssueCount = 0;
+let lastHlsIssueTs = 0;
 
 // MP4 de secours quand un flux ne diffuse pas
 const OFFLINE_MP4_URL = 'media/media/title_top.mp4';
@@ -510,6 +517,20 @@ function startOfflineAutoRetry() {
   }, 15000);
 }
 
+function bufferedAheadSeconds(media) {
+  try {
+    const now = Number(media?.currentTime || 0);
+    const ranges = media?.buffered;
+    if (!ranges) return 0;
+    for (let i = 0; i < ranges.length; i += 1) {
+      if (now >= ranges.start(i) - 0.15 && now <= ranges.end(i) + 0.15) {
+        return Math.max(0, ranges.end(i) - now);
+      }
+    }
+  } catch (_) {}
+  return 0;
+}
+
 function startStallWatchdog() {
   if (stallWatchdogIntervalId) return;
   lastProgressTs = Date.now();
@@ -519,13 +540,26 @@ function startStallWatchdog() {
     if (activePlaybackMode !== 'stream') return;
     if (!currentEntry || !currentEntry.url) return;
     if (isEffectiveIframeEntry(currentEntry)) return;
-    if (videoEl.paused || videoEl.ended) return;
+    if (videoEl.paused || videoEl.ended || videoEl.seeking) return;
 
-    // Si la lecture n'avance pas depuis un moment (buffering / flux mort)
+    // Un onglet masqué peut ralentir les événements média : ne pas provoquer
+    // une fausse bascule lorsque le navigateur bride l'arrière-plan.
+    if (document.hidden) {
+      lastProgressTs = Date.now();
+      return;
+    }
+
     const now = Date.now();
     const stuckMs = now - (lastProgressTs || now);
-    if (stuckMs > 18000) {
-      if (!switchToNextWorkerSource('flux bloqué depuis 18 secondes')) {
+    const bufferedAhead = bufferedAheadSeconds(videoEl);
+    const lowBuffer = bufferedAhead < 1.5;
+    const mediaNotReady = videoEl.readyState < 3;
+    const hasRecentHlsIssue = recentHlsIssueCount > 0 && (now - lastHlsIssueTs) < 30000;
+
+    // On bascule seulement si la vidéo n'avance plus ET que le buffer est vide,
+    // avec un état média insuffisant ou une erreur HLS récente.
+    if (stuckMs > 18000 && lowBuffer && (mediaNotReady || hasRecentHlsIssue)) {
+      if (!switchToNextWorkerSource('flux réellement bloqué depuis 18 secondes')) {
         enterOfflineMode('Flux interrompu / plus de données');
       }
     }
@@ -533,7 +567,9 @@ function startStallWatchdog() {
 }
 
 function markProgress() {
-  lastProgressTs = Date.now();
+  const now = Date.now();
+  lastProgressTs = now;
+  if (lastHlsIssueTs && now - lastHlsIssueTs > 8000) recentHlsIssueCount = 0;
 }
 
 function enterOfflineMode(reason) {
@@ -2079,7 +2115,12 @@ function switchToNextWorkerSource(reason) {
     workerChannel: next.channel,
     workerSourceIndex: nextIndex,
     workerSourceLabel: next.label,
-    workerFailoverReason: String(reason || 'source indisponible')
+    workerFailoverReason: String(reason || 'source indisponible'),
+    // Nouveau séjour de secours : le retour LiveWatch ne sera pas autorisé
+    // avant la durée minimale anti-oscillation.
+    workerFallbackStartedAt: currentIndex === 0
+      ? Date.now()
+      : (Number(entry.workerFallbackStartedAt) || Date.now())
   };
 
   console.warn(
@@ -2109,7 +2150,9 @@ function workerPrimaryRetryEntry(entry) {
     workerChannel: primary.channel,
     workerSourceIndex: 0,
     workerSourceLabel: primary.label,
-    workerFailoverReason: ''
+    workerFailoverReason: '',
+    workerFallbackStartedAt: 0,
+    workerLastAutomaticReturnAt: Date.now()
   };
 }
 
@@ -2121,6 +2164,7 @@ function stopWorkerPrimaryRecoveryProbe() {
   }
   workerPrimaryRecoveryInFlight = false;
   workerPrimaryRecoverySuccesses = 0;
+  workerPrimaryRecoveryFailures = 0;
 }
 
 function shouldProbeWorkerPrimary(entry = currentEntry) {
@@ -2130,26 +2174,121 @@ function shouldProbeWorkerPrimary(entry = currentEntry) {
   return currentWorkerSourceIndex(entry) > 0;
 }
 
+function hlsNonCommentUris(text) {
+  return String(text || '')
+    .split(/\r?\n/)
+    .map(line => line.trim())
+    .filter(line => line && !line.startsWith('#'));
+}
+
+function hlsVariantUri(text) {
+  const lines = String(text || '').split(/\r?\n/);
+  for (let i = 0; i < lines.length; i += 1) {
+    if (!lines[i].trim().startsWith('#EXT-X-STREAM-INF')) continue;
+    for (let j = i + 1; j < lines.length; j += 1) {
+      const candidate = lines[j].trim();
+      if (!candidate) continue;
+      if (!candidate.startsWith('#')) return candidate;
+      break;
+    }
+  }
+  return hlsNonCommentUris(text).find(uri => /\.m3u8(?:[?#]|$)/i.test(uri)) || '';
+}
+
+async function fetchRecoveryProbe(url, controller, accept) {
+  return fetch(url, {
+    method: 'GET',
+    cache: 'no-store',
+    headers: { Accept: accept || '*/*' },
+    signal: controller.signal
+  });
+}
+
+async function validateMediaSegmentSilently(segmentUrl, controller) {
+  const response = await fetch(segmentUrl, {
+    method: 'GET',
+    cache: 'no-store',
+    headers: {
+      Accept: 'video/mp2t,video/iso.segment,video/mp4,audio/aac,application/octet-stream,*/*',
+      Range: 'bytes=0-4095'
+    },
+    signal: controller.signal
+  });
+  if (!response.ok) return false;
+
+  // Lire seulement le début du segment puis annuler le reste pour limiter
+  // la consommation réseau, y compris si l'origine ignore l'en-tête Range.
+  if (response.body?.getReader) {
+    const reader = response.body.getReader();
+    try {
+      const first = await reader.read();
+      return !!first.value?.byteLength;
+    } finally {
+      try { await reader.cancel(); } catch (_) {}
+    }
+  }
+
+  const data = await response.arrayBuffer();
+  return data.byteLength > 0;
+}
+
 async function validateWorkerPrimarySilently(primaryUrl) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort('timeout'), WORKER_PRIMARY_RECOVERY_TIMEOUT_MS);
   try {
     const separator = String(primaryUrl).includes('?') ? '&' : '?';
     const probeUrl = `${primaryUrl}${separator}_ares_probe=${Date.now()}`;
-    const response = await fetch(probeUrl, {
-      method: 'GET',
-      cache: 'no-store',
-      headers: { Accept: 'application/vnd.apple.mpegurl,application/x-mpegURL,text/plain,*/*' },
-      signal: controller.signal
-    });
-    if (!response.ok) return false;
-    const text = await response.text();
-    return text.trimStart().startsWith('#EXTM3U');
+    const masterResponse = await fetchRecoveryProbe(
+      probeUrl,
+      controller,
+      'application/vnd.apple.mpegurl,application/x-mpegURL,text/plain,*/*'
+    );
+    if (!masterResponse.ok) return false;
+
+    let playlistUrl = masterResponse.url || probeUrl;
+    let playlistText = await masterResponse.text();
+    if (!playlistText.trimStart().startsWith('#EXTM3U')) return false;
+
+    // Un master peut pointer vers une playlist de qualité. On la charge avant
+    // de tester un segment réel. Deux niveaux suffisent pour les manifests HLS.
+    for (let depth = 0; depth < 2; depth += 1) {
+      const variant = hlsVariantUri(playlistText);
+      const isMediaPlaylist = /#EXTINF:/i.test(playlistText) || /#EXT-X-MAP:/i.test(playlistText);
+      if (!variant || isMediaPlaylist) break;
+
+      const variantUrl = new URL(variant, playlistUrl).href;
+      const variantResponse = await fetchRecoveryProbe(
+        variantUrl,
+        controller,
+        'application/vnd.apple.mpegurl,application/x-mpegURL,text/plain,*/*'
+      );
+      if (!variantResponse.ok) return false;
+      playlistUrl = variantResponse.url || variantUrl;
+      playlistText = await variantResponse.text();
+      if (!playlistText.trimStart().startsWith('#EXTM3U')) return false;
+    }
+
+    // Prendre le segment le plus récent afin d'éviter un ancien segment expiré.
+    const segmentUris = hlsNonCommentUris(playlistText)
+      .filter(uri => !/\.m3u8(?:[?#]|$)/i.test(uri));
+    const segmentUri = segmentUris[segmentUris.length - 1];
+    if (!segmentUri) return false;
+
+    const segmentUrl = new URL(segmentUri, playlistUrl).href;
+    return await validateMediaSegmentSilently(segmentUrl, controller);
   } catch (_) {
     return false;
   } finally {
     clearTimeout(timeoutId);
   }
+}
+
+function workerPrimaryRecoveryBackoffDelay() {
+  const index = Math.min(
+    Math.max(0, workerPrimaryRecoveryFailures - 1),
+    WORKER_PRIMARY_RECOVERY_BACKOFF_MS.length - 1
+  );
+  return WORKER_PRIMARY_RECOVERY_BACKOFF_MS[index];
 }
 
 function scheduleWorkerPrimaryRecoveryProbe(generation, delayMs) {
@@ -2158,7 +2297,7 @@ function scheduleWorkerPrimaryRecoveryProbe(generation, delayMs) {
   workerPrimaryRecoveryTimerId = setTimeout(() => {
     workerPrimaryRecoveryTimerId = null;
     runWorkerPrimaryRecoveryProbe(generation);
-  }, delayMs);
+  }, Math.max(1000, Number(delayMs) || 0));
 }
 
 async function runWorkerPrimaryRecoveryProbe(generation) {
@@ -2180,17 +2319,34 @@ async function runWorkerPrimaryRecoveryProbe(generation) {
   if (currentEntry !== entryAtStart || String(currentEntry?.url || '') !== fallbackUrlAtStart) return;
   if (!shouldProbeWorkerPrimary(currentEntry)) return;
 
-  workerPrimaryRecoverySuccesses = ok ? workerPrimaryRecoverySuccesses + 1 : 0;
+  if (ok) {
+    workerPrimaryRecoverySuccesses += 1;
+    workerPrimaryRecoveryFailures = 0;
+  } else {
+    workerPrimaryRecoverySuccesses = 0;
+    workerPrimaryRecoveryFailures += 1;
+  }
 
-  if (workerPrimaryRecoverySuccesses >= WORKER_PRIMARY_RECOVERY_REQUIRED_SUCCESSES) {
+  const fallbackStartedAt = Number(currentEntry?.workerFallbackStartedAt) || Date.now();
+  const fallbackElapsed = Date.now() - fallbackStartedAt;
+  const minimumRemaining = Math.max(0, WORKER_PRIMARY_RECOVERY_MIN_FALLBACK_MS - fallbackElapsed);
+
+  if (
+    ok &&
+    workerPrimaryRecoverySuccesses >= WORKER_PRIMARY_RECOVERY_REQUIRED_SUCCESSES &&
+    minimumRemaining <= 0
+  ) {
     const primaryEntry = workerPrimaryRetryEntry(currentEntry);
-    console.info('[ARES] LiveWatch de nouveau stable : retour automatique silencieux', primaryEntry.workerChannel || '');
+    console.info('[ARES] LiveWatch validé jusqu’au segment : retour automatique silencieux', primaryEntry.workerChannel || '');
     stopWorkerPrimaryRecoveryProbe();
     playUrl({ ...primaryEntry, workerSilentPrimaryRecovery: true });
     return;
   }
 
-  scheduleWorkerPrimaryRecoveryProbe(generation, WORKER_PRIMARY_RECOVERY_INTERVAL_MS);
+  const nextDelay = ok
+    ? Math.max(WORKER_PRIMARY_RECOVERY_SUCCESS_INTERVAL_MS, minimumRemaining)
+    : workerPrimaryRecoveryBackoffDelay();
+  scheduleWorkerPrimaryRecoveryProbe(generation, nextDelay);
 }
 
 function syncWorkerPrimaryRecoveryProbe() {
@@ -2202,6 +2358,7 @@ function syncWorkerPrimaryRecoveryProbe() {
   if (workerPrimaryRecoveryTimerId || workerPrimaryRecoveryInFlight) return;
   workerPrimaryRecoveryGeneration += 1;
   workerPrimaryRecoverySuccesses = 0;
+  workerPrimaryRecoveryFailures = 0;
   const generation = workerPrimaryRecoveryGeneration;
   scheduleWorkerPrimaryRecoveryProbe(generation, WORKER_PRIMARY_RECOVERY_INITIAL_DELAY_MS);
 }
@@ -4341,7 +4498,7 @@ function playUrl(entry) {
   // (JSON, favoris, import, routeur externe, Next/Prev...).
   entry = normalizeWorkerEntryForPlayback(entry);
   if (entry?.workerDirectPlayback) {
-    console.info('[ARES] Worker lu directement dans videoEl :', entry.workerFamily, entry.workerChannel, entry.url);
+    console.info('[ARES] Worker lu directement dans videoEl :', entry.workerFamily, entry.workerChannel);
   }
 
   // 🎬 Si l’intro tourne, on la stoppe dès qu’on lance un vrai contenu
@@ -4368,6 +4525,8 @@ currentEntry = entry;
   markProgress();
 
   const url = entry.url;
+  recentHlsIssueCount = 0;
+  lastHlsIssueTs = 0;
 
   // RTP / SMIL => lecteur externe
   if (/rtp\.pt/i.test(url) || /smil:/i.test(url)) {
@@ -4439,7 +4598,15 @@ modeLabel = 'DASH';
       // Ignore les événements retardés provenant d'une ancienne tentative détruite.
       if (hlsInstance !== hlsForThisAttempt || String(currentEntry?.url || '') !== urlForThisAttempt) return;
 
-      console.error('HLS error:', data);
+      const hlsType = String(data?.type || 'unknown');
+      const hlsDetails = String(data?.details || 'unknown');
+      const healthRelevant = /frag|level|manifest|bufferStalled|network/i.test(`${hlsType} ${hlsDetails}`);
+      if (healthRelevant) {
+        recentHlsIssueCount += 1;
+        lastHlsIssueTs = Date.now();
+      }
+      // Log résumé : évite d'imprimer les objets réseau contenant des tokens.
+      console.warn('[ARES] HLS', hlsType, hlsDetails, data?.fatal ? 'fatal' : 'non-fatal');
 
       // LiveWatch reste prioritaire. En cas d'échec fatal, on tente ensuite
       // le secours Clouding/Deviantart déclaré pour la chaîne, puis OFFLINE.
