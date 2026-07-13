@@ -213,11 +213,12 @@ function isHttpUrl(u) {
 }
 
 async function checkEntryLink(entry) {
-  const url = entry?.url || '';
+  const effectiveEntry = normalizeWorkerIptv3EntryForPlayback(entry);
+  const url = effectiveEntry?.url || '';
   if (!isHttpUrl(url)) return { ok: false, info: 'URL invalide' };
 
   // iFrame/Youtube → test "chargeable" via iframe
-  if (entry?.isIframe || isYoutubeUrl(url)) {
+  if (isEffectiveIframeEntry(effectiveEntry) || isYoutubeUrl(url)) {
     return await checkUrlByIframeLoad(url);
   }
 
@@ -505,7 +506,7 @@ function startStallWatchdog() {
     if (offlineMode) return;
     if (activePlaybackMode !== 'stream') return;
     if (!currentEntry || !currentEntry.url) return;
-    if (currentEntry.isIframe) return;
+    if (isEffectiveIframeEntry(currentEntry)) return;
     if (videoEl.paused || videoEl.ended) return;
 
     // Si la lecture n'avance pas depuis un moment (buffering / flux mort)
@@ -1172,6 +1173,15 @@ function resolveCastMediaUrl(entry) {
   }
 
   if (pageUrl && pageUrl.origin === window.location.origin) {
+    if (/\/pages\/worker-iptv3(?:\.html)?$/i.test(pageUrl.pathname)) {
+      const channel = String(pageUrl.searchParams.get('channel') || '').trim().toLowerCase();
+      if (!channel) return { ok:false, reason:'Chaine Worker IPTV3 inconnue.' };
+      return {
+        ok:true,
+        url:`${WORKER_IPTV3_DIRECT_BASE}/${encodeURIComponent(channel)}/master.m3u8`,
+      };
+    }
+
     if (pageUrl.pathname.toLowerCase() === '/pages/worker-iptv.html') {
       const channel = String(pageUrl.searchParams.get('channel') || '').trim().toLowerCase();
       if (!channel) return { ok:false, reason:'Chaine Worker inconnue.' };
@@ -1201,7 +1211,7 @@ function resolveCastMediaUrl(entry) {
     }
   }
 
-  if (entry.isIframe || activePlaybackMode === 'iframe') {
+  if (isEffectiveIframeEntry(entry) || activePlaybackMode === 'iframe') {
     return { ok:false, reason:'Cette page ne fournit pas de flux direct compatible Chromecast.' };
   }
 
@@ -1807,6 +1817,72 @@ function isProbablyDash(url) {
 function isProbablyPlaylist(url) {
   return /\.m3u8?(\?|$)/i.test(url);
 }
+
+// =====================================================
+// WORKER IPTV3 : PAGE IFRAME -> FLUX HLS DIRECT
+// =====================================================
+// Les entrées PT/FR peuvent continuer à être fournies sous la forme :
+//   /pages/worker-iptv3.html?channel=cmtv
+// Cette couche les convertit au moment de la lecture vers :
+//   https://tron-ares-iptv3.../api/iptv/live/cmtv/master.m3u8
+// Ainsi, videoEl + HLS.js utilisent les contrôles natifs et l'iframe reste
+// réservée à YouTube, aux sites externes et aux widgets.
+const WORKER_IPTV3_DIRECT_BASE =
+  'https://tron-ares-iptv3.victor-salema-53d.workers.dev/api/iptv/live';
+
+function getWorkerIptv3ChannelFromPageUrl(rawUrl) {
+  const value = String(rawUrl || '').trim();
+  if (!value) return '';
+
+  try {
+    const parsed = new URL(value, window.location.href);
+    if (!/\/pages\/worker-iptv3(?:\.html)?$/i.test(parsed.pathname)) return '';
+    return String(parsed.searchParams.get('channel') || '').trim().toLowerCase();
+  } catch (_) {
+    const match = value.match(/\/pages\/worker-iptv3(?:\.html)?[^#]*[?&]channel=([^&#]+)/i);
+    if (!match) return '';
+    try { return decodeURIComponent(match[1]).trim().toLowerCase(); }
+    catch (_) { return String(match[1] || '').trim().toLowerCase(); }
+  }
+}
+
+function isWorkerIptv3PageUrl(rawUrl) {
+  return !!getWorkerIptv3ChannelFromPageUrl(rawUrl);
+}
+
+function workerIptv3DirectUrlFromPage(rawUrl) {
+  const channel = getWorkerIptv3ChannelFromPageUrl(rawUrl);
+  if (!channel) return '';
+  return `${WORKER_IPTV3_DIRECT_BASE}/${encodeURIComponent(channel)}/master.m3u8`;
+}
+
+function normalizeWorkerIptv3EntryForPlayback(entry) {
+  if (!entry || !entry.url) return entry;
+
+  const channel = getWorkerIptv3ChannelFromPageUrl(entry.url);
+  if (!channel) return entry;
+
+  return {
+    ...entry,
+    url: `${WORKER_IPTV3_DIRECT_BASE}/${encodeURIComponent(channel)}/master.m3u8`,
+    isIframe: false,
+    workerPageUrl: entry.workerPageUrl || entry.url,
+    workerChannel: channel,
+    workerDirectPlayback: true
+  };
+}
+
+function isEffectiveIframeEntry(entry) {
+  if (!entry) return false;
+  return !!entry.isIframe && !isWorkerIptv3PageUrl(entry.url);
+}
+
+function effectiveEntryGroupLabel(entry) {
+  if (entry?.group) return entry.group;
+  if (isWorkerIptv3PageUrl(entry?.url) || entry?.workerDirectPlayback) return 'Flux HLS Worker';
+  return isEffectiveIframeEntry(entry) ? 'Overlay / iFrame' : 'Flux M3U';
+}
+
 function isYoutubeUrl(url) {
   return /youtu\.be|youtube\.com|youtube\-nocookie\.com/i.test(url);
 }
@@ -3030,12 +3106,12 @@ function createChannelElement(entry, index, sourceType, options) {
 
   const subDiv = document.createElement('div');
   subDiv.className = 'channel-sub';
-  subDiv.textContent = entry.group || (entry.isIframe ? 'Overlay / iFrame' : 'Flux M3U');
+  subDiv.textContent = effectiveEntryGroupLabel(entry);
 
   const tagsDiv = document.createElement('div');
   tagsDiv.className = 'channel-tags';
 
-  const showIframe = !!entry.isIframe || (isActive && activePlaybackMode === 'iframe');
+  const showIframe = isEffectiveIframeEntry(entry) || (isActive && activePlaybackMode === 'iframe');
 
   const tag = document.createElement('div');
   tag.className = 'tag-chip' + (showIframe ? ' tag-chip--iframe' : '');
@@ -3279,7 +3355,7 @@ function updateNowPlaying(entry, modeLabel) {
   }
 
   npTitle.textContent = normalizeName(entry.name);
-  npSub.textContent = entry.group || (entry.isIframe ? 'Overlay / iFrame' : 'Flux M3U');
+  npSub.textContent = effectiveEntryGroupLabel(entry);
   npBadge.textContent = modeLabel;
   __renderNowPlayingLangBadge(entry);
 }
@@ -3845,6 +3921,13 @@ function showIframe() {
 function playEntryAsOverlay(entry) {
   if (!entry || !entry.url) return;
 
+  // Une page worker-iptv3 n'est plus un vrai overlay : elle est lue
+  // directement dans videoEl pour conserver performance et contrôles natifs.
+  if (isWorkerIptv3PageUrl(entry.url)) {
+    playUrl(normalizeWorkerIptv3EntryForPlayback(entry));
+    return;
+  }
+
   currentEntry = entry;
   activePlaybackMode = 'iframe';
 
@@ -3917,6 +4000,13 @@ function fallbackToExternalPlayer(entry) {
 function playUrl(entry) {
   if (!entry || !entry.url || !videoEl) return;
 
+  // Point unique de normalisation : les pages worker-iptv3 deviennent
+  // automatiquement des URLs HLS directes, quelle que soit leur provenance
+  // (JSON PT, favoris, import, routeur externe, Next/Prev...).
+  entry = normalizeWorkerIptv3EntryForPlayback(entry);
+  if (entry?.workerDirectPlayback) {
+    console.info('[ARES] Worker IPTV3 lu directement dans videoEl :', entry.workerChannel, entry.url);
+  }
 
   // 🎬 Si l’intro tourne, on la stoppe dès qu’on lance un vrai contenu
   __stopIntroIfNeeded();
@@ -3951,8 +4041,9 @@ currentEntry = entry;
     return;
   }
 
-  // Entrées iframe/youtube
-  if (entry.isIframe || isYoutubeUrl(url)) {
+  // Entrées réellement iframe/youtube. Les pages worker-iptv3 ont déjà
+  // été normalisées en HLS direct juste au-dessus.
+  if (isEffectiveIframeEntry(entry) || isYoutubeUrl(url)) {
     playEntryAsOverlay(entry);
     refreshActiveListsUI();
     if (favoriteListEl?.classList.contains('active')) renderFavoritesList();
@@ -4895,7 +4986,7 @@ toggleOverlayBtn?.addEventListener('click', () => {
   }
 
   if (overlayMode) {
-    if (currentEntry.isIframe || isYoutubeUrl(currentEntry.url)) {
+    if (isEffectiveIframeEntry(currentEntry) || isYoutubeUrl(currentEntry.url)) {
       setStatus('Cette entrée est un overlay (pas de mode vidéo)');
       return;
     }
