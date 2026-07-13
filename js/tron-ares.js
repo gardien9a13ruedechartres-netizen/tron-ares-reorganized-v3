@@ -477,6 +477,18 @@ let offlineRetryIntervalId = null;
 let stallWatchdogIntervalId = null;
 let lastProgressTs = 0;
 
+// Retour automatique silencieux vers la source principale LiveWatch.
+// Générique : fonctionne pour toute entrée possédant workerFailoverChain,
+// y compris les futures chaînes ajoutées avec un secours.
+const WORKER_PRIMARY_RECOVERY_INITIAL_DELAY_MS = 60000;
+const WORKER_PRIMARY_RECOVERY_INTERVAL_MS = 60000;
+const WORKER_PRIMARY_RECOVERY_TIMEOUT_MS = 8000;
+const WORKER_PRIMARY_RECOVERY_REQUIRED_SUCCESSES = 2;
+let workerPrimaryRecoveryTimerId = null;
+let workerPrimaryRecoveryGeneration = 0;
+let workerPrimaryRecoveryInFlight = false;
+let workerPrimaryRecoverySuccesses = 0;
+
 // MP4 de secours quand un flux ne diffuse pas
 const OFFLINE_MP4_URL = 'media/media/title_top.mp4';
 
@@ -531,6 +543,7 @@ function enterOfflineMode(reason) {
 
   offlineMode = true;
   externalFallbackTried = true; // évite les fallbacks multiples ailleurs
+  stopWorkerPrimaryRecoveryProbe();
 
   // Stop players
   destroyHls();
@@ -2098,6 +2111,99 @@ function workerPrimaryRetryEntry(entry) {
     workerSourceLabel: primary.label,
     workerFailoverReason: ''
   };
+}
+
+function stopWorkerPrimaryRecoveryProbe() {
+  workerPrimaryRecoveryGeneration += 1;
+  if (workerPrimaryRecoveryTimerId) {
+    clearTimeout(workerPrimaryRecoveryTimerId);
+    workerPrimaryRecoveryTimerId = null;
+  }
+  workerPrimaryRecoveryInFlight = false;
+  workerPrimaryRecoverySuccesses = 0;
+}
+
+function shouldProbeWorkerPrimary(entry = currentEntry) {
+  const chain = Array.isArray(entry?.workerFailoverChain) ? entry.workerFailoverChain : [];
+  if (chain.length < 2 || !chain[0]?.url) return false;
+  if (offlineMode || activePlaybackMode !== 'stream') return false;
+  return currentWorkerSourceIndex(entry) > 0;
+}
+
+async function validateWorkerPrimarySilently(primaryUrl) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort('timeout'), WORKER_PRIMARY_RECOVERY_TIMEOUT_MS);
+  try {
+    const separator = String(primaryUrl).includes('?') ? '&' : '?';
+    const probeUrl = `${primaryUrl}${separator}_ares_probe=${Date.now()}`;
+    const response = await fetch(probeUrl, {
+      method: 'GET',
+      cache: 'no-store',
+      headers: { Accept: 'application/vnd.apple.mpegurl,application/x-mpegURL,text/plain,*/*' },
+      signal: controller.signal
+    });
+    if (!response.ok) return false;
+    const text = await response.text();
+    return text.trimStart().startsWith('#EXTM3U');
+  } catch (_) {
+    return false;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+function scheduleWorkerPrimaryRecoveryProbe(generation, delayMs) {
+  if (generation !== workerPrimaryRecoveryGeneration) return;
+  if (workerPrimaryRecoveryTimerId) clearTimeout(workerPrimaryRecoveryTimerId);
+  workerPrimaryRecoveryTimerId = setTimeout(() => {
+    workerPrimaryRecoveryTimerId = null;
+    runWorkerPrimaryRecoveryProbe(generation);
+  }, delayMs);
+}
+
+async function runWorkerPrimaryRecoveryProbe(generation) {
+  if (generation !== workerPrimaryRecoveryGeneration) return;
+  if (workerPrimaryRecoveryInFlight || !shouldProbeWorkerPrimary()) return;
+
+  const entryAtStart = currentEntry;
+  const chain = Array.isArray(entryAtStart?.workerFailoverChain) ? entryAtStart.workerFailoverChain : [];
+  const primary = chain[0];
+  const fallbackUrlAtStart = String(entryAtStart?.url || '');
+  if (!primary?.url) return;
+
+  workerPrimaryRecoveryInFlight = true;
+  const ok = await validateWorkerPrimarySilently(primary.url);
+  workerPrimaryRecoveryInFlight = false;
+
+  // La chaîne ou la source a changé pendant le test : résultat obsolète.
+  if (generation !== workerPrimaryRecoveryGeneration) return;
+  if (currentEntry !== entryAtStart || String(currentEntry?.url || '') !== fallbackUrlAtStart) return;
+  if (!shouldProbeWorkerPrimary(currentEntry)) return;
+
+  workerPrimaryRecoverySuccesses = ok ? workerPrimaryRecoverySuccesses + 1 : 0;
+
+  if (workerPrimaryRecoverySuccesses >= WORKER_PRIMARY_RECOVERY_REQUIRED_SUCCESSES) {
+    const primaryEntry = workerPrimaryRetryEntry(currentEntry);
+    console.info('[ARES] LiveWatch de nouveau stable : retour automatique silencieux', primaryEntry.workerChannel || '');
+    stopWorkerPrimaryRecoveryProbe();
+    playUrl({ ...primaryEntry, workerSilentPrimaryRecovery: true });
+    return;
+  }
+
+  scheduleWorkerPrimaryRecoveryProbe(generation, WORKER_PRIMARY_RECOVERY_INTERVAL_MS);
+}
+
+function syncWorkerPrimaryRecoveryProbe() {
+  if (!shouldProbeWorkerPrimary()) {
+    stopWorkerPrimaryRecoveryProbe();
+    return;
+  }
+
+  if (workerPrimaryRecoveryTimerId || workerPrimaryRecoveryInFlight) return;
+  workerPrimaryRecoveryGeneration += 1;
+  workerPrimaryRecoverySuccesses = 0;
+  const generation = workerPrimaryRecoveryGeneration;
+  scheduleWorkerPrimaryRecoveryProbe(generation, WORKER_PRIMARY_RECOVERY_INITIAL_DELAY_MS);
 }
 
 function isEffectiveIframeEntry(entry) {
@@ -4134,6 +4240,7 @@ function showVideo() {
 }
 
 function showIframe() {
+  stopWorkerPrimaryRecoveryProbe();
   overlayMode = true;
   try {
     if (__trailerReturnCtx && trailerBackBtn) trailerBackBtn.classList.remove('hidden');
@@ -4227,6 +4334,7 @@ function fallbackToExternalPlayer(entry) {
 }
 function playUrl(entry) {
   if (!entry || !entry.url || !videoEl) return;
+  stopWorkerPrimaryRecoveryProbe();
 
   // Point unique de normalisation : toutes les pages Worker IPTV reconnues
   // deviennent des URLs HLS directes, quelle que soit leur provenance
@@ -5482,7 +5590,11 @@ exportIframeJsonBtn?.addEventListener('click', exportIframeToJson);
 importJsonBtn?.addEventListener('click', importFromJson);
 
 // Video events
-videoEl?.addEventListener('playing', () => { markProgress(); setStatus('Lecture en cours'); });
+videoEl?.addEventListener('playing', () => {
+  markProgress();
+  setStatus('Lecture en cours');
+  syncWorkerPrimaryRecoveryProbe();
+});
 videoEl?.addEventListener('pause', () => setStatus('Pause'));
 videoEl?.addEventListener('waiting', () => setStatus('Buffering…'));
 videoEl?.addEventListener('error', () => {
@@ -5520,6 +5632,8 @@ videoEl?.addEventListener('error', () => {
   if (npBadge) npBadge.textContent = 'ERREUR';
   console.error('Video error', mediaError);
 });
+
+window.addEventListener('beforeunload', stopWorkerPrimaryRecoveryProbe);
 
 // ✅ Sauvegarde reprise : basée sur l’entrée réellement en lecture
 videoEl?.addEventListener('timeupdate', () => {
