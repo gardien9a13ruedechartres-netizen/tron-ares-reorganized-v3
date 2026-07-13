@@ -739,10 +739,10 @@
     {
       "id": "canal-j",
       "name": "Canal J",
-      "url": "https://canal-j.victor-salema-53d.workers.dev/",
+      "url": "/pages/worker-iptv3.html?channel=canal-j",
       "logo": {
         "type": "image",
-        "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Canal%20J%20Logo%202019.svg"
+        "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/france/canal-j-fr.png"
       },
       "group": "Jeunesse",
       "isFavorite": false,

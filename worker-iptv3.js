@@ -134,6 +134,12 @@ const LIVE_CHANNELS = new Map([
     { id: "3047805633546dcf9fb24b-e949024146d5d8", name: "CARTOON NETWORK", quality: null, source: "basic" },
     { id: "2078762115ee0894e1e157-adbd239d277f15", name: "CARTOON NETWORK", quality: "4K", source: "basic" }
   ] }],
+  ["canal-j", { search: "CANAL J", exact: "CANAL J", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: "85706364091e683ba1a33-5c832e172adad3", name: "CANAL J", quality: null, source: "cable" },
+    { id: "24446412ebabf61b09ad-043d27d40d15b4", name: "CANAL J", quality: "FHD", source: "satellite" },
+    { id: "3860888136d301b247640b-021aab3c4b6dfb", name: "CANAL J", quality: null, source: "basic" },
+    { id: "6099304471232528ee2e1-4f07037b01a340", name: "CANAL J (BACKUP)", quality: null, source: "basic" }
+  ] }],
   ["teletoon", { search: "TELETOON", exact: "TELETOON+", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
     { id: "2382507077306dedae7ff3-e03c9b3620ee1a", name: "TELETOON+", quality: null, source: "cable" },
     { id: "231278062503478eaef59f-1363b3bc9b6a6e", name: "TELETOON+", quality: null, source: "satellite" },
