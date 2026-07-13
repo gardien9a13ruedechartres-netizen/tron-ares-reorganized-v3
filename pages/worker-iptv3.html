@@ -52,6 +52,9 @@
       font-family: Arial, sans-serif;
       box-sizing: border-box;
       pointer-events: auto;
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
       transition: opacity .18s ease, transform .18s ease, visibility .18s ease;
     }
     .player-controls.is-hidden {
@@ -594,10 +597,20 @@
     function showPlayerControls(keepVisible = false) {
       playerControls.hidden = false;
       playerControls.classList.remove('is-hidden');
+      playerControls.style.opacity = '1';
+      playerControls.style.visibility = 'visible';
+      playerControls.style.transform = 'translateY(0)';
+      playerControls.style.pointerEvents = 'auto';
       clearTimeout(controlsIdleTimer);
       if (!keepVisible && !video.paused) {
         controlsIdleTimer = setTimeout(() => {
-          if (!video.paused) playerControls.classList.add('is-hidden');
+          if (!video.paused) {
+            playerControls.classList.add('is-hidden');
+            playerControls.style.opacity = '';
+            playerControls.style.visibility = '';
+            playerControls.style.transform = '';
+            playerControls.style.pointerEvents = '';
+          }
         }, 2600);
       }
     }
