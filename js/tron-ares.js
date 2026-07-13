@@ -213,7 +213,7 @@ function isHttpUrl(u) {
 }
 
 async function checkEntryLink(entry) {
-  const effectiveEntry = normalizeWorkerIptv3EntryForPlayback(entry);
+  const effectiveEntry = normalizeWorkerEntryForPlayback(entry);
   const url = effectiveEntry?.url || '';
   if (!isHttpUrl(url)) return { ok: false, info: 'URL invalide' };
 
@@ -1173,23 +1173,9 @@ function resolveCastMediaUrl(entry) {
   }
 
   if (pageUrl && pageUrl.origin === window.location.origin) {
-    if (/\/pages\/worker-iptv3(?:\.html)?$/i.test(pageUrl.pathname)) {
-      const channel = String(pageUrl.searchParams.get('channel') || '').trim().toLowerCase();
-      if (!channel) return { ok:false, reason:'Chaine Worker IPTV3 inconnue.' };
-      return {
-        ok:true,
-        url:`${WORKER_IPTV3_DIRECT_BASE}/${encodeURIComponent(channel)}/master.m3u8`,
-      };
-    }
-
-    if (pageUrl.pathname.toLowerCase() === '/pages/worker-iptv.html') {
-      const channel = String(pageUrl.searchParams.get('channel') || '').trim().toLowerCase();
-      if (!channel) return { ok:false, reason:'Chaine Worker inconnue.' };
-
-      const url = CAST_WIDEIPTV_CHANNELS.has(channel)
-        ? `https://player-engine.com/api/worker-live/${encodeURIComponent(channel)}/master.m3u8`
-        : `https://tron-ares-iptv.victor-salema-53d.workers.dev/api/iptv/live/${encodeURIComponent(channel)}/master.m3u8`;
-      return { ok:true, url };
+    const workerDirect = resolveWorkerPageDirectStream(sourceUrl);
+    if (workerDirect) {
+      return { ok:true, url:workerDirect.url };
     }
 
     if (pageUrl.pathname.toLowerCase() === '/pages/worker-cstar.html') {
@@ -1819,67 +1805,125 @@ function isProbablyPlaylist(url) {
 }
 
 // =====================================================
-// WORKER IPTV3 : PAGE IFRAME -> FLUX HLS DIRECT
+// PAGES WORKER IPTV -> FLUX HLS DIRECT DANS videoEl
 // =====================================================
-// Les entrées PT/FR peuvent continuer à être fournies sous la forme :
-//   /pages/worker-iptv3.html?channel=cmtv
-// Cette couche les convertit au moment de la lecture vers :
-//   https://tron-ares-iptv3.../api/iptv/live/cmtv/master.m3u8
-// Ainsi, videoEl + HLS.js utilisent les contrôles natifs et l'iframe reste
-// réservée à YouTube, aux sites externes et aux widgets.
+// Familles prises en charge :
+// 1) /pages/worker-iptv3.html?channel=... -> Worker IPTV3
+// 2) /pages/worker-iptv.html?channel=...  -> Worker IPTV historique
+// 3) /pages/cmtvpt.html, /pages/rtp1.html, etc. -> Worker WideIPTV
+//
+// Le backend Worker reste inchangé. Seul le mode d'affichage change :
+// HLS.js + videoEl + contrôles natifs, au lieu d'une page complète en iframe.
 const WORKER_IPTV3_DIRECT_BASE =
   'https://tron-ares-iptv3.victor-salema-53d.workers.dev/api/iptv/live';
+const WORKER_IPTV_DIRECT_BASE =
+  'https://tron-ares-iptv.victor-salema-53d.workers.dev/api/iptv/live';
+const WORKER_WIDEIPTV_DIRECT_BASE =
+  'https://player-engine.com/api/worker-live';
 
-function getWorkerIptv3ChannelFromPageUrl(rawUrl) {
+const WORKER_WIDEIPTV_PAGE_CHANNELS = new Set([
+  'cmtvpt',
+  'rtp1',
+  'rtp2',
+  'rtp3',
+  'sic',
+  'porto-canal',
+  'rtp-africa',
+  'record-europa',
+  'odisseia-pt',
+  'national-geographic-pt',
+  'historia-pt',
+  'discovery-pt',
+  'tcv-int',
+  'tvi',
+  'tvi-reality',
+  'tvi-ficcao',
+  'v-plus-tvi',
+  'cnn-portugal',
+  'tvi-internacional',
+  'sic-noticias'
+]);
+
+function parseWorkerPageUrl(rawUrl) {
   const value = String(rawUrl || '').trim();
-  if (!value) return '';
+  if (!value) return null;
 
   try {
-    const parsed = new URL(value, window.location.href);
-    if (!/\/pages\/worker-iptv3(?:\.html)?$/i.test(parsed.pathname)) return '';
-    return String(parsed.searchParams.get('channel') || '').trim().toLowerCase();
+    return new URL(value, window.location.href);
   } catch (_) {
-    const match = value.match(/\/pages\/worker-iptv3(?:\.html)?[^#]*[?&]channel=([^&#]+)/i);
-    if (!match) return '';
-    try { return decodeURIComponent(match[1]).trim().toLowerCase(); }
-    catch (_) { return String(match[1] || '').trim().toLowerCase(); }
+    return null;
   }
 }
 
-function isWorkerIptv3PageUrl(rawUrl) {
-  return !!getWorkerIptv3ChannelFromPageUrl(rawUrl);
+function resolveWorkerPageDirectStream(rawUrl) {
+  const parsed = parseWorkerPageUrl(rawUrl);
+  if (!parsed || parsed.origin !== window.location.origin) return null;
+
+  const pathname = parsed.pathname.toLowerCase().replace(/\/$/, '');
+
+  if (/\/pages\/worker-iptv3(?:\.html)?$/i.test(pathname)) {
+    const channel = String(parsed.searchParams.get('channel') || '').trim().toLowerCase();
+    if (!channel) return null;
+    return {
+      family: 'iptv3',
+      channel,
+      url: `${WORKER_IPTV3_DIRECT_BASE}/${encodeURIComponent(channel)}/master.m3u8`
+    };
+  }
+
+  if (/\/pages\/worker-iptv(?:\.html)?$/i.test(pathname)) {
+    const channel = String(parsed.searchParams.get('channel') || '').trim().toLowerCase();
+    if (!channel) return null;
+    const wideIptv = WORKER_WIDEIPTV_PAGE_CHANNELS.has(channel) || CAST_WIDEIPTV_CHANNELS.has(channel);
+    return {
+      family: wideIptv ? 'wideiptv' : 'iptv',
+      channel,
+      url: `${wideIptv ? WORKER_WIDEIPTV_DIRECT_BASE : WORKER_IPTV_DIRECT_BASE}/${encodeURIComponent(channel)}/master.m3u8`
+    };
+  }
+
+  const dedicatedMatch = pathname.match(/^\/pages\/(?:worker-)?([a-z0-9-]+)(?:\.html)?$/i);
+  const dedicatedChannel = String(dedicatedMatch?.[1] || '').trim().toLowerCase();
+  if (dedicatedChannel && WORKER_WIDEIPTV_PAGE_CHANNELS.has(dedicatedChannel)) {
+    return {
+      family: 'wideiptv',
+      channel: dedicatedChannel,
+      url: `${WORKER_WIDEIPTV_DIRECT_BASE}/${encodeURIComponent(dedicatedChannel)}/master.m3u8`
+    };
+  }
+
+  return null;
 }
 
-function workerIptv3DirectUrlFromPage(rawUrl) {
-  const channel = getWorkerIptv3ChannelFromPageUrl(rawUrl);
-  if (!channel) return '';
-  return `${WORKER_IPTV3_DIRECT_BASE}/${encodeURIComponent(channel)}/master.m3u8`;
+function isWorkerDirectPageUrl(rawUrl) {
+  return !!resolveWorkerPageDirectStream(rawUrl);
 }
 
-function normalizeWorkerIptv3EntryForPlayback(entry) {
+function normalizeWorkerEntryForPlayback(entry) {
   if (!entry || !entry.url) return entry;
 
-  const channel = getWorkerIptv3ChannelFromPageUrl(entry.url);
-  if (!channel) return entry;
+  const resolved = resolveWorkerPageDirectStream(entry.url);
+  if (!resolved) return entry;
 
   return {
     ...entry,
-    url: `${WORKER_IPTV3_DIRECT_BASE}/${encodeURIComponent(channel)}/master.m3u8`,
+    url: resolved.url,
     isIframe: false,
     workerPageUrl: entry.workerPageUrl || entry.url,
-    workerChannel: channel,
+    workerChannel: resolved.channel,
+    workerFamily: resolved.family,
     workerDirectPlayback: true
   };
 }
 
 function isEffectiveIframeEntry(entry) {
   if (!entry) return false;
-  return !!entry.isIframe && !isWorkerIptv3PageUrl(entry.url);
+  return !!entry.isIframe && !isWorkerDirectPageUrl(entry.url);
 }
 
 function effectiveEntryGroupLabel(entry) {
   if (entry?.group) return entry.group;
-  if (isWorkerIptv3PageUrl(entry?.url) || entry?.workerDirectPlayback) return 'Flux HLS Worker';
+  if (isWorkerDirectPageUrl(entry?.url) || entry?.workerDirectPlayback) return 'Flux HLS Worker';
   return isEffectiveIframeEntry(entry) ? 'Overlay / iFrame' : 'Flux M3U';
 }
 
@@ -3921,10 +3965,10 @@ function showIframe() {
 function playEntryAsOverlay(entry) {
   if (!entry || !entry.url) return;
 
-  // Une page worker-iptv3 n'est plus un vrai overlay : elle est lue
-  // directement dans videoEl pour conserver performance et contrôles natifs.
-  if (isWorkerIptv3PageUrl(entry.url)) {
-    playUrl(normalizeWorkerIptv3EntryForPlayback(entry));
+  // Les pages des trois familles Worker IPTV ne sont plus de vrais overlays :
+  // elles sont lues directement dans videoEl.
+  if (isWorkerDirectPageUrl(entry.url)) {
+    playUrl(normalizeWorkerEntryForPlayback(entry));
     return;
   }
 
@@ -4000,12 +4044,12 @@ function fallbackToExternalPlayer(entry) {
 function playUrl(entry) {
   if (!entry || !entry.url || !videoEl) return;
 
-  // Point unique de normalisation : les pages worker-iptv3 deviennent
-  // automatiquement des URLs HLS directes, quelle que soit leur provenance
-  // (JSON PT, favoris, import, routeur externe, Next/Prev...).
-  entry = normalizeWorkerIptv3EntryForPlayback(entry);
+  // Point unique de normalisation : toutes les pages Worker IPTV reconnues
+  // deviennent des URLs HLS directes, quelle que soit leur provenance
+  // (JSON, favoris, import, routeur externe, Next/Prev...).
+  entry = normalizeWorkerEntryForPlayback(entry);
   if (entry?.workerDirectPlayback) {
-    console.info('[ARES] Worker IPTV3 lu directement dans videoEl :', entry.workerChannel, entry.url);
+    console.info('[ARES] Worker lu directement dans videoEl :', entry.workerFamily, entry.workerChannel, entry.url);
   }
 
   // 🎬 Si l’intro tourne, on la stoppe dès qu’on lance un vrai contenu
@@ -4041,8 +4085,8 @@ currentEntry = entry;
     return;
   }
 
-  // Entrées réellement iframe/youtube. Les pages worker-iptv3 ont déjà
-  // été normalisées en HLS direct juste au-dessus.
+  // Entrées réellement iframe/youtube. Les pages Worker IPTV reconnues ont
+  // déjà été normalisées en HLS direct juste au-dessus.
   if (isEffectiveIframeEntry(entry) || isYoutubeUrl(url)) {
     playEntryAsOverlay(entry);
     refreshActiveListsUI();
@@ -5029,7 +5073,7 @@ prevBtn?.addEventListener('click', playPrev);
   }
 
   function isDirectInteractionPlayerUrl(url) {
-    return /\/pages\/worker-iptv3(?:\.html)?(?:[?#]|$)/i.test(String(url || ''));
+    return isWorkerDirectPageUrl(url);
   }
 
   function isSerieFilmOverlayActive() {
