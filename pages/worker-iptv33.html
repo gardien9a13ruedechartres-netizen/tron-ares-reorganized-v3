@@ -25,76 +25,6 @@
       object-fit: fill;
       background: #000;
     }
-    video::-webkit-media-controls,
-    video::-webkit-media-controls-panel,
-    video::-webkit-media-controls-enclosure {
-      display: none !important;
-      opacity: 0 !important;
-      visibility: hidden !important;
-    }
-    .player-controls {
-      position: fixed;
-      left: 12px;
-      right: 12px;
-      bottom: max(12px, env(safe-area-inset-bottom));
-      z-index: 30;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      min-height: 44px;
-      padding: 8px;
-      color: #f9fafb;
-      background: rgba(0, 0, 0, .68);
-      border: 1px solid rgba(255, 255, 255, .18);
-      border-radius: 8px;
-      font-family: Arial, sans-serif;
-      box-sizing: border-box;
-      pointer-events: auto;
-      transition: opacity .18s ease, transform .18s ease, visibility .18s ease;
-    }
-    .player-controls.is-hidden {
-      opacity: 0;
-      visibility: hidden;
-      transform: translateY(14px);
-      pointer-events: none;
-    }
-    .player-controls button {
-      margin: 0;
-      min-height: 34px;
-      padding: 8px 10px;
-      color: #fff;
-      background: rgba(17, 24, 39, .92);
-      border: 1px solid rgba(255, 255, 255, .22);
-      border-radius: 6px;
-    }
-    .player-controls input[type="range"] {
-      width: min(28vw, 160px);
-      accent-color: #60a5fa;
-    }
-    .control-time {
-      margin-left: auto;
-      min-width: 54px;
-      font-size: 12px;
-      font-weight: 700;
-      color: #dbeafe;
-      text-align: right;
-      white-space: nowrap;
-    }
-    @media (max-width: 520px) {
-      .player-controls {
-        left: 8px;
-        right: 8px;
-        gap: 6px;
-        padding: 6px;
-      }
-      .player-controls button {
-        min-height: 32px;
-        padding: 7px 8px;
-        font-size: 12px;
-      }
-      .player-controls input[type="range"] { width: 90px; }
-      .control-time { display: none; }
-    }
     #overlay {
       position: fixed;
       left: 16px;
@@ -236,13 +166,6 @@
 </head>
 <body>
   <video id="video" controls autoplay playsinline webkit-playsinline></video>
-  <div id="playerControls" class="player-controls" aria-label="Controles du lecteur">
-    <button id="controlPlay" type="button">Pause</button>
-    <button id="controlMute" type="button">Son</button>
-    <input id="controlVolume" type="range" min="0" max="1" step="0.05" value="1" aria-label="Volume">
-    <div id="controlTime" class="control-time">Direct</div>
-    <button id="controlFullscreen" type="button">Plein ecran</button>
-  </div>
   <div id="loadingOverlay">
     <div class="loader-content">
       <img id="loadingLogo" class="loader-logo" alt="">
@@ -411,12 +334,6 @@
     const loadingLogoBadge = document.getElementById('loadingLogoBadge');
     const loadingProgressFill = document.getElementById('loadingProgressFill');
     const loadingProgressText = document.getElementById('loadingProgressText');
-    const playerControls = document.getElementById('playerControls');
-    const controlPlay = document.getElementById('controlPlay');
-    const controlMute = document.getElementById('controlMute');
-    const controlVolume = document.getElementById('controlVolume');
-    const controlTime = document.getElementById('controlTime');
-    const controlFullscreen = document.getElementById('controlFullscreen');
     let hlsInstance = null;
     let retryTimer = null;
     let retryDelayMs = 3000;
@@ -424,7 +341,6 @@
     let lastLoaderProgress = 0;
     let stallTimer = null;
     let stallRecoveryCount = 0;
-    let controlsIdleTimer = null;
 
     window.__CHANNEL_HLS_URL__ = HLS_URL;
     window.__CHANNEL_HLS_URLS__ = ALL_TARGET_URLS;
@@ -440,107 +356,13 @@
     video.style.objectFit = 'fill';
 
     function keepNativeControlsVisible() {
-      video.controls = false;
-      video.removeAttribute('controls');
+      video.controls = true;
+      video.setAttribute('controls', '');
       video.disablePictureInPicture = false;
       video.style.pointerEvents = 'auto';
-      showPlayerControls();
-      updatePlayerControls();
     }
 
     keepNativeControlsVisible();
-
-    function showPlayerControls(keepVisible = false) {
-      playerControls.hidden = false;
-      playerControls.classList.remove('is-hidden');
-      clearTimeout(controlsIdleTimer);
-      if (!keepVisible && !video.paused) {
-        controlsIdleTimer = setTimeout(() => {
-          if (!video.paused) playerControls.classList.add('is-hidden');
-        }, 2600);
-      }
-    }
-
-    function formatTime(value) {
-      const seconds = Math.max(0, Math.floor(Number(value) || 0));
-      const minutes = Math.floor(seconds / 60);
-      const rest = String(seconds % 60).padStart(2, '0');
-      return minutes + ':' + rest;
-    }
-
-    function updatePlayerControls() {
-      if (!controlPlay) return;
-      controlPlay.textContent = video.paused ? 'Lecture' : 'Pause';
-      controlMute.textContent = (video.muted || video.volume === 0) ? 'Muet' : 'Son';
-      controlVolume.value = String(video.muted ? 0 : video.volume);
-      controlTime.textContent = Number.isFinite(video.duration) && video.duration > 0
-        ? formatTime(video.currentTime) + ' / ' + formatTime(video.duration)
-        : 'Direct';
-    }
-
-    async function togglePlayback() {
-      showPlayerControls(true);
-      if (video.paused) await playWithSound();
-      else video.pause();
-      updatePlayerControls();
-    }
-
-    function toggleMute() {
-      showPlayerControls(true);
-      video.muted = !video.muted;
-      if (!video.muted && video.volume === 0) video.volume = 1;
-      updatePlayerControls();
-    }
-
-    async function toggleFullscreen() {
-      try {
-        if (document.fullscreenElement) await document.exitFullscreen();
-        else await document.documentElement.requestFullscreen();
-      } catch (error) {
-        console.warn('Plein ecran indisponible:', error);
-      }
-    }
-
-    function bindControl(element, handler) {
-      let handledPointer = false;
-      element.addEventListener('pointerup', event => {
-        handledPointer = true;
-        event.preventDefault();
-        event.stopPropagation();
-        handler();
-      });
-      element.addEventListener('click', event => {
-        event.preventDefault();
-        event.stopPropagation();
-        if (handledPointer) {
-          handledPointer = false;
-          return;
-        }
-        handler();
-      });
-    }
-
-    bindControl(controlPlay, togglePlayback);
-    bindControl(controlMute, toggleMute);
-    controlVolume.addEventListener('input', () => {
-      showPlayerControls(true);
-      video.volume = Number(controlVolume.value);
-      video.muted = video.volume === 0;
-      updatePlayerControls();
-    });
-    bindControl(controlFullscreen, toggleFullscreen);
-    ['click', 'dblclick', 'pointerdown'].forEach(eventName => {
-      playerControls.addEventListener(eventName, event => {
-        showPlayerControls(true);
-        event.stopPropagation();
-      });
-    });
-    ['mousemove', 'pointermove', 'pointerdown', 'touchstart', 'click', 'keydown'].forEach(eventName => {
-      window.addEventListener(eventName, () => showPlayerControls(), { passive: true, capture: true });
-      document.addEventListener(eventName, () => showPlayerControls(), { passive: true, capture: true });
-      document.body.addEventListener(eventName, () => showPlayerControls(), { passive: true, capture: true });
-      video.addEventListener(eventName, () => showPlayerControls(), { passive: true, capture: true });
-    });
 
     function channelInitials() {
       const label = String(channelName || channelKey || 'TV').replace(/[^a-z0-9+]+/gi, ' ').trim();
@@ -736,13 +558,11 @@
     video.addEventListener('loadedmetadata', () => { keepNativeControlsVisible(); setLoadingProgress(95, 'Presque pret'); });
     video.addEventListener('canplay', () => { keepNativeControlsVisible(); hideLoader('Flux pret'); });
     video.addEventListener('playing', () => { keepNativeControlsVisible(); hideLoader('Flux actif'); });
-    video.addEventListener('pause', () => { showPlayerControls(true); updatePlayerControls(); });
-    video.addEventListener('volumechange', updatePlayerControls);
     video.addEventListener('waiting', scheduleStallRecovery);
     video.addEventListener('stalled', scheduleStallRecovery);
     video.addEventListener('playing', clearStallRecovery);
     video.addEventListener('timeupdate', () => {
-      updatePlayerControls();
+
       if (!video.paused && video.readyState >= 3) clearStallRecovery();
     });
     attachSource();
