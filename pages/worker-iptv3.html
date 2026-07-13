@@ -37,7 +37,7 @@
       left: 12px;
       right: 12px;
       bottom: max(12px, env(safe-area-inset-bottom));
-      z-index: 8;
+      z-index: 30;
       display: flex;
       align-items: center;
       gap: 8px;
@@ -50,6 +50,13 @@
       font-family: Arial, sans-serif;
       box-sizing: border-box;
       pointer-events: auto;
+      transition: opacity .18s ease, transform .18s ease, visibility .18s ease;
+    }
+    .player-controls.is-hidden {
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(14px);
+      pointer-events: none;
     }
     .player-controls button {
       margin: 0;
@@ -417,6 +424,7 @@
     let lastLoaderProgress = 0;
     let stallTimer = null;
     let stallRecoveryCount = 0;
+    let controlsIdleTimer = null;
 
     window.__CHANNEL_HLS_URL__ = HLS_URL;
     window.__CHANNEL_HLS_URLS__ = ALL_TARGET_URLS;
@@ -436,11 +444,22 @@
       video.setAttribute('controls', '');
       video.disablePictureInPicture = false;
       video.style.pointerEvents = 'auto';
-      playerControls.hidden = false;
+      showPlayerControls();
       updatePlayerControls();
     }
 
     keepNativeControlsVisible();
+
+    function showPlayerControls(keepVisible = false) {
+      playerControls.hidden = false;
+      playerControls.classList.remove('is-hidden');
+      clearTimeout(controlsIdleTimer);
+      if (!keepVisible && !video.paused) {
+        controlsIdleTimer = setTimeout(() => {
+          if (!video.paused) playerControls.classList.add('is-hidden');
+        }, 2600);
+      }
+    }
 
     function formatTime(value) {
       const seconds = Math.max(0, Math.floor(Number(value) || 0));
@@ -460,12 +479,14 @@
     }
 
     async function togglePlayback() {
+      showPlayerControls(true);
       if (video.paused) await playWithSound();
       else video.pause();
       updatePlayerControls();
     }
 
     function toggleMute() {
+      showPlayerControls(true);
       video.muted = !video.muted;
       if (!video.muted && video.volume === 0) video.volume = 1;
       updatePlayerControls();
@@ -474,7 +495,7 @@
     async function toggleFullscreen() {
       try {
         if (document.fullscreenElement) await document.exitFullscreen();
-        else await (video.requestFullscreen ? video.requestFullscreen() : document.documentElement.requestFullscreen());
+        else await document.documentElement.requestFullscreen();
       } catch (error) {
         console.warn('Plein ecran indisponible:', error);
       }
@@ -483,13 +504,20 @@
     controlPlay.addEventListener('click', togglePlayback);
     controlMute.addEventListener('click', toggleMute);
     controlVolume.addEventListener('input', () => {
+      showPlayerControls(true);
       video.volume = Number(controlVolume.value);
       video.muted = video.volume === 0;
       updatePlayerControls();
     });
     controlFullscreen.addEventListener('click', toggleFullscreen);
     ['click', 'dblclick', 'pointerdown'].forEach(eventName => {
-      playerControls.addEventListener(eventName, event => event.stopPropagation());
+      playerControls.addEventListener(eventName, event => {
+        showPlayerControls(true);
+        event.stopPropagation();
+      });
+    });
+    ['mousemove', 'pointermove', 'touchstart', 'click'].forEach(eventName => {
+      document.addEventListener(eventName, () => showPlayerControls(), { passive: true });
     });
 
     function channelInitials() {
@@ -686,7 +714,7 @@
     video.addEventListener('loadedmetadata', () => { keepNativeControlsVisible(); setLoadingProgress(95, 'Presque pret'); });
     video.addEventListener('canplay', () => { keepNativeControlsVisible(); hideLoader('Flux pret'); });
     video.addEventListener('playing', () => { keepNativeControlsVisible(); hideLoader('Flux actif'); });
-    video.addEventListener('pause', updatePlayerControls);
+    video.addEventListener('pause', () => { showPlayerControls(true); updatePlayerControls(); });
     video.addEventListener('volumechange', updatePlayerControls);
     video.addEventListener('waiting', scheduleStallRecovery);
     video.addEventListener('stalled', scheduleStallRecovery);
