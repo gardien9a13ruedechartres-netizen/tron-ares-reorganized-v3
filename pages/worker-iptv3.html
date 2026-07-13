@@ -34,19 +34,21 @@
     }
     .player-controls {
       position: fixed;
-      left: 12px;
-      right: 12px;
-      bottom: max(12px, env(safe-area-inset-bottom));
+      left: 0;
+      right: 0;
+      bottom: 0;
       z-index: 30;
       display: flex;
-      align-items: center;
-      gap: 8px;
-      min-height: 44px;
-      padding: 8px;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 10px;
+      padding: 18px 16px calc(12px + env(safe-area-inset-bottom));
       color: #f9fafb;
-      background: rgba(0, 0, 0, .68);
-      border: 1px solid rgba(255, 255, 255, .18);
-      border-radius: 8px;
+      background: linear-gradient(to top,
+        rgba(0, 0, 0, .88) 0%,
+        rgba(0, 0, 0, .74) 48%,
+        rgba(0, 0, 0, .38) 78%,
+        rgba(0, 0, 0, 0) 100%);
       font-family: Arial, sans-serif;
       box-sizing: border-box;
       pointer-events: auto;
@@ -55,45 +57,165 @@
     .player-controls.is-hidden {
       opacity: 0;
       visibility: hidden;
-      transform: translateY(14px);
+      transform: translateY(18px);
       pointer-events: none;
+    }
+    .controls-top,
+    .controls-bottom {
+      display: flex;
+      align-items: center;
+      width: 100%;
+    }
+    .controls-top {
+      padding: 0 2px;
+    }
+    .controls-bottom {
+      gap: 10px;
+      min-height: 34px;
     }
     .player-controls button {
       margin: 0;
-      min-height: 34px;
-      padding: 8px 10px;
+      min-height: 0;
+      padding: 0;
       color: #fff;
-      background: rgba(17, 24, 39, .92);
-      border: 1px solid rgba(255, 255, 255, .22);
-      border-radius: 6px;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      appearance: none;
+      -webkit-appearance: none;
     }
-    .player-controls input[type="range"] {
-      width: min(28vw, 160px);
-      accent-color: #60a5fa;
+    .control-icon {
+      width: 32px;
+      height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 18px;
+      line-height: 1;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .08);
+      border: 1px solid rgba(255, 255, 255, .14);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      transition: background .18s ease, border-color .18s ease, transform .18s ease;
+    }
+    .control-icon:hover,
+    .control-icon:focus-visible {
+      background: rgba(255, 255, 255, .16);
+      border-color: rgba(255, 255, 255, .26);
+      transform: scale(1.03);
+      outline: none;
+    }
+    .control-label {
+      display: inline-block;
+      transform: translateY(-1px);
+      pointer-events: none;
     }
     .control-time {
-      margin-left: auto;
-      min-width: 54px;
-      font-size: 12px;
-      font-weight: 700;
-      color: #dbeafe;
-      text-align: right;
+      min-width: 92px;
+      font-size: 13px;
+      font-variant-numeric: tabular-nums;
+      color: rgba(255, 255, 255, .92);
       white-space: nowrap;
+    }
+    .control-spacer {
+      flex: 1;
+      min-width: 8px;
+    }
+    .control-live-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 50px;
+      height: 24px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: #cf202f;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      box-shadow: 0 0 0 1px rgba(255,255,255,.12) inset;
+    }
+    .control-live-badge[hidden] {
+      display: none !important;
+    }
+    .control-volume {
+      width: min(18vw, 112px);
+    }
+    .control-seek,
+    .control-volume {
+      appearance: none;
+      -webkit-appearance: none;
+      background: transparent;
+      accent-color: #fff;
+    }
+    .control-seek {
+      width: 100%;
+      margin: 0;
+    }
+    .control-seek::-webkit-slider-runnable-track,
+    .control-volume::-webkit-slider-runnable-track {
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .35);
+    }
+    .control-seek::-moz-range-track,
+    .control-volume::-moz-range-track {
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .35);
+    }
+    .control-seek::-webkit-slider-thumb,
+    .control-volume::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      margin-top: -5px;
+      border-radius: 50%;
+      border: 0;
+      background: #fff;
+      box-shadow: 0 1px 4px rgba(0,0,0,.45);
+    }
+    .control-seek::-moz-range-thumb,
+    .control-volume::-moz-range-thumb {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 0;
+      background: #fff;
+      box-shadow: 0 1px 4px rgba(0,0,0,.45);
+    }
+    .control-seek.is-disabled,
+    .player-controls.is-live .control-seek {
+      opacity: .5;
+    }
+    .control-seek:disabled {
+      cursor: default;
     }
     @media (max-width: 520px) {
       .player-controls {
-        left: 8px;
-        right: 8px;
-        gap: 6px;
-        padding: 6px;
+        gap: 8px;
+        padding: 16px 10px calc(10px + env(safe-area-inset-bottom));
       }
-      .player-controls button {
-        min-height: 32px;
-        padding: 7px 8px;
-        font-size: 12px;
+      .controls-bottom {
+        gap: 8px;
       }
-      .player-controls input[type="range"] { width: 90px; }
-      .control-time { display: none; }
+      .control-time {
+        min-width: 72px;
+        font-size: 11px;
+      }
+      .control-volume {
+        width: 74px;
+      }
+      .control-live-badge {
+        min-width: 42px;
+        padding: 0 8px;
+        font-size: 10px;
+      }
     }
     #overlay {
       position: fixed;
@@ -237,11 +359,24 @@
 <body>
   <video id="video" controls autoplay playsinline webkit-playsinline></video>
   <div id="playerControls" class="player-controls" aria-label="Controles du lecteur">
-    <button id="controlPlay" type="button">Pause</button>
-    <button id="controlMute" type="button">Son</button>
-    <input id="controlVolume" type="range" min="0" max="1" step="0.05" value="1" aria-label="Volume">
-    <div id="controlTime" class="control-time">Direct</div>
-    <button id="controlFullscreen" type="button">Plein ecran</button>
+    <div class="controls-top">
+      <input id="controlSeek" class="control-seek" type="range" min="0" max="100" step="0.1" value="100" aria-label="Position de lecture">
+    </div>
+    <div class="controls-bottom">
+      <button id="controlPlay" class="control-icon" type="button" aria-label="Pause" title="Pause">
+        <span id="controlPlayIcon" class="control-label" aria-hidden="true">❚❚</span>
+      </button>
+      <div id="controlTime" class="control-time">Direct</div>
+      <button id="controlMute" class="control-icon" type="button" aria-label="Couper le son" title="Couper le son">
+        <span id="controlMuteIcon" class="control-label" aria-hidden="true">🔊</span>
+      </button>
+      <input id="controlVolume" class="control-volume" type="range" min="0" max="1" step="0.05" value="1" aria-label="Volume">
+      <div id="controlLive" class="control-live-badge" hidden>Direct</div>
+      <div class="control-spacer" aria-hidden="true"></div>
+      <button id="controlFullscreen" class="control-icon" type="button" aria-label="Plein écran" title="Plein écran">
+        <span id="controlFullscreenIcon" class="control-label" aria-hidden="true">⛶</span>
+      </button>
+    </div>
   </div>
   <div id="loadingOverlay">
     <div class="loader-content">
@@ -412,11 +547,16 @@
     const loadingProgressFill = document.getElementById('loadingProgressFill');
     const loadingProgressText = document.getElementById('loadingProgressText');
     const playerControls = document.getElementById('playerControls');
+    const controlSeek = document.getElementById('controlSeek');
     const controlPlay = document.getElementById('controlPlay');
+    const controlPlayIcon = document.getElementById('controlPlayIcon');
     const controlMute = document.getElementById('controlMute');
+    const controlMuteIcon = document.getElementById('controlMuteIcon');
     const controlVolume = document.getElementById('controlVolume');
     const controlTime = document.getElementById('controlTime');
+    const controlLive = document.getElementById('controlLive');
     const controlFullscreen = document.getElementById('controlFullscreen');
+    const controlFullscreenIcon = document.getElementById('controlFullscreenIcon');
     let hlsInstance = null;
     let retryTimer = null;
     let retryDelayMs = 3000;
@@ -425,6 +565,7 @@
     let stallTimer = null;
     let stallRecoveryCount = 0;
     let controlsIdleTimer = null;
+    let isDraggingSeek = false;
 
     window.__CHANNEL_HLS_URL__ = HLS_URL;
     window.__CHANNEL_HLS_URLS__ = ALL_TARGET_URLS;
@@ -463,19 +604,58 @@
 
     function formatTime(value) {
       const seconds = Math.max(0, Math.floor(Number(value) || 0));
-      const minutes = Math.floor(seconds / 60);
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
       const rest = String(seconds % 60).padStart(2, '0');
-      return minutes + ':' + rest;
+      return hours > 0
+        ? hours + ':' + String(minutes).padStart(2, '0') + ':' + rest
+        : minutes + ':' + rest;
+    }
+
+    function isSeekableMedia() {
+      return Number.isFinite(video.duration) && video.duration > 0 && video.duration !== Infinity;
+    }
+
+    function syncFullscreenButton() {
+      const isFullscreen = !!document.fullscreenElement;
+      controlFullscreen.setAttribute('aria-label', isFullscreen ? 'Quitter le plein écran' : 'Plein écran');
+      controlFullscreen.title = isFullscreen ? 'Quitter le plein écran' : 'Plein écran';
+      controlFullscreenIcon.textContent = isFullscreen ? '🗗' : '⛶';
     }
 
     function updatePlayerControls() {
       if (!controlPlay) return;
-      controlPlay.textContent = video.paused ? 'Lecture' : 'Pause';
-      controlMute.textContent = (video.muted || video.volume === 0) ? 'Muet' : 'Son';
-      controlVolume.value = String(video.muted ? 0 : video.volume);
-      controlTime.textContent = Number.isFinite(video.duration) && video.duration > 0
-        ? formatTime(video.currentTime) + ' / ' + formatTime(video.duration)
-        : 'Direct';
+      const isPaused = video.paused;
+      const isMuted = video.muted || video.volume === 0;
+      const seekable = isSeekableMedia();
+
+      controlPlay.setAttribute('aria-label', isPaused ? 'Lecture' : 'Pause');
+      controlPlay.title = isPaused ? 'Lecture' : 'Pause';
+      controlPlayIcon.textContent = isPaused ? '▶' : '❚❚';
+
+      controlMute.setAttribute('aria-label', isMuted ? 'Activer le son' : 'Couper le son');
+      controlMute.title = isMuted ? 'Activer le son' : 'Couper le son';
+      controlMuteIcon.textContent = isMuted ? '🔇' : '🔊';
+      controlVolume.value = String(isMuted ? 0 : video.volume);
+
+      playerControls.classList.toggle('is-live', !seekable);
+      controlSeek.disabled = !seekable;
+      controlSeek.classList.toggle('is-disabled', !seekable);
+      controlLive.hidden = seekable;
+
+      if (seekable) {
+        const duration = Math.max(0, Number(video.duration) || 0);
+        const currentTime = Math.max(0, Math.min(Number(video.currentTime) || 0, duration));
+        if (!isDraggingSeek && duration > 0) {
+          controlSeek.value = String((currentTime / duration) * 100);
+        }
+        controlTime.textContent = formatTime(currentTime) + ' / ' + formatTime(duration);
+      } else {
+        if (!isDraggingSeek) controlSeek.value = '100';
+        controlTime.textContent = 'Direct';
+      }
+
+      syncFullscreenButton();
     }
 
     async function togglePlayback() {
@@ -528,6 +708,24 @@
       video.muted = video.volume === 0;
       updatePlayerControls();
     });
+    controlSeek.addEventListener('input', () => {
+      if (!isSeekableMedia()) return;
+      showPlayerControls(true);
+      isDraggingSeek = true;
+      const duration = Math.max(0, Number(video.duration) || 0);
+      const targetTime = duration * (Number(controlSeek.value) / 100);
+      controlTime.textContent = formatTime(targetTime) + ' / ' + formatTime(duration);
+    });
+    const commitSeek = () => {
+      if (!isSeekableMedia()) return;
+      const duration = Math.max(0, Number(video.duration) || 0);
+      video.currentTime = duration * (Number(controlSeek.value) / 100);
+      isDraggingSeek = false;
+      updatePlayerControls();
+    };
+    controlSeek.addEventListener('change', commitSeek);
+    controlSeek.addEventListener('pointerup', commitSeek);
+    controlSeek.addEventListener('touchend', commitSeek, { passive: true });
     bindControl(controlFullscreen, toggleFullscreen);
     ['click', 'dblclick', 'pointerdown'].forEach(eventName => {
       playerControls.addEventListener(eventName, event => {
@@ -733,18 +931,22 @@
     }
 
     playBtn.addEventListener('click', playWithSound);
-    video.addEventListener('loadedmetadata', () => { keepNativeControlsVisible(); setLoadingProgress(95, 'Presque pret'); });
-    video.addEventListener('canplay', () => { keepNativeControlsVisible(); hideLoader('Flux pret'); });
-    video.addEventListener('playing', () => { keepNativeControlsVisible(); hideLoader('Flux actif'); });
+    video.addEventListener('loadedmetadata', () => { keepNativeControlsVisible(); setLoadingProgress(95, 'Presque pret'); updatePlayerControls(); });
+    video.addEventListener('durationchange', updatePlayerControls);
+    video.addEventListener('canplay', () => { keepNativeControlsVisible(); hideLoader('Flux pret'); updatePlayerControls(); });
+    video.addEventListener('playing', () => { keepNativeControlsVisible(); hideLoader('Flux actif'); updatePlayerControls(); });
     video.addEventListener('pause', () => { showPlayerControls(true); updatePlayerControls(); });
     video.addEventListener('volumechange', updatePlayerControls);
     video.addEventListener('waiting', scheduleStallRecovery);
     video.addEventListener('stalled', scheduleStallRecovery);
     video.addEventListener('playing', clearStallRecovery);
+    video.addEventListener('seeking', updatePlayerControls);
+    video.addEventListener('seeked', () => { isDraggingSeek = false; updatePlayerControls(); });
     video.addEventListener('timeupdate', () => {
       updatePlayerControls();
       if (!video.paused && video.readyState >= 3) clearStallRecovery();
     });
+    document.addEventListener('fullscreenchange', updatePlayerControls);
     attachSource();
 
     console.log('URL HLS ciblee:', HLS_URL);
