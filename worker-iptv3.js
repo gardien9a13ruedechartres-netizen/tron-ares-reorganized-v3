@@ -16,6 +16,26 @@ const LIVE_CHANNELS = new Map([
     { id: '1860727909951701e97ea9-0552c051c6ab52', name: 'CANAL+', quality: 'HD', source: 'basic' },
     { id: '2421698062be5948a928f5-92450af7cf51c2', name: 'CANAL+', quality: '4K', source: 'basic' }
   ] }],
+  ['canal-gr-ecran', { search: 'CANAL+ GRAND ECRAN', exact: 'CANAL+ GRAND ECRAN', country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: '25747471736b92892116f8-9e6e1088c67bdc', name: 'CANAL+ GRAND ECRAN', quality: null, source: 'cable' },
+    { id: '25481898009fc4dd96f118-ebf0455ad2d869', name: 'CANAL+ GRAND ECRAN', quality: 'FHD', source: 'satellite' },
+    { id: '764514828841cf1a946e8-a890035e372e41', name: 'CANAL+ GRAND ECRAN', quality: 'FHD', source: 'basic' },
+    { id: '13730112351c691b47ed3b-da2c3b2aa7a4bb', name: 'CANAL+ GRAND ECRAN', quality: 'HD', source: 'basic' }
+  ] }],
+  ['canal-cinema', { search: 'CANAL+ CINEMA', exact: 'CANAL+ CINEMA', country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: '3980730104297e5d74da47-ae5ab89e27534a', name: 'CANAL+ CINEMA', quality: null, source: 'cable' },
+    { id: '7815381974235226e525c-08b89a15623fb6', name: 'CANAL+ CINEMA', quality: null, source: 'satellite' },
+    { id: '2898387495718e66ec3be-c854d47617c539', name: 'CANAL+ CINEMA', quality: 'FHD', source: 'satellite' },
+    { id: '9740778764179b9c92456-b9dbab0a86d0a4', name: 'CANAL+ CINEMA', quality: 'HD', source: 'satellite' }
+  ] }],
+  ['canal-series', { search: 'CANAL+ SERIES', exact: 'CANAL+ SERIES', country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
+    { id: '907568283b0bf51903416-605791705e0c48', name: 'CANAL+ SERIES', quality: null, source: 'cable' },
+    { id: '412353586256ea59f8b7b5-48ff83e119e784', name: 'CANAL+ SERIES', quality: null, source: 'satellite' },
+    { id: '2141653939fb56edcf97da-a136854c58391a', name: 'CANAL+ SERIES', quality: 'FHD', source: 'satellite' },
+    { id: '2354397782686b0f84677f-21272264449cba', name: 'CANAL+ SERIES', quality: 'FHD', source: 'basic' },
+    { id: '296255235587d472eb18c8-a46767322a9b14', name: 'CANAL+ SERIES', quality: 'HD', source: 'satellite' },
+    { id: '31229880095478070434b1-49a1fae602e682', name: 'CANAL+ SERIES', quality: '4K', source: 'basic' }
+  ] }],
   ['6ter', { search: '6TER', exact: '6TER', country: 'France', prefer: ['FHD', 'HD', null] }],
   ['cstar', { search: 'C STAR', exact: 'C STAR', country: 'France', prefer: ['FHD', 'HD', null], fallbackIds: [
     { id: '3480426017c3f2b3e10a98-4eb0ab5a31ab6c', name: 'C STAR', quality: 'FHD', source: 'satellite' },

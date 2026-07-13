@@ -475,31 +475,31 @@
     {
       "id": "canal-gr-ecran",
       "name": "CANAL+ Gr. Ecran",
-      "url": "https://cluone.dad:443/live/99F7CFCD396779DC13E1FEF9BA9F9AE8/28.m3u8",
+      "url": "/pages/worker-iptv3.html?channel=canal-gr-ecran",
       "logo": {
         "type": "image",
         "value": "media/image/canal-plus-grand-ecran.webp"
       },
       "group": "Cinema",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "canal-cinema",
       "name": "CANAL+ Cinema",
-      "url": "https://cluone.dad:443/live/99F7CFCD396779DC13E1FEF9BA9F9AE8/13.m3u8",
+      "url": "/pages/worker-iptv3.html?channel=canal-cinema",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20Canal%2B%20Cin%C3%A9ma%202009.svg"
       },
       "group": "Cinema",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "canal-series",
       "name": "CANAL+ SERIES",
-      "url": "/pages/players/canal-plus-series.html",
+      "url": "/pages/worker-iptv3.html?channel=canal-series",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20Canal%2B%20S%C3%A9ries%202013.svg"
