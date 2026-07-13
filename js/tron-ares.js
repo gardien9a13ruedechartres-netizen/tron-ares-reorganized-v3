@@ -493,8 +493,8 @@ function startOfflineAutoRetry() {
   offlineRetryIntervalId = setInterval(() => {
     if (!offlineMode) return;
     if (!currentEntry || !currentEntry.url) return;
-    // Retente la lecture du flux original
-    playUrl(currentEntry);
+    // Retente toujours la source principale LiveWatch en premier.
+    playUrl(workerPrimaryRetryEntry(currentEntry));
   }, 15000);
 }
 
@@ -513,7 +513,9 @@ function startStallWatchdog() {
     const now = Date.now();
     const stuckMs = now - (lastProgressTs || now);
     if (stuckMs > 18000) {
-      enterOfflineMode('Flux interrompu / plus de données');
+      if (!switchToNextWorkerSource('flux bloqué depuis 18 secondes')) {
+        enterOfflineMode('Flux interrompu / plus de données');
+      }
     }
   }, 2000);
 }
@@ -1844,6 +1846,52 @@ const WORKER_WIDEIPTV_PAGE_CHANNELS = new Set([
   'sic-noticias'
 ]);
 
+// Secours inter-Workers restaurés depuis l'ancien player worker-iptv3.html.
+// IMPORTANT : LiveWatch/IPTV3 reste toujours la source n°1.
+// Ces URLs ne sont essayées qu'après un échec fatal ou un blocage persistant.
+const WORKER_IPTV3_STABLE_FALLBACKS = Object.freeze({
+  cmtv: [
+    {
+      family: 'wideiptv',
+      channel: 'cmtvpt',
+      label: 'Clouding / WideIPTV',
+      url: `${WORKER_WIDEIPTV_DIRECT_BASE}/cmtvpt/master.m3u8`
+    }
+  ],
+  btv: [
+    {
+      family: 'iptv',
+      channel: 'btv',
+      label: 'Deviantart / IPTV stable',
+      url: `${WORKER_IPTV_DIRECT_BASE}/btv/master.m3u8`
+    }
+  ],
+  'sport-tv-1': [
+    {
+      family: 'iptv',
+      channel: 'sport-tv-1',
+      label: 'Deviantart / IPTV stable',
+      url: `${WORKER_IPTV_DIRECT_BASE}/sport-tv-1/master.m3u8`
+    }
+  ],
+  'sport-tv-5': [
+    {
+      family: 'iptv',
+      channel: 'sport-tv-5',
+      label: 'Deviantart / IPTV stable',
+      url: `${WORKER_IPTV_DIRECT_BASE}/sport-tv-5/master.m3u8`
+    }
+  ],
+  m6: [
+    {
+      family: 'iptv',
+      channel: 'm6fr',
+      label: 'Deviantart / IPTV stable',
+      url: `${WORKER_IPTV_DIRECT_BASE}/m6fr/master.m3u8`
+    }
+  ]
+});
+
 function parseWorkerPageUrl(rawUrl) {
   const value = String(rawUrl || '').trim();
   if (!value) return null;
@@ -1899,20 +1947,156 @@ function isWorkerDirectPageUrl(rawUrl) {
   return !!resolveWorkerPageDirectStream(rawUrl);
 }
 
+function resolveWorkerDirectStreamUrl(rawUrl) {
+  const parsed = parseWorkerPageUrl(rawUrl);
+  if (!parsed) return null;
+
+  const pathname = parsed.pathname.toLowerCase().replace(/\/$/, '');
+  const definitions = [
+    {
+      family: 'iptv3',
+      base: new URL(WORKER_IPTV3_DIRECT_BASE),
+      pattern: /^\/api\/iptv\/live\/([a-z0-9-]+)\/master\.m3u8$/i
+    },
+    {
+      family: 'iptv',
+      base: new URL(WORKER_IPTV_DIRECT_BASE),
+      pattern: /^\/api\/iptv\/live\/([a-z0-9-]+)\/master\.m3u8$/i
+    },
+    {
+      family: 'wideiptv',
+      base: new URL(WORKER_WIDEIPTV_DIRECT_BASE, window.location.href),
+      pattern: /^\/api\/worker-live\/([a-z0-9-]+)\/master\.m3u8$/i
+    }
+  ];
+
+  for (const definition of definitions) {
+    if (parsed.origin !== definition.base.origin) continue;
+    const match = pathname.match(definition.pattern);
+    if (!match) continue;
+    return {
+      family: definition.family,
+      channel: String(match[1] || '').toLowerCase(),
+      url: parsed.href
+    };
+  }
+
+  return null;
+}
+
+function buildWorkerFailoverChain(resolved) {
+  if (!resolved || !resolved.url) return [];
+
+  const primary = {
+    family: resolved.family,
+    channel: resolved.channel,
+    label: resolved.family === 'iptv3' ? 'LiveWatch / IPTV3' : 'Source Worker',
+    url: resolved.url
+  };
+
+  // LiveWatch/IPTV3 doit toujours rester premier.
+  if (resolved.family !== 'iptv3') return [primary];
+
+  const stableFallbacks = WORKER_IPTV3_STABLE_FALLBACKS[resolved.channel] || [];
+  return [primary, ...stableFallbacks.map(item => ({ ...item }))];
+}
+
 function normalizeWorkerEntryForPlayback(entry) {
   if (!entry || !entry.url) return entry;
 
-  const resolved = resolveWorkerPageDirectStream(entry.url);
+  // Une entrée déjà enrichie garde son index courant et toute sa chaîne.
+  if (Array.isArray(entry.workerFailoverChain) && entry.workerFailoverChain.length) {
+    return {
+      ...entry,
+      isIframe: false,
+      workerDirectPlayback: true
+    };
+  }
+
+  const fromPage = resolveWorkerPageDirectStream(entry.url);
+  const resolved = fromPage || resolveWorkerDirectStreamUrl(entry.url);
   if (!resolved) return entry;
+
+  const failoverChain = buildWorkerFailoverChain(resolved);
+  const primary = failoverChain[0] || resolved;
 
   return {
     ...entry,
-    url: resolved.url,
+    url: primary.url,
     isIframe: false,
-    workerPageUrl: entry.workerPageUrl || entry.url,
-    workerChannel: resolved.channel,
-    workerFamily: resolved.family,
-    workerDirectPlayback: true
+    workerPageUrl: entry.workerPageUrl || (fromPage ? entry.url : ''),
+    workerChannel: primary.channel,
+    workerFamily: primary.family,
+    workerDirectPlayback: true,
+    workerPrimaryUrl: primary.url,
+    workerPrimaryChannel: resolved.channel,
+    workerFailoverChain: failoverChain,
+    workerSourceIndex: 0,
+    workerSourceLabel: primary.label
+  };
+}
+
+function currentWorkerSourceIndex(entry) {
+  const chain = Array.isArray(entry?.workerFailoverChain) ? entry.workerFailoverChain : [];
+  if (!chain.length) return -1;
+
+  const explicit = Number(entry?.workerSourceIndex);
+  if (Number.isInteger(explicit) && explicit >= 0 && explicit < chain.length) return explicit;
+
+  const currentUrl = String(entry?.url || '');
+  return chain.findIndex(item => String(item?.url || '') === currentUrl);
+}
+
+function switchToNextWorkerSource(reason) {
+  const entry = currentEntry;
+  const chain = Array.isArray(entry?.workerFailoverChain) ? entry.workerFailoverChain : [];
+  if (chain.length < 2) return false;
+
+  const currentIndex = Math.max(0, currentWorkerSourceIndex(entry));
+  const nextIndex = currentIndex + 1;
+  const next = chain[nextIndex];
+  if (!next || !next.url) return false;
+
+  const nextEntry = {
+    ...entry,
+    url: next.url,
+    isIframe: false,
+    workerDirectPlayback: true,
+    workerFamily: next.family,
+    workerChannel: next.channel,
+    workerSourceIndex: nextIndex,
+    workerSourceLabel: next.label,
+    workerFailoverReason: String(reason || 'source indisponible')
+  };
+
+  console.warn(
+    '[ARES] LiveWatch indisponible, bascule secours :',
+    entry.workerSourceLabel || chain[currentIndex]?.label || 'source principale',
+    '→',
+    next.label,
+    '-',
+    reason || 'erreur'
+  );
+  setStatus(`Secours ${next.label} — ${reason || 'source principale indisponible'}`);
+  playUrl(nextEntry);
+  return true;
+}
+
+function workerPrimaryRetryEntry(entry) {
+  const chain = Array.isArray(entry?.workerFailoverChain) ? entry.workerFailoverChain : [];
+  const primary = chain[0];
+  if (!primary || !primary.url) return entry;
+
+  return {
+    ...entry,
+    url: primary.url,
+    isIframe: false,
+    workerDirectPlayback: true,
+    workerFamily: primary.family,
+    workerChannel: primary.channel,
+    workerSourceIndex: 0,
+    workerSourceLabel: primary.label,
+    workerFailoverReason: ''
   };
 }
 
@@ -4131,22 +4315,30 @@ modeLabel = 'DASH';
     }
   } else if (isProbablyHls(url) && window.Hls && Hls.isSupported()) {
     hlsInstance = new Hls();
-    hlsInstance.loadSource(url);
-    hlsInstance.attachMedia(videoEl);
-    modeLabel = 'HLS';
+    const hlsForThisAttempt = hlsInstance;
+    const urlForThisAttempt = url;
+    hlsForThisAttempt.loadSource(url);
+    hlsForThisAttempt.attachMedia(videoEl);
+    modeLabel = Number(entry.workerSourceIndex || 0) > 0 ? 'HLS-SECOURS' : 'HLS';
 
-    hlsInstance.on(Hls.Events.MANIFEST_PARSED, refreshTrackMenus);
-    hlsInstance.on(Hls.Events.AUDIO_TRACKS_UPDATED, refreshTrackMenus);
-    hlsInstance.on(Hls.Events.SUBTITLE_TRACKS_UPDATED, refreshTrackMenus);
-    hlsInstance.on(Hls.Events.AUDIO_TRACK_SWITCHED, refreshTrackMenus);
-    hlsInstance.on(Hls.Events.SUBTITLE_TRACK_SWITCH, refreshTrackMenus);
+    hlsForThisAttempt.on(Hls.Events.MANIFEST_PARSED, refreshTrackMenus);
+    hlsForThisAttempt.on(Hls.Events.AUDIO_TRACKS_UPDATED, refreshTrackMenus);
+    hlsForThisAttempt.on(Hls.Events.SUBTITLE_TRACKS_UPDATED, refreshTrackMenus);
+    hlsForThisAttempt.on(Hls.Events.AUDIO_TRACK_SWITCHED, refreshTrackMenus);
+    hlsForThisAttempt.on(Hls.Events.SUBTITLE_TRACK_SWITCH, refreshTrackMenus);
 
-    hlsInstance.on(Hls.Events.ERROR, (event, data) => {
+    hlsForThisAttempt.on(Hls.Events.ERROR, (event, data) => {
+      // Ignore les événements retardés provenant d'une ancienne tentative détruite.
+      if (hlsInstance !== hlsForThisAttempt || String(currentEntry?.url || '') !== urlForThisAttempt) return;
+
       console.error('HLS error:', data);
 
-      // Fatal = manifest introuvable / flux down / erreur média irréparable
+      // LiveWatch reste prioritaire. En cas d'échec fatal, on tente ensuite
+      // le secours Clouding/Deviantart déclaré pour la chaîne, puis OFFLINE.
       if (data && data.fatal && currentEntry && !offlineMode) {
-        enterOfflineMode('HLS fatal');
+        if (!switchToNextWorkerSource(`HLS fatal: ${data.details || data.type || 'erreur'}`)) {
+          enterOfflineMode('HLS fatal');
+        }
       }
     });
   } else {
@@ -4181,7 +4373,11 @@ modeLabel = 'DASH';
   videoEl.play().catch(() => {});
 
   updateNowPlaying(entry, modeLabel);
-  setStatus('Lecture en cours');
+  if (Number(entry.workerSourceIndex || 0) > 0) {
+    setStatus(`Lecture secours — ${entry.workerSourceLabel || 'source stable'}`);
+  } else {
+    setStatus('Lecture en cours');
+  }
 
   // Chromecast: si une session est connectée, on tente d’envoyer le nouveau flux
   try {
@@ -5299,9 +5495,15 @@ videoEl?.addEventListener('error', () => {
     return;
   }
 
-  // Si le flux principal tombe, on passe sur le MP4 OFFLINE
-  if (!offlineMode && currentEntry && !currentEntry.isIframe) {
-    enterOfflineMode('Erreur de lecture');
+  // Avec HLS.js, la bascule est gérée par Hls.Events.ERROR afin d'éviter
+  // deux bascules simultanées pour la même panne.
+  if (hlsInstance) return;
+
+  // HLS natif / vidéo directe : tente le secours stable avant le MP4 OFFLINE.
+  if (!offlineMode && currentEntry && !isEffectiveIframeEntry(currentEntry)) {
+    if (!switchToNextWorkerSource('erreur de lecture native')) {
+      enterOfflineMode('Erreur de lecture');
+    }
     return;
   }
 
