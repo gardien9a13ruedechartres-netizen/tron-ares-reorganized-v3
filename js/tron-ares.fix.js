@@ -4937,10 +4937,6 @@ prevBtn?.addEventListener('click', playPrev);
     return /\/pages\/serie-film(?:\.html)?(?:[?#]|$)/i.test(String(url || ''));
   }
 
-  function isDirectInteractionPlayerUrl(url) {
-    return /\/pages\/worker-iptv3(?:\.html)?(?:[?#]|$)/i.test(String(url || ''));
-  }
-
   function isSerieFilmOverlayActive() {
     return !!iframeOverlay &&
       !iframeOverlay.classList.contains('hidden') &&
@@ -4986,17 +4982,14 @@ prevBtn?.addEventListener('click', playPrev);
     const tab = getActiveTabKey ? getActiveTabKey() : '';
     const overlayOpen = !iframeOverlay.classList.contains('hidden');
     const url = String(currentEntry?.url || '');
-    const directInteractionPlayer = isDirectInteractionPlayerUrl(url);
-    const shouldCatch = overlayOpen && !directInteractionPlayer && (
+    const shouldCatch = overlayOpen && (
       (!!currentEntry?.isIframe && !isSerieFilmOverlayUrl(url)) ||
       tab === 'iframes' ||
       /\/pages\/worker-/i.test(url) ||
       /\/pages\/worker-iptv/i.test(url) ||
       /\/pages\/(?:cmtvpt|rtp1|rtp2|sic|worker-tf1|worker-6ter|worker-cstar|worker-m6fr)(?:\.html)?(?:[?#]|$)/i.test(url)
     );
-
     catcher.style.pointerEvents = shouldCatch ? 'auto' : 'none';
-    catcher.style.display = directInteractionPlayer ? 'none' : 'block';
   }
 
   function onWheelZap(event) {
