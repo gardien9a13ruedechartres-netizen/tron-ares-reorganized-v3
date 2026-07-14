@@ -425,6 +425,14 @@
     let stallTimer = null;
     let stallRecoveryCount = 0;
     let controlsIdleTimer = null;
+    let primaryProbeTimer = null;
+    let primaryProbeSuccessCount = 0;
+    let primaryProbeBusy = false;
+    const PRIMARY_PROBE_INITIAL_MS = 90000;
+    const PRIMARY_PROBE_INTERVAL_MS = 90000;
+    const PRIMARY_PROBE_TIMEOUT_MS = 7000;
+    const PRIMARY_PROBE_REQUIRED_SUCCESSES = 2;
+    const STATIC_SOURCE_TYPES = new Set(['clouding', 'lovetier']);
 
     window.__CHANNEL_HLS_URL__ = HLS_URL;
     window.__CHANNEL_HLS_URLS__ = ALL_TARGET_URLS;
@@ -629,6 +637,67 @@
       stallRecoveryCount = 0;
     }
 
+    function clearPrimaryProbe() {
+      if (primaryProbeTimer) {
+        clearTimeout(primaryProbeTimer);
+        primaryProbeTimer = null;
+      }
+      primaryProbeSuccessCount = 0;
+      primaryProbeBusy = false;
+    }
+
+    function schedulePrimaryProbe(delay = PRIMARY_PROBE_INTERVAL_MS) {
+      if (!BASE_HLS_URL || !FALLBACK_HLS_URL || sourceMode !== 'fallback' || primaryProbeTimer) return;
+      primaryProbeTimer = setTimeout(probePrimarySource, delay);
+    }
+
+    function isLivewatchSourceResponse(response) {
+      if (!response || !response.ok) return false;
+      const sourceType = String(response.headers.get('X-Ares-Source-Type') || '').trim().toLowerCase();
+      if (!sourceType) return true;
+      return !STATIC_SOURCE_TYPES.has(sourceType);
+    }
+
+    async function probePrimarySource() {
+      primaryProbeTimer = null;
+      if (!BASE_HLS_URL || !FALLBACK_HLS_URL || sourceMode !== 'fallback' || primaryProbeBusy) return;
+      primaryProbeBusy = true;
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), PRIMARY_PROBE_TIMEOUT_MS);
+      try {
+        const probeUrl = withRefresh(BASE_HLS_URL);
+        const response = await fetch(probeUrl, {
+          method: 'HEAD',
+          cache: 'no-store',
+          signal: controller.signal
+        });
+        if (isLivewatchSourceResponse(response)) {
+          primaryProbeSuccessCount += 1;
+          console.info('LiveWatch probe OK:', primaryProbeSuccessCount, '/', PRIMARY_PROBE_REQUIRED_SUCCESSES);
+        } else {
+          primaryProbeSuccessCount = 0;
+          console.info('LiveWatch probe ignore source:', response.headers.get('X-Ares-Source-Type') || response.status);
+        }
+      } catch (error) {
+        primaryProbeSuccessCount = 0;
+        console.info('LiveWatch probe indisponible:', error && error.message ? error.message : error);
+      } finally {
+        clearTimeout(timeout);
+        primaryProbeBusy = false;
+      }
+
+      if (sourceMode !== 'fallback') return;
+      if (primaryProbeSuccessCount >= PRIMARY_PROBE_REQUIRED_SUCCESSES) {
+        console.info('Retour automatique vers LiveWatch apres secours stable');
+        clearPrimaryProbe();
+        retryDelayMs = 3000;
+        clearStallRecovery();
+        attachSource(withRefresh(BASE_HLS_URL));
+        return;
+      }
+      schedulePrimaryProbe(PRIMARY_PROBE_INTERVAL_MS);
+    }
+
     function sourceModeFor(url) {
       return FALLBACK_HLS_URL && String(url || '').startsWith(FALLBACK_HLS_URL) ? 'fallback' : 'primary';
     }
@@ -643,6 +712,7 @@
       sourceMode = 'fallback';
       retryDelayMs = 3000;
       clearStallRecovery();
+      schedulePrimaryProbe(PRIMARY_PROBE_INITIAL_MS);
       attachSource(withRefresh(FALLBACK_HLS_URL));
       return true;
     }
@@ -684,6 +754,8 @@
       keepNativeControlsVisible();
       HLS_URL = String(nextUrl || '');
       sourceMode = sourceModeFor(HLS_URL);
+      if (sourceMode !== 'fallback') clearPrimaryProbe();
+      else schedulePrimaryProbe(PRIMARY_PROBE_INITIAL_MS);
       window.__CHANNEL_HLS_URL__ = HLS_URL;
       window.__CHANNEL_SOURCE_MODE__ = sourceMode;
       urlLabel.textContent = HLS_URL || '(aucune URL)';
