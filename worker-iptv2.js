@@ -58,9 +58,9 @@ function rewritePlaylist(text, upstreamUrl, publicOrigin) {
       return makeProxyUrl(trimmed, upstreamUrl, publicOrigin);
     }
 
-    return line.replace(/URI="([^"]+)"/g, (match, value) => {
-      return `URI="${makeProxyUrl(value, upstreamUrl, publicOrigin)}"`;
-    });
+    return line
+      .replace(/URI="([^"]+)"/g, (match, value) => `URI="${makeProxyUrl(value, upstreamUrl, publicOrigin)}"`)
+      .replace(/URI='([^']+)'/g, (match, value) => `URI='${makeProxyUrl(value, upstreamUrl, publicOrigin)}'`);
   }).join('\n');
 }
 
@@ -68,7 +68,8 @@ function corsHeaders() {
   return {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
-    'Access-Control-Allow-Headers': 'Range'
+    'Access-Control-Allow-Headers': 'Range, Accept, Content-Type',
+    'Access-Control-Expose-Headers': 'Content-Length, Content-Range, Accept-Ranges, X-Ares-Channel, X-Ares-Resolved-At'
   };
 }
 
@@ -207,11 +208,24 @@ async function proxyIptv(request, requestUrl) {
   const range = request.headers.get('Range');
   if (range) upstreamHeaders.set('Range', range);
 
-  const upstream = await fetch(upstreamUrl, {
-    method: request.method,
-    headers: upstreamHeaders,
-    redirect: 'follow'
-  });
+  let upstream;
+  try {
+    upstream = await fetch(upstreamUrl, {
+      method: request.method,
+      headers: upstreamHeaders,
+      redirect: 'follow'
+    });
+  } catch (error) {
+    const headers = new Headers(corsHeaders());
+    headers.set('Content-Type', 'text/plain; charset=utf-8');
+    headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+    headers.set('CDN-Cache-Control', 'no-store');
+    headers.set('Cloudflare-CDN-Cache-Control', 'no-store');
+    return new Response(`Upstream fetch failed: ${error?.message || 'network error'}`, {
+      status: 502,
+      headers
+    });
+  }
 
   const contentType = upstream.headers.get('Content-Type') || 'application/octet-stream';
   const isPlaylist = request.method === 'GET' &&

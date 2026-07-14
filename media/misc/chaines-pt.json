@@ -1,371 +1,490 @@
 {
-"type": "tron-channels",
-"version": 2,
-"listType": "pt",
-"title": "Chaînes Portugal",
-"country": "PT",
-"exportedAt": "2026-03-10T21:00:00Z",
-"items": [
-{
-"id": "cmtv",
-"name": "CMTV",
-"url": "https://player-engine.com/pages/worker-iptv3.html?channel=cmtv",
-"logo": { "type": "image", "value": "/media/cmtv.png" },
-"group": "Généraliste",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "rtp1",
-"name": "RTP1",
-"url": "/pages/worker-iptv.html?channel=rtp1",
-"logo": { "type": "image", "value": "/media/rtp1.jpg" },
-"group": "Généraliste",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "rtp2",
-"name": "RTP2",
-"url": "/pages/worker-iptv.html?channel=rtp2",
-"logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/commons/f/f9/RTP2_logo_2016.svg" },
-"group": "Généraliste",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "rtpn",
-"name": "RTPN",
-"url": "/pages/worker-iptv?channel=rtp3",
-"logo": { "type": "image", "value": "/media/rtpn.png" },
-"group": "News",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "rtp-africa",
-"name": "RTP África",
-"url": "/pages/worker-iptv.html?channel=rtp-africa",
-"logo": { "type": "image", "value": "https://commons.wikimedia.org/wiki/Special:FilePath/RTP%20%C3%81frica%202026.svg" },
-"group": "Generalista",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "odisseia-pt",
-"name": "Odisseia PT",
-"url": "/pages/worker-iptv.html?channel=odisseia-pt",
-"logo": { "type": "image", "value": "https://www.freeshot.live/upload/source/CanalOdisseia-logo.png" },
-"group": "Documentarios",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "national-geographic-pt",
-"name": "National Geographic PT",
-"url": "/pages/worker-iptv.html?channel=national-geographic-pt",
-"logo": { "type": "image", "value": "https://commons.wikimedia.org/wiki/Special:FilePath/National%20Geographic%20Channel.svg" },
-"group": "Documentarios",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "tvi",
-"name": "TVI",
-"url": "/pages/worker-iptv.html?channel=tvi",
-"logo": { "type": "image", "value": "/media/TVI.png" },
-"group": "Généraliste",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "tvir",
-"name": "TVI Reality",
-"url": "/pages/worker-iptv.html?channel=tvi-reality",
-"logo": { "type": "image", "value": "/media/tvir.jpg" },
-"group": "Divertissement",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "tvif",
-"name": "TVI Ficção",
-"url": "/pages/worker-iptv.html?channel=tvi-ficcao",
-"logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/commons/0/0d/TVI_Fic%C3%A7%C3%A3o_%282017%29.png" },
-"group": "Divertissement",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "v-mais",
-"name": "V MAIS",
-"url": "/pages/worker-iptv.html?channel=v-plus-tvi",
-"logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/pt/e/ef/V%2BTVI_Logo.png" },
-"group": "Divertissement",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "tvi-int",
-"name": "TVI Internacional",
-"url": "/pages/worker-iptv.html?channel=tvi-internacional",
-"logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/commons/0/08/TVI_Internacional_%282017%29.png" },
-"group": "Généraliste",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "sic",
-"name": "SIC",
-"url": "/pages/worker-iptv.html?channel=sic",
-"logo": { "type": "image", "value": "/media/sic.jpg" },
-"group": "Généraliste",
-"isFavorite": false,
-  "isIframe": true
-},
-{
-"id": "sicn",
-"name": "SIC Notícias",
-"url": "/pages/worker-iptv.html?channel=sic-noticias",
-"logo": { "type": "image", "value": "/media/SICN.webp" },
-"group": "News",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "cnnpt",
-"name": "CNN Portugal",
-"url": "/pages/worker-iptv.html?channel=cnn-portugal",
-"logo": { "type": "image", "value": "/media/cnn.png" },
-"group": "News",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "fifaplus",
-"name": "FIFA+",
-"url": "https://f7ccf7fc.wurl.com/master/f36d25e7e52f1ba8d7e56eb859c636563214f541/UmFrdXRlblRWLXB0X0ZJRkFQbHVzUG9ydHVndWVzZV9ITFM/playlist.m3u8",
-"logo": { "type": "image", "value": "https://toppng.com/uploads/preview/fifa-logo-png-hd-11659693816tfaadada2y.png" },
-"group": "Sport",
-"isFavorite": false,
-"isIframe": false
-},
-{
-"id": "canal11",
-"name": "Canal 11",
-"url": "/pages/worker-iptv.html?channel=canal-11",
-"logo": { "type": "image", "value": "https://www.zupimages.net/up/24/13/qj99.jpg" },
-"group": "Sport",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "btv",
-"name": "BTV",
-"url": "/pages/worker-iptv3.html?channel=btv",
-"logo": { "type": "image", "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/btv-hd-pt.png" },
-"group": "Sport",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "SCP",
-"name": "SCP",
-"url": "/pages/worker-iptv.html?channel=sporting",
-"logo": { "type": "image", "value": "https://pplware.sapo.pt/wp-content/uploads/2017/06/scp_00.jpg" },
-"group": "Sport",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "PORTO canal",
-"name": "PORTO canal",
-"url": "/pages/worker-iptv.html?channel=porto-canal",
-"logo": { "type": "image", "value": "https://www.freeshot.live/upload/source/Porto-Canal-logo.png" },
-"group": "Sport",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "eurosport1pt",
-"name": "Eurosport 1 PT",
-"url": "/pages/worker-iptv.html?channel=eurosport-1-pt",
-"logo": { "type": "image", "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Eurosport%20Logo%20%282011-2015%29.svg" },
-"group": "Sport",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "eurosport2pt",
-"name": "Eurosport 2 PT",
-"url": "/pages/worker-iptv.html?channel=eurosport-2-pt",
-"logo": { "type": "image", "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Eurosport%202%20Logo%20%282011-2015%29.svg" },
-"group": "Sport",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "abola",
-"name": "A Bola TV",
-"url": "/pages/worker-iptv.html?channel=a-bola",
-"logo": { "type": "image", "value": "https://www.telesatellite.com/images/actu/a/abolatv.jpg" },
-"group": "Sport",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "sporttv+",
-"name": "Sport TV +",
-"url": "/pages/worker-iptv.html?channel=sport-tv-plus",
-"logo": { "type": "image", "value": "https://cdn.jsdelivr.net/gh/imagesloads/images@main/img_1a740cf3fae8c219.png" },
-"group": "Sport",
-"isFavorite": false,
-"isIframe": true
-},
-
-{
-"id": "sporttv1",
-"name": "Sport TV 1",
-"url": "/pages/worker-iptv3.html?channel=sport-tv-1",
-"logo": { "type": "image", "value": "/media/sport-tv-1.png" },
-"group": "Sport",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "sporttv2",
-"name": "Sport TV 2",
-"url": "/pages/worker-iptv.html?channel=sport-tv-2",
-"logo": { "type": "image", "value": "/media/sport-tv-2.png" },
-"group": "Sport",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "sporttv3",
-"name": "Sport TV 3",
-"url": "/pages/worker-iptv.html?channel=sport-tv-3",
-"logo": { "type": "image", "value": "/media/sport-tv-3.png" },
-"group": "Sport",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "sporttv4",
-"name": "Sport TV 4",
-"url": "/pages/worker-iptv.html?channel=sport-tv-4",
-"logo": { "type": "image", "value": "/media/sport-tv-4.png" },
-"group": "Sport",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "sporttv5",
-"name": "Sport TV 5",
-"url": "/pages/worker-iptv3.html?channel=sport-tv-5",
-"logo": { "type": "image", "value": "/media/sport-tv-5.png" },
-"group": "Sport",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "dazn1",
-"name": "DAZN 1 PT",
-"url": "/pages/worker-iptv.html?channel=dazn-1",
-"logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/commons/7/71/DAZN_logo.svg" },
-"group": "Sport",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "dazn2",
-"name": "DAZN 2 PT",
-"url": "/pages/worker-iptv.html?channel=dazn-2",
-"logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/commons/7/71/DAZN_logo.svg" },
-"group": "Sport",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "dazn3",
-"name": "DAZN 3 PT",
-"url": "/pages/worker-iptv.html?channel=dazn-3",
-"logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/commons/7/71/DAZN_logo.svg" },
-"group": "Sport",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "dazn4",
-"name": "DAZN 4 PT",
-"url": "/pages/worker-iptv.html?channel=dazn-4",
-"logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/commons/7/71/DAZN_logo.svg" },
-"group": "Sport",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "dazn5",
-"name": "DAZN 5 PT",
-"url": "/pages/worker-iptv.html?channel=dazn-5",
-"logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/commons/7/71/DAZN_logo.svg" },
-"group": "Sport",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "disney-pixar",
-"name": "DISNEY+ PIXAR",
-"url": "/pages/worker-iptv3.html?channel=disney-pixar",
-"logo": { "type": "image", "value": "/media/disney-pixar.png" },
-"group": "Jeunesse",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "canal panda",
-"name": "CANAL PANDA",
-"url": "/pages/worker-iptv3.html?channel=canal-panda",
-"logo": { "type": "image", "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/canal-panda-pt.png" },
-"group": "Jeunesse",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "Record",
-"name": "RECORD",
-"url": "/pages/worker-iptv.html?channel=record-europa",
-"logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/commons/5/58/Logomarca_da_Record_%282023%29.webp" },
-"group": "Généraliste",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "historia-pt",
-"name": "História PT",
-"url": "/pages/worker-iptv.html?channel=historia-pt",
-"logo": { "type": "image", "value": "https://upload.wikimedia.org/wikipedia/commons/0/07/Historia_2022_logo.webp" },
-"group": "Documentarios",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "discovery-pt",
-"name": "Discovery PT",
-"url": "/pages/worker-iptv.html?channel=discovery-pt",
-"logo": { "type": "image", "value": "https://cdn.jsdelivr.net/gh/imagesloads/images@main/img_f3aea22ba48bd5da.png" },
-"group": "Documentarios",
-"isFavorite": false,
-"isIframe": true
-},
-{
-"id": "tcv-int",
-"name": "TCV Internacional",
-"url": "/pages/worker-iptv.html?channel=tcv-int",
-"logo": { "type": "image", "value": "https://cdn.jsdelivr.net/gh/imagesloads/images@main/img_43acca95f234ef0a.png" },
-"group": "Généraliste",
-"isFavorite": false,
-"isIframe": true
-}
-]
+  "type": "tron-channels",
+  "version": 2,
+  "listType": "pt",
+  "title": "Chaînes Portugal",
+  "country": "PT",
+  "exportedAt": "2026-03-10T21:00:00Z",
+  "items": [
+    {
+      "id": "cmtv",
+      "name": "CMTV",
+      "url": "https://player-engine.com/pages/worker-iptv3.html?channel=cmtv",
+      "logo": {
+        "type": "image",
+        "value": "/media/cmtv.png"
+      },
+      "group": "Généraliste",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "rtp1",
+      "name": "RTP1",
+      "url": "https://player-engine.com/api/worker-live/rtp1/master.m3u8",
+      "logo": {
+        "type": "image",
+        "value": "/media/rtp1.jpg"
+      },
+      "group": "Généraliste",
+      "isFavorite": false,
+      "isIframe": false
+    },
+    {
+      "id": "rtp2",
+      "name": "RTP2",
+      "url": "https://player-engine.com/api/worker-live/rtp2/master.m3u8",
+      "logo": {
+        "type": "image",
+        "value": "https://upload.wikimedia.org/wikipedia/commons/f/f9/RTP2_logo_2016.svg"
+      },
+      "group": "Généraliste",
+      "isFavorite": false,
+      "isIframe": false
+    },
+    {
+      "id": "rtpn",
+      "name": "RTPN",
+      "url": "https://player-engine.com/api/worker-live/rtp3/master.m3u8",
+      "logo": {
+        "type": "image",
+        "value": "/media/rtpn.png"
+      },
+      "group": "News",
+      "isFavorite": false,
+      "isIframe": false
+    },
+    {
+      "id": "rtp-africa",
+      "name": "RTP África",
+      "url": "https://player-engine.com/api/worker-live/rtp-africa/master.m3u8",
+      "logo": {
+        "type": "image",
+        "value": "https://commons.wikimedia.org/wiki/Special:FilePath/RTP%20%C3%81frica%202026.svg"
+      },
+      "group": "Generalista",
+      "isFavorite": false,
+      "isIframe": false
+    },
+    {
+      "id": "odisseia-pt",
+      "name": "Odisseia PT",
+      "url": "https://player-engine.com/api/worker-live/odisseia-pt/master.m3u8",
+      "logo": {
+        "type": "image",
+        "value": "https://www.freeshot.live/upload/source/CanalOdisseia-logo.png"
+      },
+      "group": "Documentarios",
+      "isFavorite": false,
+      "isIframe": false
+    },
+    {
+      "id": "national-geographic-pt",
+      "name": "National Geographic PT",
+      "url": "https://player-engine.com/api/worker-live/national-geographic-pt/master.m3u8",
+      "logo": {
+        "type": "image",
+        "value": "https://commons.wikimedia.org/wiki/Special:FilePath/National%20Geographic%20Channel.svg"
+      },
+      "group": "Documentarios",
+      "isFavorite": false,
+      "isIframe": false
+    },
+    {
+      "id": "tvi",
+      "name": "TVI",
+      "url": "https://player-engine.com/api/worker-live/tvi/master.m3u8",
+      "logo": {
+        "type": "image",
+        "value": "/media/TVI.png"
+      },
+      "group": "Généraliste",
+      "isFavorite": false,
+      "isIframe": false
+    },
+    {
+      "id": "tvir",
+      "name": "TVI Reality",
+      "url": "https://player-engine.com/api/worker-live/tvi-reality/master.m3u8",
+      "logo": {
+        "type": "image",
+        "value": "/media/tvir.jpg"
+      },
+      "group": "Divertissement",
+      "isFavorite": false,
+      "isIframe": false
+    },
+    {
+      "id": "tvif",
+      "name": "TVI Ficção",
+      "url": "https://player-engine.com/api/worker-live/tvi-ficcao/master.m3u8",
+      "logo": {
+        "type": "image",
+        "value": "https://upload.wikimedia.org/wikipedia/commons/0/0d/TVI_Fic%C3%A7%C3%A3o_%282017%29.png"
+      },
+      "group": "Divertissement",
+      "isFavorite": false,
+      "isIframe": false
+    },
+    {
+      "id": "v-mais",
+      "name": "V MAIS",
+      "url": "https://player-engine.com/api/worker-live/v-plus-tvi/master.m3u8",
+      "logo": {
+        "type": "image",
+        "value": "https://upload.wikimedia.org/wikipedia/pt/e/ef/V%2BTVI_Logo.png"
+      },
+      "group": "Divertissement",
+      "isFavorite": false,
+      "isIframe": false
+    },
+    {
+      "id": "tvi-int",
+      "name": "TVI Internacional",
+      "url": "https://player-engine.com/api/worker-live/tvi-internacional/master.m3u8",
+      "logo": {
+        "type": "image",
+        "value": "https://upload.wikimedia.org/wikipedia/commons/0/08/TVI_Internacional_%282017%29.png"
+      },
+      "group": "Généraliste",
+      "isFavorite": false,
+      "isIframe": false
+    },
+    {
+      "id": "sic",
+      "name": "SIC",
+      "url": "https://player-engine.com/api/worker-live/sic/master.m3u8",
+      "logo": {
+        "type": "image",
+        "value": "/media/sic.jpg"
+      },
+      "group": "Généraliste",
+      "isFavorite": false,
+      "isIframe": false
+    },
+    {
+      "id": "sicn",
+      "name": "SIC Notícias",
+      "url": "https://player-engine.com/api/worker-live/sic-noticias/master.m3u8",
+      "logo": {
+        "type": "image",
+        "value": "/media/SICN.webp"
+      },
+      "group": "News",
+      "isFavorite": false,
+      "isIframe": false
+    },
+    {
+      "id": "cnnpt",
+      "name": "CNN Portugal",
+      "url": "https://player-engine.com/api/worker-live/cnn-portugal/master.m3u8",
+      "logo": {
+        "type": "image",
+        "value": "/media/cnn.png"
+      },
+      "group": "News",
+      "isFavorite": false,
+      "isIframe": false
+    },
+    {
+      "id": "fifaplus",
+      "name": "FIFA+",
+      "url": "https://f7ccf7fc.wurl.com/master/f36d25e7e52f1ba8d7e56eb859c636563214f541/UmFrdXRlblRWLXB0X0ZJRkFQbHVzUG9ydHVndWVzZV9ITFM/playlist.m3u8",
+      "logo": {
+        "type": "image",
+        "value": "https://toppng.com/uploads/preview/fifa-logo-png-hd-11659693816tfaadada2y.png"
+      },
+      "group": "Sport",
+      "isFavorite": false,
+      "isIframe": false
+    },
+    {
+      "id": "canal11",
+      "name": "Canal 11",
+      "url": "/pages/worker-iptv.html?channel=canal-11",
+      "logo": {
+        "type": "image",
+        "value": "https://www.zupimages.net/up/24/13/qj99.jpg"
+      },
+      "group": "Sport",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "btv",
+      "name": "BTV",
+      "url": "/pages/worker-iptv3.html?channel=btv",
+      "logo": {
+        "type": "image",
+        "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/btv-hd-pt.png"
+      },
+      "group": "Sport",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "SCP",
+      "name": "SCP",
+      "url": "/pages/worker-iptv.html?channel=sporting",
+      "logo": {
+        "type": "image",
+        "value": "https://pplware.sapo.pt/wp-content/uploads/2017/06/scp_00.jpg"
+      },
+      "group": "Sport",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "PORTO canal",
+      "name": "PORTO canal",
+      "url": "https://player-engine.com/api/worker-live/porto-canal/master.m3u8",
+      "logo": {
+        "type": "image",
+        "value": "https://www.freeshot.live/upload/source/Porto-Canal-logo.png"
+      },
+      "group": "Sport",
+      "isFavorite": false,
+      "isIframe": false
+    },
+    {
+      "id": "eurosport1pt",
+      "name": "Eurosport 1 PT",
+      "url": "/pages/worker-iptv.html?channel=eurosport-1-pt",
+      "logo": {
+        "type": "image",
+        "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Eurosport%20Logo%20%282011-2015%29.svg"
+      },
+      "group": "Sport",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "eurosport2pt",
+      "name": "Eurosport 2 PT",
+      "url": "/pages/worker-iptv.html?channel=eurosport-2-pt",
+      "logo": {
+        "type": "image",
+        "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Eurosport%202%20Logo%20%282011-2015%29.svg"
+      },
+      "group": "Sport",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "abola",
+      "name": "A Bola TV",
+      "url": "/pages/worker-iptv.html?channel=a-bola",
+      "logo": {
+        "type": "image",
+        "value": "https://www.telesatellite.com/images/actu/a/abolatv.jpg"
+      },
+      "group": "Sport",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "sporttv+",
+      "name": "Sport TV +",
+      "url": "/pages/worker-iptv.html?channel=sport-tv-plus",
+      "logo": {
+        "type": "image",
+        "value": "https://cdn.jsdelivr.net/gh/imagesloads/images@main/img_1a740cf3fae8c219.png"
+      },
+      "group": "Sport",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "sporttv1",
+      "name": "Sport TV 1",
+      "url": "/pages/worker-iptv3.html?channel=sport-tv-1",
+      "logo": {
+        "type": "image",
+        "value": "/media/sport-tv-1.png"
+      },
+      "group": "Sport",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "sporttv2",
+      "name": "Sport TV 2",
+      "url": "/pages/worker-iptv.html?channel=sport-tv-2",
+      "logo": {
+        "type": "image",
+        "value": "/media/sport-tv-2.png"
+      },
+      "group": "Sport",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "sporttv3",
+      "name": "Sport TV 3",
+      "url": "/pages/worker-iptv.html?channel=sport-tv-3",
+      "logo": {
+        "type": "image",
+        "value": "/media/sport-tv-3.png"
+      },
+      "group": "Sport",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "sporttv4",
+      "name": "Sport TV 4",
+      "url": "/pages/worker-iptv.html?channel=sport-tv-4",
+      "logo": {
+        "type": "image",
+        "value": "/media/sport-tv-4.png"
+      },
+      "group": "Sport",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "sporttv5",
+      "name": "Sport TV 5",
+      "url": "/pages/worker-iptv3.html?channel=sport-tv-5",
+      "logo": {
+        "type": "image",
+        "value": "/media/sport-tv-5.png"
+      },
+      "group": "Sport",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "dazn1",
+      "name": "DAZN 1 PT",
+      "url": "/pages/worker-iptv.html?channel=dazn-1",
+      "logo": {
+        "type": "image",
+        "value": "https://upload.wikimedia.org/wikipedia/commons/7/71/DAZN_logo.svg"
+      },
+      "group": "Sport",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "dazn2",
+      "name": "DAZN 2 PT",
+      "url": "/pages/worker-iptv.html?channel=dazn-2",
+      "logo": {
+        "type": "image",
+        "value": "https://upload.wikimedia.org/wikipedia/commons/7/71/DAZN_logo.svg"
+      },
+      "group": "Sport",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "dazn3",
+      "name": "DAZN 3 PT",
+      "url": "/pages/worker-iptv.html?channel=dazn-3",
+      "logo": {
+        "type": "image",
+        "value": "https://upload.wikimedia.org/wikipedia/commons/7/71/DAZN_logo.svg"
+      },
+      "group": "Sport",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "dazn4",
+      "name": "DAZN 4 PT",
+      "url": "/pages/worker-iptv.html?channel=dazn-4",
+      "logo": {
+        "type": "image",
+        "value": "https://upload.wikimedia.org/wikipedia/commons/7/71/DAZN_logo.svg"
+      },
+      "group": "Sport",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "dazn5",
+      "name": "DAZN 5 PT",
+      "url": "/pages/worker-iptv.html?channel=dazn-5",
+      "logo": {
+        "type": "image",
+        "value": "https://upload.wikimedia.org/wikipedia/commons/7/71/DAZN_logo.svg"
+      },
+      "group": "Sport",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "disney-pixar",
+      "name": "DISNEY+ PIXAR",
+      "url": "/pages/worker-iptv3.html?channel=disney-pixar",
+      "logo": {
+        "type": "image",
+        "value": "/media/disney-pixar.png"
+      },
+      "group": "Jeunesse",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "canal panda",
+      "name": "CANAL PANDA",
+      "url": "/pages/worker-iptv3.html?channel=canal-panda",
+      "logo": {
+        "type": "image",
+        "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/canal-panda-pt.png"
+      },
+      "group": "Jeunesse",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "Record",
+      "name": "RECORD",
+      "url": "https://player-engine.com/api/worker-live/record-europa/master.m3u8",
+      "logo": {
+        "type": "image",
+        "value": "https://upload.wikimedia.org/wikipedia/commons/5/58/Logomarca_da_Record_%282023%29.webp"
+      },
+      "group": "Généraliste",
+      "isFavorite": false,
+      "isIframe": false
+    },
+    {
+      "id": "historia-pt",
+      "name": "História PT",
+      "url": "https://player-engine.com/api/worker-live/historia-pt/master.m3u8",
+      "logo": {
+        "type": "image",
+        "value": "https://upload.wikimedia.org/wikipedia/commons/0/07/Historia_2022_logo.webp"
+      },
+      "group": "Documentarios",
+      "isFavorite": false,
+      "isIframe": false
+    },
+    {
+      "id": "discovery-pt",
+      "name": "Discovery PT",
+      "url": "https://player-engine.com/api/worker-live/discovery-pt/master.m3u8",
+      "logo": {
+        "type": "image",
+        "value": "https://cdn.jsdelivr.net/gh/imagesloads/images@main/img_f3aea22ba48bd5da.png"
+      },
+      "group": "Documentarios",
+      "isFavorite": false,
+      "isIframe": false
+    },
+    {
+      "id": "tcv-int",
+      "name": "TCV Internacional",
+      "url": "https://player-engine.com/api/worker-live/tcv-int/master.m3u8",
+      "logo": {
+        "type": "image",
+        "value": "https://cdn.jsdelivr.net/gh/imagesloads/images@main/img_43acca95f234ef0a.png"
+      },
+      "group": "Généraliste",
+      "isFavorite": false,
+      "isIframe": false
+    }
+  ]
 }

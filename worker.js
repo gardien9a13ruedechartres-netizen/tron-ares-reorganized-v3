@@ -98,6 +98,16 @@ function programSummary(item) {
   };
 }
 
+function streamCorsHeaders(extra = {}) {
+  return {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+    'Access-Control-Allow-Headers': 'Range, Accept, Content-Type',
+    'Access-Control-Expose-Headers': 'Content-Length, Content-Range, Accept-Ranges, X-Ares-Channel, X-Ares-Resolved-At',
+    ...extra
+  };
+}
+
 async function resolveSportTvEpg(request) {
   const cors = {
     'Access-Control-Allow-Origin': '*',
@@ -194,18 +204,15 @@ async function resolveWorkerLive(request, requestUrl, channelKey) {
   if (request.method === 'OPTIONS') {
     return new Response(null, {
       status: 204,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS'
-      }
+      headers: streamCorsHeaders()
     });
   }
   if (request.method !== 'GET' && request.method !== 'HEAD') {
-    return new Response('Method not allowed', { status: 405 });
+    return new Response('Method not allowed', { status: 405, headers: streamCorsHeaders() });
   }
 
   const channel = LIVE_CHANNELS.get(channelKey);
-  if (!channel) return new Response('Unknown channel', { status: 404 });
+  if (!channel) return new Response('Unknown channel', { status: 404, headers: streamCorsHeaders() });
 
   const sourceUrl = `https://popcdn.day/player.php?stream=${channel}`;
   const source = await fetch(sourceUrl, {
@@ -216,7 +223,7 @@ async function resolveWorkerLive(request, requestUrl, channelKey) {
     redirect: 'follow'
   });
   if (!source.ok) {
-    return new Response(`Source unavailable (${source.status})`, { status: 502 });
+    return new Response(`Source unavailable (${source.status})`, { status: 502, headers: streamCorsHeaders() });
   }
 
   const sourceHtml = await source.text();
@@ -226,7 +233,7 @@ async function resolveWorkerLive(request, requestUrl, channelKey) {
   );
   const match = sourceHtml.match(pattern);
   if (!match || !match[1]) {
-    return new Response('Dynamic token unavailable', { status: 502 });
+    return new Response('Dynamic token unavailable', { status: 502, headers: streamCorsHeaders() });
   }
 
   const embedUrl = match[0];
@@ -235,7 +242,7 @@ async function resolveWorkerLive(request, requestUrl, channelKey) {
     redirect: 'follow'
   });
   if (!embed.ok) {
-    return new Response(`Embed activation failed (${embed.status})`, { status: 502 });
+    return new Response(`Embed activation failed (${embed.status})`, { status: 502, headers: streamCorsHeaders() });
   }
   await embed.arrayBuffer();
 
@@ -248,18 +255,17 @@ async function resolveWorkerLive(request, requestUrl, channelKey) {
   });
   const masterText = await master.text();
   if (!master.ok || !masterText.trimStart().startsWith('#EXTM3U')) {
-    return new Response(`Master validation failed (${master.status})`, { status: 502 });
+    return new Response(`Master validation failed (${master.status})`, { status: 502, headers: streamCorsHeaders() });
   }
 
-  const headers = new Headers({
+  const headers = new Headers(streamCorsHeaders({
     'Content-Type': 'application/vnd.apple.mpegurl',
-    'Access-Control-Allow-Origin': '*',
     'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
     'CDN-Cache-Control': 'no-store',
     'Cloudflare-CDN-Cache-Control': 'no-store',
     'X-Ares-Channel': channel,
     'X-Ares-Resolved-At': new Date().toISOString()
-  });
+  }));
   if (request.method === 'HEAD') return new Response(null, { status: 200, headers });
 
   return new Response(
@@ -272,30 +278,26 @@ async function proxyCmtvpt(request, requestUrl) {
   if (request.method === 'OPTIONS') {
     return new Response(null, {
       status: 204,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
-        'Access-Control-Allow-Headers': 'Range'
-      }
+      headers: streamCorsHeaders()
     });
   }
   if (request.method !== 'GET' && request.method !== 'HEAD') {
-    return new Response('Method not allowed', { status: 405 });
+    return new Response('Method not allowed', { status: 405, headers: streamCorsHeaders() });
   }
 
   const rawUrl = requestUrl.searchParams.get('url') || '';
   if (!rawUrl || rawUrl.length > 4096) {
-    return new Response('Missing or invalid upstream URL', { status: 400 });
+    return new Response('Missing or invalid upstream URL', { status: 400, headers: streamCorsHeaders() });
   }
 
   let upstreamUrl;
   try {
     upstreamUrl = new URL(rawUrl);
   } catch (_) {
-    return new Response('Invalid upstream URL', { status: 400 });
+    return new Response('Invalid upstream URL', { status: 400, headers: streamCorsHeaders() });
   }
   if (!isAllowedCmtvptUrl(upstreamUrl)) {
-    return new Response('Upstream not allowed', { status: 403 });
+    return new Response('Upstream not allowed', { status: 403, headers: streamCorsHeaders() });
   }
 
   const upstreamHeaders = new Headers({
@@ -304,22 +306,34 @@ async function proxyCmtvpt(request, requestUrl) {
   const range = request.headers.get('Range');
   if (range) upstreamHeaders.set('Range', range);
 
-  const upstream = await fetch(upstreamUrl, {
-    method: request.method,
-    headers: upstreamHeaders,
-    redirect: 'follow'
-  });
+  let upstream;
+  try {
+    upstream = await fetch(upstreamUrl, {
+      method: request.method,
+      headers: upstreamHeaders,
+      redirect: 'follow'
+    });
+  } catch (error) {
+    return new Response(`Upstream fetch failed: ${error?.message || 'network error'}`, {
+      status: 502,
+      headers: streamCorsHeaders({
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        'CDN-Cache-Control': 'no-store',
+        'Cloudflare-CDN-Cache-Control': 'no-store'
+      })
+    });
+  }
 
   const contentType = upstream.headers.get('Content-Type') || 'application/octet-stream';
   const isPlaylist = request.method === 'GET' &&
     (contentType.includes('mpegurl') || upstreamUrl.pathname.endsWith('.m3u8'));
-  const headers = new Headers({
+  const headers = new Headers(streamCorsHeaders({
     'Content-Type': contentType,
-    'Access-Control-Allow-Origin': '*',
     'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
     'CDN-Cache-Control': 'no-store',
     'Cloudflare-CDN-Cache-Control': 'no-store'
-  });
+  }));
 
   for (const name of ['Accept-Ranges', 'Content-Range']) {
     const value = upstream.headers.get(name);
