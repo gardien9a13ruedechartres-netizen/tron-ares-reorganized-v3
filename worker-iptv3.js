@@ -1,16 +1,52 @@
 const LIVEWATCH_ORIGIN = 'https://livewatch.top';
 const LOVETIER_ORIGIN = 'https://deviantart.lovetier.bz';
+const LOVETIER_PLAYER_ORIGIN = 'https://lovetier.bz';
+const LOVETIER_WORKER_ORIGIN = 'https://tron-ares-iptv.victor-salema-53d.workers.dev';
+const ENGINE_WORKER_ORIGIN = 'https://tron-ares-engine.victor-salema-53d.workers.dev';
+const CLOUDING_ORIGIN = 'https://clouding.wideiptv.top';
+const CLOUDING_PLAYER_ORIGIN = 'https://popcdn.day';
 const PROXY_PATH = '/api/iptv/proxy';
 const SOURCE_CACHE_TTL_MS = 120000;
 const SOURCE_TEST_TIMEOUT_MS = 5000;
 const sourceCache = new Map();
+const LOVETIER_ALLOWED_PATHS = [
+  '/BTV1/',
+  '/SPT1/',
+  '/SPT5/',
+  '/CANALPLFR/',
+  '/M6FR/',
+  '/TF1FR/'
+];
+const CLOUDING_ALLOWED_PATHS = [
+  '/CMTVPT/'
+];
+
+function legacyLovetierFallback(channelKey, label, lovetierChannel = channelKey.toUpperCase()) {
+  return {
+    id: `legacy-lovetier-${channelKey}`,
+    name: `${label} Lovetier worker`,
+    quality: null,
+    source: 'lovetier',
+    lovetierChannel
+  };
+}
+
+function engineCloudingFallback(channelKey, label) {
+  return {
+    id: `legacy-clouding-${channelKey}`,
+    name: `${label} Clouding worker`,
+    quality: null,
+    source: 'clouding',
+    cloudingChannel: channelKey.toUpperCase()
+  };
+}
 
 const LIVE_CHANNELS = new Map([
     ["tf1", { search: "TF1", exact: "TF1", country: "France", prefer: [null, "HD", "FHD"], sourcePrefer: ["satellite", "cable", "basic"], fallbackIds: [
     { id: "2913521200ae11151a1fc4-b5746bd2522e5c", name: "TF1", quality: "FHD", source: "satellite" },
     { id: "1334669376bf508b8ed995-e1dc32893923cf", name: "TF1", quality: null, source: "cable" } 
   ], staticFallbacks: [
-    { id: "lovetier-tf1fr", name: "TF1 Lovetier", quality: null, source: "lovetier", url: `${LOVETIER_ORIGIN}/TF1FR/index.m3u8` }
+    legacyLovetierFallback('tf1fr', 'TF1', 'TF1FR')
   ] }], 
   ['canal-plus', { search: 'CANAL+', exact: 'CANAL+', country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
     { id: '1839597702d549646f5393-2ac8f134e5cc3d', name: 'CANAL+', quality: null, source: 'cable' },
@@ -18,6 +54,8 @@ const LIVE_CHANNELS = new Map([
     { id: '298747715234a3a02669b8-699fafb82ad92d', name: 'CANAL+', quality: 'FHD', source: 'basic' },
     { id: '1860727909951701e97ea9-0552c051c6ab52', name: 'CANAL+', quality: 'HD', source: 'basic' },
     { id: '2421698062be5948a928f5-92450af7cf51c2', name: 'CANAL+', quality: '4K', source: 'basic' }
+  ], staticFallbacks: [
+    legacyLovetierFallback('canalplfr', 'CANAL+', 'CANALPLFR')
   ] }],
   ['canal-gr-ecran', { search: 'CANAL+ GRAND ECRAN', exact: 'CANAL+ GRAND ECRAN', country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
     { id: '25747471736b92892116f8-9e6e1088c67bdc', name: 'CANAL+ GRAND ECRAN', quality: null, source: 'cable' },
@@ -48,10 +86,14 @@ const LIVE_CHANNELS = new Map([
   ['cmtv', { search: 'CM TV', exact: 'CM TV', country: 'Portugal', prefer: [null, 'HD', 'FHD'], fallbackIds: [
     { id: '384601660517fa3552a29f-6816b5893e5bcc', name: 'CM TV', quality: null, source: 'basic' },
     { id: '805844173b05e1a81e31d-579768661fe265', name: 'CM TV', quality: null, source: 'cable' }
+  ], staticFallbacks: [
+    engineCloudingFallback('cmtvpt', 'CMTV')
   ] }],
   ['btv', { search: 'BTV', exact: 'BTV', country: 'Portugal', prefer: ['HD', null, 'FHD'], fallbackIds: [
     { id: '419434034c29c7a3c7b07-c30c1297e6e5ce', name: 'BTV', quality: 'HD', source: 'basic' },
     { id: '2434383426cedb9a7f8182-853d5b7284c58b', name: 'BTV (BENFICA)', quality: null, source: 'cable' }
+  ], staticFallbacks: [
+    legacyLovetierFallback('btv', 'BTV', 'BTV1')
   ] }],
   ['sport-tv-1', { search: 'SPORT TV 1', exact: 'SPORT TV 1', country: 'Portugal', prefer: ['HD', null, 'FHD'], fallbackIds: [
     { id: '3966581533812bd3be6382-2dee5e113ca360', name: 'SPORT TV 1', quality: 'HD', source: 'basic' },
@@ -59,10 +101,14 @@ const LIVE_CHANNELS = new Map([
     { id: '10004270647c8377fd8313-31e3d5c4614739', name: 'SPORT TV 1', quality: null, source: 'basic' },
     { id: '34289402226976c68b9b9e-bf2069844244ff', name: 'SPORT TV 1', quality: null, source: 'cable' },
     { id: '14386289065b08d49bfc3e-61a6d716bcbe83', name: 'SPORT TV 1 (BACKUP)', quality: null, source: 'basic' }
+  ], staticFallbacks: [
+    legacyLovetierFallback('sport-tv-1', 'SPORT TV 1', 'SPT1')
   ] }],
   ['sport-tv-5', { search: 'SPORT TV 5', exact: 'SPORT TV 5', country: 'Portugal', prefer: [null, 'HD', 'FHD'], excludeIds: ['34583288246e0a0ec6fc0f-7f7f9c6e6c2f38'], fallbackIds: [
     { id: '12763267051751832c99d9-e96250d7d887f8', name: 'SPORT TV 5 (BACKUP)', quality: null, source: 'basic' },
     { id: '9711041268146231bc411-77fb597e2397df', name: 'SPORT TV 5', quality: null, source: 'cable' }
+  ], staticFallbacks: [
+    legacyLovetierFallback('sport-tv-5', 'SPORT TV 5', 'SPT5')
   ] }],
   ['disney-pixar', { search: 'DISNEY+ PIXAR', exact: 'DISNEY+ PIXAR', country: 'Portugal', prefer: [null, 'HD', 'FHD'], fallbackIds: [
     { id: '1616464273e04bb68a8a1c-ed3fcb510db31f', name: 'DISNEY+ PIXAR', quality: null, source: 'cable' }
@@ -257,7 +303,9 @@ const LIVE_CHANNELS = new Map([
   ["bfm-business", { search: "BFM BUSINESS", exact: "BFM BUSINESS", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
     { id: "1945266328e8e437e6162d-e36c345412b4b4", name: "BFM BUSINESS", quality: null, source: "cable" }
   ] }],
-  ['m6', { search: 'M6', exact: 'M6', country: 'France', prefer: ['FHD', 'HD', null] }]
+  ['m6', { search: 'M6', exact: 'M6', country: 'France', prefer: ['FHD', 'HD', null], staticFallbacks: [
+    legacyLovetierFallback('m6fr', 'M6', 'M6FR')
+  ] }]
 ]);
 
 function corsHeaders() {
@@ -297,13 +345,36 @@ function isAllowedLivewatchUrl(url) {
 
 function isAllowedLovetierUrl(url) {
   return url.origin === LOVETIER_ORIGIN &&
-    url.pathname.startsWith('/TF1FR/') &&
+    LOVETIER_ALLOWED_PATHS.some(path => url.pathname.toLowerCase().startsWith(path.toLowerCase())) &&
+    !url.username &&
+    !url.password;
+}
+
+function isAllowedCloudingUrl(url) {
+  return url.origin === CLOUDING_ORIGIN &&
+    CLOUDING_ALLOWED_PATHS.some(path => url.pathname.toLowerCase().startsWith(path.toLowerCase())) &&
     !url.username &&
     !url.password;
 }
 
 function isAllowedProxyUrl(url) {
-  return isAllowedLivewatchUrl(url) || isAllowedLovetierUrl(url);
+  return isAllowedLivewatchUrl(url) || isAllowedLovetierUrl(url) || isAllowedCloudingUrl(url);
+}
+
+function isAllowedStaticFallbackUrl(url) {
+  if (url.origin === LOVETIER_WORKER_ORIGIN) {
+    return /^\/api\/iptv\/live\/[a-z0-9-]+\/master\.m3u8$/i.test(url.pathname) &&
+      !url.username &&
+      !url.password;
+  }
+
+  if (url.origin === ENGINE_WORKER_ORIGIN) {
+    return /^\/api\/worker-live\/[a-z0-9-]+\/master\.m3u8$/i.test(url.pathname) &&
+      !url.username &&
+      !url.password;
+  }
+
+  return isAllowedProxyUrl(url);
 }
 
 function makeProxyUrl(value, baseUrl, publicOrigin) {
@@ -451,8 +522,11 @@ async function resolveCandidate(candidate) {
 }
 
 async function resolveStaticFallback(fallback) {
+  if (fallback.lovetierChannel) return resolveLovetierFallback(fallback);
+  if (fallback.cloudingChannel) return resolveCloudingFallback(fallback);
+
   const upstreamUrl = new URL(fallback.url);
-  if (!isAllowedProxyUrl(upstreamUrl)) throw new Error('static fallback URL refused');
+  if (!isAllowedStaticFallbackUrl(upstreamUrl)) throw new Error('static fallback URL refused');
 
   const startedAt = Date.now();
   const master = await fetchTextWithTimeout(upstreamUrl, {
@@ -463,6 +537,93 @@ async function resolveStaticFallback(fallback) {
   const masterText = await master.text();
   if (!master.ok || !masterText.trimStart().startsWith('#EXTM3U')) {
     throw new Error(`static master ${master.status}`);
+  }
+
+  return { candidate: fallback, upstreamUrl, masterText, latencyMs };
+}
+
+async function resolveCloudingFallback(fallback) {
+  const channel = String(fallback.cloudingChannel || '');
+  if (!channel || !/^[a-z0-9-]+$/i.test(channel)) throw new Error('clouding channel refused');
+
+  const sourceUrl = new URL('/player.php', CLOUDING_PLAYER_ORIGIN);
+  sourceUrl.searchParams.set('stream', channel);
+  const source = await fetchTextWithTimeout(sourceUrl, {
+    headers: {
+      Accept: 'text/html,application/xhtml+xml',
+      'User-Agent': 'Mozilla/5.0'
+    },
+    redirect: 'follow'
+  });
+  if (!source.ok) throw new Error(`clouding source ${source.status}`);
+
+  const sourceHtml = await source.text();
+  const pattern = new RegExp(
+    `https://clouding\\.wideiptv\\.top/${channel}/embed\\.html\\?token=([^"'\\s<>&]+)`,
+    'i'
+  );
+  const match = sourceHtml.match(pattern);
+  if (!match || !match[1]) throw new Error('clouding token unavailable');
+
+  const upstreamUrl = new URL(`${CLOUDING_ORIGIN}/${channel}/index.fmp4.m3u8`);
+  upstreamUrl.searchParams.set('token', match[1]);
+  if (!isAllowedCloudingUrl(upstreamUrl)) throw new Error('clouding stream URL refused');
+
+  const startedAt = Date.now();
+  const master = await fetchTextWithTimeout(upstreamUrl, {
+    headers: upstreamHeaders(upstreamUrl, 'application/vnd.apple.mpegurl,application/x-mpegURL,*/*'),
+    redirect: 'follow'
+  });
+  const latencyMs = Date.now() - startedAt;
+  const masterText = await master.text();
+  if (!master.ok || !masterText.trimStart().startsWith('#EXTM3U')) {
+    throw new Error(`clouding master ${master.status}`);
+  }
+
+  return { candidate: fallback, upstreamUrl, masterText, latencyMs };
+}
+
+async function resolveLovetierFallback(fallback) {
+  const channel = String(fallback.lovetierChannel || '');
+  if (!channel || !/^[a-z0-9-]+$/i.test(channel)) throw new Error('lovetier channel refused');
+
+  const sourceUrl = new URL(`/player/${channel}`, LOVETIER_PLAYER_ORIGIN);
+  const source = await fetchTextWithTimeout(sourceUrl, {
+    headers: {
+      Accept: 'text/html,application/xhtml+xml',
+      'User-Agent': 'Mozilla/5.0'
+    },
+    redirect: 'follow'
+  });
+  if (!source.ok) throw new Error(`lovetier source ${source.status}`);
+
+  const sourceHtml = await source.text();
+  const match = sourceHtml.match(/streamUrl:\s*"([^"]+)"/i);
+  if (!match || !match[1]) throw new Error('lovetier stream URL unavailable');
+
+  const upstreamUrl = new URL(
+    match[1]
+      .replace(/\\\//g, '/')
+      .replace(/\\u0026/gi, '&')
+  );
+  const expectedPath = `/${channel}/index.m3u8`.toLowerCase();
+  if (
+    !isAllowedLovetierUrl(upstreamUrl) ||
+    upstreamUrl.pathname.toLowerCase() !== expectedPath ||
+    !upstreamUrl.searchParams.has('token')
+  ) {
+    throw new Error('lovetier stream URL refused');
+  }
+
+  const startedAt = Date.now();
+  const master = await fetchTextWithTimeout(upstreamUrl, {
+    headers: upstreamHeaders(upstreamUrl, 'application/vnd.apple.mpegurl,application/x-mpegURL,*/*'),
+    redirect: 'follow'
+  });
+  const latencyMs = Date.now() - startedAt;
+  const masterText = await master.text();
+  if (!master.ok || !masterText.trimStart().startsWith('#EXTM3U')) {
+    throw new Error(`lovetier master ${master.status}`);
   }
 
   return { candidate: fallback, upstreamUrl, masterText, latencyMs };
