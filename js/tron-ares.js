@@ -1852,10 +1852,6 @@ function resolveDirectStreamFallbackUrl(entry) {
   const probe = `${sourceUrl}\n${originalUrl}`.toLowerCase();
   const directFallbacks = [
     {
-      patterns: ['/api/iptv/live/cmtv/master.m3u8', '/pages/worker-iptv3.html?channel=cmtv'],
-      url: 'https://player-engine.com/api/worker-live/cmtvpt/master.m3u8'
-    },
-    {
       patterns: ['/api/iptv/live/tf1/master.m3u8', '/pages/worker-iptv3.html?channel=tf1'],
       url: 'https://tron-ares-iptv.victor-salema-53d.workers.dev/api/iptv/live/tf1fr/master.m3u8'
     },
