@@ -2136,6 +2136,36 @@ function switchToNextWorkerSource(reason) {
   return true;
 }
 
+function refreshCurrentWorkerSource(reason) {
+  const entry = currentEntry;
+  if (!entry?.workerDirectPlayback || !entry.url || entry.workerFamily !== 'iptv3') return false;
+
+  const attempt = Number(entry.workerTokenRefreshAttempt || 0);
+  if (attempt >= 1) return false;
+
+  let refreshedUrl;
+  try {
+    const nextUrl = new URL(entry.url, window.location.href);
+    nextUrl.searchParams.set('_hls_refresh', String(Date.now()));
+    refreshedUrl = nextUrl.href;
+  } catch {
+    refreshedUrl = String(entry.url) + (String(entry.url).includes('?') ? '&' : '?') + '_hls_refresh=' + Date.now();
+  }
+
+  const nextEntry = {
+    ...entry,
+    url: refreshedUrl,
+    workerPrimaryUrl: entry.workerPrimaryUrl || entry.url,
+    workerTokenRefreshAttempt: attempt + 1,
+    workerFailoverReason: String(reason || 'rafraichissement token')
+  };
+
+  console.warn('[ARES] Rafraichissement du master IPTV3 :', reason || 'token HLS');
+  setStatus('Rafraichissement du flux IPTV3');
+  playUrl(nextEntry);
+  return true;
+}
+
 function workerPrimaryRetryEntry(entry) {
   const chain = Array.isArray(entry?.workerFailoverChain) ? entry.workerFailoverChain : [];
   const primary = chain[0];
@@ -4611,7 +4641,17 @@ modeLabel = 'DASH';
       // LiveWatch reste prioritaire. En cas d'échec fatal, on tente ensuite
       // le secours Clouding/Deviantart déclaré pour la chaîne, puis OFFLINE.
       if (data && data.fatal && currentEntry && !offlineMode) {
-        if (!switchToNextWorkerSource(`HLS fatal: ${data.details || data.type || 'erreur'}`)) {
+        const fatalReason = `HLS fatal: ${data.details || data.type || 'erreur'}`;
+        const shouldRefreshWorker =
+          currentEntry.workerDirectPlayback &&
+          currentEntry.workerFamily === 'iptv3' &&
+          /levelLoad|manifestLoad|network/i.test(`${data.details || ''} ${data.type || ''}`);
+
+        if (shouldRefreshWorker && refreshCurrentWorkerSource(fatalReason)) {
+          return;
+        }
+
+        if (!switchToNextWorkerSource(fatalReason)) {
           enterOfflineMode('HLS fatal');
         }
       }

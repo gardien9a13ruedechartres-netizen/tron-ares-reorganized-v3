@@ -756,11 +756,24 @@ async function proxyIptv(request, requestUrl) {
   const range = request.headers.get('Range');
   if (range) headersForUpstream.set('Range', range);
 
-  const upstream = await fetch(upstreamUrl, {
-    method: request.method,
-    headers: headersForUpstream,
-    redirect: 'follow'
-  });
+  let upstream;
+  try {
+    upstream = await fetch(upstreamUrl, {
+      method: request.method,
+      headers: headersForUpstream,
+      redirect: 'follow'
+    });
+  } catch (error) {
+    const headers = new Headers(corsHeaders());
+    headers.set('Content-Type', 'text/plain; charset=utf-8');
+    headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+    headers.set('CDN-Cache-Control', 'no-store');
+    headers.set('Cloudflare-CDN-Cache-Control', 'no-store');
+    return new Response(`Upstream fetch failed: ${error?.message || 'network error'}`, {
+      status: 502,
+      headers
+    });
+  }
 
   const contentType = hlsContentType(upstreamUrl.pathname, upstream.headers.get('Content-Type'));
   const isPlaylist = request.method === 'GET' && contentType.toLowerCase().includes('mpegurl');
