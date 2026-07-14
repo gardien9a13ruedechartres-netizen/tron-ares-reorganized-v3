@@ -42,7 +42,7 @@ function engineCloudingFallback(channelKey, label) {
 }
 
 const LIVE_CHANNELS = new Map([
-    ["tf1", { search: "TF1", exact: "TF1", country: "France", prefer: [null, "HD", "FHD"], sourcePrefer: ["satellite", "cable", "basic"], fallbackIds: [
+    ["tf1", { search: "TF1", exact: "TF1", country: "France", prefer: [null, "HD", "FHD"], sourcePrefer: ["satellite", "cable", "basic"], staticFirst: true, fallbackIds: [
     { id: "2913521200ae11151a1fc4-b5746bd2522e5c", name: "TF1", quality: "FHD", source: "satellite" },
     { id: "1334669376bf508b8ed995-e1dc32893923cf", name: "TF1", quality: null, source: "cable" } 
   ], staticFallbacks: [
@@ -644,6 +644,28 @@ async function selectWorkingSource(channelKey, channel, skipIds = new Set()) {
   let matches = [];
   const failures = [];
 
+  const tryStaticFallbacks = async (detectionLabel) => {
+    for (const fallback of channel.staticFallbacks || []) {
+      if (skipIds.has(String(fallback.id || ''))) continue;
+      try {
+        const resolved = await resolveStaticFallback(fallback);
+        sourceCache.delete(channelKey);
+        return {
+          ...resolved,
+          detection: failures.length ? `${detectionLabel}-after-${failures.length}-failure` : detectionLabel
+        };
+      } catch (error) {
+        failures.push(`${fallback.id}:${error.message}`);
+      }
+    }
+    return null;
+  };
+
+  if (channel.staticFirst) {
+    const staticResolved = await tryStaticFallbacks('static-primary');
+    if (staticResolved) return staticResolved;
+  }
+
   try {
     matches = prioritizeCandidates(channelKey, await findChannelMatches(channel, skipIds), skipIds);
   } catch (error) {
@@ -666,18 +688,9 @@ async function selectWorkingSource(channelKey, channel, skipIds = new Set()) {
     }
   }
 
-  for (const fallback of channel.staticFallbacks || []) {
-    if (skipIds.has(String(fallback.id || ''))) continue;
-    try {
-      const resolved = await resolveStaticFallback(fallback);
-      sourceCache.delete(channelKey);
-      return {
-        ...resolved,
-        detection: failures.length ? `static-fallback-after-${failures.length}-failure` : 'static-fallback'
-      };
-    } catch (error) {
-      failures.push(`${fallback.id}:${error.message}`);
-    }
+  if (!channel.staticFirst) {
+    const staticResolved = await tryStaticFallbacks('static-fallback');
+    if (staticResolved) return staticResolved;
   }
 
   sourceCache.delete(channelKey);
