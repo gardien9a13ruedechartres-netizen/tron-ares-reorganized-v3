@@ -2050,6 +2050,51 @@ function buildWorkerFailoverChain(resolved) {
   return [primary, ...stableFallbacks.map(item => ({ ...item }))];
 }
 
+function captureVideoAudioState() {
+  if (!videoEl) return { muted: false, volume: 1 };
+  const volume = Number(videoEl.volume);
+  return {
+    muted: !!videoEl.muted,
+    volume: Number.isFinite(volume) ? Math.min(1, Math.max(0, volume)) : 1
+  };
+}
+
+function workerAudioStateForNextEntry(entry = currentEntry) {
+  const previous = entry?.workerAudioState;
+  if (
+    previous &&
+    typeof previous === 'object' &&
+    typeof previous.muted === 'boolean' &&
+    Number.isFinite(Number(previous.volume))
+  ) {
+    return {
+      muted: previous.muted,
+      volume: Math.min(1, Math.max(0, Number(previous.volume)))
+    };
+  }
+  return captureVideoAudioState();
+}
+
+function applyVideoAudioState(state) {
+  if (!videoEl || !state) return;
+  const volume = Number(state.volume);
+  try { videoEl.muted = !!state.muted; } catch {}
+  try {
+    if (Number.isFinite(volume)) videoEl.volume = Math.min(1, Math.max(0, volume));
+  } catch {}
+}
+
+function ensureHlsAudioOutput(hls, audioState) {
+  applyVideoAudioState(audioState);
+  try {
+    const tracks = Array.isArray(hls?.audioTracks) ? hls.audioTracks : [];
+    if (tracks.length && (typeof hls.audioTrack !== 'number' || hls.audioTrack < 0)) {
+      const defaultIndex = tracks.findIndex(track => track?.default);
+      hls.audioTrack = defaultIndex >= 0 ? defaultIndex : 0;
+    }
+  } catch {}
+}
+
 function normalizeWorkerEntryForPlayback(entry) {
   if (!entry || !entry.url) return entry;
 
@@ -2115,6 +2160,7 @@ function switchToNextWorkerSource(reason) {
     workerChannel: next.channel,
     workerSourceIndex: nextIndex,
     workerSourceLabel: next.label,
+    workerAudioState: workerAudioStateForNextEntry(entry),
     workerFailoverReason: String(reason || 'source indisponible'),
     // Nouveau séjour de secours : le retour LiveWatch ne sera pas autorisé
     // avant la durée minimale anti-oscillation.
@@ -2157,6 +2203,7 @@ function refreshCurrentWorkerSource(reason) {
     url: refreshedUrl,
     workerPrimaryUrl: entry.workerPrimaryUrl || entry.url,
     workerTokenRefreshAttempt: attempt + 1,
+    workerAudioState: workerAudioStateForNextEntry(entry),
     workerFailoverReason: String(reason || 'rafraichissement token')
   };
 
@@ -2180,6 +2227,7 @@ function workerPrimaryRetryEntry(entry) {
     workerChannel: primary.channel,
     workerSourceIndex: 0,
     workerSourceLabel: primary.label,
+    workerAudioState: workerAudioStateForNextEntry(entry),
     workerFailoverReason: '',
     workerFallbackStartedAt: 0,
     workerLastAutomaticReturnAt: Date.now()
@@ -4580,8 +4628,13 @@ currentEntry = entry;
   destroyHls();
   destroyDash();
 
+  const audioStateForThisAttempt = entry.workerDirectPlayback
+    ? workerAudioStateForNextEntry(entry)
+    : captureVideoAudioState();
+
   videoEl.removeAttribute('src');
   videoEl.load();
+  applyVideoAudioState(audioStateForThisAttempt);
 
   let modeLabel = 'VIDEO';
 
@@ -4618,10 +4671,19 @@ modeLabel = 'DASH';
     hlsForThisAttempt.attachMedia(videoEl);
     modeLabel = Number(entry.workerSourceIndex || 0) > 0 ? 'HLS-SECOURS' : 'HLS';
 
-    hlsForThisAttempt.on(Hls.Events.MANIFEST_PARSED, refreshTrackMenus);
-    hlsForThisAttempt.on(Hls.Events.AUDIO_TRACKS_UPDATED, refreshTrackMenus);
+    hlsForThisAttempt.on(Hls.Events.MANIFEST_PARSED, () => {
+      ensureHlsAudioOutput(hlsForThisAttempt, audioStateForThisAttempt);
+      refreshTrackMenus();
+    });
+    hlsForThisAttempt.on(Hls.Events.AUDIO_TRACKS_UPDATED, () => {
+      ensureHlsAudioOutput(hlsForThisAttempt, audioStateForThisAttempt);
+      refreshTrackMenus();
+    });
     hlsForThisAttempt.on(Hls.Events.SUBTITLE_TRACKS_UPDATED, refreshTrackMenus);
-    hlsForThisAttempt.on(Hls.Events.AUDIO_TRACK_SWITCHED, refreshTrackMenus);
+    hlsForThisAttempt.on(Hls.Events.AUDIO_TRACK_SWITCHED, () => {
+      applyVideoAudioState(audioStateForThisAttempt);
+      refreshTrackMenus();
+    });
     hlsForThisAttempt.on(Hls.Events.SUBTITLE_TRACK_SWITCH, refreshTrackMenus);
 
     hlsForThisAttempt.on(Hls.Events.ERROR, (event, data) => {
@@ -4664,6 +4726,7 @@ modeLabel = 'DASH';
   // ✅ reprise position basée sur l’entrée (pas sur l’onglet)
   videoEl.onloadedmetadata = () => {
     try {
+      applyVideoAudioState(audioStateForThisAttempt);
       if (entry.listType !== 'channels') return;
 
       const key = entry.url;
