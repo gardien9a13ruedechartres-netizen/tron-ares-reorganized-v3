@@ -894,6 +894,7 @@
 
     function scheduleStallRecovery() {
       if (!HLS_URL || stallTimer) return;
+      const stallDelayMs = channelKey === 'cmtv' && sourceMode === 'primary' ? 18000 : 4500;
       stallTimer = setTimeout(() => {
         stallTimer = null;
         stallRecoveryCount += 1;
@@ -907,7 +908,7 @@
         console.warn('Rechargement du master apres blocage persistant');
         stallRecoveryCount = 0;
         if (!switchToNextPrimarySource('persistent-stall') && !switchToFallback('persistent-stall')) reloadCurrentSource();
-      }, 4500);
+      }, stallDelayMs);
     }
 
     async function captureCurrentSourceId(url) {
@@ -943,7 +944,12 @@
       startLoader(sourceMode === 'fallback' ? 'Connexion secours' : 'Connexion HLS');
       await captureCurrentSourceId(HLS_URL);
       if (window.Hls && Hls.isSupported()) {
-        hlsInstance = new Hls({ enableWorker: true, lowLatencyMode: true });
+        hlsInstance = new Hls({
+          enableWorker: true,
+          lowLatencyMode: true,
+          fragLoadingTimeOut: channelKey === 'cmtv' ? 30000 : 20000,
+          manifestLoadingTimeOut: 20000
+        });
         hlsInstance.loadSource(HLS_URL);
         hlsInstance.attachMedia(video);
         hlsInstance.on(Hls.Events.MEDIA_ATTACHED, () => { keepNativeControlsVisible(); setLoadingProgress(58, 'Media attache'); });

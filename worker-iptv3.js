@@ -87,9 +87,9 @@ const LIVE_CHANNELS = new Map([
     { id: '3166346130b6b8b30bb9d2-eda28228a50465', name: 'C STAR', quality: null, source: 'cable' }
   ] }],
   ['w9', { search: 'W9', exact: 'W9', country: 'France', prefer: ['HD', 'FHD', null] }],
-  ['cmtv', { search: 'CM TV', exact: 'CM TV', country: 'Portugal', prefer: [null, 'HD', 'FHD'], staticFirst: true, fallbackIds: [
-    { id: '384601660517fa3552a29f-6816b5893e5bcc', name: 'CM TV', quality: null, source: 'basic' },
-    { id: '805844173b05e1a81e31d-579768661fe265', name: 'CM TV', quality: null, source: 'cable' }
+  ['cmtv', { search: 'CM TV', exact: 'CM TV', country: 'Portugal', prefer: [null, 'HD', 'FHD'], fallbackIds: [
+    { id: '805844173b05e1a81e31d-579768661fe265', name: 'CM TV', quality: null, source: 'cable' },
+    { id: '384601660517fa3552a29f-6816b5893e5bcc', name: 'CM TV', quality: null, source: 'basic' }
   ], staticFallbacks: [
     engineCloudingFallback('cmtvpt', 'CMTV')
   ] }],
