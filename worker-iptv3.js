@@ -42,9 +42,9 @@ function engineCloudingFallback(channelKey, label) {
 }
 
 const LIVE_CHANNELS = new Map([
-    ["tf1", { search: "TF1", exact: "TF1", country: "France", prefer: [null, "HD", "FHD"], sourcePrefer: ["satellite", "cable", "basic"], staticFirst: true, fallbackIds: [
-    { id: "2913521200ae11151a1fc4-b5746bd2522e5c", name: "TF1", quality: "FHD", source: "satellite" },
-    { id: "1334669376bf508b8ed995-e1dc32893923cf", name: "TF1", quality: null, source: "cable" } 
+    ["tf1", { search: "TF1", exact: "TF1", country: "France", prefer: [null, "HD", "FHD"], sourcePrefer: ["satellite", "basic", "cable"], staticFirst: true, fallbackIds: [
+    { id: "2913521200ae11151a1fc4-b5746bd2522e5c", name: "TF1", quality: null, source: "satellite" },
+    { id: "1334669376bf508b8ed995-e1dc32893923cf", name: "TF1", quality: "FHD", source: "basic" } 
   ], staticFallbacks: [
     legacyLovetierFallback('tf1fr', 'TF1', 'TF1FR')
   ] }], 
