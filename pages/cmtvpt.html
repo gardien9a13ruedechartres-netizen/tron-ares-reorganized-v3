@@ -4,6 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>Player HLS CMTVPT</title>
+  <script>
+    (() => {
+      const target = new URL('/pages/worker-iptv3.html', window.location.href);
+      target.searchParams.set('channel', 'cmtv');
+      window.location.replace(target.href);
+    })();
+  </script>
   <style>
     html, body {
       width: 100%;

@@ -74,7 +74,7 @@ function connect(wsUrl) {
         if (!pending.has(id)) return;
         pending.delete(id);
         reject(new Error(`CDP timeout: ${method}`));
-      }, 10000);
+      }, 30000);
     });
   }
 
@@ -250,7 +250,10 @@ async function clickVideoAndPlay(client) {
       try {
         video.muted = false;
         video.volume = 1;
-        await video.play();
+        await Promise.race([
+          video.play(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('play-timeout')), 4000))
+        ]);
         return 'play-ok';
       } catch (error) {
         return 'play-failed:' + (error && (error.name || error.message) || error);
