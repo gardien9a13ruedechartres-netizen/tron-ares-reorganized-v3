@@ -146,24 +146,23 @@ video{
 
 <button id="refreshButton" class="controlButton" title="Actualiser"></button>
 <button id="switchButton" class="controlButton" title="Changer de lecteur"></button>
-<div id="playerInfo">1/2</div>
+<div id="playerInfo" style="visibility: hidden;">IFRAME 1/2</div>
 
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 <script>
-const IFRAME_1_URL = 'https://player-engine.com/pages/worker-iptv3?channel=cmtv';
-
 const HLS_URL = 'https://tron-ares-engine.victor-salema-53d.workers.dev/api/worker-live/cmtvpt/master.m3u8';
+const IFRAME_URL = 'https://player-engine.com/pages/worker-iptv3?channel=cmtv';
 
 const PLAYERS = [
     {
-        type:'hls',
-        label:'HLS 1/2',
-        url:HLS_URL
+        type:'iframe',
+        label:'IFRAME 1/2',
+        url:IFRAME_URL
     },
     {
-        type:'iframe',
-        label:'2/2',
-        url:IFRAME_1_URL
+        type:'hls',
+        label:'HLS 2/2',
+        url:HLS_URL
     }
 ];
 
@@ -184,7 +183,6 @@ function showMessage(show){
 }
 
 function createFrame(url){
-
     const iframe = document.createElement('iframe');
 
     iframe.allow =
@@ -204,7 +202,6 @@ function createFrame(url){
 }
 
 function createHlsPlayer(url){
-
     const video = document.createElement('video');
 
     video.controls = true;
@@ -218,14 +215,12 @@ function createHlsPlayer(url){
     }
 
     if(video.canPlayType('application/vnd.apple.mpegurl')){
-
         video.src = url;
+
         video.addEventListener('loadedmetadata',()=>{
             video.play().catch(()=>{});
         });
-
     }else if(window.Hls && Hls.isSupported()){
-
         currentHls = new Hls({
             enableWorker:true,
             lowLatencyMode:true
@@ -237,10 +232,9 @@ function createHlsPlayer(url){
         currentHls.on(Hls.Events.MANIFEST_PARSED,()=>{
             video.play().catch(()=>{});
         });
-
     }else{
-
         showMessage(true);
+
         message.querySelector('strong').textContent = 'HLS non supporté';
         message.querySelector('span').textContent =
             'Ce navigateur ne prend pas en charge ce flux HLS et hls.js n’est pas disponible.';
@@ -250,18 +244,19 @@ function createHlsPlayer(url){
 }
 
 function destroyCurrentElement(){
-
     if(currentHls){
         try{
             currentHls.destroy();
         }catch(e){}
+
         currentHls = null;
     }
 
-    if(!currentElement) return;
+    if(!currentElement){
+        return;
+    }
 
     try{
-
         if(currentElement.tagName === 'IFRAME'){
             currentElement.src = 'about:blank';
         }
@@ -271,7 +266,6 @@ function destroyCurrentElement(){
             currentElement.removeAttribute('src');
             currentElement.load();
         }
-
     }catch(e){}
 
     currentElement.remove();
@@ -279,7 +273,6 @@ function destroyCurrentElement(){
 }
 
 function loadPlayer(index){
-
     destroyCurrentElement();
     showMessage(false);
 
@@ -307,23 +300,14 @@ function switchPlayer(){
     loadPlayer(nextIndex);
 }
 
-/*
- Chargement initial : HLS en position 1
-*/
 loadPlayer(0);
 
-/*
- Switch
-*/
 document
 .getElementById('switchButton')
 .addEventListener('click',()=>{
     switchPlayer();
 });
 
-/*
- Refresh
-*/
 document
 .getElementById('refreshButton')
 .addEventListener('click',()=>{
