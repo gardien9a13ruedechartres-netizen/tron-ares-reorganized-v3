@@ -1900,6 +1900,8 @@ function switchCurrentEntryToDirectFallback(reason) {
 
   console.warn('Bascule vers secours direct:', reason, fallbackUrl);
   setStatus('Bascule vers secours stable...');
+  try { if (videoEl) videoEl.loop = false; } catch {}
+  lastProgressTs = Date.now();
   playUrl(nextEntry);
   return true;
 }
@@ -4040,6 +4042,7 @@ currentEntry = entry;
   externalFallbackTried = false;
   // Si on était en mode OFFLINE, on repasse en lecture normale
   leaveOfflineMode();
+  try { videoEl.loop = false; } catch {}
   // Lance un watchdog anti-freeze (flux mort / buffering infini)
   startStallWatchdog();
   markProgress();
@@ -4071,7 +4074,6 @@ currentEntry = entry;
   videoEl.load();
 
   let modeLabel = 'VIDEO';
-  let hlsSoftErrorCount = 0;
 
   if (isProbablyDash(url) && window.dashjs) {
     try {
@@ -4104,10 +4106,7 @@ modeLabel = 'DASH';
     hlsInstance.attachMedia(videoEl);
     modeLabel = 'HLS';
 
-    hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
-      hlsSoftErrorCount = 0;
-      refreshTrackMenus();
-    });
+    hlsInstance.on(Hls.Events.MANIFEST_PARSED, refreshTrackMenus);
     hlsInstance.on(Hls.Events.AUDIO_TRACKS_UPDATED, refreshTrackMenus);
     hlsInstance.on(Hls.Events.SUBTITLE_TRACKS_UPDATED, refreshTrackMenus);
     hlsInstance.on(Hls.Events.AUDIO_TRACK_SWITCHED, refreshTrackMenus);
@@ -4115,24 +4114,11 @@ modeLabel = 'DASH';
 
     hlsInstance.on(Hls.Events.ERROR, (event, data) => {
       console.error('HLS error:', data);
-      const details = data && data.details ? String(data.details) : '';
-      const isRecoverableStall =
-        details === 'bufferStalledError' ||
-        details === 'levelLoadTimeOut' ||
-        details === 'fragLoadTimeOut' ||
-        details === 'levelLoadError' ||
-        details === 'fragLoadError';
-
       // Fatal = manifest introuvable / flux down / erreur media irreparable
       if (data && data.fatal && currentEntry && !offlineMode) {
         if (switchCurrentEntryToDirectFallback('HLS fatal')) return;
         enterOfflineMode('HLS fatal');
         return;
-      }
-
-      if (isRecoverableStall && currentEntry && !offlineMode) {
-        hlsSoftErrorCount += 1;
-        if (hlsSoftErrorCount >= 4 && switchCurrentEntryToDirectFallback(details)) return;
       }
     });
   } else {
