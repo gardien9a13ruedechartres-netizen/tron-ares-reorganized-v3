@@ -1,6 +1,7 @@
 node_modules/
 .wrangler/
 .cache/
+.tmp/
 dist/
 build/
 
