@@ -5068,7 +5068,7 @@ prevBtn?.addEventListener('click', playPrev);
     iframeWheelCatcher.setAttribute('aria-hidden', 'true');
     iframeWheelCatcher.style.cssText = [
       'position:absolute',
-      'inset:0',
+      ,
       'z-index:3',
       'background:transparent',
       'pointer-events:none'
