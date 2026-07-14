@@ -512,6 +512,7 @@ function startStallWatchdog() {
     const now = Date.now();
     const stuckMs = now - (lastProgressTs || now);
     if (stuckMs > 18000) {
+      if (switchCurrentEntryToDirectFallback('Flux interrompu / plus de données')) return;
       enterOfflineMode('Flux interrompu / plus de données');
     }
   }, 2000);
@@ -1842,6 +1843,39 @@ function resolveWorkerPageDirectMediaUrl(sourceUrl) {
   }
 
   return '';
+}
+function resolveDirectStreamFallbackUrl(entry) {
+  if (!entry || !entry.url || entry.usedStreamFallback) return '';
+
+  const sourceUrl = String(entry.url || '');
+  const originalUrl = String(entry.originalPageUrl || '');
+  const probe = `${sourceUrl}\n${originalUrl}`.toLowerCase();
+
+  if (
+    probe.includes('/api/iptv/live/cmtv/master.m3u8') ||
+    probe.includes('/pages/worker-iptv3.html?channel=cmtv')
+  ) {
+    return 'https://player-engine.com/api/worker-live/cmtvpt/master.m3u8';
+  }
+
+  return '';
+}
+function switchCurrentEntryToDirectFallback(reason) {
+  const fallbackUrl = resolveDirectStreamFallbackUrl(currentEntry);
+  if (!fallbackUrl) return false;
+
+  const nextEntry = {
+    ...currentEntry,
+    url: fallbackUrl,
+    isIframe: false,
+    usedStreamFallback: true,
+    fallbackReason: reason || 'fallback'
+  };
+
+  console.warn('Bascule vers secours direct:', reason, fallbackUrl);
+  setStatus('Bascule vers secours stable...');
+  playUrl(nextEntry);
+  return true;
 }
 function youtubeToEmbed(url) {
   try {
@@ -4011,6 +4045,7 @@ currentEntry = entry;
   videoEl.load();
 
   let modeLabel = 'VIDEO';
+  let hlsSoftErrorCount = 0;
 
   if (isProbablyDash(url) && window.dashjs) {
     try {
@@ -4043,7 +4078,10 @@ modeLabel = 'DASH';
     hlsInstance.attachMedia(videoEl);
     modeLabel = 'HLS';
 
-    hlsInstance.on(Hls.Events.MANIFEST_PARSED, refreshTrackMenus);
+    hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+      hlsSoftErrorCount = 0;
+      refreshTrackMenus();
+    });
     hlsInstance.on(Hls.Events.AUDIO_TRACKS_UPDATED, refreshTrackMenus);
     hlsInstance.on(Hls.Events.SUBTITLE_TRACKS_UPDATED, refreshTrackMenus);
     hlsInstance.on(Hls.Events.AUDIO_TRACK_SWITCHED, refreshTrackMenus);
@@ -4051,10 +4089,24 @@ modeLabel = 'DASH';
 
     hlsInstance.on(Hls.Events.ERROR, (event, data) => {
       console.error('HLS error:', data);
+      const details = data && data.details ? String(data.details) : '';
+      const isRecoverableStall =
+        details === 'bufferStalledError' ||
+        details === 'levelLoadTimeOut' ||
+        details === 'fragLoadTimeOut' ||
+        details === 'levelLoadError' ||
+        details === 'fragLoadError';
 
-      // Fatal = manifest introuvable / flux down / erreur média irréparable
+      // Fatal = manifest introuvable / flux down / erreur media irreparable
       if (data && data.fatal && currentEntry && !offlineMode) {
+        if (switchCurrentEntryToDirectFallback('HLS fatal')) return;
         enterOfflineMode('HLS fatal');
+        return;
+      }
+
+      if (isRecoverableStall && currentEntry && !offlineMode) {
+        hlsSoftErrorCount += 1;
+        if (hlsSoftErrorCount >= 4 && switchCurrentEntryToDirectFallback(details)) return;
       }
     });
   } else {
@@ -5202,6 +5254,7 @@ videoEl?.addEventListener('error', () => {
 
   // Si le flux principal tombe, on passe sur le MP4 OFFLINE
   if (!offlineMode && currentEntry && !currentEntry.isIframe) {
+    if (switchCurrentEntryToDirectFallback('Erreur de lecture')) return;
     enterOfflineMode('Erreur de lecture');
     return;
   }
