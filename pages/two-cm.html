@@ -173,7 +173,7 @@ video{
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 <script>
 const HLS_URL = 'https://tron-ares-iptv3.victor-salema-53d.workers.dev/api/iptv/live/cmtv/master.m3u8?skip=805844173b05e1a81e31d-579768661fe265';
-const IFRAME_URL = 'https://player-engine.com/pages/worker-iptv3?channel=cmtv';
+const CLOUDING_URL = 'https://player-engine.com/api/worker-live/cmtvpt/master.m3u8';
 
 const STARTUP_TIMEOUT_MS = 15000;
 const STALL_TIMEOUT_MS = 12000;
@@ -183,13 +183,13 @@ const MAX_AUTO_FAILOVERS_PER_WINDOW = 4;
 const PLAYERS = [
     {
         type:'hls',
-        label:'HLS 1/2',
+        label:'LIVEWATCH 1/2',
         url:HLS_URL
     },
     {
-        type:'iframe',
-        label:'IFRAME 2/2',
-        url:IFRAME_URL
+        type:'hls',
+        label:'CLOUDING 2/2',
+        url:CLOUDING_URL
     }
 ];
 
@@ -570,4 +570,3 @@ document
 
 </body>
 </html>
-
