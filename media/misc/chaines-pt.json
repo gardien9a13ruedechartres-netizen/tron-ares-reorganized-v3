@@ -43,18 +43,6 @@
       "isIframe": false
     },
     {
-      "id": "rtpn",
-      "name": "RTPN",
-      "url": "https://player-engine.com/api/worker-live/rtp3/master.m3u8",
-      "logo": {
-        "type": "image",
-        "value": "/media/rtpn.png"
-      },
-      "group": "News",
-      "isFavorite": false,
-      "isIframe": false
-    },
-    {
       "id": "rtp-africa",
       "name": "RTP África",
       "url": "https://player-engine.com/api/worker-live/rtp-africa/master.m3u8",
@@ -62,31 +50,7 @@
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/RTP%20%C3%81frica%202026.svg"
       },
-      "group": "Generalista",
-      "isFavorite": false,
-      "isIframe": false
-    },
-    {
-      "id": "odisseia-pt",
-      "name": "Odisseia PT",
-      "url": "https://player-engine.com/api/worker-live/odisseia-pt/master.m3u8",
-      "logo": {
-        "type": "image",
-        "value": "https://www.freeshot.live/upload/source/CanalOdisseia-logo.png"
-      },
-      "group": "Documentarios",
-      "isFavorite": false,
-      "isIframe": false
-    },
-    {
-      "id": "national-geographic-pt",
-      "name": "National Geographic PT",
-      "url": "https://player-engine.com/api/worker-live/national-geographic-pt/master.m3u8",
-      "logo": {
-        "type": "image",
-        "value": "https://commons.wikimedia.org/wiki/Special:FilePath/National%20Geographic%20Channel.svg"
-      },
-      "group": "Documentarios",
+      "group": "Généraliste",
       "isFavorite": false,
       "isIframe": false
     },
@@ -99,42 +63,6 @@
         "value": "/media/TVI.png"
       },
       "group": "Généraliste",
-      "isFavorite": false,
-      "isIframe": false
-    },
-    {
-      "id": "tvir",
-      "name": "TVI Reality",
-      "url": "https://player-engine.com/api/worker-live/tvi-reality/master.m3u8",
-      "logo": {
-        "type": "image",
-        "value": "/media/tvir.jpg"
-      },
-      "group": "Divertissement",
-      "isFavorite": false,
-      "isIframe": false
-    },
-    {
-      "id": "tvif",
-      "name": "TVI Ficção",
-      "url": "https://player-engine.com/api/worker-live/tvi-ficcao/master.m3u8",
-      "logo": {
-        "type": "image",
-        "value": "https://upload.wikimedia.org/wikipedia/commons/0/0d/TVI_Fic%C3%A7%C3%A3o_%282017%29.png"
-      },
-      "group": "Divertissement",
-      "isFavorite": false,
-      "isIframe": false
-    },
-    {
-      "id": "v-mais",
-      "name": "V MAIS",
-      "url": "https://player-engine.com/api/worker-live/v-plus-tvi/master.m3u8",
-      "logo": {
-        "type": "image",
-        "value": "https://upload.wikimedia.org/wikipedia/pt/e/ef/V%2BTVI_Logo.png"
-      },
-      "group": "Divertissement",
       "isFavorite": false,
       "isIframe": false
     },
@@ -163,6 +91,54 @@
       "isIframe": false
     },
     {
+      "id": "tv-globo",
+      "name": "TV GLOBO",
+      "url": "/pages/worker-iptv3.html?channel=tv-globo",
+      "logo": {
+        "type": "image",
+        "value": "https://upload.wikimedia.org/wikipedia/commons/1/1f/TV_Globo_logo_%28April_2025%29.png"
+      },
+      "group": "Généraliste",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "Record",
+      "name": "RECORD",
+      "url": "https://player-engine.com/api/worker-live/record-europa/master.m3u8",
+      "logo": {
+        "type": "image",
+        "value": "https://upload.wikimedia.org/wikipedia/commons/5/58/Logomarca_da_Record_%282023%29.webp"
+      },
+      "group": "Généraliste",
+      "isFavorite": false,
+      "isIframe": false
+    },
+    {
+      "id": "tcv-int",
+      "name": "TCV Internacional",
+      "url": "https://player-engine.com/api/worker-live/tcv-int/master.m3u8",
+      "logo": {
+        "type": "image",
+        "value": "https://cdn.jsdelivr.net/gh/imagesloads/images@main/img_43acca95f234ef0a.png"
+      },
+      "group": "Généraliste",
+      "isFavorite": false,
+      "isIframe": false
+    },
+    {
+      "id": "rtpn",
+      "name": "RTPN",
+      "url": "https://player-engine.com/api/worker-live/rtp3/master.m3u8",
+      "logo": {
+        "type": "image",
+        "value": "/media/rtpn.png"
+      },
+      "group": "Info",
+      "isFavorite": false,
+      "isIframe": false
+    },
+    {
       "id": "sicn",
       "name": "SIC Notícias",
       "url": "https://player-engine.com/api/worker-live/sic-noticias/master.m3u8",
@@ -170,7 +146,7 @@
         "type": "image",
         "value": "/media/SICN.webp"
       },
-      "group": "News",
+      "group": "Info",
       "isFavorite": false,
       "isIframe": false
     },
@@ -182,7 +158,7 @@
         "type": "image",
         "value": "/media/cnn.png"
       },
-      "group": "News",
+      "group": "Info",
       "isFavorite": false,
       "isIframe": false
     },
@@ -415,6 +391,42 @@
       "isIframe": true
     },
     {
+      "id": "tvir",
+      "name": "TVI Reality",
+      "url": "https://player-engine.com/api/worker-live/tvi-reality/master.m3u8",
+      "logo": {
+        "type": "image",
+        "value": "/media/tvir.jpg"
+      },
+      "group": "Divertissement",
+      "isFavorite": false,
+      "isIframe": false
+    },
+    {
+      "id": "tvif",
+      "name": "TVI Ficção",
+      "url": "https://player-engine.com/api/worker-live/tvi-ficcao/master.m3u8",
+      "logo": {
+        "type": "image",
+        "value": "https://upload.wikimedia.org/wikipedia/commons/0/0d/TVI_Fic%C3%A7%C3%A3o_%282017%29.png"
+      },
+      "group": "Divertissement",
+      "isFavorite": false,
+      "isIframe": false
+    },
+    {
+      "id": "v-mais",
+      "name": "V MAIS",
+      "url": "https://player-engine.com/api/worker-live/v-plus-tvi/master.m3u8",
+      "logo": {
+        "type": "image",
+        "value": "https://upload.wikimedia.org/wikipedia/pt/e/ef/V%2BTVI_Logo.png"
+      },
+      "group": "Divertissement",
+      "isFavorite": false,
+      "isIframe": false
+    },
+    {
       "id": "disney-pixar",
       "name": "DISNEY+ PIXAR",
       "url": "/pages/worker-iptv3.html?channel=disney-pixar",
@@ -439,26 +451,26 @@
       "isIframe": true
     },
     {
-      "id": "tv-globo",
-      "name": "TV GLOBO",
-      "url": "/pages/worker-iptv3.html?channel=tv-globo",
+      "id": "odisseia-pt",
+      "name": "Odisseia PT",
+      "url": "https://player-engine.com/api/worker-live/odisseia-pt/master.m3u8",
       "logo": {
         "type": "image",
-        "value": "https://upload.wikimedia.org/wikipedia/commons/1/1f/TV_Globo_logo_%28April_2025%29.png"
+        "value": "https://www.freeshot.live/upload/source/CanalOdisseia-logo.png"
       },
-      "group": "Généraliste",
+      "group": "Documentaire",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": false
     },
     {
-      "id": "Record",
-      "name": "RECORD",
-      "url": "https://player-engine.com/api/worker-live/record-europa/master.m3u8",
+      "id": "national-geographic-pt",
+      "name": "National Geographic PT",
+      "url": "https://player-engine.com/api/worker-live/national-geographic-pt/master.m3u8",
       "logo": {
         "type": "image",
-        "value": "https://upload.wikimedia.org/wikipedia/commons/5/58/Logomarca_da_Record_%282023%29.webp"
+        "value": "https://commons.wikimedia.org/wiki/Special:FilePath/National%20Geographic%20Channel.svg"
       },
-      "group": "Généraliste",
+      "group": "Documentaire",
       "isFavorite": false,
       "isIframe": false
     },
@@ -470,7 +482,7 @@
         "type": "image",
         "value": "https://upload.wikimedia.org/wikipedia/commons/0/07/Historia_2022_logo.webp"
       },
-      "group": "Documentarios",
+      "group": "Documentaire",
       "isFavorite": false,
       "isIframe": false
     },
@@ -482,19 +494,7 @@
         "type": "image",
         "value": "https://cdn.jsdelivr.net/gh/imagesloads/images@main/img_f3aea22ba48bd5da.png"
       },
-      "group": "Documentarios",
-      "isFavorite": false,
-      "isIframe": false
-    },
-    {
-      "id": "tcv-int",
-      "name": "TCV Internacional",
-      "url": "https://player-engine.com/api/worker-live/tcv-int/master.m3u8",
-      "logo": {
-        "type": "image",
-        "value": "https://cdn.jsdelivr.net/gh/imagesloads/images@main/img_43acca95f234ef0a.png"
-      },
-      "group": "Généraliste",
+      "group": "Documentaire",
       "isFavorite": false,
       "isIframe": false
     }
