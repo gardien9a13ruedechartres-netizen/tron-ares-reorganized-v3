@@ -1810,6 +1810,39 @@ function isProbablyPlaylist(url) {
 function isYoutubeUrl(url) {
   return /youtu\.be|youtube\.com|youtube\-nocookie\.com/i.test(url);
 }
+function resolveWorkerPageDirectMediaUrl(sourceUrl) {
+  if (!sourceUrl) return '';
+
+  let pageUrl;
+  try {
+    pageUrl = new URL(String(sourceUrl).trim(), window.location.origin);
+  } catch {
+    return '';
+  }
+
+  const path = pageUrl.pathname.toLowerCase();
+  const channel = String(pageUrl.searchParams.get('channel') || '').trim().toLowerCase();
+
+  if (path === '/pages/worker-iptv3.html' && channel) {
+    return `https://tron-ares-iptv3.victor-salema-53d.workers.dev/api/iptv/live/${encodeURIComponent(channel)}/master.m3u8`;
+  }
+
+  if (path === '/pages/worker-iptv.html' && channel) {
+    return CAST_WIDEIPTV_CHANNELS.has(channel)
+      ? `https://player-engine.com/api/worker-live/${encodeURIComponent(channel)}/master.m3u8`
+      : `https://tron-ares-iptv.victor-salema-53d.workers.dev/api/iptv/live/${encodeURIComponent(channel)}/master.m3u8`;
+  }
+
+  if (path === '/pages/worker-cstar.html') {
+    return 'https://tron-ares-iptv2.victor-salema-53d.workers.dev/api/iptv/live/cstar/master.m3u8';
+  }
+
+  if (path === '/pages/worker-m6fr.html') {
+    return 'https://tron-ares-iptv2.victor-salema-53d.workers.dev/api/iptv/live/m6/master.m3u8';
+  }
+
+  return '';
+}
 function youtubeToEmbed(url) {
   try {
     const u = new URL(url, window.location.href);
@@ -3916,6 +3949,16 @@ function fallbackToExternalPlayer(entry) {
 }
 function playUrl(entry) {
   if (!entry || !entry.url || !videoEl) return;
+
+  const directWorkerUrl = resolveWorkerPageDirectMediaUrl(entry.url);
+  if (directWorkerUrl) {
+    entry = {
+      ...entry,
+      url: directWorkerUrl,
+      originalPageUrl: entry.url,
+      isIframe: false
+    };
+  }
 
 
   // 🎬 Si l’intro tourne, on la stoppe dès qu’on lance un vrai contenu

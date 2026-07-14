@@ -2,6 +2,7 @@ node_modules/
 .wrangler/
 .cache/
 .tmp/
+.backup/
 dist/
 build/
 
