@@ -81,7 +81,6 @@
         align-items: center;
         justify-content: center;
         border-radius: 50%;
-        border: 1px solid currentColor;
         font: 700 12px/1 Arial, sans-serif;
         color: currentColor;
       }
