@@ -34,191 +34,66 @@
     }
     .player-controls {
       position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      left: 12px;
+      right: 12px;
+      bottom: max(12px, env(safe-area-inset-bottom));
       z-index: 30;
       display: flex;
-      flex-direction: column;
-      align-items: stretch;
-      gap: 10px;
-      padding: 18px 16px calc(12px + env(safe-area-inset-bottom));
+      align-items: center;
+      gap: 8px;
+      min-height: 44px;
+      padding: 8px;
       color: #f9fafb;
-      background: linear-gradient(to top,
-        rgba(0, 0, 0, .88) 0%,
-        rgba(0, 0, 0, .74) 48%,
-        rgba(0, 0, 0, .38) 78%,
-        rgba(0, 0, 0, 0) 100%);
+      background: rgba(0, 0, 0, .68);
+      border: 1px solid rgba(255, 255, 255, .18);
+      border-radius: 8px;
       font-family: Arial, sans-serif;
       box-sizing: border-box;
       pointer-events: auto;
-      opacity: 1;
-      visibility: visible;
-      transform: translateY(0);
       transition: opacity .18s ease, transform .18s ease, visibility .18s ease;
     }
     .player-controls.is-hidden {
       opacity: 0;
       visibility: hidden;
-      transform: translateY(18px);
+      transform: translateY(14px);
       pointer-events: none;
-    }
-    .controls-top,
-    .controls-bottom {
-      display: flex;
-      align-items: center;
-      width: 100%;
-    }
-    .controls-top {
-      padding: 0 2px;
-    }
-    .controls-bottom {
-      gap: 10px;
-      min-height: 34px;
     }
     .player-controls button {
       margin: 0;
-      min-height: 0;
-      padding: 0;
+      min-height: 34px;
+      padding: 8px 10px;
       color: #fff;
-      background: transparent;
-      border: 0;
-      border-radius: 0;
-      box-shadow: none;
-      appearance: none;
-      -webkit-appearance: none;
+      background: rgba(17, 24, 39, .92);
+      border: 1px solid rgba(255, 255, 255, .22);
+      border-radius: 6px;
     }
-    .control-icon {
-      width: 32px;
-      height: 32px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-size: 18px;
-      line-height: 1;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, .08);
-      border: 1px solid rgba(255, 255, 255, .14);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      transition: background .18s ease, border-color .18s ease, transform .18s ease;
-    }
-    .control-icon:hover,
-    .control-icon:focus-visible {
-      background: rgba(255, 255, 255, .16);
-      border-color: rgba(255, 255, 255, .26);
-      transform: scale(1.03);
-      outline: none;
-    }
-    .control-label {
-      display: inline-block;
-      transform: translateY(-1px);
-      pointer-events: none;
+    .player-controls input[type="range"] {
+      width: min(28vw, 160px);
+      accent-color: #60a5fa;
     }
     .control-time {
-      min-width: 92px;
-      font-size: 13px;
-      font-variant-numeric: tabular-nums;
-      color: rgba(255, 255, 255, .92);
-      white-space: nowrap;
-    }
-    .control-spacer {
-      flex: 1;
-      min-width: 8px;
-    }
-    .control-live-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 50px;
-      height: 24px;
-      padding: 0 10px;
-      border-radius: 999px;
-      background: #cf202f;
-      color: #fff;
-      font-size: 11px;
+      margin-left: auto;
+      min-width: 54px;
+      font-size: 12px;
       font-weight: 700;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      box-shadow: 0 0 0 1px rgba(255,255,255,.12) inset;
-    }
-    .control-live-badge[hidden] {
-      display: none !important;
-    }
-    .control-volume {
-      width: min(18vw, 112px);
-    }
-    .control-seek,
-    .control-volume {
-      appearance: none;
-      -webkit-appearance: none;
-      background: transparent;
-      accent-color: #fff;
-    }
-    .control-seek {
-      width: 100%;
-      margin: 0;
-    }
-    .control-seek::-webkit-slider-runnable-track,
-    .control-volume::-webkit-slider-runnable-track {
-      height: 4px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, .35);
-    }
-    .control-seek::-moz-range-track,
-    .control-volume::-moz-range-track {
-      height: 4px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, .35);
-    }
-    .control-seek::-webkit-slider-thumb,
-    .control-volume::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 14px;
-      height: 14px;
-      margin-top: -5px;
-      border-radius: 50%;
-      border: 0;
-      background: #fff;
-      box-shadow: 0 1px 4px rgba(0,0,0,.45);
-    }
-    .control-seek::-moz-range-thumb,
-    .control-volume::-moz-range-thumb {
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      border: 0;
-      background: #fff;
-      box-shadow: 0 1px 4px rgba(0,0,0,.45);
-    }
-    .control-seek.is-disabled,
-    .player-controls.is-live .control-seek {
-      opacity: .5;
-    }
-    .control-seek:disabled {
-      cursor: default;
+      color: #dbeafe;
+      text-align: right;
+      white-space: nowrap;
     }
     @media (max-width: 520px) {
       .player-controls {
-        gap: 8px;
-        padding: 16px 10px calc(10px + env(safe-area-inset-bottom));
+        left: 8px;
+        right: 8px;
+        gap: 6px;
+        padding: 6px;
       }
-      .controls-bottom {
-        gap: 8px;
+      .player-controls button {
+        min-height: 32px;
+        padding: 7px 8px;
+        font-size: 12px;
       }
-      .control-time {
-        min-width: 72px;
-        font-size: 11px;
-      }
-      .control-volume {
-        width: 74px;
-      }
-      .control-live-badge {
-        min-width: 42px;
-        padding: 0 8px;
-        font-size: 10px;
-      }
+      .player-controls input[type="range"] { width: 90px; }
+      .control-time { display: none; }
     }
     #overlay {
       position: fixed;
@@ -362,24 +237,11 @@
 <body>
   <video id="video" controls autoplay playsinline webkit-playsinline></video>
   <div id="playerControls" class="player-controls" aria-label="Controles du lecteur">
-    <div class="controls-top">
-      <input id="controlSeek" class="control-seek" type="range" min="0" max="100" step="0.1" value="100" aria-label="Position de lecture">
-    </div>
-    <div class="controls-bottom">
-      <button id="controlPlay" class="control-icon" type="button" aria-label="Pause" title="Pause">
-        <span id="controlPlayIcon" class="control-label" aria-hidden="true">❚❚</span>
-      </button>
-      <div id="controlTime" class="control-time">Direct</div>
-      <button id="controlMute" class="control-icon" type="button" aria-label="Couper le son" title="Couper le son">
-        <span id="controlMuteIcon" class="control-label" aria-hidden="true">🔊</span>
-      </button>
-      <input id="controlVolume" class="control-volume" type="range" min="0" max="1" step="0.05" value="1" aria-label="Volume">
-      <div id="controlLive" class="control-live-badge" hidden>Direct</div>
-      <div class="control-spacer" aria-hidden="true"></div>
-      <button id="controlFullscreen" class="control-icon" type="button" aria-label="Plein écran" title="Plein écran">
-        <span id="controlFullscreenIcon" class="control-label" aria-hidden="true">⛶</span>
-      </button>
-    </div>
+    <button id="controlPlay" type="button">Pause</button>
+    <button id="controlMute" type="button">Son</button>
+    <input id="controlVolume" type="range" min="0" max="1" step="0.05" value="1" aria-label="Volume">
+    <div id="controlTime" class="control-time">Direct</div>
+    <button id="controlFullscreen" type="button">Plein ecran</button>
   </div>
   <div id="loadingOverlay">
     <div class="loader-content">
@@ -403,7 +265,6 @@
   <script>
     const channels = {
       tf1: 'TF1',
-      tf1sf: 'TF1 SERIES & FILM',
       'canal-plus': 'CANAL+',
       'canal-gr-ecran': 'CANAL+ Gr. Ecran',
       'canal-cinema': 'CANAL+ Cinema',
@@ -414,7 +275,6 @@
       'sport-tv-5': 'Sport TV 5',
       'canal-panda': 'Canal Panda',
       'disney-pixar': 'Disney+ Pixar',
-      'tv-globo': 'TV Globo',
       '6ter': '6ter',
       cstar: 'CStar',
       w9: 'W9',
@@ -487,7 +347,6 @@
       "disney-plus-fr": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/united-kingdom/disney-plus-uk.png",
       "disney-junior": "/media/image/disney-junior.webp",
       "disney-pixar": "/media/disney-pixar.png",
-      "tv-globo": "https://upload.wikimedia.org/wikipedia/commons/1/1f/TV_Globo_logo_%28April_2025%29.png",
       "game-one": "https://commons.wikimedia.org/wiki/Special:FilePath/One%20Hand%20Clapping%20%28Logo%29.png",
       golf: "https://thumb.canalplus.pro/bran/unsafe/435x243/filters:quality(90)/image/5f5f638902dc0/uploads/media/golf+.png",
       "investigation-discovery": "https://commons.wikimedia.org/wiki/Special:FilePath/Investigation%20Discovery%20Logo%202018.svg",
@@ -513,7 +372,6 @@
       "tcm-cinema": "https://commons.wikimedia.org/wiki/Special:FilePath/TCM%20Cin%C3%A9ma%20logo%202019.png",
       teletoon: "https://commons.wikimedia.org/wiki/Special:FilePath/T%C3%A9l%C3%A9toon%2B%20Logo%202011.svg",
       tf1: "/media/image/tf1.webp",
-      tf1sf: "https://upload.wikimedia.org/wikipedia/fr/thumb/4/4b/TF1_S%C3%A9ries_Films_logo_2020.svg/330px-TF1_S%C3%A9ries_Films_logo_2020.svg.png",
       tiji: "https://commons.wikimedia.org/wiki/Special:FilePath/%D0%9B%D0%BE%D0%B3%D0%BE%D1%82%D0%B8%D0%BF%20%D1%82%D0%B5%D0%BB%D0%B5%D0%BA%D0%B0%D0%BD%D0%B0%D0%BB%D0%B0%20Tiji%20%D1%81%202019.png",
       toonami: "https://commons.wikimedia.org/wiki/Special:FilePath/Toonami%202022%20Logo.png",
       "toute-l-histoire": "/media/image/toute-l-histoire.webp",
@@ -554,16 +412,11 @@
     const loadingProgressFill = document.getElementById('loadingProgressFill');
     const loadingProgressText = document.getElementById('loadingProgressText');
     const playerControls = document.getElementById('playerControls');
-    const controlSeek = document.getElementById('controlSeek');
     const controlPlay = document.getElementById('controlPlay');
-    const controlPlayIcon = document.getElementById('controlPlayIcon');
     const controlMute = document.getElementById('controlMute');
-    const controlMuteIcon = document.getElementById('controlMuteIcon');
     const controlVolume = document.getElementById('controlVolume');
     const controlTime = document.getElementById('controlTime');
-    const controlLive = document.getElementById('controlLive');
     const controlFullscreen = document.getElementById('controlFullscreen');
-    const controlFullscreenIcon = document.getElementById('controlFullscreenIcon');
     let hlsInstance = null;
     let retryTimer = null;
     let retryDelayMs = 3000;
@@ -572,9 +425,6 @@
     let stallTimer = null;
     let stallRecoveryCount = 0;
     let controlsIdleTimer = null;
-    let isDraggingSeek = false;
-    let currentSourceId = '';
-    const failedSourceIds = new Set();
 
     window.__CHANNEL_HLS_URL__ = HLS_URL;
     window.__CHANNEL_HLS_URLS__ = ALL_TARGET_URLS;
@@ -603,78 +453,29 @@
     function showPlayerControls(keepVisible = false) {
       playerControls.hidden = false;
       playerControls.classList.remove('is-hidden');
-      playerControls.style.opacity = '1';
-      playerControls.style.visibility = 'visible';
-      playerControls.style.transform = 'translateY(0)';
-      playerControls.style.pointerEvents = 'auto';
       clearTimeout(controlsIdleTimer);
       if (!keepVisible && !video.paused) {
         controlsIdleTimer = setTimeout(() => {
-          if (!video.paused) {
-            playerControls.classList.add('is-hidden');
-            playerControls.style.opacity = '';
-            playerControls.style.visibility = '';
-            playerControls.style.transform = '';
-            playerControls.style.pointerEvents = '';
-          }
+          if (!video.paused) playerControls.classList.add('is-hidden');
         }, 2600);
       }
     }
 
     function formatTime(value) {
       const seconds = Math.max(0, Math.floor(Number(value) || 0));
-      const hours = Math.floor(seconds / 3600);
-      const minutes = Math.floor((seconds % 3600) / 60);
+      const minutes = Math.floor(seconds / 60);
       const rest = String(seconds % 60).padStart(2, '0');
-      return hours > 0
-        ? hours + ':' + String(minutes).padStart(2, '0') + ':' + rest
-        : minutes + ':' + rest;
-    }
-
-    function isSeekableMedia() {
-      return Number.isFinite(video.duration) && video.duration > 0 && video.duration !== Infinity;
-    }
-
-    function syncFullscreenButton() {
-      const isFullscreen = !!document.fullscreenElement;
-      controlFullscreen.setAttribute('aria-label', isFullscreen ? 'Quitter le plein écran' : 'Plein écran');
-      controlFullscreen.title = isFullscreen ? 'Quitter le plein écran' : 'Plein écran';
-      controlFullscreenIcon.textContent = isFullscreen ? '🗗' : '⛶';
+      return minutes + ':' + rest;
     }
 
     function updatePlayerControls() {
       if (!controlPlay) return;
-      const isPaused = video.paused;
-      const isMuted = video.muted || video.volume === 0;
-      const seekable = isSeekableMedia();
-
-      controlPlay.setAttribute('aria-label', isPaused ? 'Lecture' : 'Pause');
-      controlPlay.title = isPaused ? 'Lecture' : 'Pause';
-      controlPlayIcon.textContent = isPaused ? '▶' : '❚❚';
-
-      controlMute.setAttribute('aria-label', isMuted ? 'Activer le son' : 'Couper le son');
-      controlMute.title = isMuted ? 'Activer le son' : 'Couper le son';
-      controlMuteIcon.textContent = isMuted ? '🔇' : '🔊';
-      controlVolume.value = String(isMuted ? 0 : video.volume);
-
-      playerControls.classList.toggle('is-live', !seekable);
-      controlSeek.disabled = !seekable;
-      controlSeek.classList.toggle('is-disabled', !seekable);
-      controlLive.hidden = seekable;
-
-      if (seekable) {
-        const duration = Math.max(0, Number(video.duration) || 0);
-        const currentTime = Math.max(0, Math.min(Number(video.currentTime) || 0, duration));
-        if (!isDraggingSeek && duration > 0) {
-          controlSeek.value = String((currentTime / duration) * 100);
-        }
-        controlTime.textContent = formatTime(currentTime) + ' / ' + formatTime(duration);
-      } else {
-        if (!isDraggingSeek) controlSeek.value = '100';
-        controlTime.textContent = 'Direct';
-      }
-
-      syncFullscreenButton();
+      controlPlay.textContent = video.paused ? 'Lecture' : 'Pause';
+      controlMute.textContent = (video.muted || video.volume === 0) ? 'Muet' : 'Son';
+      controlVolume.value = String(video.muted ? 0 : video.volume);
+      controlTime.textContent = Number.isFinite(video.duration) && video.duration > 0
+        ? formatTime(video.currentTime) + ' / ' + formatTime(video.duration)
+        : 'Direct';
     }
 
     async function togglePlayback() {
@@ -727,24 +528,6 @@
       video.muted = video.volume === 0;
       updatePlayerControls();
     });
-    controlSeek.addEventListener('input', () => {
-      if (!isSeekableMedia()) return;
-      showPlayerControls(true);
-      isDraggingSeek = true;
-      const duration = Math.max(0, Number(video.duration) || 0);
-      const targetTime = duration * (Number(controlSeek.value) / 100);
-      controlTime.textContent = formatTime(targetTime) + ' / ' + formatTime(duration);
-    });
-    const commitSeek = () => {
-      if (!isSeekableMedia()) return;
-      const duration = Math.max(0, Number(video.duration) || 0);
-      video.currentTime = duration * (Number(controlSeek.value) / 100);
-      isDraggingSeek = false;
-      updatePlayerControls();
-    };
-    controlSeek.addEventListener('change', commitSeek);
-    controlSeek.addEventListener('pointerup', commitSeek);
-    controlSeek.addEventListener('touchend', commitSeek, { passive: true });
     bindControl(controlFullscreen, toggleFullscreen);
     ['click', 'dblclick', 'pointerdown'].forEach(eventName => {
       playerControls.addEventListener(eventName, event => {
@@ -834,9 +617,6 @@
     function withRefresh(url) {
       if (!url) return '';
       const next = new URL(url, location.href);
-      if (String(url).startsWith(BASE_HLS_URL) && failedSourceIds.size) {
-        next.searchParams.set('skip', Array.from(failedSourceIds).join(','));
-      }
       next.searchParams.set('_hls_refresh', String(Date.now()));
       return next.href;
     }
@@ -861,21 +641,9 @@
       if (!FALLBACK_HLS_URL || sourceMode === 'fallback') return false;
       console.warn('Bascule vers worker-iptv stable:', reason);
       sourceMode = 'fallback';
-      currentSourceId = '';
       retryDelayMs = 3000;
       clearStallRecovery();
       attachSource(withRefresh(FALLBACK_HLS_URL));
-      return true;
-    }
-
-    function switchToNextPrimarySource(reason) {
-      if (sourceMode !== 'primary' || !BASE_HLS_URL || !currentSourceId) return false;
-      failedSourceIds.add(currentSourceId);
-      console.warn('Source IPTV3 ignoree apres erreur:', currentSourceId, reason);
-      currentSourceId = '';
-      retryDelayMs = 3000;
-      clearStallRecovery();
-      attachSource(withRefresh(BASE_HLS_URL));
       return true;
     }
 
@@ -890,13 +658,12 @@
       setMessage('Flux temporairement indisponible. Nouvelle tentative...');
       retryTimer = setTimeout(() => {
         retryTimer = null;
-        if (!switchToNextPrimarySource('network-error') && !switchToFallback('network-error')) reloadCurrentSource();
+        if (!switchToFallback('network-error')) reloadCurrentSource();
       }, delay);
     }
 
     function scheduleStallRecovery() {
       if (!HLS_URL || stallTimer) return;
-      const stallDelayMs = channelKey === 'cmtv' && sourceMode === 'primary' ? 18000 : 4500;
       stallTimer = setTimeout(() => {
         stallTimer = null;
         stallRecoveryCount += 1;
@@ -909,24 +676,11 @@
         }
         console.warn('Rechargement du master apres blocage persistant');
         stallRecoveryCount = 0;
-        if (!switchToNextPrimarySource('persistent-stall') && !switchToFallback('persistent-stall')) reloadCurrentSource();
-      }, stallDelayMs);
+        if (!switchToFallback('persistent-stall')) reloadCurrentSource();
+      }, 4500);
     }
 
-    async function captureCurrentSourceId(url) {
-      currentSourceId = '';
-      if (!url || sourceModeFor(url) !== 'primary') return;
-      try {
-        const response = await fetch(url, { method: 'HEAD', cache: 'no-store' });
-        currentSourceId = response.headers.get('X-Ares-Source-Id') || '';
-        window.__CHANNEL_SOURCE_ID__ = currentSourceId;
-        if (currentSourceId) console.log('Source IPTV3 active:', currentSourceId, response.headers.get('X-Ares-Source-Type') || '');
-      } catch (error) {
-        console.warn('Lecture des headers source impossible:', error);
-      }
-    }
-
-    async function attachSource(nextUrl = HLS_URL) {
+    function attachSource(nextUrl = HLS_URL) {
       keepNativeControlsVisible();
       HLS_URL = String(nextUrl || '');
       sourceMode = sourceModeFor(HLS_URL);
@@ -944,14 +698,8 @@
         hlsInstance = null;
       }
       startLoader(sourceMode === 'fallback' ? 'Connexion secours' : 'Connexion HLS');
-      await captureCurrentSourceId(HLS_URL);
       if (window.Hls && Hls.isSupported()) {
-        hlsInstance = new Hls({
-          enableWorker: true,
-          lowLatencyMode: true,
-          fragLoadingTimeOut: channelKey === 'cmtv' ? 30000 : 20000,
-          manifestLoadingTimeOut: 20000
-        });
+        hlsInstance = new Hls({ enableWorker: true, lowLatencyMode: true });
         hlsInstance.loadSource(HLS_URL);
         hlsInstance.attachMedia(video);
         hlsInstance.on(Hls.Events.MEDIA_ATTACHED, () => { keepNativeControlsVisible(); setLoadingProgress(58, 'Media attache'); });
@@ -985,22 +733,18 @@
     }
 
     playBtn.addEventListener('click', playWithSound);
-    video.addEventListener('loadedmetadata', () => { keepNativeControlsVisible(); setLoadingProgress(95, 'Presque pret'); updatePlayerControls(); });
-    video.addEventListener('durationchange', updatePlayerControls);
-    video.addEventListener('canplay', () => { keepNativeControlsVisible(); hideLoader('Flux pret'); updatePlayerControls(); });
-    video.addEventListener('playing', () => { keepNativeControlsVisible(); hideLoader('Flux actif'); updatePlayerControls(); });
+    video.addEventListener('loadedmetadata', () => { keepNativeControlsVisible(); setLoadingProgress(95, 'Presque pret'); });
+    video.addEventListener('canplay', () => { keepNativeControlsVisible(); hideLoader('Flux pret'); });
+    video.addEventListener('playing', () => { keepNativeControlsVisible(); hideLoader('Flux actif'); });
     video.addEventListener('pause', () => { showPlayerControls(true); updatePlayerControls(); });
     video.addEventListener('volumechange', updatePlayerControls);
     video.addEventListener('waiting', scheduleStallRecovery);
     video.addEventListener('stalled', scheduleStallRecovery);
     video.addEventListener('playing', clearStallRecovery);
-    video.addEventListener('seeking', updatePlayerControls);
-    video.addEventListener('seeked', () => { isDraggingSeek = false; updatePlayerControls(); });
     video.addEventListener('timeupdate', () => {
       updatePlayerControls();
       if (!video.paused && video.readyState >= 3) clearStallRecovery();
     });
-    document.addEventListener('fullscreenchange', updatePlayerControls);
     attachSource();
 
     console.log('URL HLS ciblee:', HLS_URL);

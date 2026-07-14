@@ -10,6 +10,7 @@ const DURATION_MS = Number(process.env.ARES_MONITOR_MS || 10 * 60 * 1000);
 const POLL_MS = Number(process.env.ARES_MONITOR_POLL_MS || 10000);
 const CDP_PORT = Number(process.env.ARES_MONITOR_CDP_PORT || 9333);
 const OPEN_FIREFOX = process.env.ARES_MONITOR_FIREFOX !== '0';
+const JOURNAL_PATH = path.join(ROOT, '.tmp', 'player-engine-monitor-log.jsonl');
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -41,6 +42,11 @@ async function waitForJson(url, timeoutMs = 15000) {
     await sleep(300);
   }
   throw new Error(`Timeout waiting for ${url}`);
+}
+
+function appendJournal(entry) {
+  fs.mkdirSync(path.dirname(JOURNAL_PATH), { recursive: true });
+  fs.appendFileSync(JOURNAL_PATH, `${JSON.stringify(entry)}\n`);
 }
 
 function connect(wsUrl) {
@@ -143,7 +149,7 @@ async function evaluate(client, expression) {
       return result.result?.value;
     } catch (error) {
       lastError = error;
-      if (!/context was destroyed|Cannot find context|Target closed/i.test(String(error?.message || error))) {
+      if (!/context was destroyed|Cannot find context|Target closed|CDP timeout|Execution context was destroyed|timed out/i.test(String(error?.message || error))) {
         throw error;
       }
       await sleep(1500);
@@ -274,53 +280,113 @@ async function clickVideoAndPlay(client) {
 }
 
 async function snapshot(client) {
-  return evaluate(client, `
-    (() => {
-      const video = document.querySelector('video');
-      const bufferedAhead = (() => {
-        if (!video || !video.buffered) return 0;
-        for (let i = 0; i < video.buffered.length; i += 1) {
-          if (video.currentTime >= video.buffered.start(i) - 0.15 && video.currentTime <= video.buffered.end(i) + 0.15) {
-            return Math.max(0, video.buffered.end(i) - video.currentTime);
+  try {
+    return await evaluate(client, `
+      (() => {
+        const video = document.querySelector('video');
+        const bufferedAhead = (() => {
+          if (!video || !video.buffered) return 0;
+          for (let i = 0; i < video.buffered.length; i += 1) {
+            if (video.currentTime >= video.buffered.start(i) - 0.15 && video.currentTime <= video.buffered.end(i) + 0.15) {
+              return Math.max(0, video.buffered.end(i) - video.currentTime);
+            }
           }
-        }
-        return 0;
-      })();
-      const textOf = selectors => {
-        for (const selector of selectors) {
-          const el = document.querySelector(selector);
-          const text = (el && el.textContent || '').trim();
-          if (text) return text.replace(/\\s+/g, ' ');
-        }
-        return '';
-      };
-      const active = [...document.querySelectorAll('.channel-item.active,.active')]
-        .map(el => (el.textContent || '').trim().replace(/\\s+/g, ' '))
-        .find(text => /CMTV|RTP|TF1|Sport|CANAL|SIC|TVI/i.test(text)) || '';
-      return {
-        at: new Date().toISOString(),
-        title: document.title,
-        status: textOf(['#statusText', '.status', '[data-status]', '#playerStatus']),
-        nowPlaying: textOf(['#nowTitle', '.now-title', '.now-playing', '#npTitle']),
-        active,
-        video: video ? {
-          currentTime: Number(video.currentTime || 0),
-          paused: !!video.paused,
-          muted: !!video.muted,
-          volume: Number(video.volume),
-          readyState: video.readyState,
-          networkState: video.networkState,
-          bufferedAhead,
-          error: video.error ? { code: video.error.code, message: video.error.message } : null,
-          src: video.currentSrc || video.src || ''
-        } : null
-      };
-    })()
-  `);
+          return 0;
+        })();
+        const textOf = selectors => {
+          for (const selector of selectors) {
+            const el = document.querySelector(selector);
+            const text = (el && el.textContent || '').trim();
+            if (text) return text.replace(/\\s+/g, ' ');
+          }
+          return '';
+        };
+        const active = [...document.querySelectorAll('.channel-item.active,.active')]
+          .map(el => (el.textContent || '').trim().replace(/\\s+/g, ' '))
+          .find(text => /CMTV|RTP|TF1|Sport|CANAL|SIC|TVI/i.test(text)) || '';
+        return {
+          at: new Date().toISOString(),
+          title: document.title,
+          status: textOf(['#statusText', '.status', '[data-status]', '#playerStatus']),
+          nowPlaying: textOf(['#nowTitle', '.now-title', '.now-playing', '#npTitle']),
+          active,
+          video: video ? {
+            currentTime: Number(video.currentTime || 0),
+            paused: !!video.paused,
+            muted: !!video.muted,
+            volume: Number(video.volume),
+            readyState: video.readyState,
+            networkState: video.networkState,
+            bufferedAhead,
+            error: video.error ? { code: video.error.code, message: video.error.message } : null,
+            src: video.currentSrc || video.src || ''
+          } : null
+        };
+      })()
+    `);
+  } catch (error) {
+    remember('snapshot-failed', error?.message || String(error));
+    return {
+      at: new Date().toISOString(),
+      title: '',
+      status: '',
+      nowPlaying: '',
+      active: '',
+      video: null,
+      snapshotError: error?.message || String(error)
+    };
+  }
+}
+
+function summarize(samples) {
+  const first = samples[0] || null;
+  const last = samples[samples.length - 1] || null;
+  const videoSamples = samples.map(sample => sample.video).filter(Boolean);
+  const started = videoSamples.some(video => video.currentTime > 0);
+  const advancing = videoSamples.some((video, index) => index > 0 && samples[index - 1]?.video && video.currentTime > samples[index - 1].video.currentTime + 0.1);
+  const stalled = videoSamples.some((video, index) => index > 0 && samples[index - 1]?.video && !video.paused && video.currentTime <= samples[index - 1].video.currentTime + 0.1);
+  const muted = videoSamples.some(video => video.muted || video.volume <= 0);
+  const livewatchTopObserved = recentEvents.some(line => /livewatch\.top/i.test(line));
+  const workerSignals = Array.from(new Set(
+    recentEvents
+      .map(line => line.match(/worker-(?:live|iptv3?|hls)|m3u8|HLS|proxy/i)?.[0])
+      .filter(Boolean)
+  ));
+
+  return {
+    started,
+    advancing,
+    stalled,
+    muted,
+    first,
+    last,
+    livewatchTopObserved,
+    workerSignals,
+    result: !started ? 'no-start' : stalled ? 'unstable' : advancing ? 'stable-through-sample' : 'mixed'
+  };
 }
 
 async function main() {
   if (!fs.existsSync(CHROME)) throw new Error(`Chrome not found: ${CHROME}`);
+
+  const samples = [];
+  const journal = {
+    timestamp: new Date().toISOString(),
+    project: ROOT,
+    target: TARGET_URL,
+    chrome: {
+      launched: true
+    },
+    firefox: {
+      launched: OPEN_FIREFOX && fs.existsSync(FIREFOX),
+      profile: 'temporary'
+    },
+    livewatch: {
+      topObserved: false,
+      workerSignals: []
+    },
+    result: 'running'
+  };
 
   const chromeProfile = tempProfile(`chrome-cmtv-monitor-${CDP_PORT}-${Date.now()}`);
   spawnDetached(CHROME, [
@@ -364,6 +430,7 @@ async function main() {
   const started = Date.now();
   while (Date.now() - started < DURATION_MS) {
     const snap = await snapshot(client);
+    samples.push(snap);
     const video = snap.video;
     const delta = previous?.video && video ? video.currentTime - previous.video.currentTime : 0;
     const flags = [];
@@ -399,10 +466,58 @@ async function main() {
 
   console.log('Recent important events:');
   console.log(recentEvents.join('\n') || '(none)');
+  const summary = summarize(samples);
+  journal.chrome = {
+    ...journal.chrome,
+    url: TARGET_URL,
+    selection: recentEvents.find(line => /selection:/.test(line))?.replace(/^.*selection: /, '') || '',
+    video: {
+      started: summary.started,
+      currentTimeStart: summary.first?.video?.currentTime ?? 0,
+      currentTimeEnd: summary.last?.video?.currentTime ?? 0,
+      paused: summary.last?.video?.paused ?? false,
+      muted: summary.last?.video?.muted ?? false,
+      volume: summary.last?.video?.volume ?? 1,
+      readyState: summary.last?.video?.readyState ?? 0,
+      networkState: summary.last?.video?.networkState ?? 0,
+      bufferedAheadEnd: summary.last?.video?.bufferedAhead ?? 0,
+      srcKind: summary.last?.video?.src ? (/worker-iptv3/.test(summary.last.video.src) ? 'iptv3' : /worker-live/.test(summary.last.video.src) ? 'worker-live' : /blob:/.test(summary.last.video.src) ? 'blob' : 'other') : 'none'
+    },
+    audio: {
+      muted: summary.muted,
+      volume: summary.last?.video?.volume ?? 1,
+      physicalCheck: 'not available'
+    },
+    sync: summary.started && summary.advancing && !summary.stalled ? 'acceptable during sample' : 'not confirmed',
+    anomalies: recentEvents
+      .filter(line => /error|failed|stalled|timeout|cert|abort|buffer/i.test(line))
+      .map(line => line.replace(/^\[[^\]]+\]\s*/, ''))
+      .slice(-10)
+  };
+  journal.firefox = {
+    ...journal.firefox,
+    automation: OPEN_FIREFOX && fs.existsSync(FIREFOX) ? 'launch-only' : 'unavailable'
+  };
+  journal.livewatch = {
+    topObserved: summary.livewatchTopObserved,
+    workerSignals: summary.workerSignals,
+    notes: summary.livewatchTopObserved ? 'livewatch.top observed' : 'no livewatch.top string observed in this cycle'
+  };
+  journal.result = summary.result === 'stable-through-sample' ? 'playback recovered and stayed stable through sample' : summary.result === 'mixed' ? 'mixed playback state observed' : 'playback remained blocked or stalled';
+  appendJournal(journal);
   client.ws.close();
 }
 
 main().catch(error => {
   console.error(error);
+  try {
+    appendJournal({
+      timestamp: new Date().toISOString(),
+      project: ROOT,
+      target: TARGET_URL,
+      result: 'failed',
+      error: error?.message || String(error)
+    });
+  } catch (_) {}
   process.exitCode = 1;
 });
