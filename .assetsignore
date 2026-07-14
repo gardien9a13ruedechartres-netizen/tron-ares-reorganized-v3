@@ -1,6 +1,11 @@
 node_modules
 .wrangler
 .git
+.cache
+.tmp
+.tmp/**
+chrome-cmtv-monitor*
+firefox-cmtv-monitor*
 auto-deploy-cloudflare.js
 package.json
 package-lock.json
