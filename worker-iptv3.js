@@ -88,8 +88,8 @@ const LIVE_CHANNELS = new Map([
   ] }],
   ['w9', { search: 'W9', exact: 'W9', country: 'France', prefer: ['HD', 'FHD', null] }],
   ['cmtv', { search: 'CM TV', exact: 'CM TV', country: 'Portugal', prefer: [null, 'HD', 'FHD'], sourcePrefer: ['cable', 'basic'], livewatchRetries: 3, livewatchRetryDelayMs: 700, fallbackIds: [
-    { id: '384601660517fa3552a29f-6816b5893e5bcc', name: 'CM TV', quality: null, source: 'basic' },
-    { id: '805844173b05e1a81e31d-579768661fe265', name: 'CM TV', quality: null, source: 'cable' }
+    { id: '805844173b05e1a81e31d-579768661fe265', name: 'CM TV', quality: null, source: 'cable' },
+    { id: '384601660517fa3552a29f-6816b5893e5bcc', name: 'CM TV', quality: null, source: 'basic' }
   ], staticFallbacks: [
     engineCloudingFallback('cmtvpt', 'CMTV')
   ] }],
