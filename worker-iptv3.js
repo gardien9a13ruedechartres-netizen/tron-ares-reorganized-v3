@@ -87,7 +87,7 @@ const LIVE_CHANNELS = new Map([
     { id: '3166346130b6b8b30bb9d2-eda28228a50465', name: 'C STAR', quality: null, source: 'cable' }
   ] }],
   ['w9', { search: 'W9', exact: 'W9', country: 'France', prefer: ['HD', 'FHD', null] }],
-  ['cmtv', { search: 'CM TV', exact: 'CM TV', country: 'Portugal', prefer: [null, 'HD', 'FHD'], fallbackIds: [
+  ['cmtv', { search: 'CM TV', exact: 'CM TV', country: 'Portugal', prefer: [null, 'HD', 'FHD'], sourcePrefer: ['cable', 'basic'], livewatchRetries: 3, livewatchRetryDelayMs: 700, fallbackIds: [
     { id: '805844173b05e1a81e31d-579768661fe265', name: 'CM TV', quality: null, source: 'cable' },
     { id: '384601660517fa3552a29f-6816b5893e5bcc', name: 'CM TV', quality: null, source: 'basic' }
   ], staticFallbacks: [
@@ -449,6 +449,10 @@ function timeoutSignal(ms) {
   return { signal: controller.signal, cancel: () => clearTimeout(timer) };
 }
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 async function fetchTextWithTimeout(url, options = {}, timeoutMs = SOURCE_TEST_TIMEOUT_MS) {
   const timeout = timeoutSignal(timeoutMs);
   try {
@@ -666,26 +670,32 @@ async function selectWorkingSource(channelKey, channel, skipIds = new Set()) {
     if (staticResolved) return staticResolved;
   }
 
-  try {
-    matches = prioritizeCandidates(channelKey, await findChannelMatches(channel, skipIds), skipIds);
-  } catch (error) {
-    failures.push(`livewatch-search:${error.message}`);
-  }
-
-  for (const candidate of matches.slice(0, 5)) {
+  const livewatchAttempts = Math.max(1, Number(channel.livewatchRetries || 1));
+  for (let attempt = 1; attempt <= livewatchAttempts; attempt += 1) {
     try {
-      const resolved = await resolveCandidate(candidate);
-      sourceCache.set(channelKey, {
-        id: candidate.id,
-        expiresAt: Date.now() + SOURCE_CACHE_TTL_MS
-      });
-      return {
-        ...resolved,
-        detection: failures.length ? `fallback-after-${failures.length}-failure` : 'validated-primary'
-      };
+      matches = prioritizeCandidates(channelKey, await findChannelMatches(channel, skipIds), skipIds);
     } catch (error) {
-      failures.push(`${candidate.id}:${error.message}`);
+      failures.push(`livewatch-search:${error.message}`);
+      matches = [];
     }
+
+    for (const candidate of matches.slice(0, 5)) {
+      try {
+        const resolved = await resolveCandidate(candidate);
+        sourceCache.set(channelKey, {
+          id: candidate.id,
+          expiresAt: Date.now() + SOURCE_CACHE_TTL_MS
+        });
+        return {
+          ...resolved,
+          detection: failures.length ? `livewatch-retry-${attempt}-after-${failures.length}-failure` : 'validated-primary'
+        };
+      } catch (error) {
+        failures.push(`${candidate.id}:${error.message}`);
+      }
+    }
+
+    if (attempt < livewatchAttempts) await sleep(Number(channel.livewatchRetryDelayMs || 500));
   }
 
   if (!channel.staticFirst) {

@@ -92,7 +92,17 @@ function remember(type, message) {
 function handleEvent(event) {
   if (event.method === 'Runtime.consoleAPICalled') {
     const args = event.params.args || [];
-    const text = args.map(arg => arg.value ?? arg.description ?? arg.type).join(' ');
+    const text = args.map(arg => {
+      if (arg.value !== undefined) return arg.value;
+      if (arg.preview?.properties?.length) {
+        const details = arg.preview.properties
+          .slice(0, 12)
+          .map(prop => `${prop.name}=${prop.value ?? prop.description ?? prop.type}`)
+          .join(' ');
+        return `${arg.description || arg.type}{${details}}`;
+      }
+      return arg.description ?? arg.type;
+    }).join(' ');
     if (/ARES|HLS|LiveWatch|Erreur|error|fatal|bascule|secours|Rafraichissement/i.test(text)) {
       remember('console', text);
     }
