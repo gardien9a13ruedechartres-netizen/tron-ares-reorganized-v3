@@ -87,9 +87,8 @@ const LIVE_CHANNELS = new Map([
     { id: '3166346130b6b8b30bb9d2-eda28228a50465', name: 'C STAR', quality: null, source: 'cable' }
   ] }],
   ['w9', { search: 'W9', exact: 'W9', country: 'France', prefer: ['HD', 'FHD', null] }],
-  ['cmtv', { search: 'CM TV', exact: 'CM TV', country: 'Portugal', prefer: [null, 'HD', 'FHD'], sourcePrefer: ['cable', 'basic'], livewatchRetries: 3, livewatchRetryDelayMs: 700, fallbackIds: [
-    { id: '384601660517fa3552a29f-6816b5893e5bcc', name: 'CM TV', quality: null, source: 'basic' },
-    { id: '805844173b05e1a81e31d-579768661fe265', name: 'CM TV', quality: null, source: 'cable' }
+  ['cmtv', { search: 'CM TV', exact: 'CM TV', country: 'Portugal', prefer: [null, 'HD', 'FHD'], sourcePrefer: ['basic'], excludeIds: ['805844173b05e1a81e31d-579768661fe265'], livewatchRetries: 3, livewatchRetryDelayMs: 700, fallbackIds: [
+    { id: '384601660517fa3552a29f-6816b5893e5bcc', name: 'CM TV', quality: null, source: 'basic' }
   ], staticFallbacks: [
     engineCloudingFallback('cmtvpt', 'CMTV')
   ] }],
@@ -133,10 +132,10 @@ const LIVE_CHANNELS = new Map([
   ["auto-moto", { search: "AUTO MOTO", exact: "AUTO MOTO", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
     { id: "1110040958c161c4e38ce9-8d51147a271203", name: "AUTO MOTO", quality: "HD", source: "satellite" }
   ] }],
-  ["l-equipe-fr", { search: "L EQUIPE", exact: "L EQUIPE", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
-    { id: "1064699189d6dd5dc4d422-856d62582d1513", name: "L EQUIPE", quality: null, source: "cable" },
+  ["l-equipe-fr", { search: "L EQUIPE", exact: "L EQUIPE", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['satellite', 'basic', 'cable'], fallbackIds: [
     { id: "38373319428576fb860cef-802f251211ffb1", name: "L EQUIPE", quality: null, source: "satellite" },
-    { id: "2241995657d1acf374577f-439b1c3988b027", name: "L EQUIPE", quality: null, source: "basic" }
+    { id: "2241995657d1acf374577f-439b1c3988b027", name: "L EQUIPE", quality: null, source: "basic" },
+    { id: "1064699189d6dd5dc4d422-856d62582d1513", name: "L EQUIPE", quality: null, source: "cable" }
   ] }],
   ["ocs-max", { search: "OCS MAX", exact: "OCS MAX", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
     { id: "636734800c64cceb42cf-7325d09036ee4e", name: "OCS MAX", quality: null, source: "cable" },
@@ -490,6 +489,7 @@ async function findChannelMatches(channel, skipIds = new Set()) {
   if (Array.isArray(channel.fallbackIds)) {
     const seen = new Set(matches.map(item => String(item.id || '')));
     const fallbacks = channel.fallbackIds
+      .filter(item => !excluded.has(String(item.id || '')))
       .filter(item => !skipIds.has(String(item.id || '')))
       .filter(item => {
         const id = String(item.id || '');
