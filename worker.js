@@ -464,7 +464,8 @@ export default {
 
     const response = await env.ASSETS.fetch(request);
 
-    if (/^\/pages\/(?:worker-)?(?:cmtvpt|rtp1|rtp2|sic)(?:\.html)?$/i.test(url.pathname)) {
+    if (/^\/js\/fr-program-badges\.js$/i.test(url.pathname) ||
+        /^\/pages\/(?:worker-)?(?:cmtvpt|rtp1|rtp2|sic)(?:\.html)?$/i.test(url.pathname)) {
       const headers = new Headers(response.headers);
       headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
       headers.set('CDN-Cache-Control', 'no-store');
