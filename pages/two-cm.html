@@ -33,8 +33,17 @@ video{
     object-fit:fill;
 }
 
-.controlButton{
+#controls{
     position:fixed;
+    top:0;
+    right:0;
+    z-index:9999;
+    width:132px;
+    height:72px;
+}
+
+.controlButton{
+    position:absolute;
     z-index:9999;
     width:48px;
     height:48px;
@@ -50,6 +59,17 @@ video{
     color:#fff;
     font-size:22px;
     line-height:1;
+    opacity:0;
+    visibility:hidden;
+    pointer-events:none;
+    transition:opacity .2s ease, visibility .2s ease, background .2s ease;
+}
+
+#controls:hover .controlButton,
+#controls:focus-within .controlButton{
+    opacity:1;
+    visibility:visible;
+    pointer-events:auto;
 }
 
 .controlButton:hover{
@@ -139,19 +159,26 @@ video{
 <div id="wrap"></div>
 <div id="message">
     <div id="messageBox">
-        <strong>Lecteur HLS non configuré</strong>
-        <span>Ajoute ton lien .m3u8 dans la constante HLS_URL pour activer le lecteur HLS.</span>
+        <strong>Lecteur indisponible</strong>
+        <span>Le lecteur actif ne répond pas.</span>
     </div>
 </div>
 
-<button id="refreshButton" class="controlButton" title="Actualiser"></button>
-<button id="switchButton" class="controlButton" title="Changer de lecteur"></button>
+<div id="controls">
+    <button id="refreshButton" class="controlButton" title="Actualiser"></button>
+    <button id="switchButton" class="controlButton" title="Changer de lecteur"></button>
+</div>
 <div id="playerInfo" style="visibility: hidden;">IFRAME 1/2</div>
 
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 <script>
 const HLS_URL = 'https://tron-ares-engine.victor-salema-53d.workers.dev/api/worker-live/cmtvpt/master.m3u8';
 const IFRAME_URL = 'https://player-engine.com/pages/worker-iptv3?channel=cmtv';
+
+const STARTUP_TIMEOUT_MS = 15000;
+const STALL_TIMEOUT_MS = 12000;
+const FAILOVER_WINDOW_MS = 60000;
+const MAX_AUTO_FAILOVERS_PER_WINDOW = 4;
 
 const PLAYERS = [
     {
@@ -168,13 +195,29 @@ const PLAYERS = [
 
 const wrap = document.getElementById('wrap');
 const message = document.getElementById('message');
+const messageTitle = message.querySelector('strong');
+const messageText = message.querySelector('span');
 const playerInfo = document.getElementById('playerInfo');
 
 let currentElement = null;
 let currentHls = null;
 let currentIndex = 0;
+let playerGeneration = 0;
+let startupTimer = null;
+let stallTimer = null;
+let autoFailoverHistory = [];
+let hlsNetworkRecoveryAttempts = 0;
+let hlsMediaRecoveryAttempts = 0;
 
-function showMessage(show){
+function showMessage(show, title = '', text = ''){
+    if(title){
+        messageTitle.textContent = title;
+    }
+
+    if(text){
+        messageText.textContent = text;
+    }
+
     if(show){
         message.classList.add('visible');
     }else{
@@ -182,7 +225,105 @@ function showMessage(show){
     }
 }
 
-function createFrame(url){
+function clearTimers(){
+    if(startupTimer){
+        clearTimeout(startupTimer);
+        startupTimer = null;
+    }
+
+    if(stallTimer){
+        clearTimeout(stallTimer);
+        stallTimer = null;
+    }
+}
+
+function clearStartupTimer(){
+    if(startupTimer){
+        clearTimeout(startupTimer);
+        startupTimer = null;
+    }
+}
+
+function clearStallTimer(){
+    if(stallTimer){
+        clearTimeout(stallTimer);
+        stallTimer = null;
+    }
+}
+
+function isCurrentGeneration(generation){
+    return generation === playerGeneration;
+}
+
+function pruneFailoverHistory(){
+    const cutoff = Date.now() - FAILOVER_WINDOW_MS;
+
+    autoFailoverHistory = autoFailoverHistory.filter(
+        timestamp => timestamp >= cutoff
+    );
+}
+
+function stopAutoFailoverLoop(){
+    clearTimers();
+
+    showMessage(
+        true,
+        'Les deux lecteurs semblent indisponibles',
+        'La bascule automatique a été arrêtée temporairement pour éviter une boucle infinie. Utilise Actualiser ou Changer de lecteur pour relancer.'
+    );
+}
+
+function autoFailover(reason, generation){
+    if(!isCurrentGeneration(generation)){
+        return;
+    }
+
+    pruneFailoverHistory();
+
+    if(autoFailoverHistory.length >= MAX_AUTO_FAILOVERS_PER_WINDOW){
+        stopAutoFailoverLoop();
+        return;
+    }
+
+    autoFailoverHistory.push(Date.now());
+
+    const nextIndex = (currentIndex + 1) % PLAYERS.length;
+
+    console.warn(
+        '[Auto failover]',
+        PLAYERS[currentIndex].label,
+        '->',
+        PLAYERS[nextIndex].label,
+        '| raison:',
+        reason
+    );
+
+    loadPlayer(nextIndex, true);
+}
+
+function startStartupWatchdog(generation, label){
+    clearStartupTimer();
+
+    startupTimer = setTimeout(()=>{
+        autoFailover(
+            'délai de démarrage dépassé pour ' + label,
+            generation
+        );
+    }, STARTUP_TIMEOUT_MS);
+}
+
+function startStallWatchdog(generation, reason){
+    if(stallTimer){
+        return;
+    }
+
+    stallTimer = setTimeout(()=>{
+        stallTimer = null;
+        autoFailover(reason, generation);
+    }, STALL_TIMEOUT_MS);
+}
+
+function createFrame(url, generation){
     const iframe = document.createElement('iframe');
 
     iframe.allow =
@@ -196,12 +337,62 @@ function createFrame(url){
     iframe.sandbox =
         'allow-scripts allow-same-origin allow-forms allow-presentation allow-popups';
 
+    iframe.addEventListener('load',()=>{
+        if(!isCurrentGeneration(generation)){
+            return;
+        }
+
+        clearStartupTimer();
+    });
+
+    iframe.addEventListener('error',()=>{
+        autoFailover('erreur de chargement de l’iframe', generation);
+    });
+
     iframe.src = url;
+
+    startStartupWatchdog(generation, PLAYERS[currentIndex].label);
 
     return iframe;
 }
 
-function createHlsPlayer(url){
+function attachVideoHealthEvents(video, generation){
+    const markPlaying = ()=>{
+        if(!isCurrentGeneration(generation)){
+            return;
+        }
+
+        clearStartupTimer();
+        clearStallTimer();
+    };
+
+    const markStalled = ()=>{
+        if(!isCurrentGeneration(generation)){
+            return;
+        }
+
+        startStallWatchdog(
+            generation,
+            'lecture bloquée pendant plus de ' + (STALL_TIMEOUT_MS / 1000) + ' secondes'
+        );
+    };
+
+    video.addEventListener('playing', markPlaying);
+    video.addEventListener('canplay', markPlaying);
+    video.addEventListener('timeupdate', markPlaying);
+    video.addEventListener('waiting', markStalled);
+    video.addEventListener('stalled', markStalled);
+
+    video.addEventListener('error',()=>{
+        autoFailover('erreur vidéo', generation);
+    });
+
+    video.addEventListener('ended',()=>{
+        autoFailover('fin inattendue du flux vidéo', generation);
+    });
+}
+
+function createHlsPlayer(url, generation){
     const video = document.createElement('video');
 
     video.controls = true;
@@ -209,8 +400,11 @@ function createHlsPlayer(url){
     video.playsInline = true;
     video.muted = false;
 
+    attachVideoHealthEvents(video, generation);
+    startStartupWatchdog(generation, PLAYERS[currentIndex].label);
+
     if(!url || url === 'stream.m3u8'){
-        showMessage(true);
+        autoFailover('URL HLS non configurée', generation);
         return video;
     }
 
@@ -218,6 +412,10 @@ function createHlsPlayer(url){
         video.src = url;
 
         video.addEventListener('loadedmetadata',()=>{
+            if(!isCurrentGeneration(generation)){
+                return;
+            }
+
             video.play().catch(()=>{});
         });
     }else if(window.Hls && Hls.isSupported()){
@@ -230,20 +428,53 @@ function createHlsPlayer(url){
         currentHls.attachMedia(video);
 
         currentHls.on(Hls.Events.MANIFEST_PARSED,()=>{
+            if(!isCurrentGeneration(generation)){
+                return;
+            }
+
             video.play().catch(()=>{});
         });
-    }else{
-        showMessage(true);
 
-        message.querySelector('strong').textContent = 'HLS non supporté';
-        message.querySelector('span').textContent =
-            'Ce navigateur ne prend pas en charge ce flux HLS et hls.js n’est pas disponible.';
+        currentHls.on(Hls.Events.ERROR,(_event, data)=>{
+            if(!isCurrentGeneration(generation) || !data.fatal){
+                return;
+            }
+
+            if(data.type === Hls.ErrorTypes.NETWORK_ERROR &&
+               hlsNetworkRecoveryAttempts < 1){
+                hlsNetworkRecoveryAttempts += 1;
+
+                try{
+                    currentHls.startLoad();
+                    return;
+                }catch(e){}
+            }
+
+            if(data.type === Hls.ErrorTypes.MEDIA_ERROR &&
+               hlsMediaRecoveryAttempts < 1){
+                hlsMediaRecoveryAttempts += 1;
+
+                try{
+                    currentHls.recoverMediaError();
+                    return;
+                }catch(e){}
+            }
+
+            autoFailover(
+                'erreur HLS fatale : ' + (data.details || data.type || 'inconnue'),
+                generation
+            );
+        });
+    }else{
+        autoFailover('HLS non supporté par ce navigateur', generation);
     }
 
     return video;
 }
 
 function destroyCurrentElement(){
+    clearTimers();
+
     if(currentHls){
         try{
             currentHls.destroy();
@@ -272,35 +503,57 @@ function destroyCurrentElement(){
     currentElement = null;
 }
 
-function loadPlayer(index){
+function loadPlayer(index, automatic = false){
+    playerGeneration += 1;
+
+    const generation = playerGeneration;
+
     destroyCurrentElement();
     showMessage(false);
 
+    currentIndex = index;
+
     const player = PLAYERS[index];
+    let nextElement = null;
+
+    hlsNetworkRecoveryAttempts = 0;
+    hlsMediaRecoveryAttempts = 0;
+
+    if(!automatic){
+        autoFailoverHistory = [];
+    }
 
     if(player.type === 'iframe'){
-        currentElement = createFrame(player.url);
+        nextElement = createFrame(player.url, generation);
     }
 
     if(player.type === 'hls'){
-        currentElement = createHlsPlayer(player.url);
+        nextElement = createHlsPlayer(player.url, generation);
     }
 
+    if(!isCurrentGeneration(generation) || !nextElement){
+        try{
+            nextElement?.remove();
+        }catch(e){}
+
+        return;
+    }
+
+    currentElement = nextElement;
     wrap.appendChild(currentElement);
-    currentIndex = index;
     playerInfo.textContent = player.label;
 }
 
 function refreshCurrentPlayer(){
-    loadPlayer(currentIndex);
+    loadPlayer(currentIndex, false);
 }
 
 function switchPlayer(){
     const nextIndex = (currentIndex + 1) % PLAYERS.length;
-    loadPlayer(nextIndex);
+    loadPlayer(nextIndex, false);
 }
 
-loadPlayer(0);
+loadPlayer(0, false);
 
 document
 .getElementById('switchButton')
@@ -317,3 +570,4 @@ document
 
 </body>
 </html>
+
