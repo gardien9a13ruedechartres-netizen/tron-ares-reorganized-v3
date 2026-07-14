@@ -1850,13 +1850,39 @@ function resolveDirectStreamFallbackUrl(entry) {
   const sourceUrl = String(entry.url || '');
   const originalUrl = String(entry.originalPageUrl || '');
   const probe = `${sourceUrl}\n${originalUrl}`.toLowerCase();
+  const directFallbacks = [
+    {
+      patterns: ['/api/iptv/live/cmtv/master.m3u8', '/pages/worker-iptv3.html?channel=cmtv'],
+      url: 'https://player-engine.com/api/worker-live/cmtvpt/master.m3u8'
+    },
+    {
+      patterns: ['/api/iptv/live/tf1/master.m3u8', '/pages/worker-iptv3.html?channel=tf1'],
+      url: 'https://tron-ares-iptv.victor-salema-53d.workers.dev/api/iptv/live/tf1fr/master.m3u8'
+    },
+    {
+      patterns: ['/api/iptv/live/canal-plus/master.m3u8', '/pages/worker-iptv3.html?channel=canal-plus'],
+      url: 'https://tron-ares-iptv.victor-salema-53d.workers.dev/api/iptv/live/canalplfr/master.m3u8'
+    },
+    {
+      patterns: ['/api/iptv/live/btv/master.m3u8', '/pages/worker-iptv3.html?channel=btv'],
+      url: 'https://tron-ares-iptv.victor-salema-53d.workers.dev/api/iptv/live/btv/master.m3u8'
+    },
+    {
+      patterns: ['/api/iptv/live/sport-tv-1/master.m3u8', '/pages/worker-iptv3.html?channel=sport-tv-1'],
+      url: 'https://tron-ares-iptv.victor-salema-53d.workers.dev/api/iptv/live/sport-tv-1/master.m3u8'
+    },
+    {
+      patterns: ['/api/iptv/live/sport-tv-5/master.m3u8', '/pages/worker-iptv3.html?channel=sport-tv-5'],
+      url: 'https://tron-ares-iptv.victor-salema-53d.workers.dev/api/iptv/live/sport-tv-5/master.m3u8'
+    },
+    {
+      patterns: ['/api/iptv/live/m6/master.m3u8', '/pages/worker-iptv3.html?channel=m6'],
+      url: 'https://tron-ares-iptv.victor-salema-53d.workers.dev/api/iptv/live/m6fr/master.m3u8'
+    }
+  ];
 
-  if (
-    probe.includes('/api/iptv/live/cmtv/master.m3u8') ||
-    probe.includes('/pages/worker-iptv3.html?channel=cmtv')
-  ) {
-    return 'https://player-engine.com/api/worker-live/cmtvpt/master.m3u8';
-  }
+  const fallback = directFallbacks.find(item => item.patterns.some(pattern => probe.includes(pattern)));
+  if (fallback) return fallback.url;
 
   return '';
 }
