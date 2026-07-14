@@ -439,6 +439,18 @@
       "isIframe": true
     },
     {
+      "id": "tv-globo",
+      "name": "TV GLOBO",
+      "url": "/pages/worker-iptv3.html?channel=tv-globo",
+      "logo": {
+        "type": "image",
+        "value": "https://upload.wikimedia.org/wikipedia/commons/1/1f/TV_Globo_logo_%28April_2025%29.png"
+      },
+      "group": "Généraliste",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
       "id": "Record",
       "name": "RECORD",
       "url": "https://player-engine.com/api/worker-live/record-europa/master.m3u8",

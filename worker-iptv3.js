@@ -121,6 +121,11 @@ const LIVE_CHANNELS = new Map([
     { id: '4002241315e5ee10f4b753-97c7a8325393c2', name: 'CANAL PANDA', quality: null, source: 'basic' },
     { id: '26958390437906a5f4ba97-d22b5eb462d646', name: 'CANAL PANDA', quality: null, source: 'cable' }
   ] }],
+  ['tv-globo', { search: 'GLOBO BRAZIL', exact: 'GLOBO BRAZIL', country: 'Portugal', prefer: [null, 'HD', 'FHD'], sourcePrefer: ['cable', 'basic'], fallbackIds: [
+    { id: '4138844993f9f6ab3175df-991265815db62b', name: 'GLOBO BRAZIL', quality: null, source: 'cable' },
+    { id: '3068526841d78e5d3c16ff-dc1695f8251824', name: 'TV GLOBO', quality: null, source: 'basic' },
+    { id: '20994889228f6a91cba570-41e5862131242f', name: 'TV GLOBO NOW', quality: null, source: 'basic' }
+  ] }],
   ["golf", { search: "GOLF+", exact: "GOLF+ CHANNEL", country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
     { id: "780950104a5cb52c94aa2-88d30a5c48d027", name: "GOLF+ CHANNEL", quality: null, source: "satellite" },
     { id: "28324561ced12307fdbb-735096274b0694", name: "GOLF+ CHANNEL", quality: "FHD", source: "satellite" }
@@ -482,10 +487,20 @@ async function findChannelMatches(channel, skipIds = new Set()) {
     .filter(item => !skipIds.has(String(item.id || '')))
     .sort((a, b) => qualityRank(channel, b) - qualityRank(channel, a));
 
-  if (!matches.length && Array.isArray(channel.fallbackIds)) {
-    return [...channel.fallbackIds]
+  if (Array.isArray(channel.fallbackIds)) {
+    const seen = new Set(matches.map(item => String(item.id || '')));
+    const fallbacks = channel.fallbackIds
       .filter(item => !skipIds.has(String(item.id || '')))
+      .filter(item => {
+        const id = String(item.id || '');
+        if (!id || seen.has(id)) return false;
+        seen.add(id);
+        return true;
+      });
+    if (matches.length || fallbacks.length) {
+      return [...matches, ...fallbacks]
       .sort((a, b) => qualityRank(channel, b) - qualityRank(channel, a));
+    }
   }
 
   if (!matches.length) throw new Error('channel not found');
