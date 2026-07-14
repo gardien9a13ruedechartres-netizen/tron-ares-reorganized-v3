@@ -48,6 +48,10 @@ const LIVE_CHANNELS = new Map([
   ], staticFallbacks: [
     legacyLovetierFallback('tf1fr', 'TF1', 'TF1FR')
   ] }], 
+  ['tf1sf', { search: 'TF1 SERIES & FILM', exact: 'TF1 SERIES & FILM', country: 'France', prefer: [null, 'HD', 'FHD'], sourcePrefer: ['satellite', 'cable', 'basic'], fallbackIds: [
+    { id: '1760063888f6e9e21d8039-e1c647aa24dff8', name: 'TF1 SERIES & FILM', quality: null, source: 'satellite' },
+    { id: '3049436856cd6a1575450a-d6ab2a40a54f7a', name: 'TF1 SERIES & FILM', quality: 'HD', source: 'satellite' }
+  ] }],
   ['canal-plus', { search: 'CANAL+', exact: 'CANAL+', country: 'France', prefer: [null, 'FHD', 'HD', '4K'], sourcePrefer: ['cable', 'satellite', 'basic'], fallbackIds: [
     { id: '1839597702d549646f5393-2ac8f134e5cc3d', name: 'CANAL+', quality: null, source: 'cable' },
     { id: '6981957d8c5d6ef6ebe-00e248dcf7e873', name: 'CANAL+', quality: null, source: 'satellite' },
