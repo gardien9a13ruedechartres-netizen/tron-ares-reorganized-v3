@@ -168,11 +168,11 @@ video{
     <button id="refreshButton" class="controlButton" title="Actualiser"></button>
     <button id="switchButton" class="controlButton" title="Changer de lecteur"></button>
 </div>
-<div id="playerInfo" style="visibility: hidden;">IFRAME 1/2</div>
+<div id="playerInfo" style="visibility: hidden;">HLS 1/2</div>
 
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 <script>
-const HLS_URL = 'https://tron-ares-engine.victor-salema-53d.workers.dev/api/worker-live/cmtvpt/master.m3u8';
+const HLS_URL = 'https://tron-ares-iptv3.victor-salema-53d.workers.dev/api/iptv/live/cmtv/master.m3u8?skip=805844173b05e1a81e31d-579768661fe265';
 const IFRAME_URL = 'https://player-engine.com/pages/worker-iptv3?channel=cmtv';
 
 const STARTUP_TIMEOUT_MS = 15000;
@@ -182,14 +182,14 @@ const MAX_AUTO_FAILOVERS_PER_WINDOW = 4;
 
 const PLAYERS = [
     {
-        type:'iframe',
-        label:'IFRAME 1/2',
-        url:IFRAME_URL
+        type:'hls',
+        label:'HLS 1/2',
+        url:HLS_URL
     },
     {
-        type:'hls',
-        label:'HLS 2/2',
-        url:HLS_URL
+        type:'iframe',
+        label:'IFRAME 2/2',
+        url:IFRAME_URL
     }
 ];
 
