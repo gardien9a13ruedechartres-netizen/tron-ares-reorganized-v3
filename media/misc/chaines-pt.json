@@ -273,14 +273,14 @@
     {
       "id": "sporttv1",
       "name": "Sport TV 1",
-      "url": "/pages/worker-iptv3.html?channel=sport-tv-1",
+      "url": "https://tron-ares-iptv.victor-salema-53d.workers.dev/api/iptv/live/sport-tv-1/master.m3u8",
       "logo": {
         "type": "image",
         "value": "/media/sport-tv-1.png"
       },
       "group": "Sport",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": false
     },
     {
       "id": "sporttv2",
@@ -321,14 +321,14 @@
     {
       "id": "sporttv5",
       "name": "Sport TV 5",
-      "url": "/pages/worker-iptv3.html?channel=sport-tv-5",
+      "url": "https://tron-ares-iptv.victor-salema-53d.workers.dev/api/iptv/live/sport-tv-5/master.m3u8",
       "logo": {
         "type": "image",
         "value": "/media/sport-tv-5.png"
       },
       "group": "Sport",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": false
     },
     {
       "id": "dazn1",
