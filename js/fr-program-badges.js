@@ -7,8 +7,6 @@
 (() => {
   "use strict";
 
-  const BADGE_ICON_URL = "https://www.stream4free.tv/images/jtv/info.png";
-
   // URL par chaîne (optionnel). Si pas trouvé => fallback (guide général).
   const PROGRAM_URLS = {
     // Exemple (tu peux compléter au fur et à mesure)
@@ -54,11 +52,9 @@
     btn.title = "Programme / Infos";
     btn.setAttribute("aria-label", "Programme / Infos");
 
-    const img = document.createElement("img");
-    img.src = BADGE_ICON_URL;
-    img.alt = "Info";
-    img.decoding = "async";
-    img.loading = "lazy";
+    const img = document.createElement("span");
+    img.textContent = "i";
+    img.setAttribute("aria-hidden", "true");
     img.className = "fr-program-badge-icon";
 
     btn.appendChild(img);
@@ -78,7 +74,17 @@
     style.id = "frProgramBadgeStyle";
     style.textContent = `
       .fr-program-badge { margin-right: 8px; }
-      .fr-program-badge-icon { width: 16px; height: 16px; display:block; }
+      .fr-program-badge-icon {
+        width: 16px;
+        height: 16px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        border: 1px solid currentColor;
+        font: 700 12px/1 Arial, sans-serif;
+        color: currentColor;
+      }
     `;
     document.head.appendChild(style);
   }
