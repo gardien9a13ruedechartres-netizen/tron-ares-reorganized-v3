@@ -118,8 +118,8 @@ const LIVE_CHANNELS = new Map([
     { id: '1616464273e04bb68a8a1c-ed3fcb510db31f', name: 'DISNEY+ PIXAR', quality: null, source: 'cable' }
   ] }],
   ['canal-panda', { search: 'CANAL PANDA', exact: 'CANAL PANDA', country: 'Portugal', prefer: [null, 'HD', 'FHD'], fallbackIds: [
-    { id: '4002241315e5ee10f4b753-97c7a8325393c2', name: 'CANAL PANDA', quality: null, source: 'basic' },
-    { id: '26958390437906a5f4ba97-d22b5eb462d646', name: 'CANAL PANDA', quality: null, source: 'cable' }
+    { id: '26958390437906a5f4ba97-d22b5eb462d646', name: 'CANAL PANDA', quality: null, source: 'cable' },
+    { id: '4002241315e5ee10f4b753-97c7a8325393c2', name: 'CANAL PANDA', quality: null, source: 'basic' }
   ] }],
   ['tv-globo', { search: 'GLOBO BRAZIL', exact: 'GLOBO BRAZIL', country: 'Portugal', prefer: [null, 'HD', 'FHD'], sourcePrefer: ['cable', 'basic'], fallbackIds: [
     { id: '4138844993f9f6ab3175df-991265815db62b', name: 'GLOBO BRAZIL', quality: null, source: 'cable' },
