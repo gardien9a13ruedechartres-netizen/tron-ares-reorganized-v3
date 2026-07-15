@@ -161,6 +161,1094 @@ const CHANNELS = {
   }
 };
 
+
+// Imported LiveWatch channels from worker-iptv3.
+Object.assign(CHANNELS, {
+  "canal-gr-ecran": {
+    "label": "CANAL+ GRAND ECRAN",
+    "defaultOrder": [
+      "cable",
+      "satellite-fhd",
+      "basic-fhd",
+      "basic-hd"
+    ],
+    "sources": {
+      "cable": {
+        "id": "25747471736b92892116f8-9e6e1088c67bdc",
+        "label": "LiveWatch cable"
+      },
+      "satellite-fhd": {
+        "id": "25481898009fc4dd96f118-ebf0455ad2d869",
+        "label": "LiveWatch satellite FHD"
+      },
+      "basic-fhd": {
+        "id": "764514828841cf1a946e8-a890035e372e41",
+        "label": "LiveWatch basic FHD"
+      },
+      "basic-hd": {
+        "id": "13730112351c691b47ed3b-da2c3b2aa7a4bb",
+        "label": "LiveWatch basic HD"
+      }
+    }
+  },
+  "canal-cinema": {
+    "label": "CANAL+ CINEMA",
+    "defaultOrder": [
+      "cable",
+      "satellite",
+      "satellite-fhd",
+      "satellite-hd"
+    ],
+    "sources": {
+      "cable": {
+        "id": "3980730104297e5d74da47-ae5ab89e27534a",
+        "label": "LiveWatch cable"
+      },
+      "satellite": {
+        "id": "7815381974235226e525c-08b89a15623fb6",
+        "label": "LiveWatch satellite"
+      },
+      "satellite-fhd": {
+        "id": "2898387495718e66ec3be-c854d47617c539",
+        "label": "LiveWatch satellite FHD"
+      },
+      "satellite-hd": {
+        "id": "9740778764179b9c92456-b9dbab0a86d0a4",
+        "label": "LiveWatch satellite HD"
+      }
+    }
+  },
+  "canal-series": {
+    "label": "CANAL+ SERIES",
+    "defaultOrder": [
+      "cable",
+      "satellite",
+      "satellite-fhd",
+      "basic-fhd",
+      "satellite-hd",
+      "basic-4k"
+    ],
+    "sources": {
+      "cable": {
+        "id": "907568283b0bf51903416-605791705e0c48",
+        "label": "LiveWatch cable"
+      },
+      "satellite": {
+        "id": "412353586256ea59f8b7b5-48ff83e119e784",
+        "label": "LiveWatch satellite"
+      },
+      "satellite-fhd": {
+        "id": "2141653939fb56edcf97da-a136854c58391a",
+        "label": "LiveWatch satellite FHD"
+      },
+      "basic-fhd": {
+        "id": "2354397782686b0f84677f-21272264449cba",
+        "label": "LiveWatch basic FHD"
+      },
+      "satellite-hd": {
+        "id": "296255235587d472eb18c8-a46767322a9b14",
+        "label": "LiveWatch satellite HD"
+      },
+      "basic-4k": {
+        "id": "31229880095478070434b1-49a1fae602e682",
+        "label": "LiveWatch basic 4K"
+      }
+    }
+  },
+  "6ter": {
+    "label": "6TER",
+    "defaultOrder": [
+      "livewatch"
+    ],
+    "sources": {
+      "livewatch": {
+        "kind": "livewatch-search",
+        "id": "dynamic-livewatch-6ter",
+        "label": "LiveWatch auto",
+        "button": "LiveWatch auto",
+        "search": "6TER",
+        "exact": "6TER",
+        "country": "France",
+        "prefer": [
+          "FHD",
+          "HD",
+          null
+        ],
+        "sourcePrefer": [],
+        "excludeIds": []
+      }
+    }
+  },
+  "cstar": {
+    "label": "C STAR",
+    "defaultOrder": [
+      "satellite-fhd",
+      "cable"
+    ],
+    "sources": {
+      "satellite-fhd": {
+        "id": "3480426017c3f2b3e10a98-4eb0ab5a31ab6c",
+        "label": "LiveWatch satellite FHD"
+      },
+      "cable": {
+        "id": "3166346130b6b8b30bb9d2-eda28228a50465",
+        "label": "LiveWatch cable"
+      }
+    }
+  },
+  "sport-tv-1": {
+    "label": "SPORT TV 1",
+    "defaultOrder": [
+      "basic-hd",
+      "basic-hd-backup",
+      "basic",
+      "cable",
+      "basic-backup"
+    ],
+    "sources": {
+      "basic-hd": {
+        "id": "3966581533812bd3be6382-2dee5e113ca360",
+        "label": "LiveWatch basic HD"
+      },
+      "basic-hd-backup": {
+        "id": "211283081051caac7287c4-b0c19770b7972b",
+        "label": "LiveWatch basic HD backup"
+      },
+      "basic": {
+        "id": "10004270647c8377fd8313-31e3d5c4614739",
+        "label": "LiveWatch basic"
+      },
+      "cable": {
+        "id": "34289402226976c68b9b9e-bf2069844244ff",
+        "label": "LiveWatch cable"
+      },
+      "basic-backup": {
+        "id": "14386289065b08d49bfc3e-61a6d716bcbe83",
+        "label": "LiveWatch basic backup"
+      }
+    },
+    "manualSources": {
+      "deviantart": {
+        "kind": "lovetier",
+        "id": "legacy-lovetier-sport-tv-1",
+        "label": "DeviantArt SPORT TV 1",
+        "button": "DeviantArt",
+        "lovetierChannel": "SPT1"
+      }
+    }
+  },
+  "sport-tv-5": {
+    "label": "SPORT TV 5",
+    "defaultOrder": [
+      "basic-backup",
+      "cable"
+    ],
+    "sources": {
+      "basic-backup": {
+        "id": "12763267051751832c99d9-e96250d7d887f8",
+        "label": "LiveWatch basic backup"
+      },
+      "cable": {
+        "id": "9711041268146231bc411-77fb597e2397df",
+        "label": "LiveWatch cable"
+      }
+    },
+    "manualSources": {
+      "deviantart": {
+        "kind": "lovetier",
+        "id": "legacy-lovetier-sport-tv-5",
+        "label": "DeviantArt SPORT TV 5",
+        "button": "DeviantArt",
+        "lovetierChannel": "SPT5"
+      }
+    }
+  },
+  "disney-pixar": {
+    "label": "DISNEY+ PIXAR",
+    "defaultOrder": [
+      "cable"
+    ],
+    "sources": {
+      "cable": {
+        "id": "1616464273e04bb68a8a1c-ed3fcb510db31f",
+        "label": "LiveWatch cable"
+      }
+    }
+  },
+  "tv-globo": {
+    "label": "GLOBO BRAZIL",
+    "defaultOrder": [
+      "cable",
+      "basic",
+      "basic-2"
+    ],
+    "sources": {
+      "cable": {
+        "id": "4138844993f9f6ab3175df-991265815db62b",
+        "label": "LiveWatch cable"
+      },
+      "basic": {
+        "id": "3068526841d78e5d3c16ff-dc1695f8251824",
+        "label": "LiveWatch basic"
+      },
+      "basic-2": {
+        "id": "20994889228f6a91cba570-41e5862131242f",
+        "label": "LiveWatch basic"
+      }
+    }
+  },
+  "golf": {
+    "label": "GOLF+ CHANNEL",
+    "defaultOrder": [
+      "satellite",
+      "satellite-fhd"
+    ],
+    "sources": {
+      "satellite": {
+        "id": "780950104a5cb52c94aa2-88d30a5c48d027",
+        "label": "LiveWatch satellite"
+      },
+      "satellite-fhd": {
+        "id": "28324561ced12307fdbb-735096274b0694",
+        "label": "LiveWatch satellite FHD"
+      }
+    }
+  },
+  "auto-moto": {
+    "label": "AUTO MOTO",
+    "defaultOrder": [
+      "satellite-hd"
+    ],
+    "sources": {
+      "satellite-hd": {
+        "id": "1110040958c161c4e38ce9-8d51147a271203",
+        "label": "LiveWatch satellite HD"
+      }
+    }
+  },
+  "l-equipe-fr": {
+    "label": "L EQUIPE",
+    "defaultOrder": [
+      "satellite",
+      "basic",
+      "cable"
+    ],
+    "sources": {
+      "satellite": {
+        "id": "38373319428576fb860cef-802f251211ffb1",
+        "label": "LiveWatch satellite"
+      },
+      "basic": {
+        "id": "2241995657d1acf374577f-439b1c3988b027",
+        "label": "LiveWatch basic"
+      },
+      "cable": {
+        "id": "1064699189d6dd5dc4d422-856d62582d1513",
+        "label": "LiveWatch cable"
+      }
+    }
+  },
+  "ocs-max": {
+    "label": "OCS MAX",
+    "defaultOrder": [
+      "cable",
+      "satellite",
+      "satellite-fhd",
+      "satellite-hd"
+    ],
+    "sources": {
+      "cable": {
+        "id": "636734800c64cceb42cf-7325d09036ee4e",
+        "label": "LiveWatch cable"
+      },
+      "satellite": {
+        "id": "42064702927b26fcd04aa-894a8129a06e33",
+        "label": "LiveWatch satellite"
+      },
+      "satellite-fhd": {
+        "id": "2561627199a0669a101b1e-f9e6cde850e4ab",
+        "label": "LiveWatch satellite FHD"
+      },
+      "satellite-hd": {
+        "id": "151053255430b682f860-71fa30e2ad1689",
+        "label": "LiveWatch satellite HD"
+      }
+    }
+  },
+  "warner-tv": {
+    "label": "WARNER TV",
+    "defaultOrder": [
+      "cable",
+      "satellite",
+      "cable-2"
+    ],
+    "sources": {
+      "cable": {
+        "id": "30593609059ce1103aec2e-59f2068cdb0b85",
+        "label": "LiveWatch cable"
+      },
+      "satellite": {
+        "id": "2978100125aecff8327cf5-ec0eb76b33ec19",
+        "label": "LiveWatch satellite"
+      },
+      "cable-2": {
+        "id": "48836462992d6cf6baccf-2dfa35b36b8332",
+        "label": "LiveWatch cable"
+      }
+    }
+  },
+  "cine-frisson": {
+    "label": "CINE+ FRISSON",
+    "defaultOrder": [
+      "cable"
+    ],
+    "sources": {
+      "cable": {
+        "id": "3654122461b46665c82b8f-2f4675d52df5dc",
+        "label": "LiveWatch cable"
+      }
+    }
+  },
+  "cine-emotion": {
+    "label": "CINE+ EMOTION",
+    "defaultOrder": [
+      "cable",
+      "satellite",
+      "satellite-fhd",
+      "basic-fhd"
+    ],
+    "sources": {
+      "cable": {
+        "id": "7546769060ce35541f305-b64237317fb59f",
+        "label": "LiveWatch cable"
+      },
+      "satellite": {
+        "id": "4012587463c5d0adb0620e-d6461b78095980",
+        "label": "LiveWatch satellite"
+      },
+      "satellite-fhd": {
+        "id": "2737270354dc417dc353b0-3bb897e9f0e140",
+        "label": "LiveWatch satellite FHD"
+      },
+      "basic-fhd": {
+        "id": "135614661597d2792a4429-800be2a83171eb",
+        "label": "LiveWatch basic FHD"
+      }
+    }
+  },
+  "cine-classic": {
+    "label": "CINE+ CLASSIC",
+    "defaultOrder": [
+      "cable",
+      "satellite",
+      "satellite-fhd",
+      "satellite-hd"
+    ],
+    "sources": {
+      "cable": {
+        "id": "826335846cd94062fe98-4fb202719f29f1",
+        "label": "LiveWatch cable"
+      },
+      "satellite": {
+        "id": "3342642717ab7f2fad50a4-3c594b794f9dee",
+        "label": "LiveWatch satellite"
+      },
+      "satellite-fhd": {
+        "id": "581219766ec0c08526620-4c53cd2db97ebc",
+        "label": "LiveWatch satellite FHD"
+      },
+      "satellite-hd": {
+        "id": "3677483481c601971abf79-b7fe08230b1502",
+        "label": "LiveWatch satellite HD"
+      }
+    }
+  },
+  "cine-club": {
+    "label": "CINE+ CLUB",
+    "defaultOrder": [
+      "cable",
+      "satellite",
+      "satellite-hd",
+      "basic-fhd"
+    ],
+    "sources": {
+      "cable": {
+        "id": "1800537483f21c95207e51-a7e1f948aac95f",
+        "label": "LiveWatch cable"
+      },
+      "satellite": {
+        "id": "176726491979039c050819-b15b40089b122f",
+        "label": "LiveWatch satellite"
+      },
+      "satellite-hd": {
+        "id": "5870248549e97edf632cd-1ff1e3a667c107",
+        "label": "LiveWatch satellite HD"
+      },
+      "basic-fhd": {
+        "id": "26514025573f474a0abd81-740408c1c368cf",
+        "label": "LiveWatch basic FHD"
+      }
+    }
+  },
+  "serie-club": {
+    "label": "SERIE CLUB",
+    "defaultOrder": [
+      "cable"
+    ],
+    "sources": {
+      "cable": {
+        "id": "1534887525bcb2cc0c943a-0f014dfb9a8451",
+        "label": "LiveWatch cable"
+      }
+    }
+  },
+  "tcm-cinema": {
+    "label": "TCM CINEMA",
+    "defaultOrder": [
+      "satellite",
+      "basic"
+    ],
+    "sources": {
+      "satellite": {
+        "id": "2451805128d0f9045d041b-ed47dcec34444c",
+        "label": "LiveWatch satellite"
+      },
+      "basic": {
+        "id": "3637294135d561d9540c1c-933813a71d3ece",
+        "label": "LiveWatch basic"
+      }
+    }
+  },
+  "disney-cinema": {
+    "label": "DISNEY CINEMA",
+    "defaultOrder": [
+      "basic",
+      "satellite",
+      "basic-backup"
+    ],
+    "sources": {
+      "basic": {
+        "id": "13753937069c923e070773-c072ddbe1fd2dc",
+        "label": "LiveWatch basic"
+      },
+      "satellite": {
+        "id": "3691576487927392cb891e-14f6b6ead7f4b4",
+        "label": "LiveWatch satellite"
+      },
+      "basic-backup": {
+        "id": "1624576575a94e3212da5-5284eaf4bb0ca3",
+        "label": "LiveWatch basic backup"
+      }
+    }
+  },
+  "disney-junior": {
+    "label": "DISNEY JUNIOR",
+    "defaultOrder": [
+      "satellite",
+      "satellite-fhd",
+      "basic",
+      "basic-backup"
+    ],
+    "sources": {
+      "satellite": {
+        "id": "3351330853ba2b580d385f-08df3f69cbcec0",
+        "label": "LiveWatch satellite"
+      },
+      "satellite-fhd": {
+        "id": "357894050d7f96e94e22f-7dea5cea101754",
+        "label": "LiveWatch satellite FHD"
+      },
+      "basic": {
+        "id": "1244883752934afb7348d0-710962f0dc7de6",
+        "label": "LiveWatch basic"
+      },
+      "basic-backup": {
+        "id": "4039125784a8c6af55cefd-1089d3f4d65646",
+        "label": "LiveWatch basic backup"
+      }
+    }
+  },
+  "cartoon-network": {
+    "label": "CARTOON NETWORK",
+    "defaultOrder": [
+      "cable",
+      "satellite-fhd",
+      "basic",
+      "basic-4k"
+    ],
+    "sources": {
+      "cable": {
+        "id": "278630331931d4f590a721-11a3e66f138ae4",
+        "label": "LiveWatch cable"
+      },
+      "satellite-fhd": {
+        "id": "2127297858581f62f0bf4c-eef3410f1d1bfb",
+        "label": "LiveWatch satellite FHD"
+      },
+      "basic": {
+        "id": "3047805633546dcf9fb24b-e949024146d5d8",
+        "label": "LiveWatch basic"
+      },
+      "basic-4k": {
+        "id": "2078762115ee0894e1e157-adbd239d277f15",
+        "label": "LiveWatch basic 4K"
+      }
+    }
+  },
+  "canal-j": {
+    "label": "CANAL J",
+    "defaultOrder": [
+      "cable",
+      "satellite-fhd",
+      "basic",
+      "basic-backup"
+    ],
+    "sources": {
+      "cable": {
+        "id": "85706364091e683ba1a33-5c832e172adad3",
+        "label": "LiveWatch cable"
+      },
+      "satellite-fhd": {
+        "id": "24446412ebabf61b09ad-043d27d40d15b4",
+        "label": "LiveWatch satellite FHD"
+      },
+      "basic": {
+        "id": "3860888136d301b247640b-021aab3c4b6dfb",
+        "label": "LiveWatch basic"
+      },
+      "basic-backup": {
+        "id": "6099304471232528ee2e1-4f07037b01a340",
+        "label": "LiveWatch basic backup"
+      }
+    }
+  },
+  "teletoon": {
+    "label": "TELETOON+",
+    "defaultOrder": [
+      "cable",
+      "satellite",
+      "cable-2"
+    ],
+    "sources": {
+      "cable": {
+        "id": "2382507077306dedae7ff3-e03c9b3620ee1a",
+        "label": "LiveWatch cable"
+      },
+      "satellite": {
+        "id": "231278062503478eaef59f-1363b3bc9b6a6e",
+        "label": "LiveWatch satellite"
+      },
+      "cable-2": {
+        "id": "1143042553bb95572793be-4a7357659fbfc8",
+        "label": "LiveWatch cable"
+      }
+    }
+  },
+  "mangas": {
+    "label": "MANGAS",
+    "defaultOrder": [
+      "satellite",
+      "basic",
+      "basic-hd"
+    ],
+    "sources": {
+      "satellite": {
+        "id": "139408412ba8e0ae7a800-af3111e493d466",
+        "label": "LiveWatch satellite"
+      },
+      "basic": {
+        "id": "3781018265a0de3a4a5f34-cb323ba5b11df7",
+        "label": "LiveWatch basic"
+      },
+      "basic-hd": {
+        "id": "401237472a1e90e56167a-e5d148a48b2e03",
+        "label": "LiveWatch basic HD"
+      }
+    }
+  },
+  "j-one": {
+    "label": "J-ONE",
+    "defaultOrder": [
+      "basic"
+    ],
+    "sources": {
+      "basic": {
+        "id": "874035777bcae83ee8339-448ec8df936ca1",
+        "label": "LiveWatch basic"
+      }
+    }
+  },
+  "tiji": {
+    "label": "TIJI",
+    "defaultOrder": [
+      "satellite-fhd",
+      "satellite-hd",
+      "basic"
+    ],
+    "sources": {
+      "satellite-fhd": {
+        "id": "381228029420ab3e3544f6-b7ace7d491d7aa",
+        "label": "LiveWatch satellite FHD"
+      },
+      "satellite-hd": {
+        "id": "61014295140065dfc1ba9-42df2ea83b0598",
+        "label": "LiveWatch satellite HD"
+      },
+      "basic": {
+        "id": "12869143765e4bc62e1bc-a831bfc016195f",
+        "label": "LiveWatch basic"
+      }
+    }
+  },
+  "nickelodeon": {
+    "label": "NICKELODEON",
+    "defaultOrder": [
+      "cable",
+      "satellite",
+      "cable-2",
+      "cable-3"
+    ],
+    "sources": {
+      "cable": {
+        "id": "280381887053bd39b0c65f-f0abfafee5bc9c",
+        "label": "LiveWatch cable"
+      },
+      "satellite": {
+        "id": "2881806872c3195b245695-8f25ba9085fc8e",
+        "label": "LiveWatch satellite"
+      },
+      "cable-2": {
+        "id": "2600378206c4151e6fe1dd-7e83c87ae047f4",
+        "label": "LiveWatch cable"
+      },
+      "cable-3": {
+        "id": "2786840044bbf88bfbe8f7-6c830fd8cea545",
+        "label": "LiveWatch cable"
+      }
+    }
+  },
+  "boing": {
+    "label": "BOING",
+    "defaultOrder": [
+      "basic"
+    ],
+    "sources": {
+      "basic": {
+        "id": "69130693e2582f2056fe-1367813e7d7947",
+        "label": "LiveWatch basic"
+      }
+    }
+  },
+  "game-one": {
+    "label": "GAME ONE",
+    "defaultOrder": [
+      "cable",
+      "satellite"
+    ],
+    "sources": {
+      "cable": {
+        "id": "22141630554906bb2fc4a4-615863c6daad76",
+        "label": "LiveWatch cable"
+      },
+      "satellite": {
+        "id": "1479966396202ff806f8d8-cbf2e8251593f3",
+        "label": "LiveWatch satellite"
+      }
+    }
+  },
+  "toonami": {
+    "label": "TOONAMI",
+    "defaultOrder": [
+      "cable"
+    ],
+    "sources": {
+      "cable": {
+        "id": "4132905048a27f69176a77-f271550b92fa28",
+        "label": "LiveWatch cable"
+      }
+    }
+  },
+  "toute-l-histoire": {
+    "label": "TOUTE L HISTOIRE",
+    "defaultOrder": [
+      "satellite",
+      "satellite-hd"
+    ],
+    "sources": {
+      "satellite": {
+        "id": "22335450950012aecee2ea-0f5f79eca55d8f",
+        "label": "LiveWatch satellite"
+      },
+      "satellite-hd": {
+        "id": "31946318574d1657fbd437-c09eeedf8b9fdb",
+        "label": "LiveWatch satellite HD"
+      }
+    }
+  },
+  "nat-geo": {
+    "label": "NAT GEO",
+    "defaultOrder": [
+      "cable",
+      "satellite-fhd"
+    ],
+    "sources": {
+      "cable": {
+        "id": "13411697827c093b9217a6-d306fbe39a12c6",
+        "label": "LiveWatch cable"
+      },
+      "satellite-fhd": {
+        "id": "2662111844aff3a550d3f7-7ba789afe7e146",
+        "label": "LiveWatch satellite FHD"
+      }
+    }
+  },
+  "nat-geo-wild": {
+    "label": "NAT GEO WILD",
+    "defaultOrder": [
+      "cable",
+      "satellite",
+      "satellite-fhd",
+      "satellite-hd"
+    ],
+    "sources": {
+      "cable": {
+        "id": "4163250572cb7f669550a4-3d0d5a84418865",
+        "label": "LiveWatch cable"
+      },
+      "satellite": {
+        "id": "12578909822641fbc02dc3-c31972024bfa81",
+        "label": "LiveWatch satellite"
+      },
+      "satellite-fhd": {
+        "id": "295899358126aff7725d18-fdee8f20c90503",
+        "label": "LiveWatch satellite FHD"
+      },
+      "satellite-hd": {
+        "id": "4087509269bc6b8e5313a4-bcff710cb1d8ee",
+        "label": "LiveWatch satellite HD"
+      }
+    }
+  },
+  "discovery-science": {
+    "label": "DISCOVERY SCIENCE",
+    "defaultOrder": [
+      "satellite",
+      "basic"
+    ],
+    "sources": {
+      "satellite": {
+        "id": "27011456832d97fd3f96b1-a853c618061161",
+        "label": "LiveWatch satellite"
+      },
+      "basic": {
+        "id": "13916241181642741e7fb7-fdaacb46707245",
+        "label": "LiveWatch basic"
+      }
+    }
+  },
+  "ushuaia-tv": {
+    "label": "USHUAIA",
+    "defaultOrder": [
+      "satellite",
+      "satellite-fhd",
+      "satellite-hd",
+      "basic-hd"
+    ],
+    "sources": {
+      "satellite": {
+        "id": "4274246496cae3eb6b9282-fd0a6c4baf6755",
+        "label": "LiveWatch satellite"
+      },
+      "satellite-fhd": {
+        "id": "7377560460dce594183e5-ad52d57e270076",
+        "label": "LiveWatch satellite FHD"
+      },
+      "satellite-hd": {
+        "id": "814473941476083b06ccb-aa495a509760c4",
+        "label": "LiveWatch satellite HD"
+      },
+      "basic-hd": {
+        "id": "30343651343100cf58d048-49ae141343babb",
+        "label": "LiveWatch basic HD"
+      }
+    }
+  },
+  "science-vie": {
+    "label": "SCIENCE & VIE",
+    "defaultOrder": [
+      "satellite",
+      "cable"
+    ],
+    "sources": {
+      "satellite": {
+        "id": "38619424749a7f941cb30-54abd9ba33e71b",
+        "label": "LiveWatch satellite"
+      },
+      "cable": {
+        "id": "152357533f67555e62908-aa5ee95724bef2",
+        "label": "LiveWatch cable"
+      }
+    }
+  },
+  "planete-crime": {
+    "label": "PLANETE+ CRIME",
+    "defaultOrder": [
+      "satellite",
+      "satellite-hd"
+    ],
+    "sources": {
+      "satellite": {
+        "id": "18698414995fd862423d6-6f3ef08a42e1bc",
+        "label": "LiveWatch satellite"
+      },
+      "satellite-hd": {
+        "id": "3552349294e8f1f6a1d376-8e3ce7fd7b5016",
+        "label": "LiveWatch satellite HD"
+      }
+    }
+  },
+  "animaux": {
+    "label": "ANIMAUX",
+    "defaultOrder": [
+      "cable",
+      "satellite",
+      "basic"
+    ],
+    "sources": {
+      "cable": {
+        "id": "23092519062e4569443ea7-6ca1f439632427",
+        "label": "LiveWatch cable"
+      },
+      "satellite": {
+        "id": "2474469311465ad21db7be-9cded0c55031b8",
+        "label": "LiveWatch satellite"
+      },
+      "basic": {
+        "id": "155306235421d782ab66e0-d7ecc20b2eb620",
+        "label": "LiveWatch basic"
+      }
+    }
+  },
+  "rmc-decouverte-2": {
+    "label": "RMC DECOUVERTE",
+    "defaultOrder": [
+      "satellite"
+    ],
+    "sources": {
+      "satellite": {
+        "id": "26066150769be8b83ee804-af017e71349872",
+        "label": "LiveWatch satellite"
+      }
+    }
+  },
+  "investigation-discovery": {
+    "label": "INVESTIGATION DISCOVERY",
+    "defaultOrder": [
+      "cable"
+    ],
+    "sources": {
+      "cable": {
+        "id": "286307272239f45a9230cb-3b4db1b78f26f3",
+        "label": "LiveWatch cable"
+      }
+    }
+  },
+  "chasse-peche": {
+    "label": "CHASSE & PECHE",
+    "defaultOrder": [
+      "cable",
+      "satellite"
+    ],
+    "sources": {
+      "cable": {
+        "id": "30277092126bc746a51a20-d17faee3c160af",
+        "label": "LiveWatch cable"
+      },
+      "satellite": {
+        "id": "2674834370a1cac4b77989-e6c20205a967e8",
+        "label": "LiveWatch satellite"
+      }
+    }
+  },
+  "crime-district": {
+    "label": "CRIME DISTRICT",
+    "defaultOrder": [
+      "cable",
+      "satellite"
+    ],
+    "sources": {
+      "cable": {
+        "id": "233249952949b217798c9e-4beb79d74324a1",
+        "label": "LiveWatch cable"
+      },
+      "satellite": {
+        "id": "26863556070010417e6d9d-8989a74e7c7b85",
+        "label": "LiveWatch satellite"
+      }
+    }
+  },
+  "mcm": {
+    "label": "MCM",
+    "defaultOrder": [
+      "satellite",
+      "satellite-hd",
+      "cable",
+      "cable-2"
+    ],
+    "sources": {
+      "satellite": {
+        "id": "855739216dd3b63b126bc-2ebedcfec45012",
+        "label": "LiveWatch satellite"
+      },
+      "satellite-hd": {
+        "id": "33400096800b79d7bb9d9-5ca9814ebe0f2f",
+        "label": "LiveWatch satellite HD"
+      },
+      "cable": {
+        "id": "8696880859ab59a847a37-1acc146d4bb3d4",
+        "label": "LiveWatch cable"
+      },
+      "cable-2": {
+        "id": "33487111745e397d403417-d2c67332238dbd",
+        "label": "LiveWatch cable"
+      }
+    }
+  },
+  "m6-music": {
+    "label": "M6 MUSIC",
+    "defaultOrder": [
+      "cable",
+      "satellite",
+      "basic-hd",
+      "satellite-backup"
+    ],
+    "sources": {
+      "cable": {
+        "id": "4154285296f902b73b0d28-87a81f8557de0d",
+        "label": "LiveWatch cable"
+      },
+      "satellite": {
+        "id": "7435919714613b22a77d1-a6d54f4daab9d6",
+        "label": "LiveWatch satellite"
+      },
+      "basic-hd": {
+        "id": "285936085861281a838c2f-9ae29e33139ec9",
+        "label": "LiveWatch basic HD"
+      },
+      "satellite-backup": {
+        "id": "38871521898e03f2cfd86d-baee3d9fb1aa96",
+        "label": "LiveWatch satellite backup"
+      }
+    }
+  },
+  "mtv": {
+    "label": "MTV",
+    "defaultOrder": [
+      "satellite",
+      "satellite-fhd",
+      "cable",
+      "satellite-2"
+    ],
+    "sources": {
+      "satellite": {
+        "id": "987897824424746e378ce-28029f74c62f46",
+        "label": "LiveWatch satellite"
+      },
+      "satellite-fhd": {
+        "id": "131724335525762423a972-63da2e4425c6be",
+        "label": "LiveWatch satellite FHD"
+      },
+      "cable": {
+        "id": "808220806e13753a10c7c-3a533f91f48d29",
+        "label": "LiveWatch cable"
+      },
+      "satellite-2": {
+        "id": "84149442655bf9ba0d47b-28fa7a18187594",
+        "label": "LiveWatch satellite"
+      }
+    }
+  },
+  "mtv-hits": {
+    "label": "MTV HITS",
+    "defaultOrder": [
+      "satellite",
+      "basic"
+    ],
+    "sources": {
+      "satellite": {
+        "id": "2301201739cd8e74158e09-96f25fb704ee3b",
+        "label": "LiveWatch satellite"
+      },
+      "basic": {
+        "id": "199610210545959c828fd6-c5f21ab7eb0770",
+        "label": "LiveWatch basic"
+      }
+    }
+  },
+  "nrj-hits": {
+    "label": "NRJ HITS",
+    "defaultOrder": [
+      "satellite",
+      "basic-hd"
+    ],
+    "sources": {
+      "satellite": {
+        "id": "730920094046c7f17c984-7c2374b1edf467",
+        "label": "LiveWatch satellite"
+      },
+      "basic-hd": {
+        "id": "3639203183127ef9073e5d-80087061989ddf",
+        "label": "LiveWatch basic HD"
+      }
+    }
+  },
+  "bfm-business": {
+    "label": "BFM BUSINESS",
+    "defaultOrder": [
+      "cable"
+    ],
+    "sources": {
+      "cable": {
+        "id": "1945266328e8e437e6162d-e36c345412b4b4",
+        "label": "LiveWatch cable"
+      }
+    }
+  },
+  "m6": {
+    "label": "M6",
+    "defaultOrder": [
+      "livewatch"
+    ],
+    "sources": {
+      "livewatch": {
+        "kind": "livewatch-search",
+        "id": "dynamic-livewatch-m6",
+        "label": "LiveWatch auto",
+        "button": "LiveWatch auto",
+        "search": "M6",
+        "exact": "M6",
+        "country": "France",
+        "prefer": [
+          "FHD",
+          "HD",
+          null
+        ],
+        "sourcePrefer": [],
+        "excludeIds": []
+      }
+    },
+    "manualSources": {
+      "deviantart": {
+        "kind": "lovetier",
+        "id": "legacy-lovetier-m6fr",
+        "label": "DeviantArt M6",
+        "button": "DeviantArt",
+        "lovetierChannel": "M6FR"
+      }
+    }
+  }
+});
+
 const sourceCache = new Map();
 
 function corsHeaders() {
@@ -348,6 +1436,59 @@ function writeCache(channelKey, mode, requestUrl, channel, value) {
   sourceCache.set(key, { value, expiresAt: Date.now() + SOURCE_CACHE_TTL_MS });
 }
 
+function sourcePreferenceScore(source, config) {
+  if (Array.isArray(config?.sourcePrefer) && config.sourcePrefer.length) {
+    const index = config.sourcePrefer.indexOf(String(source || '').toLowerCase());
+    return index >= 0 ? 30 - index * 10 : 0;
+  }
+  const normalized = String(source || '').toLowerCase();
+  if (normalized === 'basic') return 20;
+  if (normalized === 'satellite') return 10;
+  if (normalized === 'cable') return 5;
+  return 0;
+}
+
+function normalizeQuality(value) {
+  return value == null ? null : String(value).toUpperCase();
+}
+
+function qualityRank(config, item) {
+  const prefer = Array.isArray(config?.prefer) ? config.prefer.map(normalizeQuality) : [];
+  const index = prefer.indexOf(normalizeQuality(item?.quality));
+  const qualityScore = index >= 0 ? 100 - index : 0;
+  return qualityScore + sourcePreferenceScore(item?.source, config);
+}
+
+async function resolveLivewatchSearchSource(channelKey, sourceName, source) {
+  const apiUrl = new URL('/api/channels', LIVEWATCH_ORIGIN);
+  apiUrl.searchParams.set('country', source.country || '');
+  apiUrl.searchParams.set('limit', '20');
+  apiUrl.searchParams.set('search', source.search || source.exact || '');
+
+  const response = await fetchWithTimeout(apiUrl, {
+    headers: livewatchHeaders('application/json,text/plain,*/*'),
+    redirect: 'follow'
+  });
+  if (!response.ok) throw new Error(`channels ${response.status}`);
+
+  const data = await response.json();
+  const exact = String(source.exact || source.search || '').toLowerCase();
+  const excluded = new Set((source.excludeIds || []).map((id) => String(id)));
+  const matches = (data.channels || [])
+    .filter((item) => String(item.name || '').toLowerCase() === exact)
+    .filter((item) => !excluded.has(String(item.id || '')))
+    .sort((a, b) => qualityRank(source, b) - qualityRank(source, a));
+
+  if (!matches.length) throw new Error('livewatch channel not found');
+  const selected = matches[0];
+  const quality = selected.quality ? ` ${selected.quality}` : '';
+  const label = `LiveWatch ${selected.source || 'auto'}${quality}`;
+  return resolveLivewatchSource(channelKey, sourceName, {
+    id: String(selected.id || ''),
+    label
+  });
+}
+
 async function resolveLivewatchSource(channelKey, sourceName, source) {
   if (!source) throw new Error(`unknown source ${sourceName}`);
   const streamUrl = new URL(`/api/stream/${encodeURIComponent(source.id)}`, LIVEWATCH_ORIGIN);
@@ -488,6 +1629,7 @@ async function resolveLovetierSource(channelKey, sourceName, source) {
 async function resolveSource(channelKey, channel, sourceName) {
   const source = allSources(channel)[sourceName];
   if (!source) throw new Error(`unknown source ${sourceName}`);
+  if (source.kind === "livewatch-search") return resolveLivewatchSearchSource(channelKey, sourceName, source);
   if (source.kind === "clouding") return resolveCloudingSource(channelKey, sourceName, source);
   if (source.kind === "lovetier") return resolveLovetierSource(channelKey, sourceName, source);
   return resolveLivewatchSource(channelKey, sourceName, source);
