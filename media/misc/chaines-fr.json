@@ -91,14 +91,14 @@
     {
       "id": "w9",
       "name": "W9",
-      "url": "https://tron-ares-iptv3.victor-salema-53d.workers.dev/api/iptv/live/w9/master.m3u8",
+      "url": "https://w9.victor-salema-53d.workers.dev/",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/W9-Logo.svg"
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "cstar",
