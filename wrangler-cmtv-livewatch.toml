@@ -1,0 +1,3 @@
+name = "tron-ares-cmtv-livewatch"
+main = "worker-cmtv-livewatch.js"
+compatibility_date = "2026-07-15"

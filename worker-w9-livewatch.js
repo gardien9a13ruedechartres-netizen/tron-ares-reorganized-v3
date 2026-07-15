@@ -6,12 +6,12 @@ const SOURCE_TEST_TIMEOUT_MS = 7000;
 const SOURCE_CACHE_TTL_MS = 30000;
 
 const W9_SOURCES = {
-  basic: {
-    id: '12804661554f36ca1095a-36724fff9f173c',
-    label: 'W9 basic HD'
-  },
   satellite: {
     id: '338554998683e8b650775f-03d803b21aa717',
+    label: 'W9 basic HD'
+  },
+  basic: {
+    id: '12804661554f36ca1095a-36724fff9f173c',
     label: 'W9 satellite HD'
   },
   cable: {
@@ -20,7 +20,7 @@ const W9_SOURCES = {
   }
 };
 
-const DEFAULT_AUTO_ORDER = ['basic', 'satellite', 'cable'];
+const DEFAULT_AUTO_ORDER = ['satellite', 'basic', 'cable'];
 const sourceCache = new Map();
 
 addEventListener('fetch', event => {
