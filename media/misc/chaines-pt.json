@@ -189,7 +189,7 @@
     {
       "id": "btv",
       "name": "BTV",
-      "url": "/pages/worker-iptv3.html?channel=btv",
+      "url": "https://tron-ares-btv-livewatch.victor-salema-53d.workers.dev/",
       "logo": {
         "type": "image",
         "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/btv-hd-pt.png"

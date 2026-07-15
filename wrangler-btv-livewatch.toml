@@ -1,0 +1,3 @@
+name = "tron-ares-btv-livewatch"
+main = "worker-btv-livewatch.js"
+compatibility_date = "2026-05-07"

@@ -749,12 +749,12 @@
       "isIframe": false
     },
     {
-      "id": "disney-plus-fr",
-      "name": "DISNEY+ France",
-      "url": "/pages/worker-iptv3.html?channel=disney-plus-fr",
+      "id": "disney-cinema",
+      "name": "Disney Cinema",
+      "url": "/pages/worker-iptv3.html?channel=disney-cinema",
       "logo": {
         "type": "image",
-        "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/united-kingdom/disney-plus-uk.png"
+        "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Disney%20cinema%20logo.png"
       },
       "group": "Jeunesse",
       "isFavorite": false,
