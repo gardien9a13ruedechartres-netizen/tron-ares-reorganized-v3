@@ -20,7 +20,7 @@ var LIVEWATCH_SOURCES = {
     label: "LiveWatch basic"
   }
 };
-var DEFAULT_AUTO_ORDER = ["cable", "basic", "clouding"];
+var DEFAULT_AUTO_ORDER = ["basic", "cable", "clouding"];
 var sourceCache = /* @__PURE__ */ new Map();
 function corsHeaders() {
   return {
@@ -257,10 +257,20 @@ async function resolveNamedSource(sourceName) {
 }
 __name(resolveNamedSource, "resolveNamedSource");
 async function resolveAutoSource(requestUrl) {
-  const cached = readCache("auto", requestUrl);
-  if (cached) return { ...cached, detection: `${cached.detection}; cache-hit` };
-  const order = parseOrder(requestUrl);
   const failures = [];
+  const cached = readCache("auto", requestUrl);
+  if (cached?.source) {
+    try {
+      const resolved = await resolveNamedSource(cached.source);
+      return {
+        ...resolved,
+        detection: `cache-${cached.source}`
+      };
+    } catch (error) {
+      failures.push(`${cached.source}:${error?.message || "error"}`);
+    }
+  }
+  const order = parseOrder(requestUrl);
   for (const sourceName of order) {
     try {
       const resolved = await resolveNamedSource(sourceName);
@@ -268,7 +278,7 @@ async function resolveAutoSource(requestUrl) {
         ...resolved,
         detection: failures.length ? `auto-${sourceName}-after-${failures.length}-failure` : `auto-${sourceName}`
       };
-      writeCache("auto", requestUrl, value);
+      writeCache("auto", requestUrl, { source: sourceName });
       return value;
     } catch (error) {
       failures.push(`${sourceName}:${error?.message || "error"}`);
@@ -854,10 +864,10 @@ function htmlPage(origin) {
       }
     },
     sequences: [
-      { keys: ["cable", "basic", "clouding"], label: "Auto resilient cable,basic,clouding" }
+      { keys: ["basic", "cable", "clouding"], label: "Auto resilient basic,cable,clouding" }
     ],
-    startSequence: ["cable", "basic", "clouding"],
-    startLabel: "Auto resilient cable,basic,clouding"
+    startSequence: ["basic", "cable", "clouding"],
+    startLabel: "Auto resilient basic,cable,clouding"
   });
 }
 __name(htmlPage, "htmlPage");
@@ -873,8 +883,12 @@ var worker_default = {
     }
     if (path === PROXY_PATH) return handleProxy(request, url);
     if (path === "/api/cmtv/status") return handleStatus(request);
+    if (path === "/api/live/cmtv/health") return handleStatus(request);
+    if (path === "/api/live/cmtv/master.m3u8") return handleMaster(request, url, "auto");
     const match = path.match(/^\/api\/cmtv\/(auto|cable|basic|clouding)\/master\.m3u8$/);
     if (match) return handleMaster(request, url, match[1]);
+    const liveMatch = path.match(/^\/api\/live\/cmtv\/(auto|cable|basic|clouding)\/master\.m3u8$/);
+    if (liveMatch) return handleMaster(request, url, liveMatch[1]);
     return new Response("CMTV lab: not found", {
       status: 404,
       headers: corsHeaders()
