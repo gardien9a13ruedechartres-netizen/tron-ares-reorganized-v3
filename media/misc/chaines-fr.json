@@ -91,26 +91,26 @@
     {
       "id": "w9",
       "name": "W9",
-      "url": "/pages/w9-stream-work.html",
+      "url": "https://tron-ares-iptv3.victor-salema-53d.workers.dev/api/iptv/live/w9/master.m3u8",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/W9-Logo.svg"
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": false
     },
     {
       "id": "cstar",
       "name": "CStar",
-      "url": "/pages/cstar.html",
+      "url": "https://tron-ares-iptv3.victor-salema-53d.workers.dev/api/iptv/live/cstar/master.m3u8",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20CStar%202016.svg"
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": false
     },
     {
       "id": "tmc",
@@ -187,14 +187,14 @@
     {
       "id": "6ter",
       "name": "6ter",
-      "url": "/pages/6ter-stream-work.html",
+      "url": "https://tron-ares-iptv3.victor-salema-53d.workers.dev/api/iptv/live/6ter/master.m3u8",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%206ter%202016.svg"
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": false
     },
     {
       "id": "bfmtv",
@@ -511,7 +511,7 @@
     {
       "id": "TF1sf",
       "name": "TF1 SERIES & FILM",
-      "url": "/pages/tf1-sf.html",
+      "url": "/pages/worker-iptv3.html?channel=tf1sf",
       "logo": {
         "type": "image",
         "value": "https://upload.wikimedia.org/wikipedia/fr/thumb/4/4b/TF1_S%C3%A9ries_Films_logo_2020.svg/330px-TF1_S%C3%A9ries_Films_logo_2020.svg.png"
