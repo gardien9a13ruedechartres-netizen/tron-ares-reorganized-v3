@@ -1,0 +1,3 @@
+name = "tron-ares-livewatch-smart"
+main = "worker-livewatch-smart.js"
+compatibility_date = "2026-07-15"
