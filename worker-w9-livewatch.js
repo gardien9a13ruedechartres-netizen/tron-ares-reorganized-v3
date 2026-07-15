@@ -162,9 +162,14 @@ function writeCache(mode, requestUrl, value) {
 }
 
 function friendlyLivewatchError(error) {
-  const message = String(error?.message || error || 'network error');
+  let message = String(error?.message || error || 'network error');
+  const suffix = ' ; LiveWatch semble indisponible cote Cloudflare/TLS';
+  while (message.includes(`${suffix}${suffix}`)) {
+    message = message.replace(`${suffix}${suffix}`, suffix);
+  }
+  if (message.includes(suffix.trim())) return message;
   if (/526|certificate|certificat|ssl|tls|fetch failed|network/i.test(message)) {
-    return `${message} ; LiveWatch semble indisponible cote Cloudflare/TLS`;
+    return `${message}${suffix}`;
   }
   return message;
 }
