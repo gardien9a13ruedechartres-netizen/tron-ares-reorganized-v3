@@ -1,0 +1,3 @@
+name = "tron-ares-w9-livewatch"
+main = "worker-w9-livewatch.js"
+compatibility_date = "2026-07-15"
