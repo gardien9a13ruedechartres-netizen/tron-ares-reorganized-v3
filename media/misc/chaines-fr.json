@@ -91,14 +91,14 @@
     {
       "id": "w9",
       "name": "W9",
-      "url": "/pages/w9-livewatch.html",
+      "url": "https://tron-ares-iptv3.victor-salema-53d.workers.dev/api/iptv/live/w9/master.m3u8",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/W9-Logo.svg"
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": false
     },
     {
       "id": "cstar",
