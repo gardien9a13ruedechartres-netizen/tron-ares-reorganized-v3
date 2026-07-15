@@ -1,4 +1,9 @@
 const LIVEWATCH_ORIGIN = "https://livewatch.top";
+const LOVETIER_ORIGIN = "https://deviantart.lovetier.bz";
+const LOVETIER_PLAYER_ORIGIN = "https://lovetier.bz";
+const BLUETIER_ORIGIN = "https://cdn.bluetier.top";
+const CLOUDING_ORIGIN = "https://clouding.wideiptv.top";
+const CLOUDING_PLAYER_ORIGIN = "https://popcdn.day";
 const PROXY_PATH = "/api/proxy";
 const SOURCE_TEST_TIMEOUT_MS = 7000;
 const SOURCE_CACHE_TTL_MS = 30000;
@@ -15,6 +20,15 @@ const CHANNELS = {
       basic: {
         id: "384601660517fa3552a29f-6816b5893e5bcc",
         label: "LiveWatch basic"
+      }
+    },
+    manualSources: {
+      clouding: {
+        kind: "clouding",
+        id: "legacy-clouding-cmtvpt",
+        label: "Clouding CMTV",
+        button: "Clouding",
+        cloudingChannel: "CMTVPT"
       }
     }
   },
@@ -48,11 +62,20 @@ const CHANNELS = {
         id: "2434383426cedb9a7f8182-853d5b7284c58b",
         label: "LiveWatch cable"
       }
+    },
+    manualSources: {
+      deviantart: {
+        kind: "lovetier",
+        id: "legacy-lovetier-btv",
+        label: "DeviantArt BTV",
+        button: "DeviantArt",
+        lovetierChannel: "BTV1"
+      }
     }
   },
   tf1: {
     label: "TF1",
-    defaultOrder: ["satellite", "basic"],
+    defaultOrder: ["basic", "satellite"],
     sources: {
       satellite: {
         id: "2913521200ae11151a1fc4-b5746bd2522e5c",
@@ -61,6 +84,15 @@ const CHANNELS = {
       basic: {
         id: "1334669376bf508b8ed995-e1dc32893923cf",
         label: "LiveWatch basic FHD"
+      }
+    },
+    manualSources: {
+      deviantart: {
+        kind: "lovetier",
+        id: "legacy-lovetier-tf1fr",
+        label: "DeviantArt TF1",
+        button: "DeviantArt",
+        lovetierChannel: "TF1FR"
       }
     }
   },
@@ -116,6 +148,15 @@ const CHANNELS = {
         id: "2421698062be5948a928f5-92450af7cf51c2",
         label: "LiveWatch basic 4K"
       }
+    },
+    manualSources: {
+      deviantart: {
+        kind: "lovetier",
+        id: "legacy-lovetier-canalplfr",
+        label: "DeviantArt CANAL+",
+        button: "DeviantArt",
+        lovetierChannel: "CANALPLFR"
+      }
     }
   }
 };
@@ -149,6 +190,17 @@ function livewatchHeaders(accept = "*/*") {
   };
 }
 
+function upstreamHeaders(url, accept = "*/*") {
+  const headers = {
+    Accept: accept,
+    "User-Agent": "Mozilla/5.0"
+  };
+  if (url.origin === LIVEWATCH_ORIGIN) headers.Referer = `${LIVEWATCH_ORIGIN}/`;
+  if (url.origin === LOVETIER_ORIGIN || url.origin === BLUETIER_ORIGIN) headers.Referer = `${LOVETIER_PLAYER_ORIGIN}/`;
+  if (url.origin === CLOUDING_ORIGIN) headers.Referer = `${CLOUDING_PLAYER_ORIGIN}/`;
+  return headers;
+}
+
 function timeoutSignal(ms) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort("timeout"), ms);
@@ -168,9 +220,32 @@ function normalizeChannelKey(value) {
   return String(value || "").trim().toLowerCase().replace(/[^a-z0-9-]/g, "-");
 }
 
+function escapeRegex(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function getChannel(channelKey) {
   const normalized = normalizeChannelKey(channelKey || "cmtv");
   return CHANNELS[normalized] ? { key: normalized, config: CHANNELS[normalized] } : null;
+}
+
+function allSources(channel) {
+  return {
+    ...(channel.sources || {}),
+    ...(channel.manualSources || {})
+  };
+}
+
+function configuredManualPaths(kind, property) {
+  const paths = new Set();
+  for (const channel of Object.values(CHANNELS)) {
+    for (const source of Object.values(channel.manualSources || {})) {
+      if (source.kind === kind && source[property]) {
+        paths.add(`/${String(source[property]).toLowerCase()}/`);
+      }
+    }
+  }
+  return paths;
 }
 
 function isAllowedLivewatchUrl(url) {
@@ -181,10 +256,30 @@ function isAllowedLivewatchUrl(url) {
     !url.password;
 }
 
+function isAllowedLovetierUrl(url) {
+  const paths = configuredManualPaths("lovetier", "lovetierChannel");
+  return (url.origin === LOVETIER_ORIGIN || url.origin === BLUETIER_ORIGIN) &&
+    Array.from(paths).some((path) => url.pathname.toLowerCase().startsWith(path)) &&
+    !url.username &&
+    !url.password;
+}
+
+function isAllowedCloudingUrl(url) {
+  const paths = configuredManualPaths("clouding", "cloudingChannel");
+  return url.origin === CLOUDING_ORIGIN &&
+    Array.from(paths).some((path) => url.pathname.toLowerCase().startsWith(path)) &&
+    !url.username &&
+    !url.password;
+}
+
+function isAllowedProxyUrl(url) {
+  return isAllowedLivewatchUrl(url) || isAllowedLovetierUrl(url) || isAllowedCloudingUrl(url);
+}
+
 function makeProxyUrl(value, baseUrl, publicOrigin) {
   try {
     const upstream = new URL(value, baseUrl);
-    if (!isAllowedLivewatchUrl(upstream)) return value;
+    if (!isAllowedProxyUrl(upstream)) return value;
     return `${publicOrigin}${PROXY_PATH}?url=${encodeURIComponent(upstream.href)}`;
   } catch (_) {
     return value;
@@ -253,8 +348,7 @@ function writeCache(channelKey, mode, requestUrl, channel, value) {
   sourceCache.set(key, { value, expiresAt: Date.now() + SOURCE_CACHE_TTL_MS });
 }
 
-async function resolveLivewatchSource(channelKey, channel, sourceName) {
-  const source = channel.sources[sourceName];
+async function resolveLivewatchSource(channelKey, sourceName, source) {
   if (!source) throw new Error(`unknown source ${sourceName}`);
   const streamUrl = new URL(`/api/stream/${encodeURIComponent(source.id)}`, LIVEWATCH_ORIGIN);
   const streamResponse = await fetchWithTimeout(streamUrl, {
@@ -287,12 +381,124 @@ async function resolveLivewatchSource(channelKey, channel, sourceName) {
   };
 }
 
+async function resolveCloudingSource(channelKey, sourceName, source) {
+  const channel = String(source.cloudingChannel || "");
+  if (!channel || !/^[a-z0-9_-]+$/i.test(channel)) throw new Error("clouding channel refused");
+
+  const sourceUrl = new URL("/player.php", CLOUDING_PLAYER_ORIGIN);
+  sourceUrl.searchParams.set("stream", channel);
+  const sourceResponse = await fetchWithTimeout(sourceUrl, {
+    headers: {
+      Accept: "text/html,application/xhtml+xml",
+      "User-Agent": "Mozilla/5.0"
+    },
+    redirect: "follow"
+  });
+  if (!sourceResponse.ok) throw new Error(`clouding source ${sourceResponse.status}`);
+
+  const sourceHtml = await sourceResponse.text();
+  const pattern = new RegExp(
+    `https://clouding\\.wideiptv\\.top/${escapeRegex(channel)}/embed\\.html\\?token=([^"'\\s<>&]+)`,
+    "i"
+  );
+  const match = sourceHtml.match(pattern);
+  if (!match || !match[1]) throw new Error("clouding token unavailable");
+
+  const upstreamUrl = new URL(`${CLOUDING_ORIGIN}/${channel}/index.fmp4.m3u8`);
+  upstreamUrl.searchParams.set("token", match[1]);
+  if (!isAllowedCloudingUrl(upstreamUrl)) throw new Error("clouding stream URL refused");
+
+  const startedAt = Date.now();
+  const master = await fetchWithTimeout(upstreamUrl, {
+    headers: upstreamHeaders(upstreamUrl, "application/vnd.apple.mpegurl,application/x-mpegURL,*/*"),
+    redirect: "follow"
+  });
+  const latencyMs = Date.now() - startedAt;
+  const masterText = await master.text();
+  if (!master.ok || !masterText.trimStart().startsWith("#EXTM3U")) {
+    throw new Error(`clouding master ${master.status}`);
+  }
+
+  return {
+    channelKey,
+    mode: sourceName,
+    source: sourceName,
+    sourceId: source.id,
+    label: source.label,
+    upstreamUrl,
+    masterText,
+    latencyMs
+  };
+}
+
+async function resolveLovetierSource(channelKey, sourceName, source) {
+  const channel = String(source.lovetierChannel || "");
+  if (!channel || !/^[a-z0-9_-]+$/i.test(channel)) throw new Error("lovetier channel refused");
+
+  const sourceUrl = new URL(`/player/${channel}`, LOVETIER_PLAYER_ORIGIN);
+  const sourceResponse = await fetchWithTimeout(sourceUrl, {
+    headers: {
+      Accept: "text/html,application/xhtml+xml",
+      "User-Agent": "Mozilla/5.0"
+    },
+    redirect: "follow"
+  });
+  if (!sourceResponse.ok) throw new Error(`lovetier source ${sourceResponse.status}`);
+
+  const sourceHtml = await sourceResponse.text();
+  const match = sourceHtml.match(/streamUrl:\s*"([^"]+)"/i);
+  if (!match || !match[1]) throw new Error("lovetier stream URL unavailable");
+
+  const upstreamUrl = new URL(
+    match[1]
+      .replace(/\\\//g, "/")
+      .replace(/\\u0026/gi, "&")
+  );
+  if (
+    !isAllowedLovetierUrl(upstreamUrl) ||
+    !upstreamUrl.pathname.toLowerCase().endsWith(".m3u8") ||
+    !upstreamUrl.searchParams.has("token")
+  ) {
+    throw new Error("lovetier stream URL refused");
+  }
+
+  const startedAt = Date.now();
+  const master = await fetchWithTimeout(upstreamUrl, {
+    headers: upstreamHeaders(upstreamUrl, "application/vnd.apple.mpegurl,application/x-mpegURL,*/*"),
+    redirect: "follow"
+  });
+  const latencyMs = Date.now() - startedAt;
+  const masterText = await master.text();
+  if (!master.ok || !masterText.trimStart().startsWith("#EXTM3U")) {
+    throw new Error(`lovetier master ${master.status}`);
+  }
+
+  return {
+    channelKey,
+    mode: sourceName,
+    source: sourceName,
+    sourceId: source.id,
+    label: source.label,
+    upstreamUrl,
+    masterText,
+    latencyMs
+  };
+}
+
+async function resolveSource(channelKey, channel, sourceName) {
+  const source = allSources(channel)[sourceName];
+  if (!source) throw new Error(`unknown source ${sourceName}`);
+  if (source.kind === "clouding") return resolveCloudingSource(channelKey, sourceName, source);
+  if (source.kind === "lovetier") return resolveLovetierSource(channelKey, sourceName, source);
+  return resolveLivewatchSource(channelKey, sourceName, source);
+}
+
 async function resolveAutoSource(channelKey, channel, requestUrl) {
   const failures = [];
   const cached = readCache(channelKey, "auto", requestUrl, channel);
   if (cached?.source) {
     try {
-      const resolved = await resolveLivewatchSource(channelKey, channel, cached.source);
+      const resolved = await resolveSource(channelKey, channel, cached.source);
       return { ...resolved, detection: `cache-${cached.source}` };
     } catch (error) {
       failures.push(`${cached.source}:${error?.message || "error"}`);
@@ -301,7 +507,7 @@ async function resolveAutoSource(channelKey, channel, requestUrl) {
   const order = parseOrder(requestUrl, channel);
   for (const sourceName of order) {
     try {
-      const resolved = await resolveLivewatchSource(channelKey, channel, sourceName);
+      const resolved = await resolveSource(channelKey, channel, sourceName);
       writeCache(channelKey, "auto", requestUrl, channel, { source: sourceName });
       return {
         ...resolved,
@@ -316,8 +522,8 @@ async function resolveAutoSource(channelKey, channel, requestUrl) {
 
 async function resolveMode(channelKey, channel, mode, requestUrl) {
   if (mode === "auto") return resolveAutoSource(channelKey, channel, requestUrl);
-  if (!channel.sources[mode]) throw new Error(`unknown mode ${mode}`);
-  const resolved = await resolveLivewatchSource(channelKey, channel, mode);
+  if (!allSources(channel)[mode]) throw new Error(`unknown mode ${mode}`);
+  const resolved = await resolveSource(channelKey, channel, mode);
   return { ...resolved, detection: `forced-${mode}` };
 }
 
@@ -375,17 +581,17 @@ async function handleProxy(request, requestUrl) {
   } catch (_) {
     return new Response("Invalid upstream URL", { status: 400, headers: corsHeaders() });
   }
-  if (!isAllowedLivewatchUrl(upstreamUrl)) {
+  if (!isAllowedProxyUrl(upstreamUrl)) {
     return new Response("Upstream not allowed", { status: 403, headers: corsHeaders() });
   }
-  const upstreamHeaders = new Headers(livewatchHeaders(request.headers.get("Accept") || "*/*"));
+  const upstreamHeadersForRequest = new Headers(upstreamHeaders(upstreamUrl, request.headers.get("Accept") || "*/*"));
   const range = request.headers.get("Range");
-  if (range) upstreamHeaders.set("Range", range);
+  if (range) upstreamHeadersForRequest.set("Range", range);
   let upstream;
   try {
     upstream = await fetch(upstreamUrl, {
       method: request.method,
-      headers: upstreamHeaders,
+      headers: upstreamHeadersForRequest,
       redirect: "follow"
     });
   } catch (error) {
@@ -425,7 +631,7 @@ async function handleProxy(request, requestUrl) {
 async function sourceStatus(channelKey, channel, sourceName) {
   const startedAt = Date.now();
   try {
-    const resolved = await resolveLivewatchSource(channelKey, channel, sourceName);
+    const resolved = await resolveSource(channelKey, channel, sourceName);
     return {
       source: sourceName,
       ok: true,
@@ -446,7 +652,7 @@ async function sourceStatus(channelKey, channel, sourceName) {
 
 async function handleStatus(request, channelKey, channel) {
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders() });
-  const sourceNames = Object.keys(channel.sources);
+  const sourceNames = Object.keys(allSources(channel));
   const results = await Promise.all(sourceNames.map((sourceName) => sourceStatus(channelKey, channel, sourceName)));
   const headers = new Headers(corsHeaders());
   headers.set("Content-Type", "application/json; charset=utf-8");
@@ -457,6 +663,8 @@ async function handleStatus(request, channelKey, channel) {
     channel: channelKey,
     label: channel.label,
     defaultOrder: channel.defaultOrder,
+    automaticSources: Object.keys(channel.sources || {}),
+    manualSources: Object.keys(channel.manualSources || {}),
     availableSources: sourceNames,
     results
   }, null, 2), { status: 200, headers });
@@ -478,12 +686,14 @@ function scriptJson(value) {
 function playerPage(origin, channelKey, channel) {
   const sourceUrls = {};
   const sourceLabels = {};
-  for (const [key, source] of Object.entries(channel.sources)) {
+  const sources = allSources(channel);
+  for (const [key, source] of Object.entries(sources)) {
     sourceUrls[key] = `${origin}/api/live/${channelKey}/${key}/master.m3u8`;
     sourceLabels[key] = source.label;
   }
-  const sourceButtons = Object.entries(channel.sources).map(([key, source]) => {
-    return `<button data-source="${escapeHtml(key)}">${escapeHtml(source.button || source.label)}</button>`;
+  const sourceButtons = Object.entries(sources).map(([key, source]) => {
+    const className = channel.manualSources?.[key] ? ` class="secondary"` : "";
+    return `<button data-source="${escapeHtml(key)}"${className}>${escapeHtml(source.button || source.label)}</button>`;
   }).join("\n        ");
   const channelOptions = Object.entries(CHANNELS).map(([key, value]) => {
     const selected = key === channelKey ? " selected" : "";
@@ -927,7 +1137,9 @@ export default {
         key,
         label: channel.label,
         defaultOrder: channel.defaultOrder,
-        sources: Object.keys(channel.sources)
+        automaticSources: Object.keys(channel.sources || {}),
+        manualSources: Object.keys(channel.manualSources || {}),
+        sources: Object.keys(allSources(channel))
       })));
     }
 

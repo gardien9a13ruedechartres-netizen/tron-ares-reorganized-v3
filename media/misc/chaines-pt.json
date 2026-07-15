@@ -9,7 +9,7 @@
     {
       "id": "cmtv",
       "name": "CMTV",
-      "url": "https://tron-ares-cmtv-smart-livewatch.victor-salema-53d.workers.dev/",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=cmtv",
       "logo": {
         "type": "image",
         "value": "/media/cmtv.png"
@@ -189,7 +189,7 @@
     {
       "id": "btv",
       "name": "BTV",
-      "url": "https://tron-ares-btv-livewatch.victor-salema-53d.workers.dev/",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=btv",
       "logo": {
         "type": "image",
         "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/btv-hd-pt.png"
@@ -441,7 +441,7 @@
     {
       "id": "canal panda",
       "name": "CANAL PANDA",
-      "url": "/pages/worker-iptv3.html?channel=canal-panda",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=canal-panda",
       "logo": {
         "type": "image",
         "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/canal-panda-pt.png"
