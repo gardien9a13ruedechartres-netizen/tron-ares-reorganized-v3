@@ -1,4 +1,6 @@
 const UPSTREAM_HOST = 'https://deviantart.lovetier.bz';
+const LOVETIER_PLAYER_HOST = 'https://lovetier.bz';
+const BLUETIER_HOST = 'https://cdn.bluetier.top';
 const PROXY_PATH = '/api/iptv/proxy';
 const LIVE_PREFIX = '/api/iptv/live/';
 const LIVE_CHANNELS = new Map([
@@ -78,14 +80,41 @@ const ALLOWED_UPSTREAM_PATHS = [
 ];
 
 const UPSTREAM_ORIGIN = new URL(UPSTREAM_HOST).origin;
+const BLUETIER_ORIGIN = new URL(BLUETIER_HOST).origin;
+const LOVETIER_PLAYER_ORIGIN = new URL(LOVETIER_PLAYER_HOST).origin;
+
+function upstreamHeaders(url, accept = '*/*') {
+  return {
+    Accept: accept,
+    Referer: `${LOVETIER_PLAYER_ORIGIN}/`,
+    'User-Agent': 'Mozilla/5.0'
+  };
+}
 
 function isAllowedUpstreamUrl(url) {
-  return url.origin === UPSTREAM_ORIGIN &&
+  return (url.origin === UPSTREAM_ORIGIN || url.origin === BLUETIER_ORIGIN) &&
     ALLOWED_UPSTREAM_PATHS.some(path =>
       url.pathname.toLowerCase().startsWith(path.toLowerCase())
     ) &&
     !url.username &&
     !url.password;
+}
+
+function hlsContentType(pathname, fallback) {
+  const type = String(fallback || '').split(';')[0].trim().toLowerCase();
+  if (type.includes('mpegurl') || type.includes('x-mpegurl')) return 'application/vnd.apple.mpegurl';
+  if (type.includes('mp2t')) return 'video/mp2t';
+  if (type.includes('iso.segment')) return 'video/iso.segment';
+  if (type.includes('mp4')) return 'video/mp4';
+  if (type.includes('aac')) return 'audio/aac';
+
+  const lower = pathname.toLowerCase();
+  if (lower.endsWith('.m3u8')) return 'application/vnd.apple.mpegurl';
+  if (lower.endsWith('.ts')) return 'video/mp2t';
+  if (lower.endsWith('.m4s')) return 'video/iso.segment';
+  if (lower.endsWith('.mp4')) return 'video/mp4';
+  if (lower.endsWith('.aac')) return 'audio/aac';
+  return fallback || 'application/octet-stream';
 }
 
 function makeProxyUrl(value, baseUrl, publicOrigin) {
@@ -135,7 +164,7 @@ async function resolveIptvLive(request, requestUrl, channelKey) {
     return new Response('Unknown channel', { status: 404, headers: corsHeaders() });
   }
 
-  const sourceUrl = `https://lovetier.bz/player/${channel}`;
+  const sourceUrl = `${LOVETIER_PLAYER_HOST}/player/${channel}`;
   const source = await fetch(sourceUrl, {
     headers: {
       Accept: 'text/html,application/xhtml+xml',
@@ -151,7 +180,7 @@ async function resolveIptvLive(request, requestUrl, channelKey) {
   }
 
   const sourceHtml = await source.text();
-  const match = sourceHtml.match(/streamUrl:\s*"([^"]+)"/i);
+  const match = sourceHtml.match(/streamUrl:\s*["']([^"']+)["']/i);
   if (!match || !match[1]) {
     return new Response('Dynamic stream URL unavailable', {
       status: 502,
@@ -165,6 +194,7 @@ async function resolveIptvLive(request, requestUrl, channelKey) {
       match[1]
         .replace(/\\\//g, '/')
         .replace(/\\u0026/gi, '&')
+        .replace(/&amp;/gi, '&')
     );
   } catch (_) {
     return new Response('Invalid dynamic stream URL', {
@@ -174,7 +204,7 @@ async function resolveIptvLive(request, requestUrl, channelKey) {
   }
   if (
     !isAllowedUpstreamUrl(upstreamUrl) ||
-    upstreamUrl.pathname.toLowerCase() !== `/${channel}/index.m3u8`.toLowerCase() ||
+    !upstreamUrl.pathname.toLowerCase().endsWith('.m3u8') ||
     !upstreamUrl.searchParams.has('token')
   ) {
     return new Response('Dynamic stream URL refused', {
@@ -184,7 +214,7 @@ async function resolveIptvLive(request, requestUrl, channelKey) {
   }
 
   const master = await fetch(upstreamUrl, {
-    headers: { Accept: 'application/vnd.apple.mpegurl,application/x-mpegURL,*/*' },
+    headers: upstreamHeaders(upstreamUrl, 'application/vnd.apple.mpegurl,application/x-mpegURL,*/*'),
     redirect: 'follow'
   });
   const masterText = await master.text();
@@ -250,17 +280,15 @@ async function proxyIptv(request, requestUrl) {
     });
   }
 
-  const upstreamHeaders = new Headers({
-    Accept: request.headers.get('Accept') || '*/*'
-  });
+  const upstreamHeadersForRequest = new Headers(upstreamHeaders(upstreamUrl, request.headers.get('Accept') || '*/*'));
   const range = request.headers.get('Range');
-  if (range) upstreamHeaders.set('Range', range);
+  if (range) upstreamHeadersForRequest.set('Range', range);
 
   let upstream;
   try {
     upstream = await fetch(upstreamUrl, {
       method: request.method,
-      headers: upstreamHeaders,
+      headers: upstreamHeadersForRequest,
       redirect: 'follow'
     });
   } catch (error) {
@@ -275,7 +303,7 @@ async function proxyIptv(request, requestUrl) {
     });
   }
 
-  const contentType = upstream.headers.get('Content-Type') || 'application/octet-stream';
+  const contentType = hlsContentType(upstreamUrl.pathname, upstream.headers.get('Content-Type'));
   const isPlaylist = request.method === 'GET' &&
     (contentType.toLowerCase().includes('mpegurl') ||
       upstreamUrl.pathname.toLowerCase().endsWith('.m3u8'));
