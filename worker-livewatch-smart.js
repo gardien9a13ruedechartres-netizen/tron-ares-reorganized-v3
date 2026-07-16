@@ -98,7 +98,7 @@ const CHANNELS = {
   },
   tf1sf: {
     label: "TF1 Series & Film",
-    defaultOrder: ["satellite", "satellite-hd"],
+    defaultOrder: ["satellite-hd", "satellite"],
     sources: {
       satellite: {
         id: "1760063888f6e9e21d8039-e1c647aa24dff8",
