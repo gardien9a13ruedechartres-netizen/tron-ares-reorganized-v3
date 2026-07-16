@@ -1072,16 +1072,34 @@ Object.assign(CHANNELS, {
     ],
     "sources": {
       "cable": {
-        "id": "23092519062e4569443ea7-6ca1f439632427",
-        "label": "LiveWatch cable"
+        "kind": "livewatch-search",
+        "id": "dynamic-livewatch-animaux-cable",
+        "label": "LiveWatch cable",
+        "button": "LiveWatch cable",
+        "country": "France",
+        "search": "Animaux",
+        "exact": "ANIMAUX",
+        "sourcePrefer": ["cable"]
       },
       "satellite": {
-        "id": "2474469311465ad21db7be-9cded0c55031b8",
-        "label": "LiveWatch satellite"
+        "kind": "livewatch-search",
+        "id": "dynamic-livewatch-animaux-satellite",
+        "label": "LiveWatch satellite",
+        "button": "LiveWatch satellite",
+        "country": "France",
+        "search": "Animaux",
+        "exact": "ANIMAUX",
+        "sourcePrefer": ["satellite"]
       },
       "basic": {
-        "id": "155306235421d782ab66e0-d7ecc20b2eb620",
-        "label": "LiveWatch basic"
+        "kind": "livewatch-search",
+        "id": "dynamic-livewatch-animaux-basic",
+        "label": "LiveWatch basic",
+        "button": "LiveWatch basic",
+        "country": "France",
+        "search": "Animaux",
+        "exact": "ANIMAUX",
+        "sourcePrefer": ["basic"]
       }
     }
   },
