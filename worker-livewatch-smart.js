@@ -8,6 +8,21 @@ const PROXY_PATH = "/api/proxy";
 const SOURCE_TEST_TIMEOUT_MS = 7000;
 const SOURCE_CACHE_TTL_MS = 30000;
 
+const PORTUGAL_LIVEWATCH_CHANNELS = new Set([
+  "btv",
+  "canal-panda",
+  "cmtv",
+  "disney-pixar",
+  "sport-tv-1",
+  "sport-tv-5",
+  "tv-globo"
+]);
+
+const LIVEWATCH_NAME_ALIASES = {
+  btv: ["BTV", "BTV (BENFICA)"],
+  cmtv: ["CM TV"]
+};
+
 const CHANNELS = {
   cmtv: {
     label: "CMTV",
@@ -1551,28 +1566,152 @@ function qualityRank(config, item) {
   return qualityScore + sourcePreferenceScore(item?.source, config);
 }
 
-async function resolveLivewatchSearchSource(channelKey, sourceName, source) {
-  const apiUrl = new URL('/api/channels', LIVEWATCH_ORIGIN);
-  apiUrl.searchParams.set('country', source.country || '');
-  apiUrl.searchParams.set('limit', '20');
-  apiUrl.searchParams.set('search', source.search || source.exact || '');
+function uniqueValues(values) {
+  const seen = new Set();
+  const result = [];
+  for (const value of values) {
+    const clean = String(value || "").trim();
+    if (!clean || seen.has(clean.toLowerCase())) continue;
+    seen.add(clean.toLowerCase());
+    result.push(clean);
+  }
+  return result;
+}
 
-  const response = await fetchWithTimeout(apiUrl, {
-    headers: livewatchHeaders('application/json,text/plain,*/*'),
-    redirect: 'follow'
-  });
-  if (!response.ok) throw new Error(`channels ${response.status}`);
+function normalizeLivewatchName(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/gi, "")
+    .toLowerCase();
+}
 
-  const data = await response.json();
-  const exact = String(source.exact || source.search || '').toLowerCase();
-  const excluded = new Set((source.excludeIds || []).map((id) => String(id)));
-  const matches = (data.channels || [])
-    .filter((item) => String(item.name || '').toLowerCase() === exact)
-    .filter((item) => !excluded.has(String(item.id || '')))
-    .sort((a, b) => qualityRank(source, b) - qualityRank(source, a));
+function livewatchIdPrefix(id) {
+  const clean = String(id || "");
+  if (!clean || clean.startsWith("dynamic-") || clean.startsWith("legacy-")) return "";
+  const dash = clean.indexOf("-");
+  return dash > 0 ? clean.slice(0, dash) : "";
+}
 
-  if (!matches.length) throw new Error('livewatch channel not found');
-  const selected = matches[0];
+function livewatchSourceBase(sourceName, source) {
+  const explicit = String(source?.livewatchSource || source?.source || "").toLowerCase();
+  if (explicit) return explicit;
+  const text = String(sourceName || "").toLowerCase();
+  if (text.includes("satellite")) return "satellite";
+  if (text.includes("cable")) return "cable";
+  if (text.includes("basic")) return "basic";
+  return text;
+}
+
+function livewatchQualityPrefs(sourceName, source) {
+  if (Array.isArray(source?.prefer) && source.prefer.length) return source.prefer;
+  const text = `${sourceName || ""} ${source?.label || ""}`.toLowerCase();
+  const values = [];
+  if (text.includes("4k")) values.push("4K");
+  if (text.includes("fhd")) values.push("FHD");
+  if (text.includes("hd")) values.push("HD");
+  return values;
+}
+
+function livewatchSearchTerms(channelKey, channel, source) {
+  const label = String(channel?.label || "").trim();
+  const splitTv = /^[a-z]{4,}tv$/i.test(label) ? label.replace(/tv$/i, " TV") : "";
+  return uniqueValues([
+    source?.search,
+    source?.exact,
+    channel?.livewatchSearch,
+    channel?.livewatchExact,
+    ...(LIVEWATCH_NAME_ALIASES[channelKey] || []),
+    label,
+    splitTv
+  ]);
+}
+
+function livewatchExactNames(channelKey, channel, source) {
+  return uniqueValues([
+    source?.exact,
+    channel?.livewatchExact,
+    ...(LIVEWATCH_NAME_ALIASES[channelKey] || []),
+    channel?.label,
+    source?.search
+  ]);
+}
+
+function livewatchCountryHints(channelKey, channel, source) {
+  return uniqueValues([
+    source?.country,
+    channel?.country,
+    PORTUGAL_LIVEWATCH_CHANNELS.has(channelKey) ? "Portugal" : "France",
+    ""
+  ]);
+}
+
+function livewatchSearchConfig(channelKey, channel, sourceName, source, extraExcludeIds = []) {
+  const sourceBase = livewatchSourceBase(sourceName, source);
+  const sourcePrefer = Array.isArray(source?.sourcePrefer) && source.sourcePrefer.length
+    ? source.sourcePrefer
+    : (sourceBase ? [sourceBase] : []);
+  return {
+    searchTerms: livewatchSearchTerms(channelKey, channel, source),
+    exactNames: livewatchExactNames(channelKey, channel, source),
+    countries: livewatchCountryHints(channelKey, channel, source),
+    sourcePrefer,
+    prefer: livewatchQualityPrefs(sourceName, source),
+    idPrefix: livewatchIdPrefix(source?.id),
+    excludeIds: uniqueValues([...(source?.excludeIds || []), ...extraExcludeIds])
+  };
+}
+
+function livewatchNameMatches(item, config) {
+  const itemId = String(item?.id || "");
+  if (config.idPrefix && itemId.startsWith(`${config.idPrefix}-`)) return true;
+  const itemName = normalizeLivewatchName(item?.name);
+  return config.exactNames.some((name) => normalizeLivewatchName(name) === itemName);
+}
+
+function livewatchCandidateRank(config, item) {
+  const itemId = String(item?.id || "");
+  const prefixScore = config.idPrefix && itemId.startsWith(`${config.idPrefix}-`) ? 1000 : 0;
+  const viewerScore = Math.min(Number(item?.viewers || 0), 50) / 10;
+  return prefixScore + qualityRank(config, item) + viewerScore;
+}
+
+async function findLivewatchCandidate(channelKey, channel, sourceName, source, extraExcludeIds = []) {
+  const config = livewatchSearchConfig(channelKey, channel, sourceName, source, extraExcludeIds);
+  if (!config.searchTerms.length) throw new Error("livewatch search term unavailable");
+  const excluded = new Set(config.excludeIds.map((id) => String(id)));
+  const failures = [];
+  for (const country of config.countries) {
+    for (const term of config.searchTerms) {
+      const apiUrl = new URL('/api/channels', LIVEWATCH_ORIGIN);
+      apiUrl.searchParams.set('country', country);
+      apiUrl.searchParams.set('limit', '50');
+      apiUrl.searchParams.set('search', term);
+      try {
+        const response = await fetchWithTimeout(apiUrl, {
+          headers: livewatchHeaders('application/json,text/plain,*/*'),
+          redirect: 'follow'
+        });
+        if (!response.ok) {
+          failures.push(`channels ${response.status}`);
+          continue;
+        }
+        const data = await response.json();
+        const matches = (data.channels || [])
+          .filter((item) => !excluded.has(String(item.id || '')))
+          .filter((item) => livewatchNameMatches(item, config))
+          .sort((a, b) => livewatchCandidateRank(config, b) - livewatchCandidateRank(config, a));
+        if (matches.length) return matches[0];
+      } catch (error) {
+        failures.push(error?.message || "search error");
+      }
+    }
+  }
+  throw new Error(`livewatch channel not found${failures.length ? ` (${failures.join(", ")})` : ""}`);
+}
+
+async function resolveLivewatchSearchSource(channelKey, channel, sourceName, source) {
+  const selected = await findLivewatchCandidate(channelKey, channel, sourceName, source);
   const quality = selected.quality ? ` ${selected.quality}` : '';
   const label = `LiveWatch ${selected.source || 'auto'}${quality}`;
   return resolveLivewatchSource(channelKey, sourceName, {
@@ -1612,6 +1751,32 @@ async function resolveLivewatchSource(channelKey, sourceName, source) {
     masterText,
     latencyMs
   };
+}
+
+async function resolveLivewatchSourceWithDynamicFallback(channelKey, channel, sourceName, source) {
+  try {
+    return await resolveLivewatchSource(channelKey, sourceName, source);
+  } catch (staticError) {
+    if (source.disableDynamicFallback) throw staticError;
+    const excludeIds = livewatchIdPrefix(source.id) ? [source.id] : [];
+    try {
+      const selected = await findLivewatchCandidate(channelKey, channel, sourceName, source, excludeIds);
+      const quality = selected.quality ? ` ${selected.quality}` : '';
+      const label = `${source.label || 'LiveWatch'} dynamique (${selected.source || 'auto'}${quality})`;
+      const resolved = await resolveLivewatchSource(channelKey, sourceName, {
+        ...source,
+        id: String(selected.id || ''),
+        label
+      });
+      return {
+        ...resolved,
+        dynamicFallback: true,
+        staticSourceId: source.id
+      };
+    } catch (dynamicError) {
+      throw new Error(`${staticError?.message || 'static error'}; dynamic fallback ${dynamicError?.message || 'error'}`);
+    }
+  }
 }
 
 async function resolveCloudingSource(channelKey, sourceName, source) {
@@ -1721,10 +1886,10 @@ async function resolveLovetierSource(channelKey, sourceName, source) {
 async function resolveSource(channelKey, channel, sourceName) {
   const source = allSources(channel)[sourceName];
   if (!source) throw new Error(`unknown source ${sourceName}`);
-  if (source.kind === "livewatch-search") return resolveLivewatchSearchSource(channelKey, sourceName, source);
+  if (source.kind === "livewatch-search") return resolveLivewatchSearchSource(channelKey, channel, sourceName, source);
   if (source.kind === "clouding") return resolveCloudingSource(channelKey, sourceName, source);
   if (source.kind === "lovetier") return resolveLovetierSource(channelKey, sourceName, source);
-  return resolveLivewatchSource(channelKey, sourceName, source);
+  return resolveLivewatchSourceWithDynamicFallback(channelKey, channel, sourceName, source);
 }
 
 async function resolveAutoSource(channelKey, channel, requestUrl) {
