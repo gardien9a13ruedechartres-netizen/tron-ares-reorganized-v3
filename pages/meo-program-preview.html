@@ -1,0 +1,595 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ARES - Apercu Programme MEO</title>
+  <style>
+    :root {
+      --bg: #02040a;
+      --panel: #050b18;
+      --panel-2: #071320;
+      --line: rgba(0, 229, 255, 0.35);
+      --line-soft: rgba(0, 229, 255, 0.16);
+      --text: #e0f7ff;
+      --muted: #82a7b9;
+      --cyan: #00e5ff;
+      --amber: #ffb74d;
+      --orange: #ff9100;
+      --danger: #ff5252;
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background:
+        radial-gradient(circle at top left, rgba(0, 229, 255, 0.16), transparent 28rem),
+        radial-gradient(circle at bottom right, rgba(255, 145, 0, 0.12), transparent 24rem),
+        #02040a;
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+      padding: 18px;
+    }
+
+    .preview-shell {
+      width: min(1120px, 100%);
+      min-height: min(760px, calc(100vh - 36px));
+      display: grid;
+      grid-template-columns: 330px minmax(0, 1fr);
+      border: 1px solid var(--line-soft);
+      background: linear-gradient(145deg, rgba(3, 9, 20, 0.96), rgba(0, 0, 0, 0.98));
+      box-shadow: 0 0 48px rgba(0, 229, 255, 0.16), 0 0 42px rgba(255, 145, 0, 0.08);
+      overflow: hidden;
+    }
+
+    .channel-side {
+      border-right: 1px solid var(--line-soft);
+      background: radial-gradient(circle at top, rgba(0, 229, 255, 0.12), transparent 18rem), var(--panel);
+      padding: 16px 12px;
+    }
+
+    .side-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .side-title {
+      margin: 0;
+      color: var(--amber);
+      font-size: 15px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .pill {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 4px 9px;
+      color: var(--text);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: rgba(0, 229, 255, 0.08);
+    }
+
+    .channel-row {
+      display: grid;
+      grid-template-columns: 56px minmax(0, 1fr) 38px;
+      align-items: center;
+      gap: 10px;
+      min-height: 72px;
+      border: 1px solid rgba(0, 229, 255, 0.28);
+      background: linear-gradient(90deg, rgba(0, 229, 255, 0.16), rgba(0, 0, 0, 0.24));
+      padding: 8px;
+      margin-bottom: 8px;
+      border-radius: var(--radius);
+      box-shadow: inset 0 0 18px rgba(0, 229, 255, 0.08);
+    }
+
+    .channel-row.is-active {
+      border-color: rgba(255, 183, 77, 0.86);
+      box-shadow: 0 0 20px rgba(255, 145, 0, 0.18), inset 0 0 18px rgba(0, 229, 255, 0.08);
+    }
+
+    .logo-disc {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background: #fff;
+      border: 1px solid var(--line);
+      box-shadow: 0 0 14px rgba(0, 229, 255, 0.35);
+    }
+
+    .logo-disc img {
+      width: 88%;
+      height: 88%;
+      object-fit: contain;
+      display: block;
+    }
+
+    .channel-name {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.2;
+      font-weight: 750;
+      color: #fff;
+      text-transform: uppercase;
+    }
+
+    .channel-meta {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .info-btn {
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      color: var(--amber);
+      background: rgba(2, 8, 18, 0.88);
+      font-weight: 800;
+      cursor: default;
+    }
+
+    .stage {
+      position: relative;
+      min-height: 620px;
+      background:
+        linear-gradient(180deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.54)),
+        radial-gradient(circle at 62% 22%, rgba(0, 229, 255, 0.1), transparent 22rem);
+      padding: 28px;
+    }
+
+    .fake-video {
+      min-height: 100%;
+      display: grid;
+      place-items: center;
+      color: rgba(224, 247, 255, 0.28);
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-size: 13px;
+    }
+
+    .program-overlay {
+      position: absolute;
+      inset: 26px;
+      display: grid;
+      grid-template-columns: minmax(260px, 360px) minmax(0, 1fr);
+      gap: 14px;
+      border: 1px solid rgba(0, 229, 255, 0.24);
+      background: rgba(2, 6, 13, 0.92);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 0 36px rgba(0, 229, 255, 0.16), 0 0 28px rgba(255, 145, 0, 0.1);
+      padding: 16px;
+    }
+
+    .now-panel,
+    .day-panel {
+      min-width: 0;
+      border: 1px solid rgba(0, 229, 255, 0.18);
+      background: linear-gradient(180deg, rgba(7, 19, 32, 0.92), rgba(0, 0, 0, 0.52));
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      min-height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid rgba(0, 229, 255, 0.14);
+      padding: 12px 14px;
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 13px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--amber);
+    }
+
+    .close-dot {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      border: 1px solid rgba(0, 229, 255, 0.35);
+      color: var(--text);
+      background: rgba(0, 0, 0, 0.38);
+    }
+
+    .now-content {
+      padding: 16px;
+    }
+
+    .channel-lockup {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .program-logo {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      border: 1px solid rgba(0, 229, 255, 0.58);
+      box-shadow: 0 0 18px rgba(0, 229, 255, 0.4);
+    }
+
+    .program-logo img {
+      width: 86%;
+      height: 86%;
+      object-fit: contain;
+    }
+
+    .kicker {
+      margin: 0 0 4px;
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+    }
+
+    .big-title {
+      margin: 0;
+      font-size: clamp(22px, 3vw, 34px);
+      line-height: 1.05;
+      color: #fff;
+    }
+
+    .time-band {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 16px 0 10px;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .progress {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(0, 229, 255, 0.14);
+      overflow: hidden;
+      border: 1px solid rgba(0, 229, 255, 0.16);
+    }
+
+    .progress span {
+      display: block;
+      width: 64%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--cyan), var(--amber));
+      box-shadow: 0 0 14px rgba(0, 229, 255, 0.5);
+    }
+
+    .summary {
+      margin: 16px 0 0;
+      color: #c9e8f2;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .next-box {
+      margin-top: 18px;
+      padding: 12px;
+      border: 1px solid rgba(255, 183, 77, 0.32);
+      border-radius: var(--radius);
+      background: rgba(255, 145, 0, 0.06);
+    }
+
+    .next-box strong {
+      display: block;
+      margin-bottom: 3px;
+      color: var(--amber);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .next-box span {
+      display: block;
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 650;
+    }
+
+    .program-list {
+      height: calc(100% - 55px);
+      overflow: auto;
+      padding: 8px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--cyan) rgba(0, 0, 0, 0.5);
+    }
+
+    .program-item {
+      display: grid;
+      grid-template-columns: 86px minmax(0, 1fr) 74px;
+      align-items: center;
+      gap: 12px;
+      min-height: 70px;
+      border: 1px solid rgba(0, 229, 255, 0.15);
+      background: rgba(0, 0, 0, 0.22);
+      border-radius: var(--radius);
+      padding: 10px;
+      margin-bottom: 8px;
+    }
+
+    .program-item.is-now {
+      border-color: rgba(255, 183, 77, 0.64);
+      background: linear-gradient(90deg, rgba(255, 145, 0, 0.12), rgba(0, 229, 255, 0.08));
+    }
+
+    .time {
+      color: var(--amber);
+      font-size: 12px;
+      font-weight: 750;
+      white-space: nowrap;
+    }
+
+    .item-title {
+      margin: 0 0 3px;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 760;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .item-sub {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .tag {
+      justify-self: end;
+      border: 1px solid rgba(0, 229, 255, 0.25);
+      border-radius: 999px;
+      color: var(--cyan);
+      padding: 4px 7px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: rgba(0, 229, 255, 0.06);
+    }
+
+    @media (max-width: 860px) {
+      body { padding: 0; }
+
+      .preview-shell {
+        min-height: 100vh;
+        grid-template-columns: 1fr;
+      }
+
+      .channel-side {
+        border-right: 0;
+        border-bottom: 1px solid var(--line-soft);
+      }
+
+      .stage {
+        min-height: 720px;
+        padding: 10px;
+      }
+
+      .program-overlay {
+        inset: 10px;
+        grid-template-columns: 1fr;
+        overflow: auto;
+      }
+
+      .program-list {
+        height: auto;
+        max-height: 430px;
+      }
+
+      .program-item {
+        grid-template-columns: 74px minmax(0, 1fr);
+      }
+
+      .tag {
+        grid-column: 2;
+        justify-self: start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="preview-shell" aria-label="Apercu du guide programme MEO">
+    <aside class="channel-side">
+      <div class="side-head">
+        <h1 class="side-title">Playlist Grid</h1>
+        <span class="pill">Demo MEO</span>
+      </div>
+
+      <article class="channel-row is-active">
+        <div class="logo-disc">
+          <img src="../media/cmtv.png" alt="CMTV">
+        </div>
+        <div>
+          <p class="channel-name">CMTV</p>
+          <p class="channel-meta">Info / Programme MEO</p>
+        </div>
+        <button class="info-btn" type="button" aria-label="Programme">i</button>
+      </article>
+
+      <article class="channel-row">
+        <div class="logo-disc">
+          <img src="../media/rtp1.jpg" alt="RTP1">
+        </div>
+        <div>
+          <p class="channel-name">RTP1</p>
+          <p class="channel-meta">CallLetter RTP1</p>
+        </div>
+        <button class="info-btn" type="button" aria-label="Programme">i</button>
+      </article>
+
+      <article class="channel-row">
+        <div class="logo-disc">
+          <img src="../media/sport-tv-1.png" alt="Sport TV 1">
+        </div>
+        <div>
+          <p class="channel-name">Sport TV 1</p>
+          <p class="channel-meta">CallLetter SPT1HD</p>
+        </div>
+        <button class="info-btn" type="button" aria-label="Programme">i</button>
+      </article>
+    </aside>
+
+    <section class="stage">
+      <div class="fake-video">Flux video en arriere-plan</div>
+
+      <section class="program-overlay" aria-label="Programme CMTV">
+        <article class="now-panel">
+          <header class="panel-head">
+            <h2 class="panel-title">Programme / Infos</h2>
+            <span class="close-dot" aria-hidden="true">x</span>
+          </header>
+
+          <div class="now-content">
+            <div class="channel-lockup">
+              <div class="program-logo">
+                <img src="../media/cmtv.png" alt="CMTV">
+              </div>
+              <div>
+                <p class="kicker">CMTV - Maintenant</p>
+                <h3 class="big-title">Noticias CM</h3>
+              </div>
+            </div>
+
+            <div class="time-band">
+              <span>00:53</span>
+              <span>01:30</span>
+            </div>
+            <div class="progress" aria-label="Progression du programme">
+              <span></span>
+            </div>
+
+            <p class="summary">
+              Synthese des principales nouvelles, en direct de la redaction.
+              Ce bloc serait alimente par MEO via notre Worker.
+            </p>
+
+            <div class="next-box">
+              <strong>A suivre</strong>
+              <span>Liga D'Ouro - Ep. 166</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="day-panel">
+          <header class="panel-head">
+            <h2 class="panel-title">Aujourd'hui</h2>
+            <span class="pill">25 programmes</span>
+          </header>
+
+          <div class="program-list">
+            <article class="program-item">
+              <span class="time">21:00 - 23:30</span>
+              <div>
+                <p class="item-title">Liga D'Ouro - Ep. 166</p>
+                <p class="item-sub">Football, analyse et actualite sportive.</p>
+              </div>
+              <span class="tag">Passe</span>
+            </article>
+
+            <article class="program-item">
+              <span class="time">23:30 - 23:50</span>
+              <div>
+                <p class="item-title">Jornal Da Meia-Noite</p>
+                <p class="item-sub">Actualite, reportage et analyse.</p>
+              </div>
+              <span class="tag">Passe</span>
+            </article>
+
+            <article class="program-item">
+              <span class="time">23:50 - 00:38</span>
+              <div>
+                <p class="item-title">Noite Das Estrelas</p>
+                <p class="item-sub">Late show presente par Maya.</p>
+              </div>
+              <span class="tag">Passe</span>
+            </article>
+
+            <article class="program-item">
+              <span class="time">00:38 - 00:53</span>
+              <div>
+                <p class="item-title">Jornal Da Meia-Noite</p>
+                <p class="item-sub">Point complet sur l'actualite.</p>
+              </div>
+              <span class="tag">Passe</span>
+            </article>
+
+            <article class="program-item is-now">
+              <span class="time">00:53 - 01:30</span>
+              <div>
+                <p class="item-title">Noticias CM</p>
+                <p class="item-sub">Synthese des principales nouvelles.</p>
+              </div>
+              <span class="tag">Live</span>
+            </article>
+
+            <article class="program-item">
+              <span class="time">01:30 - 03:31</span>
+              <div>
+                <p class="item-title">Liga D'Ouro - Ep. 166</p>
+                <p class="item-sub">Les emotions du football tous les jours.</p>
+              </div>
+              <span class="tag">Ensuite</span>
+            </article>
+
+            <article class="program-item">
+              <span class="time">03:31 - 03:47</span>
+              <div>
+                <p class="item-title">Falar Global T15 - Ep. 16</p>
+                <p class="item-sub">Technologies, tendances et innovation.</p>
+              </div>
+              <span class="tag">Nuit</span>
+            </article>
+
+            <article class="program-item">
+              <span class="time">03:47 - 04:06</span>
+              <div>
+                <p class="item-title">Lingua Mae T4 - Ep. 6</p>
+                <p class="item-sub">Magazine culturel portugais.</p>
+              </div>
+              <span class="tag">Nuit</span>
+            </article>
+          </div>
+        </article>
+      </section>
+    </section>
+  </main>
+</body>
+</html>

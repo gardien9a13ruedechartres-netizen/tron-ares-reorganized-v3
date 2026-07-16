@@ -17,7 +17,8 @@
       "group": "Généraliste",
       "isFavorite": false,
       "isIframe": true,
-      "programUrl": "https://nostv.pt/guia/139"
+      "programUrl": "https://nostv.pt/guia/139",
+      "meoCallLetter": "CMTV"
     },
     {
       "id": "rtp1",
@@ -29,7 +30,8 @@
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": false,
+      "meoCallLetter": "RTP1"
     },
     {
       "id": "rtp2",
@@ -41,7 +43,8 @@
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": false,
+      "meoCallLetter": "RTP2"
     },
     {
       "id": "rtp-africa",
@@ -53,7 +56,8 @@
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": false,
+      "meoCallLetter": "RTPA"
     },
     {
       "id": "tvi",
@@ -65,7 +69,8 @@
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "meoCallLetter": "TVI"
     },
     {
       "id": "tvi-int",
@@ -89,7 +94,8 @@
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": false,
+      "meoCallLetter": "SIC"
     },
     {
       "id": "tv-globo",
@@ -101,7 +107,8 @@
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "meoCallLetter": "GLOB"
     },
     {
       "id": "Record",
@@ -113,7 +120,8 @@
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": false,
+      "meoCallLetter": "REC HD"
     },
     {
       "id": "tcv-int",
@@ -125,7 +133,8 @@
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": false,
+      "meoCallLetter": "TCV"
     },
     {
       "id": "rtpn",
@@ -137,7 +146,8 @@
       },
       "group": "Info",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": false,
+      "meoCallLetter": "RTPN"
     },
     {
       "id": "sicn",
@@ -149,7 +159,8 @@
       },
       "group": "Info",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": false,
+      "meoCallLetter": "SICN"
     },
     {
       "id": "cnnpt",
@@ -161,7 +172,8 @@
       },
       "group": "Info",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": false,
+      "meoCallLetter": "CNNPT"
     },
     {
       "id": "fifaplus",
@@ -185,7 +197,8 @@
       },
       "group": "Sport",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "meoCallLetter": "C11"
     },
     {
       "id": "btv",
@@ -197,7 +210,8 @@
       },
       "group": "Sport",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "meoCallLetter": "SLBHD"
     },
     {
       "id": "SCP",
@@ -209,7 +223,8 @@
       },
       "group": "Sport",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "meoCallLetter": "SCPHD"
     },
     {
       "id": "PORTO canal",
@@ -221,7 +236,8 @@
       },
       "group": "Sport",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": false,
+      "meoCallLetter": "PORTO"
     },
     {
       "id": "eurosport1pt",
@@ -233,7 +249,8 @@
       },
       "group": "Sport",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "meoCallLetter": "EURHD"
     },
     {
       "id": "eurosport2pt",
@@ -245,7 +262,8 @@
       },
       "group": "Sport",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "meoCallLetter": "EURS2HD"
     },
     {
       "id": "abola",
@@ -257,7 +275,8 @@
       },
       "group": "Sport",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "meoCallLetter": "ABOLA"
     },
     {
       "id": "sporttv+",
@@ -269,7 +288,8 @@
       },
       "group": "Sport",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "meoCallLetter": "SPTVHD"
     },
     {
       "id": "sporttv1",
@@ -281,7 +301,8 @@
       },
       "group": "Sport",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": false,
+      "meoCallLetter": "SPT1HD"
     },
     {
       "id": "sporttv2",
@@ -293,7 +314,8 @@
       },
       "group": "Sport",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "meoCallLetter": "SPT2HD"
     },
     {
       "id": "sporttv3",
@@ -305,7 +327,8 @@
       },
       "group": "Sport",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "meoCallLetter": "SPT3HD"
     },
     {
       "id": "sporttv4",
@@ -317,7 +340,8 @@
       },
       "group": "Sport",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "meoCallLetter": "SPT4HD"
     },
     {
       "id": "sporttv5",
@@ -329,7 +353,8 @@
       },
       "group": "Sport",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": false,
+      "meoCallLetter": "SPT5HD"
     },
     {
       "id": "dazn1",
@@ -341,7 +366,8 @@
       },
       "group": "Sport",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "meoCallLetter": "DAZN1"
     },
     {
       "id": "dazn2",
@@ -353,7 +379,8 @@
       },
       "group": "Sport",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "meoCallLetter": "DAZN2"
     },
     {
       "id": "dazn3",
@@ -365,7 +392,8 @@
       },
       "group": "Sport",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "meoCallLetter": "DAZN3"
     },
     {
       "id": "dazn4",
@@ -377,7 +405,8 @@
       },
       "group": "Sport",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "meoCallLetter": "DAZN4"
     },
     {
       "id": "dazn5",
@@ -389,7 +418,8 @@
       },
       "group": "Sport",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "meoCallLetter": "DAZN5"
     },
     {
       "id": "tvir",
@@ -401,7 +431,8 @@
       },
       "group": "Divertissement",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": false,
+      "meoCallLetter": "TVIR"
     },
     {
       "id": "tvif",
@@ -425,7 +456,8 @@
       },
       "group": "Divertissement",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": false,
+      "meoCallLetter": "VMAISTVI"
     },
     {
       "id": "disney-pixar",
@@ -449,7 +481,8 @@
       },
       "group": "Jeunesse",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "meoCallLetter": "PANDA"
     },
     {
       "id": "odisseia-pt",
@@ -461,7 +494,8 @@
       },
       "group": "Documentaire",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": false,
+      "meoCallLetter": "ODISSHD"
     },
     {
       "id": "national-geographic-pt",
@@ -473,7 +507,8 @@
       },
       "group": "Documentaire",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": false,
+      "meoCallLetter": "NGHD"
     },
     {
       "id": "historia-pt",
@@ -485,7 +520,8 @@
       },
       "group": "Documentaire",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": false,
+      "meoCallLetter": "HISTHD"
     },
     {
       "id": "discovery-pt",
@@ -497,7 +533,8 @@
       },
       "group": "Documentaire",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": false,
+      "meoCallLetter": "DISCVHD"
     }
   ]
 }

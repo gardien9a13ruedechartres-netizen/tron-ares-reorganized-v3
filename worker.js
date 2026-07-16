@@ -5,6 +5,9 @@ const CMTVPT_PROXY_PATH = '/api/cmtvpt/proxy';
 const WORKER_LIVE_PREFIX = '/api/worker-live/';
 const SPORTTV_EPG_PATH = '/api/sporttv-epg';
 const SPORTTV_GUIDE_URL = 'https://www.sporttv.pt/guia';
+const MEO_EPG_PATH = '/api/meo-epg';
+const MEO_GUIDE_URL = 'https://www.meo.pt/tv/canais-programacao/guia-tv';
+const MEO_GRIDTV_BASE = 'https://meogouser.apps.meo.pt/Services/GridTv/GridTv.svc';
 const WAVEWATCH_ORIGIN = 'https://lecteur-wavewatch-universal-stable.victor-salema-53d.workers.dev';
 const WAVEWATCH_PROXY_PATHS = new Set([
   '/api/search',
@@ -106,6 +109,155 @@ function streamCorsHeaders(extra = {}) {
     'Access-Control-Expose-Headers': 'Content-Length, Content-Range, Accept-Ranges, X-Ares-Channel, X-Ares-Resolved-At',
     ...extra
   };
+}
+
+function jsonCorsHeaders(extra = {}) {
+  return {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+    'Access-Control-Allow-Headers': 'Accept, Content-Type',
+    'Content-Type': 'application/json; charset=utf-8',
+    ...extra
+  };
+}
+
+function meoRequestHeaders() {
+  return {
+    Accept: 'application/json, text/plain, */*',
+    Origin: 'https://www.meo.pt',
+    Referer: MEO_GUIDE_URL,
+    'User-Agent': 'Mozilla/5.0'
+  };
+}
+
+function currentLisbonIsoLocal() {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Lisbon',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  }).formatToParts(new Date()).reduce((acc, part) => {
+    if (part.type !== 'literal') acc[part.type] = part.value;
+    return acc;
+  }, {});
+  return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}:${parts.second}`;
+}
+
+function safeMeoDate(value) {
+  const raw = String(value || '').trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+  return currentLisbonIsoLocal().slice(0, 10);
+}
+
+function safeMeoCallLetter(value) {
+  const raw = String(value || '').trim();
+  if (!/^[A-Za-z0-9 _-]{1,32}$/.test(raw)) return '';
+  return raw;
+}
+
+function meoTime(value) {
+  const raw = String(value || '');
+  const match = raw.match(/T(\d{2}:\d{2})/);
+  return match ? match[1] : '';
+}
+
+function meoProgramStatus(program, nowLocal) {
+  const start = String(program?.StartDate || '');
+  const end = String(program?.EndDate || '');
+  if (start && end && start <= nowLocal && nowLocal < end) return 'now';
+  if (end && end <= nowLocal) return 'past';
+  return 'next';
+}
+
+function meoProgressPct(program, nowLocal) {
+  const start = Date.parse(String(program?.StartDate || ''));
+  const end = Date.parse(String(program?.EndDate || ''));
+  const now = Date.parse(nowLocal);
+  if (!Number.isFinite(start) || !Number.isFinite(end) || !Number.isFinite(now) || end <= start) return 0;
+  return Math.max(0, Math.min(100, Math.round(((now - start) / (end - start)) * 100)));
+}
+
+function normalizeMeoProgram(program, nowLocal) {
+  const status = meoProgramStatus(program, nowLocal);
+  return {
+    id: program?.Id ?? null,
+    programId: program?.ProgramId ?? null,
+    title: String(program?.Title || '').trim() || 'Programme',
+    synopsis: String(program?.Synopsis || '').trim(),
+    startDate: String(program?.StartDate || ''),
+    endDate: String(program?.EndDate || ''),
+    startTime: meoTime(program?.StartDate),
+    endTime: meoTime(program?.EndDate),
+    status,
+    progressPct: status === 'now' ? meoProgressPct(program, nowLocal) : 0
+  };
+}
+
+async function resolveMeoEpg(request, requestUrl) {
+  const cors = jsonCorsHeaders({
+    'Cache-Control': 'public, max-age=300, stale-if-error=3600'
+  });
+
+  if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
+  if (request.method !== 'GET' && request.method !== 'HEAD') {
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers: cors });
+  }
+
+  const callLetter = safeMeoCallLetter(requestUrl.searchParams.get('callLetter'));
+  if (!callLetter) {
+    return new Response(JSON.stringify({ error: 'Missing or invalid callLetter' }), {
+      status: 400,
+      headers: { ...cors, 'Cache-Control': 'no-store' }
+    });
+  }
+
+  const date = safeMeoDate(requestUrl.searchParams.get('date'));
+  const endpoint = `${MEO_GRIDTV_BASE}/GetLiveChannelProgramsByDate?callLetter=${encodeURIComponent(callLetter)}&date=${encodeURIComponent(date)}&userAgent=IPTV_OFR_GTV`;
+
+  try {
+    const upstream = await fetch(endpoint, {
+      headers: meoRequestHeaders(),
+      cf: { cacheEverything: true, cacheTtl: 300 },
+      redirect: 'follow'
+    });
+
+    if (!upstream.ok) throw new Error(`MEO EPG unavailable (${upstream.status})`);
+    const data = await upstream.json();
+    if (data?.Status !== 'OK' || !Array.isArray(data?.Result)) {
+      throw new Error(`MEO EPG bad payload (${data?.Status || 'unknown'})`);
+    }
+
+    const nowLocal = currentLisbonIsoLocal();
+    const programs = data.Result
+      .map(program => normalizeMeoProgram(program, nowLocal))
+      .filter(program => program.title && program.startDate && program.endDate);
+
+    const current = programs.find(program => program.status === 'now') || null;
+    const next = programs.find(program => program.status === 'next') || null;
+    const body = JSON.stringify({
+      ok: true,
+      source: MEO_GUIDE_URL,
+      callLetter,
+      date,
+      updatedAt: new Date().toISOString(),
+      timezone: 'Europe/Lisbon',
+      logoUrl: `https://cdn-er-images.online.meo.pt/api/Channels/logos/image?callLetter=${encodeURIComponent(callLetter)}&profile=corner_transparent_positive&width=120`,
+      current,
+      next,
+      programs
+    });
+
+    return new Response(request.method === 'HEAD' ? null : body, { status: 200, headers: cors });
+  } catch (error) {
+    return new Response(
+      JSON.stringify({ error: 'MEO EPG unavailable', detail: String(error?.message || error), callLetter, date }),
+      { status: 502, headers: { ...cors, 'Cache-Control': 'no-store' } }
+    );
+  }
 }
 
 async function resolveSportTvEpg(request) {
@@ -467,6 +619,10 @@ export default {
       return resolveSportTvEpg(request);
     }
 
+    if (url.pathname === MEO_EPG_PATH) {
+      return resolveMeoEpg(request, url);
+    }
+
     if (url.pathname === CMTVPT_PROXY_PATH) {
       return proxyCmtvpt(request, url);
     }
@@ -478,7 +634,7 @@ export default {
 
     const response = await env.ASSETS.fetch(request);
 
-    if (/^\/js\/fr-program-badges\.js$/i.test(url.pathname) ||
+    if (/^\/js\/(?:fr|pt)-program-badges\.js$/i.test(url.pathname) ||
         /^\/pages\/(?:worker-)?(?:cmtvpt|rtp1|rtp2|sic)(?:\.html)?$/i.test(url.pathname)) {
       const headers = new Headers(response.headers);
       headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
