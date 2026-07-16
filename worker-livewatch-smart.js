@@ -1066,8 +1066,8 @@ Object.assign(CHANNELS, {
   "animaux": {
     "label": "ANIMAUX",
     "defaultOrder": [
-      "satellite",
       "cable",
+      "satellite",
       "basic"
     ],
     "sources": {
