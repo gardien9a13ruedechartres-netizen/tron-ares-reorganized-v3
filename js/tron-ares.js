@@ -5068,10 +5068,11 @@ prevBtn?.addEventListener('click', playPrev);
     iframeWheelCatcher.setAttribute('aria-hidden', 'true');
     iframeWheelCatcher.style.cssText = [
       'position:absolute',
-      ,
+      'inset:0',
       'z-index:3',
       'background:transparent',
-      'pointer-events:none'
+      'pointer-events:none',
+      'touch-action:none'
     ].join(';');
     iframeOverlay.appendChild(iframeWheelCatcher);
     iframeWheelCatcher.addEventListener('wheel', onWheelZap, { passive: false });
