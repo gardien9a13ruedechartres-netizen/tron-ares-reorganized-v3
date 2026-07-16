@@ -14,7 +14,8 @@
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 58
     },
     {
       "id": "france-2",
@@ -26,7 +27,8 @@
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": false,
+      "guideTntId": 59
     },
     {
       "id": "france-3",
@@ -38,7 +40,8 @@
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": false,
+      "guideTntId": 60
     },
     {
       "id": "canal",
@@ -62,7 +65,8 @@
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": false,
+      "guideTntId": 62
     },
     {
       "id": "m6",
@@ -74,7 +78,8 @@
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 63
     },
     {
       "id": "arte",
@@ -86,7 +91,8 @@
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 64
     },
     {
       "id": "w9",
@@ -98,7 +104,8 @@
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 71
     },
     {
       "id": "cstar",
@@ -110,7 +117,8 @@
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 75
     },
     {
       "id": "tmc",
@@ -122,7 +130,8 @@
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 72
     },
     {
       "id": "tfx",
@@ -134,7 +143,8 @@
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 73
     },
     {
       "id": "rmc-story",
@@ -146,7 +156,8 @@
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": false,
+      "guideTntId": 80
     },
     {
       "id": "rmc-decouverte",
@@ -158,7 +169,8 @@
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": false,
+      "guideTntId": 131
     },
     {
       "id": "t18",
@@ -170,7 +182,8 @@
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 70
     },
     {
       "id": "novo19",
@@ -182,7 +195,8 @@
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 78
     },
     {
       "id": "6ter",
@@ -194,7 +208,8 @@
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 79
     },
     {
       "id": "bfmtv",
@@ -338,7 +353,8 @@
       },
       "group": "Sport",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 174
     },
     {
       "id": "canal-foot",
@@ -350,7 +366,8 @@
       },
       "group": "Sport",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 172
     },
     {
       "id": "canal-sport",
@@ -362,7 +379,8 @@
       },
       "group": "Sport",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 103
     },
     {
       "id": "canal-motogp",
@@ -398,7 +416,8 @@
       },
       "group": "Sport",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 150
     },
     {
       "id": "eurosport-1",
@@ -410,7 +429,8 @@
       },
       "group": "Sport",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 145
     },
     {
       "id": "eurosport-2",
@@ -422,7 +442,8 @@
       },
       "group": "Sport",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 146
     },
     {
       "id": "rmc-sport-1",
@@ -458,7 +479,8 @@
       },
       "group": "Sport",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 142
     },
     {
       "id": "equidia-fr",
@@ -482,7 +504,8 @@
       },
       "group": "Cinéma",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 74
     },
     {
       "id": "ocs-max",
@@ -506,7 +529,8 @@
       },
       "group": "Cinéma",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 104
     },
     {
       "id": "canal-gr-ecran",
@@ -518,7 +542,8 @@
       },
       "group": "Cinéma",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 100
     },
     {
       "id": "canal-cinema",
@@ -530,7 +555,8 @@
       },
       "group": "Cinéma",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 99
     },
     {
       "id": "canal-series",
@@ -554,7 +580,8 @@
       },
       "group": "Cinéma",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 113
     },
     {
       "id": "cine-frisson",
@@ -566,7 +593,8 @@
       },
       "group": "Cinéma",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 114
     },
     {
       "id": "cine-emotion",
@@ -578,7 +606,8 @@
       },
       "group": "Cinéma",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 112
     },
     {
       "id": "cine-classic",
@@ -590,7 +619,8 @@
       },
       "group": "Cinéma",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 117
     },
     {
       "id": "cine-club",
@@ -602,7 +632,8 @@
       },
       "group": "Cinéma",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 111
     },
     {
       "id": "box-office-action",
@@ -638,7 +669,8 @@
       },
       "group": "Cinéma",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 95
     },
     {
       "id": "tcm-cinema",
@@ -650,7 +682,8 @@
       },
       "group": "Cinéma",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 120
     },
     {
       "id": "syfy hd",
@@ -662,7 +695,8 @@
       },
       "group": "Cinéma",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": false,
+      "guideTntId": 122
     },
     {
       "id": "screamin",
@@ -710,7 +744,8 @@
       },
       "group": "Jeunesse",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 91
     },
     {
       "id": "disney-junior",
@@ -758,7 +793,8 @@
       },
       "group": "Jeunesse",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 102
     },
     {
       "id": "gulli",
@@ -770,7 +806,8 @@
       },
       "group": "Jeunesse",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": false,
+      "guideTntId": 87
     },
     {
       "id": "teletoon",
@@ -938,7 +975,8 @@
       },
       "group": "Jeunesse",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 107
     },
     {
       "id": "canal-kids",
@@ -950,7 +988,8 @@
       },
       "group": "Jeunesse",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 102
     },
     {
       "id": "toonami",
@@ -974,7 +1013,8 @@
       },
       "group": "Documentaire",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 126
     },
     {
       "id": "nat-geo",
@@ -986,7 +1026,8 @@
       },
       "group": "Documentaire",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 136
     },
     {
       "id": "nat-geo-wild",
@@ -1034,7 +1075,8 @@
       },
       "group": "Documentaire",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 130
     },
     {
       "id": "planete-a-e",
@@ -1046,7 +1088,8 @@
       },
       "group": "Documentaire",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": false,
+      "guideTntId": 135
     },
     {
       "id": "planete-crime",
@@ -1058,7 +1101,8 @@
       },
       "group": "Documentaire",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 134
     },
     {
       "id": "animaux",
@@ -1070,7 +1114,8 @@
       },
       "group": "Documentaire",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 138
     },
     {
       "id": "rmc-decouverte-2",
@@ -1082,7 +1127,8 @@
       },
       "group": "Documentaire",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 131
     },
     {
       "id": "investigation-discovery",
@@ -1094,7 +1140,8 @@
       },
       "group": "Documentaire",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 127
     },
     {
       "id": "canal-docs",
@@ -1106,7 +1153,8 @@
       },
       "group": "Documentaire",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 140
     },
     {
       "id": "chasse-peche",
@@ -1130,7 +1178,8 @@
       },
       "group": "Documentaire",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 127
     },
     {
       "id": "mcm",
@@ -1166,7 +1215,8 @@
       },
       "group": "Musique",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "guideTntId": 93
     },
     {
       "id": "mtv-hits",

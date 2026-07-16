@@ -3066,6 +3066,7 @@ function createChannelElement(entry, index, sourceType, options) {
   li.dataset.linkkey = linkKeyForEntry(entry);
   if (entry?.programUrl) li.dataset.programUrl = String(entry.programUrl);
   if (entry?.meoCallLetter) li.dataset.meoCallLetter = String(entry.meoCallLetter);
+  if (entry?.guideTntId) li.dataset.guideTntId = String(entry.guideTntId);
 
   const enableTmdbPoster = !!(options && options.enableTmdbPoster);
 
@@ -7560,11 +7561,12 @@ async function __subtitleDoSearch() {
         url: item.url,
         logo: item.logo || { type: "image", value: "" },
         group: item.group || "Overlay",
-        isFavorite: item.isFavorite || false,
-        isIframe: item.isIframe || false,
-        programUrl: item.programUrl || (item.nosGuideId ? `https://nostv.pt/guia/${encodeURIComponent(String(item.nosGuideId))}` : ""),
-        meoCallLetter: item.meoCallLetter || "",
-        listType: item.isIframe ? "iframe" : "playlist"
+      isFavorite: item.isFavorite || false,
+      isIframe: item.isIframe || false,
+      guideTntId: item.guideTntId || item.frGuideTntId || "",
+      programUrl: item.programUrl || (item.nosGuideId ? `https://nostv.pt/guia/${encodeURIComponent(String(item.nosGuideId))}` : ""),
+      meoCallLetter: item.meoCallLetter || "",
+      listType: item.isIframe ? "iframe" : "playlist"
       });
 
     });

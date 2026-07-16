@@ -8,6 +8,9 @@ const SPORTTV_GUIDE_URL = 'https://www.sporttv.pt/guia';
 const MEO_EPG_PATH = '/api/meo-epg';
 const MEO_GUIDE_URL = 'https://www.meo.pt/tv/canais-programacao/guia-tv';
 const MEO_GRIDTV_BASE = 'https://meogouser.apps.meo.pt/Services/GridTv/GridTv.svc';
+const GUIDETNT_EPG_PATH = '/api/guidetnt-epg';
+const GUIDETNT_PROGRAM_URL = 'https://www.guidetnt.com/mobile/programme-tv';
+const GUIDETNT_WIDGET_URL = 'https://www.guidetnt.com/program/content/1/1/0/0/21/25/00111C/031B2B/00D6FF/EAF7FF';
 const WAVEWATCH_ORIGIN = 'https://lecteur-wavewatch-universal-stable.victor-salema-53d.workers.dev';
 const WAVEWATCH_PROXY_PATHS = new Set([
   '/api/search',
@@ -255,6 +258,243 @@ async function resolveMeoEpg(request, requestUrl) {
   } catch (error) {
     return new Response(
       JSON.stringify({ error: 'MEO EPG unavailable', detail: String(error?.message || error), callLetter, date }),
+      { status: 502, headers: { ...cors, 'Cache-Control': 'no-store' } }
+    );
+  }
+}
+
+function guideTntRequestHeaders() {
+  return {
+    Accept: 'text/html,application/xhtml+xml',
+    Referer: 'https://www.guidetnt.com/',
+    'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.8',
+    'User-Agent': 'Mozilla/5.0'
+  };
+}
+
+function safeGuideTntChannelId(value) {
+  const raw = String(value || '').trim();
+  if (!/^\d{1,4}$/.test(raw)) return '';
+  return raw;
+}
+
+function currentParisIsoLocal() {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Paris',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  }).formatToParts(new Date()).reduce((acc, part) => {
+    if (part.type !== 'literal') acc[part.type] = part.value;
+    return acc;
+  }, {});
+  return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}:${parts.second}`;
+}
+
+function decodeGuideTntText(value) {
+  const named = {
+    amp: '&',
+    lt: '<',
+    gt: '>',
+    quot: '"',
+    apos: "'",
+    nbsp: ' ',
+    eacute: 'é',
+    egrave: 'è',
+    ecirc: 'ê',
+    agrave: 'à',
+    ugrave: 'ù',
+    ccedil: 'ç',
+    ocirc: 'ô',
+    icirc: 'î',
+    Eacute: 'É'
+  };
+  return String(value || '').replace(/&(#x?[0-9a-f]+|[a-zA-Z]+);/g, (match, entity) => {
+    if (entity[0] === '#') {
+      const hex = entity[1]?.toLowerCase() === 'x';
+      const code = Number.parseInt(entity.slice(hex ? 2 : 1), hex ? 16 : 10);
+      return Number.isFinite(code) ? String.fromCodePoint(code) : match;
+    }
+    return Object.prototype.hasOwnProperty.call(named, entity) ? named[entity] : match;
+  });
+}
+
+function stripGuideTntHtml(value) {
+  return decodeGuideTntText(
+    String(value || '')
+      .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+      .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+  );
+}
+
+function guideTntCategory(className) {
+  const cls = String(className || '').toLowerCase();
+  if (cls.includes('film')) return 'Film';
+  if (cls.includes('serie')) return 'Serie';
+  if (cls.includes('sport')) return 'Sport';
+  if (cls.includes('jeunesse')) return 'Jeunesse';
+  if (cls.includes('divertissement')) return 'Divertissement';
+  if (cls.includes('magazine')) return 'Mag/docu';
+  if (cls.includes('info')) return 'Info';
+  if (cls.includes('spectacle')) return 'Spectacle';
+  if (cls.includes('music')) return 'Musique';
+  if (cls.includes('reality')) return 'Telerealite';
+  return 'Programme';
+}
+
+function guideTntImage(inner) {
+  const match = String(inner || '').match(/\s(?:data-src|src)=["']([^"']+)["']/i);
+  if (!match) return '';
+  try {
+    return new URL(decodeGuideTntText(match[1]), 'https://www.guidetnt.com').href;
+  } catch (_) {
+    return '';
+  }
+}
+
+function parseGuideTntDateFromHref(href, fallbackDate) {
+  const match = String(href || '').match(/\/(\d{1,2})\/(\d{1,2})\/(\d{1,2})\/(\d{1,2})\/(\d+)(?:[/?#"]|$)/);
+  if (!match) return null;
+  const fallbackYear = Number(fallbackDate.slice(0, 4));
+  const month = String(match[1]).padStart(2, '0');
+  const day = String(match[2]).padStart(2, '0');
+  const hour = String(match[3]).padStart(2, '0');
+  const minute = String(match[4]).padStart(2, '0');
+  const channelId = match[5];
+  return {
+    channelId,
+    startDate: `${fallbackYear}-${month}-${day}T${hour}:${minute}:00`,
+    startTime: `${hour}:${minute}`
+  };
+}
+
+function extractGuideTntChannelBlock(html, channelId) {
+  const startPattern = new RegExp(`<div id=['"]channel-${channelId}['"]>`, 'i');
+  const startMatch = startPattern.exec(html);
+  if (!startMatch) return '';
+  const start = startMatch.index;
+  const nextMatch = /<div id=['"]channel-\d+['"]>/i.exec(html.slice(start + startMatch[0].length));
+  const end = nextMatch ? start + startMatch[0].length + nextMatch.index : html.length;
+  return html.slice(start, end);
+}
+
+function parseGuideTntPrograms(html, channelId) {
+  const nowLocal = currentParisIsoLocal();
+  const fallbackDate = nowLocal.slice(0, 10);
+  const block = extractGuideTntChannelBlock(html, channelId);
+  if (!block) return { channelName: '', programs: [] };
+
+  const channelName = decodeGuideTntText((block.match(/alt=["']([^"']+)["']/i) || [])[1] || '');
+  const programs = [];
+  const itemPattern = /<a\b[^>]*href=["']([^"']*\/television\/[^"']+)["'][^>]*>\s*<div\b[^>]*class=["']([^"']+)["'][^>]*>([\s\S]*?)<\/div>\s*<\/a>/gi;
+  let match;
+  while ((match = itemPattern.exec(block))) {
+    const href = decodeGuideTntText(match[1]);
+    const className = match[2];
+    const inner = match[3];
+    const parsed = parseGuideTntDateFromHref(href, fallbackDate);
+    if (!parsed || parsed.channelId !== String(channelId)) continue;
+
+    const text = stripGuideTntHtml(inner)
+      .replace(/^\+$/, '')
+      .replace(/^\d{1,2}:\d{2}\s*/, '')
+      .replace(/^\+\s*/, '')
+      .trim();
+    if (!text || text === '+') continue;
+
+    programs.push({
+      title: text,
+      synopsis: '',
+      image: guideTntImage(inner),
+      category: guideTntCategory(className),
+      detailUrl: new URL(href, 'https://www.guidetnt.com').href,
+      startDate: parsed.startDate,
+      endDate: '',
+      startTime: parsed.startTime,
+      endTime: '',
+      status: 'next',
+      progressPct: 0
+    });
+  }
+
+  programs.sort((a, b) => a.startDate.localeCompare(b.startDate));
+  for (let i = 0; i < programs.length; i += 1) {
+    const current = programs[i];
+    const next = programs[i + 1];
+    current.endDate = next?.startDate || '';
+    current.endTime = next?.startTime || '';
+    if (current.startDate <= nowLocal && (!current.endDate || nowLocal < current.endDate)) {
+      current.status = 'now';
+      const start = Date.parse(current.startDate);
+      const end = Date.parse(current.endDate || current.startDate);
+      const now = Date.parse(nowLocal);
+      current.progressPct = Number.isFinite(start) && Number.isFinite(end) && end > start
+        ? Math.max(0, Math.min(100, Math.round(((now - start) / (end - start)) * 100)))
+        : 0;
+    } else if (current.endDate && current.endDate <= nowLocal) {
+      current.status = 'past';
+    }
+  }
+
+  return { channelName, programs };
+}
+
+async function resolveGuideTntEpg(request, requestUrl) {
+  const cors = jsonCorsHeaders({
+    'Cache-Control': 'public, max-age=300, stale-if-error=1800'
+  });
+
+  if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
+  if (request.method !== 'GET' && request.method !== 'HEAD') {
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers: cors });
+  }
+
+  const channelId = safeGuideTntChannelId(requestUrl.searchParams.get('channelId'));
+  if (!channelId) {
+    return new Response(JSON.stringify({ error: 'Missing or invalid channelId' }), {
+      status: 400,
+      headers: { ...cors, 'Cache-Control': 'no-store' }
+    });
+  }
+
+  try {
+    const upstream = await fetch(GUIDETNT_PROGRAM_URL, {
+      headers: guideTntRequestHeaders(),
+      cf: { cacheEverything: true, cacheTtl: 300 },
+      redirect: 'follow'
+    });
+    if (!upstream.ok) throw new Error(`GuideTNT unavailable (${upstream.status})`);
+
+    const html = await upstream.text();
+    const parsed = parseGuideTntPrograms(html, channelId);
+    if (!parsed.programs.length) throw new Error(`GuideTNT channel ${channelId} unavailable in current grid`);
+
+    const current = parsed.programs.find(program => program.status === 'now') || parsed.programs[0] || null;
+    const next = parsed.programs.find(program => program.status === 'next') || null;
+    const body = JSON.stringify({
+      ok: true,
+      source: GUIDETNT_PROGRAM_URL,
+      fallbackUrl: GUIDETNT_WIDGET_URL,
+      channelId,
+      channelName: parsed.channelName,
+      updatedAt: new Date().toISOString(),
+      timezone: 'Europe/Paris',
+      current,
+      next,
+      programs: parsed.programs
+    });
+
+    return new Response(request.method === 'HEAD' ? null : body, { status: 200, headers: cors });
+  } catch (error) {
+    return new Response(
+      JSON.stringify({ error: 'GuideTNT EPG unavailable', detail: String(error?.message || error), channelId, fallbackUrl: GUIDETNT_WIDGET_URL }),
       { status: 502, headers: { ...cors, 'Cache-Control': 'no-store' } }
     );
   }
@@ -621,6 +861,10 @@ export default {
 
     if (url.pathname === MEO_EPG_PATH) {
       return resolveMeoEpg(request, url);
+    }
+
+    if (url.pathname === GUIDETNT_EPG_PATH) {
+      return resolveGuideTntEpg(request, url);
     }
 
     if (url.pathname === CMTVPT_PROXY_PATH) {
