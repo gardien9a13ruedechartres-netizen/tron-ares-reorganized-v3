@@ -532,9 +532,12 @@ function playerLabPage(config) {
     const SMART_PRIMARY_SOURCE = 'cable';
     const SMART_FALLBACK_SOURCE = 'basic';
     const SMART_SAFE_SOURCE = 'clouding';
-    const SMART_RECOVERY_PROBE_MS = 15000;
-    const SMART_RECOVERY_CONFIRM_MS = 7000;
-    const SMART_RETURN_COOLDOWN_MS = 45000;
+    const SMART_RECOVERY_PROBE_MS = 25000;
+    const SMART_RECOVERY_CONFIRM_MS = 12000;
+    const SMART_RETURN_COOLDOWN_MS = 60000;
+    const SMART_FAILURE_HISTORY_MS = 600000;
+    const SMART_FAILURE_BACKOFF_MS = 35000;
+    const SMART_MAX_RECOVERY_WAIT_MS = 180000;
     const logs = [];
     let hls = null;
     let activeLabel = 'auto';
@@ -549,10 +552,13 @@ function playerLabPage(config) {
     let badEvents = [];
     let smartRecoveryTimer = null;
     let smartReturnConfirmTimer = null;
+    let smartProbeInFlight = false;
+    let smartRecoveryEpoch = 0;
     let lastPrimaryFailureAt = 0;
     let lastPrimaryReturnAt = 0;
     let lastSourceFailureAt = {};
     let lastSourceReturnAt = {};
+    let sourceFailureHistory = {};
     let lastFragUrl = '';
     let sameFragCount = 0;
     function safeJson(value) {
@@ -596,6 +602,7 @@ function playerLabPage(config) {
       }
     }
     function clearSmartRecoveryTimers() {
+      smartProbeInFlight = false;
       if (smartRecoveryTimer) {
         clearTimeout(smartRecoveryTimer);
         smartRecoveryTimer = null;
@@ -616,6 +623,26 @@ function playerLabPage(config) {
       return activeSequence.slice(0, activeSequenceIndex).filter(function(key) {
         return SOURCE_URLS[key];
       });
+    }
+    function recentFailureTimes(key) {
+      const now = Date.now();
+      const history = sourceFailureHistory[key] || [];
+      const recent = history.filter(function(time) {
+        return now - time <= SMART_FAILURE_HISTORY_MS;
+      });
+      sourceFailureHistory[key] = recent;
+      return recent;
+    }
+    function noteSourceFailureHistory(key, now) {
+      const recent = recentFailureTimes(key);
+      recent.push(now);
+      sourceFailureHistory[key] = recent;
+      return recent.length;
+    }
+    function sourceRecoveryDelayMs(key) {
+      const count = recentFailureTimes(key).length;
+      const backoff = Math.max(0, count - 1) * SMART_FAILURE_BACKOFF_MS;
+      return Math.min(SMART_MAX_RECOVERY_WAIT_MS, SMART_RECOVERY_PROBE_MS + backoff);
     }
     function appendProbeParam(src) {
       return src + (src.indexOf('?') === -1 ? '?' : '&') + 'smartProbe=' + Date.now();
@@ -682,34 +709,41 @@ function playerLabPage(config) {
       if (!isSmartSequence() || !key) return;
       const now = Date.now();
       lastSourceFailureAt[key] = now;
+      const recentFailures = noteSourceFailureHistory(key, now);
       if (key === SMART_PRIMARY_SOURCE) lastPrimaryFailureAt = now;
       clearSmartRecoveryTimers();
       appendLog('smart-source-failure', {
         key: key,
         reason: reason,
-        retryAfterMs: SMART_RECOVERY_PROBE_MS
+        recentFailures: recentFailures,
+        retryAfterMs: sourceRecoveryDelayMs(key)
       });
     }
     async function attemptPrimaryReturn(reason) {
       smartRecoveryTimer = null;
       if (!hasBetterSource()) return;
+      const attemptEpoch = smartRecoveryEpoch;
       const now = Date.now();
       const candidates = betterSourceKeys();
       for (let index = 0; index < candidates.length; index += 1) {
         const candidate = candidates[index];
         const lastFailure = lastSourceFailureAt[candidate] || 0;
         const lastReturn = lastSourceReturnAt[candidate] || 0;
+        const recoveryDelayMs = sourceRecoveryDelayMs(candidate);
+        const recentFailures = recentFailureTimes(candidate).length;
         if (now - lastReturn < SMART_RETURN_COOLDOWN_MS) {
           appendLog('smart-better-candidate-cooldown', {
             candidate: candidate,
+            recentFailures: recentFailures,
             remainingMs: SMART_RETURN_COOLDOWN_MS - (now - lastReturn)
           });
           continue;
         }
-        if (now - lastFailure < SMART_RECOVERY_PROBE_MS) {
+        if (now - lastFailure < recoveryDelayMs) {
           appendLog('smart-better-candidate-recent-failure', {
             candidate: candidate,
-            remainingMs: SMART_RECOVERY_PROBE_MS - (now - lastFailure)
+            recentFailures: recentFailures,
+            remainingMs: recoveryDelayMs - (now - lastFailure)
           });
           continue;
         }
@@ -718,21 +752,31 @@ function playerLabPage(config) {
           current: activeKey,
           reason: reason
         });
+        smartProbeInFlight = true;
         const firstProbeOk = await probeSourceKey(candidate);
+        smartProbeInFlight = false;
+        if (attemptEpoch !== smartRecoveryEpoch || !hasBetterSource()) return;
         if (!firstProbeOk) {
           lastSourceFailureAt[candidate] = Date.now();
+          noteSourceFailureHistory(candidate, lastSourceFailureAt[candidate]);
           continue;
         }
         appendLog('smart-better-confirm-wait', {
           candidate: candidate,
           confirmMs: SMART_RECOVERY_CONFIRM_MS
         });
+        const confirmEpoch = attemptEpoch;
         smartReturnConfirmTimer = setTimeout(async function() {
           smartReturnConfirmTimer = null;
+          if (confirmEpoch !== smartRecoveryEpoch) return;
           if (!hasBetterSource() || activeSequence.indexOf(candidate) >= activeSequenceIndex) return;
+          smartProbeInFlight = true;
           const secondProbeOk = await probeSourceKey(candidate);
+          smartProbeInFlight = false;
+          if (confirmEpoch !== smartRecoveryEpoch || !hasBetterSource()) return;
           if (!secondProbeOk) {
             lastSourceFailureAt[candidate] = Date.now();
+            noteSourceFailureHistory(candidate, lastSourceFailureAt[candidate]);
             schedulePrimaryRecovery('better-confirm-failed-' + candidate);
             return;
           }
@@ -759,9 +803,10 @@ function playerLabPage(config) {
         const candidate = candidates[index];
         const lastFailure = lastSourceFailureAt[candidate] || 0;
         const lastReturn = lastSourceReturnAt[candidate] || 0;
+        const recoveryDelayMs = sourceRecoveryDelayMs(candidate);
         const candidateWaitMs = Math.max(
           5000,
-          SMART_RECOVERY_PROBE_MS - Math.max(0, now - lastFailure),
+          recoveryDelayMs - Math.max(0, now - lastFailure),
           SMART_RETURN_COOLDOWN_MS - Math.max(0, now - lastReturn)
         );
         waitMs = Math.min(waitMs, candidateWaitMs);
@@ -769,7 +814,7 @@ function playerLabPage(config) {
       return Math.max(5000, waitMs);
     }
     function schedulePrimaryRecovery(reason) {
-      if (!hasBetterSource() || smartRecoveryTimer || smartReturnConfirmTimer) return;
+      if (!hasBetterSource() || smartRecoveryTimer || smartReturnConfirmTimer || smartProbeInFlight) return;
       const waitMs = recoveryWaitMs();
       appendLog('smart-better-recovery-scheduled', {
         reason: reason,
@@ -975,6 +1020,7 @@ function playerLabPage(config) {
       }
     }
     function loadSourceKey(key, label, sequence, index, reason) {
+      smartRecoveryEpoch += 1;
       activeLabel = label || SOURCE_LABELS[key];
       activeKey = key;
       activeSequence = sequence && sequence.length ? sequence.slice() : [key];
