@@ -252,7 +252,8 @@
       renderPanel(panel, context, data);
     } catch (error) {
       if (requestId !== state.requestId) return;
-      renderError(panel, context, String(error?.message || error));
+      console.warn("[ARES] GuideTNT natif indisponible, fallback iframe", error);
+      openFallbackIframe();
     }
   }
 
