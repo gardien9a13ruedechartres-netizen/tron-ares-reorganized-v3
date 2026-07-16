@@ -4275,14 +4275,26 @@ function scrollToActiveItem() {
 
   if (!listEl) return;
 
-  const activeItem = listEl.querySelector('.channel-item.active');
-  if (!activeItem) return;
+  const centerActiveItem = () => {
+    const activeItem = listEl.querySelector('.channel-item.active');
+    if (!activeItem) return;
 
-  const listRect = listEl.getBoundingClientRect();
-  const itemRect = activeItem.getBoundingClientRect();
+    const listRect = listEl.getBoundingClientRect();
+    const itemRect = activeItem.getBoundingClientRect();
+    const listHeight = listEl.clientHeight || listRect.height || 0;
+    const itemTop = (itemRect.top - listRect.top) + (listEl.scrollTop || 0);
+    const itemHeight = activeItem.offsetHeight || itemRect.height || 0;
+    const maxScroll = Math.max(0, listEl.scrollHeight - listHeight);
+    const target = Math.max(0, Math.min(maxScroll, itemTop - ((listHeight - itemHeight) / 2)));
 
-  const delta = (itemRect.top - listRect.top) - (listRect.height / 2 - itemRect.height / 2);
-  listEl.scrollTop += delta;
+    if (Math.abs((listEl.scrollTop || 0) - target) > 1) {
+      listEl.scrollTop = target;
+    }
+  };
+
+  centerActiveItem();
+  requestAnimationFrame(centerActiveItem);
+  setTimeout(centerActiveItem, 80);
 }
 
 // =====================================================
