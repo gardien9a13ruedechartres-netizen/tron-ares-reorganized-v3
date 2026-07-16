@@ -1401,17 +1401,35 @@ function hlsContentType(pathname, fallback) {
   return fallback || "application/octet-stream";
 }
 
+function smartDefaultOrder(channel) {
+  const sources = allSources(channel);
+  const seen = new Set();
+  const order = [];
+  for (const value of [
+    ...(channel.defaultOrder || []),
+    ...Object.keys(channel.manualSources || {})
+  ]) {
+    const key = String(value || "").trim().toLowerCase();
+    if (!key || seen.has(key) || !sources[key]) continue;
+    seen.add(key);
+    order.push(key);
+  }
+  return order;
+}
+
 function parseOrder(requestUrl, channel) {
   const skip = new Set(String(requestUrl.searchParams.get("skip") || "")
     .split(",")
     .map((value) => value.trim().toLowerCase())
     .filter(Boolean));
   const raw = String(requestUrl.searchParams.get("order") || "").trim();
-  const order = (raw ? raw.split(",") : channel.defaultOrder)
+  const sources = allSources(channel);
+  const defaults = smartDefaultOrder(channel);
+  const order = (raw ? raw.split(",") : defaults)
     .map((value) => value.trim().toLowerCase())
-    .filter((value) => channel.sources[value])
+    .filter((value) => sources[value])
     .filter((value) => !skip.has(value));
-  return order.length ? order : channel.defaultOrder.filter((value) => !skip.has(value));
+  return order.length ? order : defaults.filter((value) => !skip.has(value));
 }
 
 function cacheKey(channelKey, mode, requestUrl, channel) {
@@ -1805,6 +1823,7 @@ async function handleStatus(request, channelKey, channel) {
     channel: channelKey,
     label: channel.label,
     defaultOrder: channel.defaultOrder,
+    smartOrder: smartDefaultOrder(channel),
     automaticSources: Object.keys(channel.sources || {}),
     manualSources: Object.keys(channel.manualSources || {}),
     availableSources: sourceNames,
@@ -1829,6 +1848,7 @@ function playerPage(origin, channelKey, channel) {
   const sourceUrls = {};
   const sourceLabels = {};
   const sources = allSources(channel);
+  const smartOrder = smartDefaultOrder(channel);
   for (const [key, source] of Object.entries(sources)) {
     sourceUrls[key] = `${origin}/api/live/${channelKey}/${key}/master.m3u8`;
     sourceLabels[key] = source.label;
@@ -1841,7 +1861,7 @@ function playerPage(origin, channelKey, channel) {
     const selected = key === channelKey ? " selected" : "";
     return `<option value="${escapeHtml(key)}"${selected}>${escapeHtml(value.label)}</option>`;
   }).join("");
-  const startLabel = `Smart ${channel.defaultOrder.join(" -> ")}`;
+  const startLabel = `Smart ${smartOrder.join(" -> ")}`;
   return `<!doctype html>
 <html lang="fr">
 <head>
@@ -1902,15 +1922,18 @@ function playerPage(origin, channelKey, channel) {
     video.volume = 1;
     const SOURCE_URLS = ${scriptJson(sourceUrls)};
     const SOURCE_LABELS = ${scriptJson(sourceLabels)};
-    const START_SEQUENCE = ${scriptJson(channel.defaultOrder)};
+    const START_SEQUENCE = ${scriptJson(smartOrder)};
     const START_LABEL = ${scriptJson(startLabel)};
     const CONSOLE_PREFIX = ${scriptJson(`${channel.label} Smart`)};
-    const LONG_STALL_MS = 4000;
-    const BAD_EVENT_WINDOW_MS = 45000;
+    const LONG_STALL_MS = 3500;
+    const BAD_EVENT_WINDOW_MS = 30000;
     const BAD_EVENT_LIMIT = 2;
-    const SMART_RECOVERY_PROBE_MS = 45000;
-    const SMART_RECOVERY_CONFIRM_MS = 15000;
-    const SMART_RETURN_COOLDOWN_MS = 120000;
+    const SMART_RECOVERY_PROBE_MS = 25000;
+    const SMART_RECOVERY_CONFIRM_MS = 12000;
+    const SMART_RETURN_COOLDOWN_MS = 60000;
+    const SMART_FAILURE_HISTORY_MS = 600000;
+    const SMART_FAILURE_BACKOFF_MS = 35000;
+    const SMART_MAX_RECOVERY_WAIT_MS = 180000;
     const logs = [];
     let hls = null;
     let activeLabel = 'auto';
@@ -1925,8 +1948,13 @@ function playerPage(origin, channelKey, channel) {
     let badEvents = [];
     let smartRecoveryTimer = null;
     let smartReturnConfirmTimer = null;
-    let lastPrimaryFailureAt = 0;
-    let lastPrimaryReturnAt = 0;
+    let smartProbeInFlight = false;
+    let smartRecoveryEpoch = 0;
+    let lastSourceFailureAt = {};
+    let lastSourceReturnAt = {};
+    let sourceFailureHistory = {};
+    let lastFragUrl = '';
+    let sameFragCount = 0;
     function safeJson(value) { try { return JSON.stringify(value); } catch (_) { return String(value); } }
     function appendLog(event, details) {
       const suffix = details === undefined ? '' : ' ' + (typeof details === 'string' ? details : safeJson(details));
@@ -1961,6 +1989,7 @@ function playerPage(origin, channelKey, channel) {
       }
     }
     function clearSmartRecoveryTimers() {
+      smartProbeInFlight = false;
       if (smartRecoveryTimer) {
         clearTimeout(smartRecoveryTimer);
         smartRecoveryTimer = null;
@@ -1970,10 +1999,35 @@ function playerPage(origin, channelKey, channel) {
         smartReturnConfirmTimer = null;
       }
     }
-    function hasPrimaryRecoveryPath() {
-      return activeSequence.length > 1 && activeSequenceIndex > 0 && activeSequence[0] && SOURCE_URLS[activeSequence[0]];
+    function hasBetterSource() {
+      return activeSequence.length > 1 && activeSequenceIndex > 0;
     }
-    function primaryKey() { return activeSequence[0] || ''; }
+    function betterSourceKeys() {
+      if (!hasBetterSource()) return [];
+      return activeSequence.slice(0, activeSequenceIndex).filter(function(key) {
+        return SOURCE_URLS[key];
+      });
+    }
+    function recentFailureTimes(key) {
+      const now = Date.now();
+      const history = sourceFailureHistory[key] || [];
+      const recent = history.filter(function(time) {
+        return now - time <= SMART_FAILURE_HISTORY_MS;
+      });
+      sourceFailureHistory[key] = recent;
+      return recent;
+    }
+    function noteSourceFailureHistory(key, now) {
+      const recent = recentFailureTimes(key);
+      recent.push(now);
+      sourceFailureHistory[key] = recent;
+      return recent.length;
+    }
+    function sourceRecoveryDelayMs(key) {
+      const count = recentFailureTimes(key).length;
+      const backoff = Math.max(0, count - 1) * SMART_FAILURE_BACKOFF_MS;
+      return Math.min(SMART_MAX_RECOVERY_WAIT_MS, SMART_RECOVERY_PROBE_MS + backoff);
+    }
     function appendProbeParam(src) { return src + (src.indexOf('?') === -1 ? '?' : '&') + 'smartProbe=' + Date.now(); }
     function firstPlayableUrlFromPlaylist(text, baseSrc) {
       const lines = String(text || '').split(/\\r?\\n/);
@@ -2012,53 +2066,121 @@ function playerPage(origin, channelKey, channel) {
         return false;
       }
     }
-    function markPrimaryFailure(reason) {
-      if (!activeSequence.length || activeSequenceIndex !== 0) return;
-      lastPrimaryFailureAt = Date.now();
+    function markSourceFailure(key, reason) {
+      if (!activeSequence.length || !key) return;
+      const now = Date.now();
+      lastSourceFailureAt[key] = now;
+      const recentFailures = noteSourceFailureHistory(key, now);
       clearSmartRecoveryTimers();
-      appendLog('smart-primary-failure', { reason: reason, primary: primaryKey(), retryAfterMs: SMART_RECOVERY_PROBE_MS });
+      appendLog('smart-source-failure', {
+        key: key,
+        reason: reason,
+        recentFailures: recentFailures,
+        retryAfterMs: sourceRecoveryDelayMs(key)
+      });
     }
     async function attemptPrimaryReturn(reason) {
       smartRecoveryTimer = null;
-      if (!hasPrimaryRecoveryPath()) return;
+      if (!hasBetterSource()) return;
+      const attemptEpoch = smartRecoveryEpoch;
       const now = Date.now();
-      if (now - lastPrimaryReturnAt < SMART_RETURN_COOLDOWN_MS) {
-        schedulePrimaryRecovery('cooldown-' + reason);
-        return;
-      }
-      if (now - lastPrimaryFailureAt < SMART_RECOVERY_PROBE_MS) {
-        schedulePrimaryRecovery('recent-failure-' + reason);
-        return;
-      }
-      const key = primaryKey();
-      appendLog('smart-primary-probe-start', { reason: reason, primary: key });
-      const firstProbeOk = await probeSourceKey(key);
-      if (!firstProbeOk) {
-        schedulePrimaryRecovery('primary-still-bad');
-        return;
-      }
-      appendLog('smart-primary-confirm-wait', { primary: key, confirmMs: SMART_RECOVERY_CONFIRM_MS });
-      smartReturnConfirmTimer = setTimeout(async function() {
-        smartReturnConfirmTimer = null;
-        if (!hasPrimaryRecoveryPath()) return;
-        const secondProbeOk = await probeSourceKey(key);
-        if (!secondProbeOk) {
-          schedulePrimaryRecovery('primary-confirm-failed');
-          return;
+      const candidates = betterSourceKeys();
+      for (let index = 0; index < candidates.length; index += 1) {
+        const candidate = candidates[index];
+        const lastFailure = lastSourceFailureAt[candidate] || 0;
+        const lastReturn = lastSourceReturnAt[candidate] || 0;
+        const recoveryDelayMs = sourceRecoveryDelayMs(candidate);
+        const recentFailures = recentFailureTimes(candidate).length;
+        if (now - lastReturn < SMART_RETURN_COOLDOWN_MS) {
+          appendLog('smart-better-candidate-cooldown', {
+            candidate: candidate,
+            recentFailures: recentFailures,
+            remainingMs: SMART_RETURN_COOLDOWN_MS - (now - lastReturn)
+          });
+          continue;
         }
-        lastPrimaryReturnAt = Date.now();
-        loadSourceKey(key, 'Smart return ' + SOURCE_LABELS[key], activeSequence, 0, 'smart-return-' + reason);
-      }, SMART_RECOVERY_CONFIRM_MS);
+        if (now - lastFailure < recoveryDelayMs) {
+          appendLog('smart-better-candidate-recent-failure', {
+            candidate: candidate,
+            recentFailures: recentFailures,
+            remainingMs: recoveryDelayMs - (now - lastFailure)
+          });
+          continue;
+        }
+        appendLog('smart-better-probe-start', {
+          candidate: candidate,
+          current: activeKey,
+          reason: reason
+        });
+        smartProbeInFlight = true;
+        const firstProbeOk = await probeSourceKey(candidate);
+        smartProbeInFlight = false;
+        if (attemptEpoch !== smartRecoveryEpoch || !hasBetterSource()) return;
+        if (!firstProbeOk) {
+          lastSourceFailureAt[candidate] = Date.now();
+          noteSourceFailureHistory(candidate, lastSourceFailureAt[candidate]);
+          continue;
+        }
+        appendLog('smart-better-confirm-wait', {
+          candidate: candidate,
+          confirmMs: SMART_RECOVERY_CONFIRM_MS
+        });
+        const confirmEpoch = attemptEpoch;
+        smartReturnConfirmTimer = setTimeout(async function() {
+          smartReturnConfirmTimer = null;
+          if (confirmEpoch !== smartRecoveryEpoch) return;
+          if (!hasBetterSource() || activeSequence.indexOf(candidate) >= activeSequenceIndex) return;
+          smartProbeInFlight = true;
+          const secondProbeOk = await probeSourceKey(candidate);
+          smartProbeInFlight = false;
+          if (confirmEpoch !== smartRecoveryEpoch || !hasBetterSource()) return;
+          if (!secondProbeOk) {
+            lastSourceFailureAt[candidate] = Date.now();
+            noteSourceFailureHistory(candidate, lastSourceFailureAt[candidate]);
+            schedulePrimaryRecovery('better-confirm-failed-' + candidate);
+            return;
+          }
+          lastSourceReturnAt[candidate] = Date.now();
+          loadSourceKey(
+            candidate,
+            'Smart return ' + SOURCE_LABELS[candidate],
+            activeSequence,
+            activeSequence.indexOf(candidate),
+            'smart-return-' + reason
+          );
+        }, SMART_RECOVERY_CONFIRM_MS);
+        return;
+      }
+      schedulePrimaryRecovery('no-better-ready-' + reason);
+    }
+    function recoveryWaitMs() {
+      if (!hasBetterSource()) return 0;
+      const now = Date.now();
+      const candidates = betterSourceKeys();
+      let waitMs = SMART_RECOVERY_PROBE_MS;
+      for (let index = 0; index < candidates.length; index += 1) {
+        const candidate = candidates[index];
+        const lastFailure = lastSourceFailureAt[candidate] || 0;
+        const lastReturn = lastSourceReturnAt[candidate] || 0;
+        const recoveryDelayMs = sourceRecoveryDelayMs(candidate);
+        const candidateWaitMs = Math.max(
+          5000,
+          recoveryDelayMs - Math.max(0, now - lastFailure),
+          SMART_RETURN_COOLDOWN_MS - Math.max(0, now - lastReturn)
+        );
+        waitMs = Math.min(waitMs, candidateWaitMs);
+      }
+      return Math.max(5000, waitMs);
     }
     function schedulePrimaryRecovery(reason) {
-      if (!hasPrimaryRecoveryPath() || smartRecoveryTimer || smartReturnConfirmTimer) return;
-      const now = Date.now();
-      const waitMs = Math.max(
-        5000,
-        SMART_RECOVERY_PROBE_MS - Math.max(0, now - lastPrimaryFailureAt),
-        SMART_RETURN_COOLDOWN_MS - Math.max(0, now - lastPrimaryReturnAt)
-      );
-      appendLog('smart-primary-recovery-scheduled', { reason: reason, primary: primaryKey(), waitMs: waitMs });
+      if (!hasBetterSource() || smartRecoveryTimer || smartReturnConfirmTimer || smartProbeInFlight) return;
+      const waitMs = recoveryWaitMs();
+      appendLog('smart-better-recovery-scheduled', {
+        reason: reason,
+        current: activeKey,
+        candidates: betterSourceKeys(),
+        waitMs: waitMs
+      });
       smartRecoveryTimer = setTimeout(function() { attemptPrimaryReturn(reason || 'scheduled'); }, waitMs);
     }
     function noteRecovered(eventName) {
@@ -2075,12 +2197,12 @@ function playerPage(origin, channelKey, channel) {
       }
       failoverLockUntil = Date.now() + 3000;
       const from = activeKey;
-      if (activeSequenceIndex === 0) markPrimaryFailure(reason);
+      markSourceFailure(from, reason);
       const nextIndex = activeSequenceIndex + 1;
       const nextKey = activeSequence[nextIndex];
       appendLog('failover-switch', { reason: reason, from: from, to: nextKey, sequence: activeSequence });
       loadSourceKey(nextKey, 'Auto failover ' + SOURCE_LABELS[nextKey], activeSequence, nextIndex, reason);
-      if (nextIndex > 0) schedulePrimaryRecovery('after-failover-' + reason);
+      schedulePrimaryRecovery('after-failover-' + reason);
     }
     function noteStall(eventName) {
       if (!stallStartedAt) {
@@ -2138,6 +2260,8 @@ function playerPage(origin, channelKey, channel) {
       lastProgressLogAt = 0;
       stallStartedAt = 0;
       badEvents = [];
+      lastFragUrl = '';
+      sameFragCount = 0;
       clearStallTimer();
       appendLog('load-start', src);
       inspectSource(src);
@@ -2146,7 +2270,16 @@ function playerPage(origin, channelKey, channel) {
       video.removeAttribute('src');
       video.load();
       if (window.Hls && Hls.isSupported()) {
-        hls = new Hls({ enableWorker: true, lowLatencyMode: true });
+        hls = new Hls({
+          enableWorker: true,
+          lowLatencyMode: true,
+          liveSyncDurationCount: 3,
+          liveMaxLatencyDurationCount: 7,
+          maxBufferLength: 18,
+          manifestLoadingTimeOut: 8000,
+          levelLoadingTimeOut: 8000,
+          fragLoadingTimeOut: 10000
+        });
         hls.on(Hls.Events.MANIFEST_PARSED, function(_, data) {
           appendLog('manifest-ok', { levels: data.levels ? data.levels.length : 0, heights: data.levels ? data.levels.map(function(level) { return level.height || 0; }) : [] });
           attemptAutoplay('manifest-parsed');
@@ -2154,6 +2287,22 @@ function playerPage(origin, channelKey, channel) {
         hls.on(Hls.Events.LEVEL_SWITCHED, function(_, data) {
           const level = hls && hls.levels ? hls.levels[data.level] : null;
           appendLog('level-switched', { level: data.level, height: level ? level.height : null, bitrate: level ? level.bitrate : null });
+        });
+        hls.on(Hls.Events.FRAG_CHANGED, function(_, data) {
+          const frag = data.frag || {};
+          const fragUrl = frag.url || frag.relurl || '';
+          if (fragUrl && fragUrl === lastFragUrl) {
+            sameFragCount += 1;
+          } else {
+            lastFragUrl = fragUrl;
+            sameFragCount = 0;
+          }
+          if (sameFragCount >= 2) {
+            recordBadEvent('sameFragRepeated', {
+              frag: frag.sn || fragUrl,
+              count: sameFragCount
+            });
+          }
         });
         hls.on(Hls.Events.ERROR, function(_, data) {
           const summary = { type: data.type, details: data.details, fatal: data.fatal, status: data.response ? data.response.code : null };
@@ -2174,6 +2323,7 @@ function playerPage(origin, channelKey, channel) {
       }
     }
     function loadSourceKey(key, label, sequence, index, reason) {
+      smartRecoveryEpoch += 1;
       activeLabel = label || SOURCE_LABELS[key];
       activeKey = key;
       activeSequence = sequence && sequence.length ? sequence.slice() : [key];
@@ -2181,8 +2331,11 @@ function playerPage(origin, channelKey, channel) {
       if (activeSequenceIndex < 0) activeSequenceIndex = 0;
       if (activeSourceInfo) activeSourceInfo.textContent = SOURCE_LABELS[key] + ' (' + key + ')';
       appendLog('source-selected', { key: key, label: SOURCE_LABELS[key], reason: reason || 'manual', sequence: activeSequence });
-      if (activeSequenceIndex === 0) clearSmartRecoveryTimers();
-      else schedulePrimaryRecovery('source-selected-' + (reason || 'manual'));
+      if (hasBetterSource()) {
+        schedulePrimaryRecovery('source-selected-' + (reason || 'manual'));
+      } else {
+        clearSmartRecoveryTimers();
+      }
       load(SOURCE_URLS[key], label || SOURCE_LABELS[key]);
     }
     function startSequence(sequence, label) {
@@ -2196,7 +2349,7 @@ function playerPage(origin, channelKey, channel) {
         if (name === 'waiting' || name === 'stalled') noteStall(name);
         if (name === 'playing' || name === 'loadedmetadata') {
           noteRecovered(name);
-          if (activeSequenceIndex > 0) schedulePrimaryRecovery('fallback-' + name);
+          if (hasBetterSource()) schedulePrimaryRecovery('fallback-' + name);
         }
         if (name === 'ended' || name === 'error') tryFailover('video-' + name);
       });
@@ -2207,7 +2360,7 @@ function playerPage(origin, channelKey, channel) {
       lastProgressLogAt = now;
       appendLog('progress', { currentTime: Number(video.currentTime.toFixed(2)), bufferedEnd: bufferedEnd(), source: activeSrc });
       noteRecovered('timeupdate');
-      if (activeSequenceIndex > 0) schedulePrimaryRecovery('fallback-progress');
+      if (hasBetterSource()) schedulePrimaryRecovery('fallback-progress');
     });
     startSmartButton.addEventListener('click', function() { startSequence(START_SEQUENCE, START_LABEL); });
     document.querySelectorAll('button[data-source]').forEach(function(btn) {
@@ -2279,6 +2432,7 @@ export default {
         key,
         label: channel.label,
         defaultOrder: channel.defaultOrder,
+        smartOrder: smartDefaultOrder(channel),
         automaticSources: Object.keys(channel.sources || {}),
         manualSources: Object.keys(channel.manualSources || {}),
         sources: Object.keys(allSources(channel))
