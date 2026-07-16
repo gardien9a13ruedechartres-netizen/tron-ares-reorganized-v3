@@ -15,6 +15,7 @@ const PORTUGAL_LIVEWATCH_CHANNELS = new Set([
   "disney-pixar",
   "sport-tv-1",
   "sport-tv-5",
+  "tvi",
   "tv-globo"
 ]);
 
@@ -44,6 +45,35 @@ const CHANNELS = {
         label: "Clouding CMTV",
         button: "Clouding",
         cloudingChannel: "CMTVPT"
+      }
+    }
+  },
+  tvi: {
+    label: "TVI",
+    defaultOrder: ["basic-hd", "cable"],
+    sources: {
+      "basic-hd": {
+        id: "3101553820b7b6d69e54fc-2a54816144ec96",
+        label: "LiveWatch basic HD",
+        country: "Portugal",
+        search: "TVI",
+        exact: "TVI"
+      },
+      cable: {
+        id: "26477881250b3e50ff9612-dacfc86a173c8d",
+        label: "LiveWatch cable",
+        country: "Portugal",
+        search: "TVI",
+        exact: "TVI"
+      }
+    },
+    manualSources: {
+      clouding: {
+        kind: "clouding",
+        id: "legacy-clouding-tvi",
+        label: "Clouding TVI",
+        button: "Clouding",
+        cloudingChannel: "TVI"
       }
     }
   },

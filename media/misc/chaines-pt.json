@@ -57,14 +57,14 @@
     {
       "id": "tvi",
       "name": "TVI",
-      "url": "https://player-engine.com/api/worker-live/tvi/master.m3u8",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=tvi",
       "logo": {
         "type": "image",
         "value": "/media/TVI.png"
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "tvi-int",
