@@ -1934,6 +1934,9 @@ function playerPage(origin, channelKey, channel) {
     const SMART_FAILURE_HISTORY_MS = 600000;
     const SMART_FAILURE_BACKOFF_MS = 35000;
     const SMART_MAX_RECOVERY_WAIT_MS = 180000;
+    const SMART_SELF_RETRY_MS = 12000;
+    const SMART_SELF_RETRY_BACKOFF_MS = 8000;
+    const SMART_SELF_RETRY_MAX_MS = 45000;
     const logs = [];
     let hls = null;
     let activeLabel = 'auto';
@@ -1948,6 +1951,8 @@ function playerPage(origin, channelKey, channel) {
     let badEvents = [];
     let smartRecoveryTimer = null;
     let smartReturnConfirmTimer = null;
+    let smartSelfRetryTimer = null;
+    let smartSelfRetryCount = 0;
     let smartProbeInFlight = false;
     let smartRecoveryEpoch = 0;
     let lastSourceFailureAt = {};
@@ -1997,6 +2002,12 @@ function playerPage(origin, channelKey, channel) {
       if (smartReturnConfirmTimer) {
         clearTimeout(smartReturnConfirmTimer);
         smartReturnConfirmTimer = null;
+      }
+    }
+    function clearSelfRetryTimer() {
+      if (smartSelfRetryTimer) {
+        clearTimeout(smartSelfRetryTimer);
+        smartSelfRetryTimer = null;
       }
     }
     function hasBetterSource() {
@@ -2183,6 +2194,31 @@ function playerPage(origin, channelKey, channel) {
       });
       smartRecoveryTimer = setTimeout(function() { attemptPrimaryReturn(reason || 'scheduled'); }, waitMs);
     }
+    function scheduleSelfRetry(reason) {
+      if (!activeKey || !SOURCE_URLS[activeKey] || smartSelfRetryTimer) return;
+      smartSelfRetryCount += 1;
+      const waitMs = Math.min(
+        SMART_SELF_RETRY_MAX_MS,
+        SMART_SELF_RETRY_MS + Math.max(0, smartSelfRetryCount - 1) * SMART_SELF_RETRY_BACKOFF_MS
+      );
+      appendLog('smart-self-retry-scheduled', {
+        reason: reason,
+        key: activeKey,
+        attempt: smartSelfRetryCount,
+        waitMs: waitMs
+      });
+      smartSelfRetryTimer = setTimeout(function() {
+        smartSelfRetryTimer = null;
+        if (!activeKey || !SOURCE_URLS[activeKey]) return;
+        loadSourceKey(
+          activeKey,
+          'Smart retry ' + SOURCE_LABELS[activeKey],
+          activeSequence && activeSequence.length ? activeSequence : [activeKey],
+          activeSequenceIndex,
+          'self-retry-' + reason
+        );
+      }, waitMs);
+    }
     function noteRecovered(eventName) {
       if (!stallStartedAt) return;
       appendLog('stall-recovered', { event: eventName, durationMs: Date.now() - stallStartedAt, currentTime: Number(video.currentTime.toFixed(2)), bufferedEnd: bufferedEnd() });
@@ -2192,7 +2228,10 @@ function playerPage(origin, channelKey, channel) {
     function tryFailover(reason) {
       if (Date.now() < failoverLockUntil) return;
       if (!activeSequence.length || activeSequenceIndex >= activeSequence.length - 1) {
+        failoverLockUntil = Date.now() + 3000;
         appendLog('failover-unavailable', { reason: reason, activeKey: activeKey, sequence: activeSequence });
+        markSourceFailure(activeKey, reason);
+        scheduleSelfRetry(reason);
         return;
       }
       failoverLockUntil = Date.now() + 3000;
@@ -2324,11 +2363,13 @@ function playerPage(origin, channelKey, channel) {
     }
     function loadSourceKey(key, label, sequence, index, reason) {
       smartRecoveryEpoch += 1;
+      clearSelfRetryTimer();
       activeLabel = label || SOURCE_LABELS[key];
       activeKey = key;
       activeSequence = sequence && sequence.length ? sequence.slice() : [key];
       activeSequenceIndex = typeof index === 'number' ? index : activeSequence.indexOf(key);
       if (activeSequenceIndex < 0) activeSequenceIndex = 0;
+      if (String(reason || '').indexOf('self-retry-') !== 0) smartSelfRetryCount = 0;
       if (activeSourceInfo) activeSourceInfo.textContent = SOURCE_LABELS[key] + ' (' + key + ')';
       appendLog('source-selected', { key: key, label: SOURCE_LABELS[key], reason: reason || 'manual', sequence: activeSequence });
       if (hasBetterSource()) {
@@ -2348,6 +2389,7 @@ function playerPage(origin, channelKey, channel) {
         appendLog('video-' + name, { currentTime: Number(video.currentTime.toFixed(2)), bufferedEnd: bufferedEnd(), paused: video.paused, muted: video.muted, volume: video.volume });
         if (name === 'waiting' || name === 'stalled') noteStall(name);
         if (name === 'playing' || name === 'loadedmetadata') {
+          if (name === 'playing') smartSelfRetryCount = 0;
           noteRecovered(name);
           if (hasBetterSource()) schedulePrimaryRecovery('fallback-' + name);
         }
