@@ -2011,6 +2011,7 @@ function playerPage(origin, channelKey, channel) {
     let smartSelfRetryCount = 0;
     let smartProbeInFlight = false;
     let smartRecoveryEpoch = 0;
+    let pendingFailoverTimer = null;
     let lastSourceFailureAt = {};
     let lastSourceReturnAt = {};
     let sourceFailureHistory = {};
@@ -2064,6 +2065,12 @@ function playerPage(origin, channelKey, channel) {
       if (smartSelfRetryTimer) {
         clearTimeout(smartSelfRetryTimer);
         smartSelfRetryTimer = null;
+      }
+    }
+    function clearPendingFailoverTimer() {
+      if (pendingFailoverTimer) {
+        clearTimeout(pendingFailoverTimer);
+        pendingFailoverTimer = null;
       }
     }
     function hasBetterSource() {
@@ -2282,7 +2289,19 @@ function playerPage(origin, channelKey, channel) {
       clearStallTimer();
     }
     function tryFailover(reason) {
-      if (Date.now() < failoverLockUntil) return;
+      const now = Date.now();
+      if (now < failoverLockUntil) {
+        if (!pendingFailoverTimer) {
+          const waitMs = Math.max(120, failoverLockUntil - now + 60);
+          appendLog('failover-delayed', { reason: reason, activeKey: activeKey, waitMs: waitMs });
+          pendingFailoverTimer = setTimeout(function() {
+            pendingFailoverTimer = null;
+            tryFailover('delayed-' + reason);
+          }, waitMs);
+        }
+        return;
+      }
+      clearPendingFailoverTimer();
       if (!activeSequence.length || activeSequenceIndex >= activeSequence.length - 1) {
         failoverLockUntil = Date.now() + 3000;
         appendLog('failover-unavailable', { reason: reason, activeKey: activeKey, sequence: activeSequence });
@@ -2420,6 +2439,7 @@ function playerPage(origin, channelKey, channel) {
     function loadSourceKey(key, label, sequence, index, reason) {
       smartRecoveryEpoch += 1;
       clearSelfRetryTimer();
+      clearPendingFailoverTimer();
       activeLabel = label || SOURCE_LABELS[key];
       activeKey = key;
       activeSequence = sequence && sequence.length ? sequence.slice() : [key];
