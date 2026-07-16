@@ -171,7 +171,7 @@ const CHANNELS = {
   },
   "canal-plus": {
     label: "CANAL+",
-    defaultOrder: ["satellite", "cable", "basic-fhd", "basic-hd", "basic-4k"],
+    defaultOrder: ["basic-4k", "cable", "basic-fhd", "basic-hd", "satellite"],
     sources: {
       cable: {
         id: "1839597702d549646f5393-2ac8f134e5cc3d",
