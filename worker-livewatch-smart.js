@@ -2460,6 +2460,12 @@ function playerPage(origin, channelKey, channel) {
       if (!clean.length) return;
       loadSourceKey(clean[0], label + ' -> ' + SOURCE_LABELS[clean[0]], clean, 0, 'sequence-start');
     }
+    function sequenceFromSource(key) {
+      const base = START_SEQUENCE && START_SEQUENCE.length ? START_SEQUENCE : [key];
+      const startAt = base.indexOf(key);
+      if (startAt < 0) return [key].filter(function(value) { return SOURCE_URLS[value]; });
+      return base.slice(startAt).filter(function(value) { return SOURCE_URLS[value]; });
+    }
     ['loadstart', 'loadedmetadata', 'playing', 'waiting', 'stalled', 'pause', 'ended', 'error'].forEach(function(name) {
       video.addEventListener(name, function() {
         appendLog('video-' + name, { currentTime: Number(video.currentTime.toFixed(2)), bufferedEnd: bufferedEnd(), paused: video.paused, muted: video.muted, volume: video.volume });
@@ -2482,7 +2488,10 @@ function playerPage(origin, channelKey, channel) {
     });
     startSmartButton.addEventListener('click', function() { startSequence(START_SEQUENCE, START_LABEL); });
     document.querySelectorAll('button[data-source]').forEach(function(btn) {
-      btn.addEventListener('click', function() { loadSourceKey(btn.dataset.source, btn.textContent.trim(), [btn.dataset.source], 0, 'manual'); });
+      btn.addEventListener('click', function() {
+        const key = btn.dataset.source;
+        loadSourceKey(key, btn.textContent.trim(), sequenceFromSource(key), 0, 'manual');
+      });
     });
     document.querySelectorAll('button[data-src]').forEach(function(btn) {
       btn.addEventListener('click', function() {
