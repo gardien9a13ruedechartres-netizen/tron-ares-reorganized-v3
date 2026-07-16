@@ -3064,6 +3064,7 @@ function createChannelElement(entry, index, sourceType, options) {
   li.dataset.type = sourceType;
   li.dataset.url = entry?.url ? String(entry.url) : '';
   li.dataset.linkkey = linkKeyForEntry(entry);
+  if (entry?.programUrl) li.dataset.programUrl = String(entry.programUrl);
 
   const enableTmdbPoster = !!(options && options.enableTmdbPoster);
 
@@ -4681,7 +4682,8 @@ function exportIframeToJson() {
       url: it.url,
       logo: it.logo || deriveLogoFromName(it.name),
       group: it.group || 'Overlay',
-      isFavorite: !!it.isFavorite
+      isFavorite: !!it.isFavorite,
+      programUrl: it.programUrl || ''
     }))
   };
   if (jsonArea) jsonArea.value = JSON.stringify(payload, null, 2);
@@ -4745,6 +4747,7 @@ function importFromJson() {
         group: item?.group || 'Overlay JSON',
         isIframe: true,
         isFavorite: !!item?.isFavorite,
+        programUrl: item?.programUrl || '',
         listType: 'iframe'
       });
     });
@@ -7544,6 +7547,7 @@ async function __subtitleDoSearch() {
         group: item.group || "Overlay",
         isFavorite: item.isFavorite || false,
         isIframe: item.isIframe || false,
+        programUrl: item.programUrl || (item.nosGuideId ? `https://nostv.pt/guia/${encodeURIComponent(String(item.nosGuideId))}` : ""),
         listType: item.isIframe ? "iframe" : "playlist"
       });
 
