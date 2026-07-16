@@ -9,7 +9,7 @@
     {
       "id": "cmtv",
       "name": "CMTV",
-      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=cmtv",
+      "url": "https://tron-ares-cmtv-smart-livewatch.victor-salema-53d.workers.dev/?channel=cmtv",
       "logo": {
         "type": "image",
         "value": "/media/cmtv.png"
