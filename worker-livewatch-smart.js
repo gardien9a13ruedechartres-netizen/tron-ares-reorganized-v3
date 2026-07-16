@@ -414,15 +414,39 @@ Object.assign(CHANNELS, {
       }
     }
   },
-  "auto-moto": {
-    "label": "AUTO MOTO",
+  "canal-motogp": {
+    "label": "CANAL+ MOTO GP",
     "defaultOrder": [
-      "satellite-hd"
+      "satellite"
     ],
     "sources": {
-      "satellite-hd": {
-        "id": "1110040958c161c4e38ce9-8d51147a271203",
-        "label": "LiveWatch satellite HD"
+      "satellite": {
+        "id": "618190741104165c33a61-e548b12f428898",
+        "label": "LiveWatch satellite"
+      }
+    }
+  },
+  "ligue-1": {
+    "label": "CANAL + LIGUE 1",
+    "defaultOrder": [
+      "satellite"
+    ],
+    "sources": {
+      "satellite": {
+        "id": "3717538119811335a8ce45-921e9afc0afc01",
+        "label": "LiveWatch satellite"
+      }
+    }
+  },
+  "auto-moto": {
+    "label": "AUTOMOTO LA CHAINE",
+    "defaultOrder": [
+      "satellite-fhd"
+    ],
+    "sources": {
+      "satellite-fhd": {
+        "id": "1808973403875ca98b3144-a878c607980fd5",
+        "label": "LiveWatch satellite FHD"
       }
     }
   },
@@ -533,6 +557,38 @@ Object.assign(CHANNELS, {
       "basic-fhd": {
         "id": "135614661597d2792a4429-800be2a83171eb",
         "label": "LiveWatch basic FHD"
+      }
+    }
+  },
+  "cine-famiz": {
+    "label": "CINE FAMIZ",
+    "defaultOrder": [
+      "basic-fhd",
+      "satellite-fhd",
+      "satellite-hd",
+      "cable",
+      "satellite"
+    ],
+    "sources": {
+      "basic-fhd": {
+        "id": "3406691536b1c2e278588c-bc9842f244f707",
+        "label": "LiveWatch basic FHD"
+      },
+      "satellite-fhd": {
+        "id": "2704150133fbb48751b7b5-70f68d6a9e6286",
+        "label": "LiveWatch satellite FHD"
+      },
+      "satellite-hd": {
+        "id": "21820840461c5c31e1d60f-eb26ab270e1d41",
+        "label": "LiveWatch satellite HD"
+      },
+      "cable": {
+        "id": "20822805044642b90cf20a-9a5a1a8ea4784b",
+        "label": "LiveWatch cable"
+      },
+      "satellite": {
+        "id": "2755354291c0d1748a003f-27af6ccc291db2",
+        "label": "LiveWatch satellite"
       }
     }
   },

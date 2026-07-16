@@ -319,14 +319,14 @@
     {
       "id": "ligue-1",
       "name": "Ligue 1+",
-      "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/22.m3u8",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=ligue-1",
       "logo": {
         "type": "image",
-        "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Ligue%201%20McDonald%27s%20logo.svg"
+        "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/france/canal-plus-ligue1-fr.png"
       },
       "group": "Sport",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "canal-sport-360",
@@ -366,11 +366,11 @@
     },
     {
       "id": "canal-motogp",
-      "name": "CANAL+ MotoGP",
-      "url": "https://lovetier.bz/player/CANALPLGPAF",
+      "name": "CANAL+ MOTO GP",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=canal-motogp",
       "logo": {
         "type": "image",
-        "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo-CanalPlus-MotoGP.png"
+        "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/france/canal-plus-moto-gp-fr.png"
       },
       "group": "Sport",
       "isFavorite": false,
@@ -389,40 +389,16 @@
       "isIframe": true
     },
     {
-      "id": "tennis-channel",
-      "name": "Tennis Channel",
-      "url": "https://tennischannel-int-samsunguk.amagi.tv/playlist720_p.m3u8",
-      "logo": {
-        "type": "image",
-        "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Tennis%20Channel%20logo.svg"
-      },
-      "group": "Sport",
-      "isFavorite": false,
-      "isIframe": false
-    },
-    {
       "id": "auto-moto",
-      "name": "AUTO MOTO",
+      "name": "AUTOMOTO LA CHAINE",
       "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=auto-moto",
       "logo": {
         "type": "image",
-        "value": "media/image/automoto.webp"
+        "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/france/automoto-la-chaine-fr.png"
       },
       "group": "Sport",
       "isFavorite": false,
       "isIframe": true
-    },
-    {
-      "id": "motorracing",
-      "name": "MotoRRacing",
-      "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/127.m3u8",
-      "logo": {
-        "type": "image",
-        "value": "media/image/motorracing.webp"
-      },
-      "group": "Sport",
-      "isFavorite": false,
-      "isIframe": false
     },
     {
       "id": "eurosport-1",
@@ -497,18 +473,6 @@
       "isIframe": true
     },
     {
-      "id": "dazn-3",
-      "name": "DAZN 3",
-      "url": "https://cc.screenify.shop:8080/stream/271/index.m3u8?token=T4Nz6WCt2Uwlqma4",
-      "logo": {
-        "type": "image",
-        "value": "https://commons.wikimedia.org/wiki/Special:FilePath/DAZN%203%20logo.png"
-      },
-      "group": "Sport",
-      "isFavorite": false,
-      "isIframe": false
-    },
-    {
       "id": "TF1sf",
       "name": "TF1 SERIES & FILM",
       "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=tf1sf",
@@ -581,16 +545,16 @@
       "isIframe": true
     },
     {
-      "id": "cine-family",
-      "name": "CINE+ Family",
-      "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/86.m3u8",
+      "id": "cine-famiz",
+      "name": "CINE FAMIZ",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=cine-famiz",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Cin%C3%A9%2BFamily2024.svg"
       },
       "group": "Cinéma",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "cine-frisson",
@@ -629,18 +593,6 @@
       "isIframe": true
     },
     {
-      "id": "cine-ocs",
-      "name": "CINÉ+ OCS",
-      "url": "https://cluone.dad:443/live/99F7CFCD396779DC13E1FEF9BA9F9AE8/18.m3u8",
-      "logo": {
-        "type": "image",
-        "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Cin%C3%A9%2BOCS%202024.svg"
-      },
-      "group": "Cinéma",
-      "isFavorite": false,
-      "isIframe": false
-    },
-    {
       "id": "cine-club",
       "name": "CINÉ+ Club",
       "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=cine-club",
@@ -671,18 +623,6 @@
       "logo": {
         "type": "image",
         "value": "/media/box-office-drama.png"
-      },
-      "group": "Cinéma",
-      "isFavorite": false,
-      "isIframe": false
-    },
-    {
-      "id": "box-office-thrillers",
-      "name": "Box Office Thrillers",
-      "url": "https://stream.ads.ottera.tv/playlist.m3u8?network_id=15078",
-      "logo": {
-        "type": "image",
-        "value": "/media/box-office-thrillers.png"
       },
       "group": "Cinéma",
       "isFavorite": false,
