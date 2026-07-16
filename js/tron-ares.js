@@ -5068,7 +5068,11 @@ prevBtn?.addEventListener('click', playPrev);
     iframeWheelCatcher.setAttribute('aria-hidden', 'true');
     iframeWheelCatcher.style.cssText = [
       'position:absolute',
-      'inset:0',
+      'top:0',
+      'right:0',
+      'bottom:0',
+      'width:min(10vw,56px)',
+      'min-width:32px',
       'z-index:3',
       'background:transparent',
       'pointer-events:none',
@@ -5079,6 +5083,14 @@ prevBtn?.addEventListener('click', playPrev);
     return iframeWheelCatcher;
   }
 
+  function isSameOriginIframeUrl(url) {
+    try { return new URL(url, location.href).origin === location.origin; } catch { return false; }
+  }
+
+  function usesIframeWheelBridge(url) {
+    return /https:\/\/tron-ares-[a-z0-9-]+\.victor-salema-53d\.workers\.dev(?:[/?#]|$)/i.test(String(url || ''));
+  }
+
   function refreshIframeWheelCatcher() {
     const catcher = ensureIframeWheelCatcher();
     if (!catcher || !iframeOverlay) return;
@@ -5086,7 +5098,10 @@ prevBtn?.addEventListener('click', playPrev);
     const tab = getActiveTabKey ? getActiveTabKey() : '';
     const overlayOpen = !iframeOverlay.classList.contains('hidden');
     const url = String(currentEntry?.url || '');
-    const shouldCatch = overlayOpen && (
+    const shouldCatch = overlayOpen &&
+      !isSameOriginIframeUrl(url) &&
+      !usesIframeWheelBridge(url) &&
+      (
       (!!currentEntry?.isIframe && !isSerieFilmOverlayUrl(url)) ||
       tab === 'iframes' ||
       /\/pages\/worker-/i.test(url) ||
@@ -5132,6 +5147,23 @@ prevBtn?.addEventListener('click', playPrev);
     try { iframeEl.contentWindow?.addEventListener('wheel', onWheelZap, { passive: false }); } catch {}
   }
 
+  function onIframeWheelMessage(event) {
+    if (!iframeEl || event.source !== iframeEl.contentWindow) return;
+
+    let data = event.data;
+    if (typeof data === 'string') {
+      try { data = JSON.parse(data); } catch { data = null; }
+    }
+    if (!data || data.type !== 'ARES_IFRAME_WHEEL_ZAP') return;
+
+    onWheelZap({
+      deltaY: Number(data.deltaY || 0),
+      target: iframeOverlay || playerContainer || document.body,
+      preventDefault() {},
+      stopPropagation() {}
+    });
+  }
+
   playerContainer?.addEventListener('wheel', onWheelZap, { passive: false });
   iframeOverlay?.addEventListener('wheel', onWheelZap, { passive: false });
   iframeEl?.addEventListener('wheel', onWheelZap, { passive: false });
@@ -5139,6 +5171,7 @@ prevBtn?.addEventListener('click', playPrev);
     wireCurrentIframeWheel();
     refreshIframeWheelCatcher();
   });
+  window.addEventListener('message', onIframeWheelMessage);
   document.getElementById('nowPlaying')?.addEventListener('wheel', onWheelZap, { passive: false });
 
   document.addEventListener('click', (event) => {

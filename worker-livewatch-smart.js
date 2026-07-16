@@ -2240,6 +2240,22 @@ function playerPage(origin, channelKey, channel) {
       log.scrollTop = log.scrollHeight;
       console.log('[' + CONSOLE_PREFIX + ']', event, details || '');
     }
+    function shouldIgnoreParentWheelBridgeTarget(target) {
+      if (!target || typeof target.closest !== 'function') return false;
+      return !!target.closest('input, textarea, select, button, a, [role="button"], [contenteditable="true"], #menuPanel, #log');
+    }
+    function relayWheelToParent(event) {
+      if (window.parent === window) return;
+      if (!event || Math.abs(event.deltaY || 0) < 18) return;
+      if (shouldIgnoreParentWheelBridgeTarget(event.target)) return;
+      window.parent.postMessage({
+        type: 'ARES_IFRAME_WHEEL_ZAP',
+        deltaY: event.deltaY
+      }, '*');
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    window.addEventListener('wheel', relayWheelToParent, { passive: false });
     function attemptAutoplay(context) {
       video.defaultMuted = false;
       video.muted = false;
