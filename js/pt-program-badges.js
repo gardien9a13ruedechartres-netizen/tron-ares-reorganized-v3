@@ -22,14 +22,35 @@
     const overlay = document.getElementById("iframeOverlay");
     const iframe = document.getElementById("iframeEl");
     if (!overlay || !iframe) {
-      window.location.href = url;
+      window.open(url, "_blank", "noopener,noreferrer");
       return;
     }
 
     iframe.removeAttribute("sandbox");
     iframe.setAttribute("referrerpolicy", "origin");
+    iframe.setAttribute("allow", "autoplay; fullscreen; picture-in-picture; encrypted-media");
     iframe.src = url;
+    overlay.classList.add("pt-program-guide-active");
     overlay.classList.remove("hidden");
+    overlay.setAttribute("aria-hidden", "false");
+    ensureExternalFallback(url);
+  }
+
+  function ensureExternalFallback(url) {
+    const controls = document.querySelector("#iframeOverlay .iframe-overlay-controls");
+    if (!controls) return;
+
+    let link = controls.querySelector(".pt-program-open-external");
+    if (!link) {
+      link = document.createElement("a");
+      link.className = "btn pt-program-open-external";
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = "Ouvrir NOS";
+      controls.appendChild(link);
+    }
+    link.href = url;
+    link.hidden = false;
   }
 
   function buildBadge(programUrl) {
@@ -70,6 +91,10 @@
         border-radius: 50%;
         font: 700 12px/1 Arial, sans-serif;
         color: currentColor;
+      }
+      .pt-program-open-external {
+        margin-left: 8px;
+        text-decoration: none;
       }
     `;
     document.head.appendChild(style);

@@ -129,6 +129,16 @@
       return /\/pages\/serie-film(?:\.html)?(?:[?#]|$)/i.test(String(url || ''));
     }
 
+    function isNosGuideUrl(url) {
+      return /^https:\/\/nostv\.pt\/guia\/\d+/i.test(String(url || ''));
+    }
+
+    function isChannelActionTarget(target) {
+      return !!(target && target.closest && target.closest(
+        '.channel-actions button, .channel-actions a, .fav-btn, .tmdb-trailer-btn, .fr-program-badge, .pt-program-badge'
+      ));
+    }
+
     function likelyIframeListItem(item) {
       if (!item) return false;
       if (item.dataset.type === 'iframe') return true;
@@ -181,8 +191,14 @@
 
     function maybeShowCurtain() {
       const src = (iframeEl.getAttribute('src') || '').trim();
+      const nosGuide = isNosGuideUrl(src);
       iframeOverlay.classList.toggle('serie-film-overlay-active', isSerieFilmUrl(src));
-      if (!isVisible(iframeOverlay) || !src || src === 'about:blank' || isSerieFilmUrl(src)) {
+      iframeOverlay.classList.toggle('pt-program-guide-active', nosGuide);
+      try {
+        const guideLink = iframeOverlay.querySelector('.pt-program-open-external');
+        if (guideLink) guideLink.hidden = !nosGuide;
+      } catch {}
+      if (!isVisible(iframeOverlay) || !src || src === 'about:blank' || isSerieFilmUrl(src) || nosGuide) {
         hideCurtain();
         return;
       }
@@ -212,7 +228,7 @@
     document.addEventListener('pointerdown', function (ev) {
       const item = ev.target && ev.target.closest ? ev.target.closest('.channel-item') : null;
       if (!item || !likelyIframeListItem(item)) return;
-      if (ev.target.closest('.fav-btn, .tmdb-trailer-btn')) return;
+      if (isChannelActionTarget(ev.target)) return;
 
       const rawIndex = Number(item.dataset.index);
       const type = item.dataset.type;
@@ -248,7 +264,7 @@
       if (!suppressNextClick) return;
       const item = ev.target && ev.target.closest ? ev.target.closest('.channel-item') : null;
       if (!item || !likelyIframeListItem(item)) return;
-      if (ev.target.closest('.fav-btn, .tmdb-trailer-btn')) return;
+      if (isChannelActionTarget(ev.target)) return;
       ev.preventDefault();
       ev.stopPropagation();
     }, true);
