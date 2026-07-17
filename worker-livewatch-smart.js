@@ -2403,7 +2403,7 @@ function playerPage(origin, channelKey, channel) {
 <body>
   <main>
     <video id="video" controls autoplay playsinline></video>
-    <button id="menuToggle" type="button" aria-label="Ouvrir le menu" aria-controls="menuPanel" aria-expanded="false">☰</button>
+    <button id="menuToggle" type="button" aria-label="Ouvrir le menu" aria-controls="menuPanel" aria-expanded="false">&#9776;</button>
     <section id="menuPanel" hidden>
       <h1>${escapeHtml(channel.label)} Smart LiveWatch</h1>
       <p class="info">Source active : <strong id="activeSourceInfo">initialisation</strong></p>
