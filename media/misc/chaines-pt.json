@@ -547,7 +547,7 @@
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": true,
+      "isIframe": false,
       "programUrl": "https://nostv.pt/guia/139",
       "meoCallLetter": "CMTV"
     }
