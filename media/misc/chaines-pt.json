@@ -538,7 +538,7 @@
     },
   
   {
-      "id": "cmtv",
+      "id": "cmtv2",
       "name": "CMTV",
       "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=cmtv",
       "logo": {
@@ -547,7 +547,7 @@
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": false,
+      "isIframe": true,
       "programUrl": "https://nostv.pt/guia/139",
       "meoCallLetter": "CMTV"
     }
