@@ -2441,6 +2441,12 @@ function playerPage(origin, channelKey, channel) {
     const START_LABEL = ${scriptJson(startLabel)};
     const CONSOLE_PREFIX = ${scriptJson(`${channel.label} Smart`)};
     const LONG_STALL_MS = 3500;
+    const STARTUP_NO_PROGRESS_MS = 8000;
+    const PLAYBACK_NO_PROGRESS_MS = 6500;
+    const PLAYBACK_WATCHDOG_TICK_MS = 1000;
+    const OUTSIDE_BUFFER_TOLERANCE_SECONDS = 8;
+    const PROBE_FETCH_TIMEOUT_MS = 6500;
+    const PROBE_MAX_CONFIRM_MS = 25000;
     const BAD_EVENT_WINDOW_MS = 30000;
     const BAD_EVENT_LIMIT = 2;
     const SMART_RECOVERY_PROBE_MS = 25000;
@@ -2465,6 +2471,13 @@ function playerPage(origin, channelKey, channel) {
     let lastProgressLogAt = 0;
     let stallStartedAt = 0;
     let stallTimer = null;
+    let playbackWatchdogTimer = null;
+    let playbackWatchdogEpoch = 0;
+    let sourceLoadStartedAt = 0;
+    let lastMeaningfulProgressAt = 0;
+    let lastObservedCurrentTime = 0;
+    let lastObservedBufferedEnd = null;
+    let sourceHasProgress = false;
     let badEvents = [];
     let smartRecoveryTimer = null;
     let smartReturnConfirmTimer = null;
@@ -2527,6 +2540,64 @@ function playerPage(origin, channelKey, channel) {
         stallTimer = null;
       }
     }
+    function clearPlaybackWatchdog() {
+      playbackWatchdogEpoch += 1;
+      if (playbackWatchdogTimer) {
+        clearInterval(playbackWatchdogTimer);
+        playbackWatchdogTimer = null;
+      }
+    }
+    function resetPlaybackTracking() {
+      sourceLoadStartedAt = Date.now();
+      lastMeaningfulProgressAt = sourceLoadStartedAt;
+      lastObservedCurrentTime = Number(video.currentTime || 0);
+      lastObservedBufferedEnd = bufferedEnd();
+      sourceHasProgress = false;
+    }
+    function observePlaybackProgress(eventName) {
+      const now = Date.now();
+      const current = Number(video.currentTime || 0);
+      const end = bufferedEnd();
+      if (current < lastObservedCurrentTime - 1) {
+        lastObservedCurrentTime = current;
+      }
+      const advanced = !video.seeking && current > lastObservedCurrentTime + 0.18;
+      if (advanced) {
+        sourceHasProgress = true;
+        lastMeaningfulProgressAt = now;
+        lastObservedCurrentTime = current;
+        noteRecovered(eventName || 'media-progress');
+      }
+      lastObservedBufferedEnd = end;
+      return advanced;
+    }
+    function startPlaybackWatchdog() {
+      clearPlaybackWatchdog();
+      resetPlaybackTracking();
+      const epoch = playbackWatchdogEpoch;
+      playbackWatchdogTimer = setInterval(function() {
+        if (epoch !== playbackWatchdogEpoch) return;
+        const now = Date.now();
+        observePlaybackProgress('watchdog-progress');
+        if (video.paused || video.ended || video.seeking) {
+          lastMeaningfulProgressAt = now;
+          return;
+        }
+        const idleMs = now - lastMeaningfulProgressAt;
+        const limitMs = sourceHasProgress ? PLAYBACK_NO_PROGRESS_MS : STARTUP_NO_PROGRESS_MS;
+        if (idleMs < limitMs) return;
+        appendLog('playback-watchdog-failure', {
+          reason: sourceHasProgress ? 'playback-no-progress' : 'startup-no-progress',
+          idleMs: idleMs,
+          sourceAgeMs: now - sourceLoadStartedAt,
+          currentTime: Number(video.currentTime.toFixed(2)),
+          bufferedEnd: bufferedEnd(),
+          readyState: video.readyState
+        });
+        lastMeaningfulProgressAt = now;
+        tryFailover(sourceHasProgress ? 'playback-no-progress' : 'startup-no-progress');
+      }, PLAYBACK_WATCHDOG_TICK_MS);
+    }
     function clearSmartRecoveryTimers() {
       smartProbeInFlight = false;
       if (smartRecoveryTimer) {
@@ -2582,42 +2653,114 @@ function playerPage(origin, channelKey, channel) {
     function compactReason(reason) {
       return String(reason || 'scheduled').replace(/(?:no-better-ready-){2,}/g, 'no-better-ready-').slice(0, 180);
     }
-    function appendProbeParam(src) { return src + (src.indexOf('?') === -1 ? '?' : '&') + 'smartProbe=' + Date.now(); }
-    function firstPlayableUrlFromPlaylist(text, baseSrc) {
-      const lines = String(text || '').split(/\\r?\\n/);
-      for (let index = 0; index < lines.length; index += 1) {
-        const trimmed = lines[index].trim();
-        if (!trimmed || trimmed.charAt(0) === '#') continue;
-        try { return new URL(trimmed, baseSrc).href; } catch (_) { return trimmed; }
-      }
-      return '';
+    function appendProbeParam(src) { return src + (src.indexOf('?') === -1 ? '?' : '&') + 'smartProbe=' + Date.now() + '-' + Math.random().toString(16).slice(2); }
+    function playlistUris(text) {
+      return String(text || '').split(/\\r?\\n/).map(function(line) {
+        return line.trim();
+      }).filter(function(line) {
+        return !!line && line.charAt(0) !== '#';
+      });
     }
-    async function probeSourceKey(key) {
+    function absolutePlaylistUrl(value, baseSrc) {
+      try { return new URL(value, baseSrc).href; } catch (_) { return value; }
+    }
+    async function probeFetch(url, options) {
+      const controller = new AbortController();
+      const timer = setTimeout(function() { controller.abort(); }, PROBE_FETCH_TIMEOUT_MS);
+      try {
+        return await fetch(url, Object.assign({}, options || {}, {
+          cache: 'no-store',
+          signal: controller.signal
+        }));
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+    function mediaPlaylistSnapshot(text, baseSrc) {
+      const uris = playlistUris(text);
+      if (!uris.length) return null;
+      const sequenceMatch = String(text || '').match(/#EXT-X-MEDIA-SEQUENCE:(\\d+)/i);
+      const targetMatch = String(text || '').match(/#EXT-X-TARGETDURATION:(\\d+(?:\\.\\d+)?)/i);
+      const mediaSequence = sequenceMatch ? Number(sequenceMatch[1]) : null;
+      const segmentCount = uris.length;
+      const lastSequence = mediaSequence === null ? null : mediaSequence + segmentCount - 1;
+      const lastUrl = absolutePlaylistUrl(uris[segmentCount - 1], baseSrc);
+      let pathIdentity = lastUrl;
+      try { pathIdentity = new URL(lastUrl, baseSrc).pathname; } catch (_) {}
+      return {
+        lastUrl: lastUrl,
+        fingerprint: lastSequence === null ? 'path:' + pathIdentity : 'seq:' + lastSequence,
+        mediaSequence: mediaSequence,
+        lastSequence: lastSequence,
+        segmentCount: segmentCount,
+        targetDuration: targetMatch ? Number(targetMatch[1]) : 0,
+        endList: /#EXT-X-ENDLIST/i.test(String(text || ''))
+      };
+    }
+    function probeConfirmDelayMs(snapshot) {
+      const targetMs = Math.max(0, Number(snapshot && snapshot.targetDuration) || 0) * 1500;
+      return Math.min(PROBE_MAX_CONFIRM_MS, Math.max(SMART_RECOVERY_CONFIRM_MS, Math.ceil(targetMs)));
+    }
+    async function probeSourceKey(key, previousSnapshot) {
       const source = SOURCE_URLS[key];
-      if (!source) return false;
-      const src = appendProbeParam(source);
+      if (!source) return { ok: false, snapshot: null };
       const startedAt = Date.now();
       try {
-        const response = await fetch(src, { cache: 'no-store' });
-        const text = await response.text();
+        let playlistUrl = appendProbeParam(source);
+        let response = await probeFetch(playlistUrl);
+        let text = await response.text();
         if (!response.ok || text.indexOf('#EXTM3U') === -1) {
           appendLog('smart-probe-master-bad', { key: key, status: response.status, latencyMs: Date.now() - startedAt });
-          return false;
+          return { ok: false, snapshot: null };
         }
-        const firstUrl = firstPlayableUrlFromPlaylist(text, response.url || src);
-        if (firstUrl) {
-          const mediaResponse = await fetch(appendProbeParam(firstUrl), { cache: 'no-store', headers: { Range: 'bytes=0-2047' } });
-          if (mediaResponse.body && mediaResponse.body.cancel) mediaResponse.body.cancel();
-          if (!mediaResponse.ok && mediaResponse.status !== 206) {
-            appendLog('smart-probe-media-bad', { key: key, status: mediaResponse.status, latencyMs: Date.now() - startedAt });
-            return false;
+        for (let depth = 0; depth < 2 && text.indexOf('#EXT-X-STREAM-INF') !== -1; depth += 1) {
+          const variants = playlistUris(text);
+          if (!variants.length) {
+            appendLog('smart-probe-variant-missing', { key: key, latencyMs: Date.now() - startedAt });
+            return { ok: false, snapshot: null };
+          }
+          playlistUrl = absolutePlaylistUrl(variants[0], response.url || playlistUrl);
+          response = await probeFetch(appendProbeParam(playlistUrl));
+          text = await response.text();
+          if (!response.ok || text.indexOf('#EXTM3U') === -1) {
+            appendLog('smart-probe-playlist-bad', { key: key, status: response.status, latencyMs: Date.now() - startedAt });
+            return { ok: false, snapshot: null };
           }
         }
-        appendLog('smart-probe-ok', { key: key, latencyMs: Date.now() - startedAt });
-        return true;
+        const snapshot = mediaPlaylistSnapshot(text, response.url || playlistUrl);
+        if (!snapshot || snapshot.endList) {
+          appendLog('smart-probe-live-edge-missing', { key: key, endList: snapshot ? snapshot.endList : null, latencyMs: Date.now() - startedAt });
+          return { ok: false, snapshot: snapshot };
+        }
+        if (previousSnapshot && previousSnapshot.fingerprint === snapshot.fingerprint) {
+          appendLog('smart-probe-stale', {
+            key: key,
+            fingerprint: snapshot.fingerprint,
+            mediaSequence: snapshot.mediaSequence,
+            segmentCount: snapshot.segmentCount,
+            latencyMs: Date.now() - startedAt
+          });
+          return { ok: false, snapshot: snapshot };
+        }
+        const mediaResponse = await probeFetch(appendProbeParam(snapshot.lastUrl), {
+          headers: { Range: 'bytes=0-2047' }
+        });
+        if (mediaResponse.body && mediaResponse.body.cancel) mediaResponse.body.cancel();
+        if (!mediaResponse.ok && mediaResponse.status !== 206) {
+          appendLog('smart-probe-media-bad', { key: key, status: mediaResponse.status, latencyMs: Date.now() - startedAt });
+          return { ok: false, snapshot: snapshot };
+        }
+        appendLog('smart-probe-ok', {
+          key: key,
+          latencyMs: Date.now() - startedAt,
+          mediaSequence: snapshot.mediaSequence,
+          lastSequence: snapshot.lastSequence,
+          segmentCount: snapshot.segmentCount
+        });
+        return { ok: true, snapshot: snapshot };
       } catch (error) {
-        appendLog('smart-probe-error', { key: key, message: error.message });
-        return false;
+        appendLog('smart-probe-error', { key: key, message: error.name === 'AbortError' ? 'timeout' : error.message });
+        return { ok: false, snapshot: null };
       }
     }
     function markSourceFailure(key, reason) {
@@ -2677,17 +2820,18 @@ function playerPage(origin, channelKey, channel) {
           reason: reason
         });
         smartProbeInFlight = true;
-        const firstProbeOk = await probeSourceKey(candidate);
+        const firstProbe = await probeSourceKey(candidate, null);
         smartProbeInFlight = false;
         if (attemptEpoch !== smartRecoveryEpoch || !hasBetterSource()) return;
-        if (!firstProbeOk) {
+        if (!firstProbe.ok) {
           lastSourceFailureAt[candidate] = Date.now();
           noteSourceFailureHistory(candidate, lastSourceFailureAt[candidate]);
           continue;
         }
+        const firstConfirmMs = probeConfirmDelayMs(firstProbe.snapshot);
         appendLog('smart-better-confirm-wait', {
           candidate: candidate,
-          confirmMs: SMART_RECOVERY_CONFIRM_MS
+          confirmMs: firstConfirmMs
         });
         const confirmEpoch = attemptEpoch;
         smartReturnConfirmTimer = setTimeout(async function() {
@@ -2695,19 +2839,20 @@ function playerPage(origin, channelKey, channel) {
           if (confirmEpoch !== smartRecoveryEpoch) return;
           if (!hasBetterSource() || activeSequence.indexOf(candidate) >= activeSequenceIndex) return;
           smartProbeInFlight = true;
-          const secondProbeOk = await probeSourceKey(candidate);
+          const secondProbe = await probeSourceKey(candidate, firstProbe.snapshot);
           smartProbeInFlight = false;
           if (confirmEpoch !== smartRecoveryEpoch || !hasBetterSource()) return;
-          if (!secondProbeOk) {
+          if (!secondProbe.ok) {
             lastSourceFailureAt[candidate] = Date.now();
             noteSourceFailureHistory(candidate, lastSourceFailureAt[candidate]);
             schedulePrimaryRecovery('better-confirm-failed-' + candidate);
             return;
           }
           if (recentFailureTimes(candidate).length >= SMART_EXTRA_CONFIRM_FAILURES) {
+            const secondConfirmMs = probeConfirmDelayMs(secondProbe.snapshot);
             appendLog('smart-better-extra-confirm-wait', {
               candidate: candidate,
-              confirmMs: SMART_RECOVERY_CONFIRM_MS,
+              confirmMs: secondConfirmMs,
               recentFailures: recentFailureTimes(candidate).length
             });
             smartReturnConfirmTimer = setTimeout(async function() {
@@ -2715,10 +2860,10 @@ function playerPage(origin, channelKey, channel) {
               if (confirmEpoch !== smartRecoveryEpoch) return;
               if (!hasBetterSource() || activeSequence.indexOf(candidate) >= activeSequenceIndex) return;
               smartProbeInFlight = true;
-              const thirdProbeOk = await probeSourceKey(candidate);
+              const thirdProbe = await probeSourceKey(candidate, secondProbe.snapshot);
               smartProbeInFlight = false;
               if (confirmEpoch !== smartRecoveryEpoch || !hasBetterSource()) return;
-              if (!thirdProbeOk) {
+              if (!thirdProbe.ok) {
                 lastSourceFailureAt[candidate] = Date.now();
                 noteSourceFailureHistory(candidate, lastSourceFailureAt[candidate]);
                 schedulePrimaryRecovery('better-extra-confirm-failed-' + candidate);
@@ -2732,7 +2877,7 @@ function playerPage(origin, channelKey, channel) {
                 activeSequence.indexOf(candidate),
                 'smart-return-' + reason
               );
-            }, SMART_RECOVERY_CONFIRM_MS);
+            }, secondConfirmMs);
             return;
           }
           lastSourceReturnAt[candidate] = Date.now();
@@ -2743,7 +2888,7 @@ function playerPage(origin, channelKey, channel) {
             activeSequence.indexOf(candidate),
             'smart-return-' + reason
           );
-        }, SMART_RECOVERY_CONFIRM_MS);
+        }, firstConfirmMs);
         return;
       }
       schedulePrimaryRecovery('no-better-ready-' + reason);
@@ -2828,6 +2973,7 @@ function playerPage(origin, channelKey, channel) {
         failoverLockUntil = Date.now() + 3000;
         appendLog('failover-unavailable', { reason: reason, activeKey: activeKey, sequence: activeSequence });
         markSourceFailure(activeKey, reason);
+        schedulePrimaryRecovery('last-source-failed-' + reason);
         scheduleSelfRetry(reason);
         return;
       }
@@ -2843,7 +2989,7 @@ function playerPage(origin, channelKey, channel) {
     function noteStall(eventName) {
       const end = bufferedEnd();
       const current = Number(video.currentTime.toFixed(2));
-      if (end !== null && current > end + 45) {
+      if (!video.seeking && end !== null && current > end + OUTSIDE_BUFFER_TOLERANCE_SECONDS) {
         appendLog('time-outside-buffer', { event: eventName, currentTime: current, bufferedEnd: end });
         tryFailover('time-outside-buffer');
         return;
@@ -2906,6 +3052,7 @@ function playerPage(origin, channelKey, channel) {
       lastFragUrl = '';
       sameFragCount = 0;
       clearStallTimer();
+      startPlaybackWatchdog();
       appendLog('load-start', src);
       inspectSource(src);
       if (hls) { hls.destroy(); hls = null; }
@@ -2954,6 +3101,10 @@ function playerPage(origin, channelKey, channel) {
             tryFailover('fatal-hls-' + (data.details || data.type || 'error'));
             return;
           }
+          if ([401, 403, 404, 410].indexOf(summary.status) !== -1) {
+            tryFailover('http-' + summary.status + '-' + (data.details || data.type || 'error'));
+            return;
+          }
           if (['bufferStalledError', 'bufferNudgeOnStall', 'fragLoadError', 'fragLoadTimeOut', 'levelLoadError', 'levelLoadTimeOut'].indexOf(data.details) !== -1) {
             recordBadEvent(data.details, summary);
           }
@@ -2999,21 +3150,24 @@ function playerPage(origin, channelKey, channel) {
       video.addEventListener(name, function() {
         appendLog('video-' + name, { currentTime: Number(video.currentTime.toFixed(2)), bufferedEnd: bufferedEnd(), paused: video.paused, muted: video.muted, volume: video.volume });
         if (name === 'waiting' || name === 'stalled') noteStall(name);
-        if (name === 'playing' || name === 'loadedmetadata') {
-          if (name === 'playing') smartSelfRetryCount = 0;
-          noteRecovered(name);
-          if (hasBetterSource()) schedulePrimaryRecovery('fallback-' + name);
+        if (name === 'playing') {
+          smartSelfRetryCount = 0;
+          observePlaybackProgress('playing');
+          if (hasBetterSource()) schedulePrimaryRecovery('fallback-playing');
+        }
+        if (name === 'loadedmetadata') {
+          appendLog('startup-metadata-only', { currentTime: Number(video.currentTime.toFixed(2)), bufferedEnd: bufferedEnd() });
         }
         if (name === 'ended' || name === 'error') tryFailover('video-' + name);
       });
     });
     video.addEventListener('timeupdate', function() {
       const now = Date.now();
+      const advanced = observePlaybackProgress('timeupdate');
+      if (advanced && hasBetterSource()) schedulePrimaryRecovery('fallback-progress');
       if (now - lastProgressLogAt < 10000) return;
       lastProgressLogAt = now;
       appendLog('progress', { currentTime: Number(video.currentTime.toFixed(2)), bufferedEnd: bufferedEnd(), source: activeSrc });
-      noteRecovered('timeupdate');
-      if (hasBetterSource()) schedulePrimaryRecovery('fallback-progress');
     });
     startSmartButton.addEventListener('click', function() { startSequence(START_SEQUENCE, START_LABEL); });
     document.querySelectorAll('button[data-source]').forEach(function(btn) {
