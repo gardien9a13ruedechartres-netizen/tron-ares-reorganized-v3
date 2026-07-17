@@ -48,6 +48,52 @@ const CHANNELS = {
       }
     }
   },
+  rtp1: {
+    label: "RTP1",
+    defaultOrder: ["cable", "basic-hd"],
+    sources: {
+      cable: {
+        id: "3213786206b9a8d9279d0a-712b0fc66558f3",
+        label: "LiveWatch cable"
+      },
+      "basic-hd": {
+        id: "13944010473df831073dad-dbffe528ab7f94",
+        label: "LiveWatch basic HD"
+      }
+    },
+    manualSources: {
+      clouding: {
+        kind: "clouding",
+        id: "legacy-clouding-rtp1",
+        label: "Clouding RTP1",
+        button: "Clouding",
+        cloudingChannel: "RTP1"
+      }
+    }
+  },
+  rtp2: {
+    label: "RTP2",
+    defaultOrder: ["cable", "basic"],
+    sources: {
+      cable: {
+        id: "416376590230300f8c5498-4f731e285a26f6",
+        label: "LiveWatch cable"
+      },
+      basic: {
+        id: "756792350076cff41c35a-cd198895610129",
+        label: "LiveWatch basic"
+      }
+    },
+    manualSources: {
+      clouding: {
+        kind: "clouding",
+        id: "legacy-clouding-rtp2",
+        label: "Clouding RTP2",
+        button: "Clouding",
+        cloudingChannel: "RTP2"
+      }
+    }
+  },
   tvi: {
     label: "TVI",
     defaultOrder: ["basic-hd", "cable"],
@@ -300,6 +346,174 @@ Object.assign(CHANNELS, {
       }
     }
   },
+  "bein-sports-1": {
+    "label": "beIN SPORTS 1",
+    "defaultOrder": [
+      "basic-fhd",
+      "cable",
+      "basic-hd",
+      "basic",
+      "basic-backup",
+      "satellite-fhd",
+      "satellite-hd",
+      "satellite"
+    ],
+    "sources": {
+      "basic-fhd": {
+        "id": "347259658949e36ffc7b26-5e55dd7f9916a1",
+        "label": "LiveWatch basic FHD"
+      },
+      "cable": {
+        "id": "2869862642fa20b06e6794-d4e577a4fbf8f0",
+        "label": "LiveWatch cable"
+      },
+      "basic-hd": {
+        "id": "1490095787bc759a62f683-3728bd24a7454b",
+        "label": "LiveWatch basic HD"
+      },
+      "basic": {
+        "id": "38449168821b069f8d9798-6a4748e42c2f9d",
+        "label": "LiveWatch basic"
+      },
+      "basic-backup": {
+        "id": "169652130611873140131b-529c806ed7af4b",
+        "label": "LiveWatch basic backup"
+      },
+      "satellite-fhd": {
+        "id": "2526338165b07cf0938746-c248edb160f3ba",
+        "label": "LiveWatch satellite FHD events"
+      },
+      "satellite-hd": {
+        "id": "106376152333528e7d498a-225d1260366243",
+        "label": "LiveWatch satellite HD events"
+      },
+      "satellite": {
+        "id": "1814496934db4257f8619-20ac1b155d0d44",
+        "label": "LiveWatch satellite events"
+      }
+    },
+    "manualSources": {
+      "deviantart": {
+        "kind": "lovetier",
+        "id": "legacy-lovetier-bein-sports-1",
+        "label": "DeviantArt beIN SPORTS 1",
+        "button": "DeviantArt",
+        "lovetierChannel": "BEINSPORT1FR"
+      }
+    }
+  },
+  "bein-sports-2": {
+    "label": "beIN SPORTS 2",
+    "defaultOrder": [
+      "basic-fhd",
+      "satellite-fhd",
+      "cable",
+      "satellite",
+      "basic-hd",
+      "satellite-hd",
+      "basic",
+      "basic-backup"
+    ],
+    "sources": {
+      "basic-fhd": {
+        "id": "415174724098645874c57f-3a86d91e8326a5",
+        "label": "LiveWatch basic FHD"
+      },
+      "satellite-fhd": {
+        "id": "75819853b0a7f36152e5-974c89e1789882",
+        "label": "LiveWatch satellite FHD"
+      },
+      "cable": {
+        "id": "39708820822e80dc81aabf-da370ea8bea0e9",
+        "label": "LiveWatch cable"
+      },
+      "satellite": {
+        "id": "796825423ed1e9e9dd950-717d0ead8786ad",
+        "label": "LiveWatch satellite"
+      },
+      "basic-hd": {
+        "id": "35964869849ed2a9498a1b-3715d5a23a5fc7",
+        "label": "LiveWatch basic HD"
+      },
+      "satellite-hd": {
+        "id": "57669399316fdf295f4ae-833e4d1061831e",
+        "label": "LiveWatch satellite HD"
+      },
+      "basic": {
+        "id": "27271322266c34c78c9b73-02308440bf8d98",
+        "label": "LiveWatch basic"
+      },
+      "basic-backup": {
+        "id": "4278173452eadb33b1be4-489a43be0eaaa1",
+        "label": "LiveWatch basic backup"
+      }
+    },
+    "manualSources": {
+      "deviantart": {
+        "kind": "lovetier",
+        "id": "legacy-lovetier-bein-sports-2",
+        "label": "DeviantArt beIN SPORTS 2",
+        "button": "DeviantArt",
+        "lovetierChannel": "BEINSPORT2FR"
+      }
+    }
+  },
+  "bein-sports-3": {
+    "label": "beIN SPORTS 3",
+    "defaultOrder": [
+      "basic-fhd",
+      "satellite-fhd",
+      "cable",
+      "satellite",
+      "basic-hd",
+      "satellite-hd",
+      "basic",
+      "basic-backup"
+    ],
+    "sources": {
+      "basic-fhd": {
+        "id": "37589951798fde8ec2b042-46ef219687902a",
+        "label": "LiveWatch basic FHD"
+      },
+      "satellite-fhd": {
+        "id": "335544078ec0a21ea1c59-58751d05e8e6d3",
+        "label": "LiveWatch satellite FHD"
+      },
+      "cable": {
+        "id": "3520000914617f771dcdef-d3530f2b64323f",
+        "label": "LiveWatch cable"
+      },
+      "satellite": {
+        "id": "3040048635a6b95e096a2-b3de669f83cccd",
+        "label": "LiveWatch satellite"
+      },
+      "basic-hd": {
+        "id": "452200918b8020be8910c-288357da0f4be3",
+        "label": "LiveWatch basic HD"
+      },
+      "satellite-hd": {
+        "id": "4009076343da811eb76e8b-76002331acc79e",
+        "label": "LiveWatch satellite HD"
+      },
+      "basic": {
+        "id": "2683082226fbcf85179319-2e1154edb00899",
+        "label": "LiveWatch basic"
+      },
+      "basic-backup": {
+        "id": "222193893594fb44c7d213-65f622b86e186f",
+        "label": "LiveWatch basic backup"
+      }
+    },
+    "manualSources": {
+      "deviantart": {
+        "kind": "lovetier",
+        "id": "legacy-lovetier-bein-sports-3",
+        "label": "DeviantArt beIN SPORTS 3",
+        "button": "DeviantArt",
+        "lovetierChannel": "BEINSPORT3FR"
+      }
+    }
+  },
   "6ter": {
     "label": "6TER",
     "defaultOrder": [
@@ -541,6 +755,33 @@ Object.assign(CHANNELS, {
       "satellite-hd": {
         "id": "151053255430b682f860-71fa30e2ad1689",
         "label": "LiveWatch satellite HD"
+      }
+    }
+  },
+  "ocs-western": {
+    "label": "OCS Western",
+    "defaultOrder": [
+      "cable",
+      "satellite-fhd",
+      "satellite-hd",
+      "satellite"
+    ],
+    "sources": {
+      "cable": {
+        "id": "14515894382c3f886d3da3-4ebd594938df16",
+        "label": "LiveWatch cable"
+      },
+      "satellite-fhd": {
+        "id": "146336370435eceaf43e56-a7a011882d93f1",
+        "label": "LiveWatch satellite FHD"
+      },
+      "satellite-hd": {
+        "id": "73922229901e8c2feeb4f-236515d3b9ebd5",
+        "label": "LiveWatch satellite HD"
+      },
+      "satellite": {
+        "id": "14177505627dd342e32501-c0e75fa65de8e6",
+        "label": "LiveWatch satellite"
       }
     }
   },
@@ -1307,10 +1548,15 @@ Object.assign(CHANNELS, {
   "nrj-hits": {
     "label": "NRJ HITS",
     "defaultOrder": [
+      "cable",
       "satellite",
       "basic-hd"
     ],
     "sources": {
+      "cable": {
+        "id": "4032821325a26979254ed7-16905b9a5b2bcc",
+        "label": "LiveWatch cable"
+      },
       "satellite": {
         "id": "730920094046c7f17c984-7c2374b1edf467",
         "label": "LiveWatch satellite"
@@ -2203,6 +2449,8 @@ function playerPage(origin, channelKey, channel) {
     const SMART_FAILURE_HISTORY_MS = 600000;
     const SMART_FAILURE_BACKOFF_MS = 35000;
     const SMART_MAX_RECOVERY_WAIT_MS = 180000;
+    const SMART_RETURN_PROBATION_MS = 45000;
+    const SMART_EXTRA_CONFIRM_FAILURES = 3;
     const SMART_SELF_RETRY_MS = 12000;
     const SMART_SELF_RETRY_BACKOFF_MS = 8000;
     const SMART_SELF_RETRY_MAX_MS = 45000;
@@ -2331,6 +2579,9 @@ function playerPage(origin, channelKey, channel) {
       const backoff = Math.max(0, count - 1) * SMART_FAILURE_BACKOFF_MS;
       return Math.min(SMART_MAX_RECOVERY_WAIT_MS, SMART_RECOVERY_PROBE_MS + backoff);
     }
+    function compactReason(reason) {
+      return String(reason || 'scheduled').replace(/(?:no-better-ready-){2,}/g, 'no-better-ready-').slice(0, 180);
+    }
     function appendProbeParam(src) { return src + (src.indexOf('?') === -1 ? '?' : '&') + 'smartProbe=' + Date.now(); }
     function firstPlayableUrlFromPlaylist(text, baseSrc) {
       const lines = String(text || '').split(/\\r?\\n/);
@@ -2373,7 +2624,17 @@ function playerPage(origin, channelKey, channel) {
       if (!activeSequence.length || !key) return;
       const now = Date.now();
       lastSourceFailureAt[key] = now;
-      const recentFailures = noteSourceFailureHistory(key, now);
+      let recentFailures = noteSourceFailureHistory(key, now);
+      const lastReturn = lastSourceReturnAt[key] || 0;
+      if (lastReturn && now - lastReturn <= SMART_RETURN_PROBATION_MS) {
+        recentFailures = noteSourceFailureHistory(key, now);
+        appendLog('smart-return-probation-failed', {
+          key: key,
+          reason: reason,
+          sinceReturnMs: now - lastReturn,
+          recentFailures: recentFailures
+        });
+      }
       clearSmartRecoveryTimers();
       appendLog('smart-source-failure', {
         key: key,
@@ -2443,6 +2704,37 @@ function playerPage(origin, channelKey, channel) {
             schedulePrimaryRecovery('better-confirm-failed-' + candidate);
             return;
           }
+          if (recentFailureTimes(candidate).length >= SMART_EXTRA_CONFIRM_FAILURES) {
+            appendLog('smart-better-extra-confirm-wait', {
+              candidate: candidate,
+              confirmMs: SMART_RECOVERY_CONFIRM_MS,
+              recentFailures: recentFailureTimes(candidate).length
+            });
+            smartReturnConfirmTimer = setTimeout(async function() {
+              smartReturnConfirmTimer = null;
+              if (confirmEpoch !== smartRecoveryEpoch) return;
+              if (!hasBetterSource() || activeSequence.indexOf(candidate) >= activeSequenceIndex) return;
+              smartProbeInFlight = true;
+              const thirdProbeOk = await probeSourceKey(candidate);
+              smartProbeInFlight = false;
+              if (confirmEpoch !== smartRecoveryEpoch || !hasBetterSource()) return;
+              if (!thirdProbeOk) {
+                lastSourceFailureAt[candidate] = Date.now();
+                noteSourceFailureHistory(candidate, lastSourceFailureAt[candidate]);
+                schedulePrimaryRecovery('better-extra-confirm-failed-' + candidate);
+                return;
+              }
+              lastSourceReturnAt[candidate] = Date.now();
+              loadSourceKey(
+                candidate,
+                'Smart return ' + SOURCE_LABELS[candidate],
+                activeSequence,
+                activeSequence.indexOf(candidate),
+                'smart-return-' + reason
+              );
+            }, SMART_RECOVERY_CONFIRM_MS);
+            return;
+          }
           lastSourceReturnAt[candidate] = Date.now();
           loadSourceKey(
             candidate,
@@ -2477,6 +2769,7 @@ function playerPage(origin, channelKey, channel) {
     }
     function schedulePrimaryRecovery(reason) {
       if (!hasBetterSource() || smartRecoveryTimer || smartReturnConfirmTimer || smartProbeInFlight) return;
+      reason = compactReason(reason);
       const waitMs = recoveryWaitMs();
       appendLog('smart-better-recovery-scheduled', {
         reason: reason,
@@ -2548,6 +2841,13 @@ function playerPage(origin, channelKey, channel) {
       schedulePrimaryRecovery('after-failover-' + reason);
     }
     function noteStall(eventName) {
+      const end = bufferedEnd();
+      const current = Number(video.currentTime.toFixed(2));
+      if (end !== null && current > end + 45) {
+        appendLog('time-outside-buffer', { event: eventName, currentTime: current, bufferedEnd: end });
+        tryFailover('time-outside-buffer');
+        return;
+      }
       if (!stallStartedAt) {
         stallStartedAt = Date.now();
         appendLog('stall-start', { event: eventName, currentTime: Number(video.currentTime.toFixed(2)), bufferedEnd: bufferedEnd() });

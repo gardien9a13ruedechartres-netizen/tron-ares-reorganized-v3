@@ -298,7 +298,7 @@
     {
       "id": "bein-sports-1",
       "name": "beIN SPORTS 1",
-      "url": "/pages/worker-iptv.html?channel=bein-sports-1",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=bein-sports-1",
       "logo": {
         "type": "image",
         "value": "media/image/bein-sports-1.webp"
@@ -310,7 +310,7 @@
     {
       "id": "bein-sports-2",
       "name": "beIN SPORTS 2",
-      "url": "/pages/worker-iptv.html?channel=bein-sports-2",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=bein-sports-2",
       "logo": {
         "type": "image",
         "value": "media/image/bein-sports-2.webp"
@@ -322,7 +322,7 @@
     {
       "id": "bein-sports-3",
       "name": "beIN SPORTS 3",
-      "url": "/pages/worker-iptv.html?channel=bein-sports-3",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=bein-sports-3",
       "logo": {
         "type": "image",
         "value": "media/image/bein-sports-3.webp"
@@ -514,6 +514,18 @@
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20OCS%20Max%202012.svg"
+      },
+      "group": "Cinéma",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "ocs-western",
+      "name": "OCS Western",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=ocs-western",
+      "logo": {
+        "type": "image",
+        "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/france/ocs-geants-fr.png"
       },
       "group": "Cinéma",
       "isFavorite": false,
@@ -1232,11 +1244,11 @@
     },
     {
       "id": "nrj-hits",
-      "name": "NRJ Hits",
+      "name": "NRJ HITS",
       "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=nrj-hits",
       "logo": {
         "type": "image",
-        "value": "https://commons.wikimedia.org/wiki/Special:FilePath/NRJ%20HITES%202017%20logo.png"
+        "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/france/nrj-hits-fr.png"
       },
       "group": "Musique",
       "isFavorite": false,

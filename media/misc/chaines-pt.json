@@ -23,27 +23,27 @@
     {
       "id": "rtp1",
       "name": "RTP1",
-      "url": "https://player-engine.com/api/worker-live/rtp1/master.m3u8",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=rtp1",
       "logo": {
         "type": "image",
         "value": "/media/rtp1.jpg"
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": false,
+      "isIframe": true,
       "meoCallLetter": "RTP1"
     },
     {
       "id": "rtp2",
       "name": "RTP2",
-      "url": "https://player-engine.com/api/worker-live/rtp2/master.m3u8",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=rtp2",
       "logo": {
         "type": "image",
         "value": "https://upload.wikimedia.org/wikipedia/commons/f/f9/RTP2_logo_2016.svg"
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": false,
+      "isIframe": true,
       "meoCallLetter": "RTP2"
     },
     {
