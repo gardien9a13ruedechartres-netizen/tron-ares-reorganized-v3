@@ -2447,6 +2447,9 @@ function playerPage(origin, channelKey, channel) {
     const OUTSIDE_BUFFER_TOLERANCE_SECONDS = 8;
     const PROBE_FETCH_TIMEOUT_MS = 6500;
     const PROBE_MAX_CONFIRM_MS = 25000;
+    const SMART_PREFLIGHT_TIMEOUT_MS = 14000;
+    const SMART_PREFLIGHT_MIN_PROGRESS_SECONDS = 0.55;
+    const SMART_PREFLIGHT_MIN_BUFFER_SECONDS = 1.25;
     const BAD_EVENT_WINDOW_MS = 30000;
     const BAD_EVENT_LIMIT = 2;
     const SMART_RECOVERY_PROBE_MS = 25000;
@@ -2484,6 +2487,7 @@ function playerPage(origin, channelKey, channel) {
     let smartSelfRetryTimer = null;
     let smartSelfRetryCount = 0;
     let smartProbeInFlight = false;
+    let smartPreflightCancel = null;
     let smartRecoveryEpoch = 0;
     let pendingFailoverTimer = null;
     let lastSourceFailureAt = {};
@@ -2600,6 +2604,11 @@ function playerPage(origin, channelKey, channel) {
     }
     function clearSmartRecoveryTimers() {
       smartProbeInFlight = false;
+      if (smartPreflightCancel) {
+        const cancel = smartPreflightCancel;
+        smartPreflightCancel = null;
+        cancel();
+      }
       if (smartRecoveryTimer) {
         clearTimeout(smartRecoveryTimer);
         smartRecoveryTimer = null;
@@ -2763,6 +2772,162 @@ function playerPage(origin, channelKey, channel) {
         return { ok: false, snapshot: null };
       }
     }
+    async function preflightSourcePlayback(key) {
+      const source = SOURCE_URLS[key];
+      if (!source) return false;
+      const startedAt = Date.now();
+      const testVideo = document.createElement('video');
+      testVideo.muted = true;
+      testVideo.defaultMuted = true;
+      testVideo.volume = 0;
+      testVideo.autoplay = true;
+      testVideo.playsInline = true;
+      testVideo.preload = 'auto';
+      testVideo.setAttribute('aria-hidden', 'true');
+      testVideo.style.position = 'fixed';
+      testVideo.style.width = '2px';
+      testVideo.style.height = '2px';
+      testVideo.style.opacity = '0';
+      testVideo.style.pointerEvents = 'none';
+      testVideo.style.left = '-10000px';
+      testVideo.style.top = '-10000px';
+      document.body.appendChild(testVideo);
+      let testHls = null;
+      let timeoutTimer = null;
+      let progressTimer = null;
+      let finished = false;
+      let playingSeen = false;
+      let fragmentSeen = false;
+      let initialTime = null;
+      let finalCurrent = 0;
+      let finalBufferedEnd = null;
+      function testBufferedEnd() {
+        try {
+          if (!testVideo.buffered || !testVideo.buffered.length) return null;
+          return Number(testVideo.buffered.end(testVideo.buffered.length - 1).toFixed(2));
+        } catch (_) {
+          return null;
+        }
+      }
+      function cleanup() {
+        if (timeoutTimer) clearTimeout(timeoutTimer);
+        if (progressTimer) clearInterval(progressTimer);
+        try { if (testHls) testHls.destroy(); } catch (_) {}
+        testHls = null;
+        try {
+          testVideo.pause();
+          testVideo.removeAttribute('src');
+          testVideo.load();
+          testVideo.remove();
+        } catch (_) {}
+      }
+      return await new Promise(function(resolve) {
+        function finish(ok, reason) {
+          if (finished) return;
+          finished = true;
+          smartPreflightCancel = null;
+          finalCurrent = Number((testVideo.currentTime || 0).toFixed(2));
+          finalBufferedEnd = testBufferedEnd();
+          cleanup();
+          appendLog(ok ? 'smart-preflight-ok' : 'smart-preflight-failed', {
+            key: key,
+            reason: reason,
+            latencyMs: Date.now() - startedAt,
+            currentTime: finalCurrent,
+            bufferedEnd: finalBufferedEnd,
+            playingSeen: playingSeen,
+            fragmentSeen: fragmentSeen
+          });
+          resolve(ok);
+        }
+        smartPreflightCancel = function() { finish(false, 'cancelled'); };
+        function checkProgress() {
+          const current = Number(testVideo.currentTime || 0);
+          const end = testBufferedEnd();
+          if (initialTime === null && Number.isFinite(current)) initialTime = current;
+          const advanced = initialTime !== null && current >= initialTime + SMART_PREFLIGHT_MIN_PROGRESS_SECONDS;
+          const bufferedAhead = end === null ? 0 : end - current;
+          if (playingSeen && advanced && bufferedAhead >= SMART_PREFLIGHT_MIN_BUFFER_SECONDS && (fragmentSeen || !testHls)) {
+            finish(true, 'real-playback-progress');
+          }
+        }
+        testVideo.addEventListener('loadedmetadata', function() {
+          initialTime = Number(testVideo.currentTime || 0);
+        });
+        testVideo.addEventListener('playing', function() {
+          playingSeen = true;
+          if (initialTime === null) initialTime = Number(testVideo.currentTime || 0);
+          checkProgress();
+        });
+        testVideo.addEventListener('timeupdate', checkProgress);
+        testVideo.addEventListener('error', function() { finish(false, 'video-error'); });
+        timeoutTimer = setTimeout(function() { finish(false, 'timeout'); }, SMART_PREFLIGHT_TIMEOUT_MS);
+        progressTimer = setInterval(checkProgress, 200);
+        if (window.Hls && Hls.isSupported()) {
+          testHls = new Hls({
+            enableWorker: true,
+            lowLatencyMode: true,
+            liveSyncDurationCount: 2,
+            liveMaxLatencyDurationCount: 5,
+            maxBufferLength: 10,
+            manifestLoadingTimeOut: 6000,
+            levelLoadingTimeOut: 6000,
+            fragLoadingTimeOut: 8000
+          });
+          testHls.on(Hls.Events.MANIFEST_PARSED, function() {
+            const playResult = testVideo.play();
+            if (playResult && typeof playResult.catch === 'function') {
+              playResult.catch(function(error) { finish(false, 'play-' + (error.name || 'error')); });
+            }
+          });
+          testHls.on(Hls.Events.FRAG_BUFFERED, function() {
+            fragmentSeen = true;
+            checkProgress();
+          });
+          testHls.on(Hls.Events.ERROR, function(_, data) {
+            const status = data && data.response ? data.response.code : null;
+            if ((data && data.fatal) || [401, 403, 404, 410].indexOf(status) !== -1) {
+              finish(false, 'hls-' + (data && (data.details || data.type) || 'error') + (status ? '-' + status : ''));
+            }
+          });
+          testHls.loadSource(appendProbeParam(source));
+          testHls.attachMedia(testVideo);
+        } else if (testVideo.canPlayType('application/vnd.apple.mpegurl')) {
+          testVideo.src = appendProbeParam(source);
+          const playResult = testVideo.play();
+          if (playResult && typeof playResult.catch === 'function') {
+            playResult.catch(function(error) { finish(false, 'native-play-' + (error.name || 'error')); });
+          }
+        } else {
+          finish(false, 'hls-unsupported');
+        }
+      });
+    }
+    async function returnToBetterSource(candidate, reason, confirmEpoch) {
+      if (confirmEpoch !== smartRecoveryEpoch) return false;
+      if (!hasBetterSource() || activeSequence.indexOf(candidate) >= activeSequenceIndex) return false;
+      appendLog('smart-preflight-start', { candidate: candidate, current: activeKey });
+      smartProbeInFlight = true;
+      const preflightOk = await preflightSourcePlayback(candidate);
+      smartProbeInFlight = false;
+      if (confirmEpoch !== smartRecoveryEpoch || !hasBetterSource()) return false;
+      if (!preflightOk) {
+        const failedAt = Date.now();
+        lastSourceFailureAt[candidate] = failedAt;
+        noteSourceFailureHistory(candidate, failedAt);
+        schedulePrimaryRecovery('preflight-failed-' + candidate);
+        return false;
+      }
+      lastSourceReturnAt[candidate] = Date.now();
+      loadSourceKey(
+        candidate,
+        'Smart return ' + SOURCE_LABELS[candidate],
+        activeSequence,
+        activeSequence.indexOf(candidate),
+        'smart-return-' + reason
+      );
+      return true;
+    }
     function markSourceFailure(key, reason) {
       if (!activeSequence.length || !key) return;
       const now = Date.now();
@@ -2869,25 +3034,11 @@ function playerPage(origin, channelKey, channel) {
                 schedulePrimaryRecovery('better-extra-confirm-failed-' + candidate);
                 return;
               }
-              lastSourceReturnAt[candidate] = Date.now();
-              loadSourceKey(
-                candidate,
-                'Smart return ' + SOURCE_LABELS[candidate],
-                activeSequence,
-                activeSequence.indexOf(candidate),
-                'smart-return-' + reason
-              );
+              await returnToBetterSource(candidate, reason, confirmEpoch);
             }, secondConfirmMs);
             return;
           }
-          lastSourceReturnAt[candidate] = Date.now();
-          loadSourceKey(
-            candidate,
-            'Smart return ' + SOURCE_LABELS[candidate],
-            activeSequence,
-            activeSequence.indexOf(candidate),
-            'smart-return-' + reason
-          );
+          await returnToBetterSource(candidate, reason, confirmEpoch);
         }, firstConfirmMs);
         return;
       }
@@ -2989,8 +3140,16 @@ function playerPage(origin, channelKey, channel) {
     function noteStall(eventName) {
       const end = bufferedEnd();
       const current = Number(video.currentTime.toFixed(2));
-      if (!video.seeking && end !== null && current > end + OUTSIDE_BUFFER_TOLERANCE_SECONDS) {
-        appendLog('time-outside-buffer', { event: eventName, currentTime: current, bufferedEnd: end });
+      const extremeOutsideBuffer = end !== null && current > end + 60;
+      const normalOutsideBuffer = !video.seeking && end !== null && current > end + OUTSIDE_BUFFER_TOLERANCE_SECONDS;
+      if (extremeOutsideBuffer || normalOutsideBuffer) {
+        appendLog('time-outside-buffer', {
+          event: eventName,
+          currentTime: current,
+          bufferedEnd: end,
+          seeking: video.seeking,
+          extreme: extremeOutsideBuffer
+        });
         tryFailover('time-outside-buffer');
         return;
       }
