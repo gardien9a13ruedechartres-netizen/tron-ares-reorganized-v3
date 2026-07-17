@@ -535,6 +535,20 @@
       "isFavorite": false,
       "isIframe": false,
       "meoCallLetter": "DISCVHD"
+    },
+    {
+      "id": "cmtv",
+      "name": "CMTV",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/api/live/cmtv/master.m3u8",
+      "logo": {
+        "type": "image",
+        "value": "/media/cmtv.png"
+      },
+      "group": "Généraliste",
+      "isFavorite": false,
+      "isIframe": false,
+      "programUrl": "https://nostv.pt/guia/139",
+      "meoCallLetter": "CMTV"
     }
-   ]
-   }
+    ]
+    }
