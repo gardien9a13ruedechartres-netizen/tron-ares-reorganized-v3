@@ -423,9 +423,9 @@ Object.assign(CHANNELS, {
   "tv-globo": {
     "label": "GLOBO BRAZIL",
     "defaultOrder": [
-      "cable",
+      "basic-2",
       "basic",
-      "basic-2"
+      "cable"
     ],
     "sources": {
       "cable": {
