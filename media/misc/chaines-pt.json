@@ -549,7 +549,7 @@
       "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=patrulha-pata",
       "logo": {
         "type": "image",
-        "value": ""
+        "value": "/media/patrulha-pata.png"
       },
       "group": "Jeunesse",
       "isFavorite": false,
