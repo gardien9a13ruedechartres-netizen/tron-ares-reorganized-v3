@@ -3051,6 +3051,8 @@ async function __getMpdQualityChips(url) {
 const LIVEWATCH_SMART_EPG_NOW_URL = 'https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/api/epg/now';
 let __livewatchEpgPanel = null;
 let __livewatchEpgHideTimer = null;
+let __livewatchEpgAutoTimer = null;
+let __lastAutoLivewatchEpgKey = '';
 
 function __entryUsesLivewatchSmart(entry) {
   return /^https:\/\/tron-ares-livewatch-smart\.victor-salema-53d\.workers\.dev\//i.test(String(entry?.url || ''));
@@ -3061,6 +3063,10 @@ function __livewatchEpgNameForEntry(entry) {
   if (explicit) return explicit;
   if (!__entryUsesLivewatchSmart(entry)) return '';
   return String(entry?.name || '').trim();
+}
+
+function __livewatchEpgEntryKey(entry) {
+  return [entry?.id, entry?.url, entry?.name].filter(Boolean).join('|');
 }
 
 function __formatEpgTime(value) {
@@ -3247,6 +3253,22 @@ async function __openLivewatchEpgNow(entry) {
     __scheduleLivewatchEpgHide(9000);
     console.warn('[LiveWatch EPG]', error);
   }
+}
+
+function __maybeOpenLivewatchEpgAutomatically(entry) {
+  const name = __livewatchEpgNameForEntry(entry);
+  if (!name || document.hidden) return;
+
+  const key = __livewatchEpgEntryKey(entry) || name;
+  if (!key || key === __lastAutoLivewatchEpgKey) return;
+  __lastAutoLivewatchEpgKey = key;
+
+  if (__livewatchEpgAutoTimer) clearTimeout(__livewatchEpgAutoTimer);
+  __livewatchEpgAutoTimer = setTimeout(() => {
+    __livewatchEpgAutoTimer = null;
+    if (currentEntry && !_entryMatch(currentEntry, entry)) return;
+    __openLivewatchEpgNow(entry);
+  }, 650);
 }
 
 
@@ -3570,6 +3592,7 @@ function updateNowPlaying(entry, modeLabel) {
     npSub.textContent = 'Choisissez une chaîne dans la liste';
     npBadge.textContent = 'IDLE';
     __renderNowPlayingLangBadge(null);
+    __lastAutoLivewatchEpgKey = '';
     return;
   }
 
@@ -3592,6 +3615,7 @@ function updateNowPlaying(entry, modeLabel) {
   npSub.textContent = entry.group || (entry.isIframe ? 'Overlay / iFrame' : 'Flux M3U');
   npBadge.textContent = modeLabel;
   __renderNowPlayingLangBadge(entry);
+  __maybeOpenLivewatchEpgAutomatically(entry);
 }
 
 
