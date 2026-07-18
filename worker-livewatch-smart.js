@@ -2650,6 +2650,428 @@ Object.assign(CHANNELS, {
   }
 });
 
+// Migrated FR channels that still had direct or legacy-worker entries in chaines-fr.json.
+Object.assign(CHANNELS, {
+  "rmc-story": {
+    label: "RMC Story",
+    livewatchSearch: "RMC Story",
+    livewatchExact: "RMC STORY",
+    defaultOrder: ["cable", "satellite"],
+    sources: {
+      cable: { id: "104723646397da6b0c2b31-0dd65839467c21", label: "LiveWatch cable", exact: "RMC STORY", country: "France" },
+      satellite: { id: "9680712917f989558355c-36954b447ee677", label: "LiveWatch satellite", exact: "RMC STORY", country: "France" }
+    },
+    manualSources: {
+      direct: {
+        kind: "direct",
+        id: "legacy-direct-rmc-story",
+        label: "Direct RMC Story",
+        button: "Direct",
+        directUrl: "https://d15aro46bnpfm8.cloudfront.net/v1/master/3722c60a815c199d9c0ef36c5b73da68a62b09d1/cc-fqkqiax1078up/RMC_Story_FR.m3u8"
+      }
+    }
+  },
+  "rmc-decouverte": {
+    label: "RMC Decouverte",
+    livewatchSearch: "RMC Decouverte",
+    livewatchExact: "RMC DECOUVERTE",
+    defaultOrder: ["cable", "satellite"],
+    sources: {
+      cable: { id: "2957270266f8a57fc4d110-cbc80784ad7396", label: "LiveWatch cable", exact: "RMC DECOUVERTE", country: "France" },
+      satellite: { id: "26066150769be8b83ee804-70fd5d35b9a82e", label: "LiveWatch satellite", exact: "RMC DECOUVERTE", country: "France" }
+    },
+    manualSources: {
+      direct: {
+        kind: "direct",
+        id: "legacy-direct-rmc-decouverte",
+        label: "Direct RMC Decouverte",
+        button: "Direct",
+        directUrl: "https://d16zzycxcd0m0r.cloudfront.net/v1/master/3722c60a815c199d9c0ef36c5b73da68a62b09d1/cc-hixvx5kymecr9/RMC_Decouverte_FR.m3u8"
+      }
+    }
+  },
+  t18: {
+    label: "T18",
+    livewatchSearch: "T18",
+    livewatchExact: "T18",
+    defaultOrder: ["cable"],
+    sources: {
+      cable: { id: "388220374408fde152c5ab-87506e7fd577fd", label: "LiveWatch cable", exact: "T18", country: "France" }
+    }
+  },
+  bfmtv: {
+    label: "BFMTV",
+    livewatchSearch: "BFM TV",
+    livewatchExact: "BFM TV",
+    defaultOrder: ["basic-hd", "cable"],
+    sources: {
+      "basic-hd": { id: "1080830216b8e08bdf456f-249c2f234ff39e", label: "LiveWatch basic HD", exact: "BFM TV", country: "France" },
+      cable: { id: "28781389555e4689451088-aedb8abfef5a4c", label: "LiveWatch cable", exact: "BFM TV", country: "France" }
+    },
+    manualSources: {
+      direct: {
+        kind: "direct",
+        id: "legacy-direct-bfmtv",
+        label: "Direct BFMTV",
+        button: "Direct",
+        directUrl: "https://live-cdn-bfmtv-euw1.bfmtv.bct.nextradiotv.com/m1/media.m3u8"
+      }
+    }
+  },
+  euronews: {
+    label: "Euronews",
+    livewatchSearch: "Euronews",
+    livewatchExact: "EURONEWS",
+    defaultOrder: ["satellite-hd", "cable", "satellite"],
+    sources: {
+      "satellite-hd": { id: "16699602012bb577bfc258-cb841c0a21ce0e", label: "LiveWatch satellite HD", exact: "EURONEWS", country: "France" },
+      cable: { id: "2551109620ffda2d65954b-535ab02c9593dd", label: "LiveWatch cable", exact: "EURONEWS", country: "France" },
+      satellite: { id: "1136778023053b84438df5-4d4b274fa4f038", label: "LiveWatch satellite", exact: "EURONEWS", country: "France" }
+    },
+    manualSources: {
+      direct: {
+        kind: "direct",
+        id: "legacy-direct-euronews",
+        label: "Direct Euronews",
+        button: "Direct",
+        directUrl: "https://euronews-live-fre-fr.fast.rakuten.tv/v1/master/0547f18649bd788bec7b67b746e47670f558b6b2/production-LiveChannel-6564/bitok/e/26032/euronews-fr.m3u8"
+      }
+    }
+  },
+  cnews: {
+    label: "CNEWS",
+    livewatchSearch: "C NEWS",
+    livewatchExact: "C NEWS",
+    defaultOrder: ["satellite-fhd", "cable"],
+    sources: {
+      "satellite-fhd": { id: "25945826014cdc04dbd4e-87ea328c67f2a4", label: "LiveWatch satellite FHD", exact: "C NEWS", country: "France" },
+      cable: { id: "191698538075f6313e5638-50960673f45de1", label: "LiveWatch cable", exact: "C NEWS", country: "France" }
+    },
+    manualSources: {
+      deviantart: {
+        kind: "lovetier",
+        id: "legacy-lovetier-cnewsfr",
+        label: "DeviantArt CNEWS",
+        button: "DeviantArt",
+        lovetierChannel: "CNEWSFR"
+      }
+    }
+  },
+  lci: {
+    label: "LCI",
+    livewatchSearch: "LCI",
+    livewatchExact: "LCI",
+    defaultOrder: ["basic", "cable", "satellite"],
+    sources: {
+      basic: { id: "3143227243cf66be60548e-cd90f358e5d695", label: "LiveWatch basic", exact: "LCI", country: "France" },
+      cable: { id: "8228734688467a2cc70b0-00eccfa4772590", label: "LiveWatch cable", exact: "LCI", country: "France" },
+      satellite: { id: "1626744356a28180b05b56-f2d128cbdd0745", label: "LiveWatch satellite", exact: "LCI", country: "France" }
+    },
+    manualSources: {
+      direct: {
+        kind: "direct",
+        id: "legacy-direct-lci",
+        label: "Direct LCI",
+        button: "Direct",
+        directUrl: "https://tvradiozap.eu/tools/tf-m3u8.php/LCI.m3u8"
+      }
+    }
+  },
+  "canal-sport-360": {
+    label: "CANAL+ Sport 360",
+    livewatchSearch: "CANAL+ Sport 360",
+    livewatchExact: "CANAL+ SPORT 360",
+    defaultOrder: ["cable", "satellite"],
+    sources: {
+      cable: { id: "3411759213e112d2746c32-10d41a7f068b7e", label: "LiveWatch cable", exact: "CANAL+ SPORT 360", country: "France" },
+      satellite: { id: "18148197605eb108ea4ea5-ff51a31ee3880a", label: "LiveWatch satellite", exact: "CANAL+ SPORT 360", country: "France" }
+    },
+    manualSources: {
+      deviantart: {
+        kind: "lovetier",
+        id: "legacy-lovetier-canals360",
+        label: "DeviantArt CANAL+ Sport 360",
+        button: "DeviantArt",
+        lovetierChannel: "CANALS360"
+      }
+    }
+  },
+  "canal-sport": {
+    label: "CANAL+ Sport",
+    livewatchSearch: "CANAL+ Sport",
+    livewatchExact: "CANAL+ SPORT",
+    defaultOrder: ["basic-4k", "basic-fhd", "satellite-fhd", "cable", "satellite", "basic-hd", "satellite-hd", "basic-hd-backup"],
+    sources: {
+      "basic-4k": { id: "1027079906da60d032d097-8ba53c008068e4", label: "LiveWatch basic 4K", exact: "CANAL+ SPORT", country: "France" },
+      "basic-fhd": { id: "453019939d84e34676bf0-860cea1c5e925d", label: "LiveWatch basic FHD", exact: "CANAL+ SPORT", country: "France" },
+      "satellite-fhd": { id: "400983001854a9f36fb4bc-ad5c8382a79828", label: "LiveWatch satellite FHD", exact: "CANAL+ SPORT", country: "France" },
+      cable: { id: "1012399982f41e3c10e6d6-646c8f3e43249f", label: "LiveWatch cable", exact: "CANAL+ SPORT", country: "France" },
+      satellite: { id: "2391290436f997307577fc-8adf404c670eb4", label: "LiveWatch satellite", exact: "CANAL+ SPORT", country: "France" },
+      "basic-hd": { id: "3280446601139b4a78a620-881df33158cbf7", label: "LiveWatch basic HD", exact: "CANAL+ SPORT", country: "France" },
+      "satellite-hd": { id: "28461194687d3f766bade5-f46e83cdd82b44", label: "LiveWatch satellite HD", exact: "CANAL+ SPORT", country: "France" },
+      "basic-hd-backup": { id: "12937314711ec2eb4953cd-943f2b5283647d", label: "LiveWatch basic HD backup", exact: "CANAL+ SPORT (BACKUP)", country: "France" }
+    },
+    manualSources: {
+      deviantart: {
+        kind: "lovetier",
+        id: "legacy-lovetier-canalsportfr",
+        label: "DeviantArt CANAL+ Sport",
+        button: "DeviantArt",
+        lovetierChannel: "CANALSPORTFR"
+      }
+    }
+  },
+  "eurosport-1": {
+    label: "EUROSPORT 1",
+    livewatchSearch: "EUROSPORT 1",
+    livewatchExact: "EUROSPORT 1",
+    defaultOrder: ["satellite-fhd", "basic-hd", "basic", "cable", "satellite"],
+    sources: {
+      "satellite-fhd": { id: "21729242750aa1745e0a25-891e5e62c68b57", label: "LiveWatch satellite FHD", exact: "EUROSPORT 1", country: "France" },
+      "basic-hd": { id: "1801327897a89211f65c72-40ad654afe260e", label: "LiveWatch basic HD", exact: "EUROSPORT 1", country: "France" },
+      basic: { id: "2935192752de8d99286a38-27a024316b559b", label: "LiveWatch basic", exact: "EUROSPORT 1", country: "France" },
+      cable: { id: "37197343360033c7217c7c-85c3725ada7d10", label: "LiveWatch cable", exact: "EUROSPORT 1", country: "France" },
+      satellite: { id: "3513558830ea552e53ae67-5865bc5a875c3d", label: "LiveWatch satellite", exact: "EUROSPORT 1", country: "France" }
+    },
+    manualSources: {
+      deviantart: {
+        kind: "lovetier",
+        id: "legacy-lovetier-euro1fr",
+        label: "DeviantArt EUROSPORT 1",
+        button: "DeviantArt",
+        lovetierChannel: "Euro1FR"
+      }
+    }
+  },
+  "eurosport-2": {
+    label: "EUROSPORT 2",
+    defaultOrder: ["deviantart"],
+    sources: {},
+    manualSources: {
+      deviantart: {
+        kind: "lovetier",
+        id: "legacy-lovetier-euro2fr",
+        label: "DeviantArt EUROSPORT 2",
+        button: "DeviantArt",
+        lovetierChannel: "Euro2FR"
+      }
+    }
+  },
+  "rmc-sport-1": {
+    label: "RMC Sport 1",
+    livewatchSearch: "RMC Sport 1",
+    livewatchExact: "RMC SPORT 1",
+    defaultOrder: ["basic-4k", "basic-fhd", "basic-hd", "basic", "cable", "satellite", "basic-backup"],
+    sources: {
+      "basic-4k": { id: "4198743891b3aa5f1b46ea-2c4d97fa9c7dfb", label: "LiveWatch basic 4K", exact: "RMC SPORT 1", country: "France" },
+      "basic-fhd": { id: "2893363456b3ad7a65ff86-c8ab030be98ffd", label: "LiveWatch basic FHD", exact: "RMC SPORT 1", country: "France" },
+      "basic-hd": { id: "191610103b147fac6cea3-5fca3964bd0ca5", label: "LiveWatch basic HD", exact: "RMC SPORT 1", country: "France" },
+      basic: { id: "3887766010e3da764db8f-ffbe2c367c454d", label: "LiveWatch basic", exact: "RMC SPORT 1", country: "France" },
+      cable: { id: "16846424097776500ef29d-70f820ed88785d", label: "LiveWatch cable", exact: "RMC SPORT 1", country: "France" },
+      satellite: { id: "1756600583a87bbd57e5f8-e3108e440f87ea", label: "LiveWatch satellite", exact: "RMC SPORT 1", country: "France" },
+      "basic-backup": { id: "175115102961b4392d8027-dd6468a5f244f9", label: "LiveWatch basic backup", exact: "RMC SPORT 1 (BACKUP)", country: "France" }
+    },
+    manualSources: {
+      deviantart: {
+        kind: "lovetier",
+        id: "legacy-lovetier-rmcsport1fr",
+        label: "DeviantArt RMC Sport 1",
+        button: "DeviantArt",
+        lovetierChannel: "RMCSPORT1FR"
+      }
+    }
+  },
+  "rmc-sport-2": {
+    label: "RMC Sport 2",
+    livewatchSearch: "RMC Sport 2",
+    livewatchExact: "RMC SPORT 2",
+    defaultOrder: ["basic-fhd", "basic-hd", "basic", "cable", "satellite", "basic-backup"],
+    sources: {
+      "basic-fhd": { id: "2516059589df8a4a2294fc-67a4c2281a1dc7", label: "LiveWatch basic FHD", exact: "RMC SPORT 2", country: "France" },
+      "basic-hd": { id: "2246359828a17b3da47b2c-3d678e628d1576", label: "LiveWatch basic HD", exact: "RMC SPORT 2", country: "France" },
+      basic: { id: "13513667299550ca3c8165-02fd0cedacf999", label: "LiveWatch basic", exact: "RMC SPORT 2", country: "France" },
+      cable: { id: "600432825b1695f7ad3f8-99c04d1f21bcb1", label: "LiveWatch cable", exact: "RMC SPORT 2", country: "France" },
+      satellite: { id: "789832663b122a3dbc3e0-5073f5c71ec049", label: "LiveWatch satellite", exact: "RMC SPORT 2", country: "France" },
+      "basic-backup": { id: "335631470dc3241eb383f-c61fa7b847bdd6", label: "LiveWatch basic backup", exact: "RMC SPORT 2 (BACKUP)", country: "France" }
+    },
+    manualSources: {
+      deviantart: {
+        kind: "lovetier",
+        id: "legacy-lovetier-rmcsport2fr",
+        label: "DeviantArt RMC Sport 2",
+        button: "DeviantArt",
+        lovetierChannel: "RMCSPORT2FR"
+      }
+    }
+  },
+  "equidia-fr": {
+    label: "Equidia",
+    livewatchSearch: "Equidia",
+    livewatchExact: "EQUIDIA",
+    defaultOrder: ["cable", "basic-hd", "satellite-hd", "satellite", "basic-hd-backup"],
+    sources: {
+      cable: { id: "17906026384c3cc6835008-705bbaaa68f698", label: "LiveWatch cable", exact: "EQUIDIA", country: "France" },
+      "basic-hd": { id: "2901949783a13d3f2a47bf-75f7a5aff3b1bd", label: "LiveWatch basic HD", exact: "EQUIDIA", country: "France" },
+      "satellite-hd": { id: "3860273832eda2d30b583d-647471ae2276ec", label: "LiveWatch satellite HD", exact: "EQUIDIA", country: "France" },
+      satellite: { id: "1885563251fcee2c0aac3f-f09bc65c505537", label: "LiveWatch satellite", exact: "EQUIDIA", country: "France" },
+      "basic-hd-backup": { id: "111705669174acd69bd4ea-ba11c0c816f4b0", label: "LiveWatch basic HD backup", exact: "EQUIDIA (BACKUP)", country: "France" }
+    },
+    manualSources: {
+      deviantart: {
+        kind: "lovetier",
+        id: "legacy-lovetier-er1fr",
+        label: "DeviantArt Equidia",
+        button: "DeviantArt",
+        lovetierChannel: "ER1FR"
+      }
+    }
+  },
+  syfy: {
+    label: "SYFY",
+    livewatchSearch: "SYFY",
+    livewatchExact: "SYFY",
+    defaultOrder: ["cable", "basic", "satellite"],
+    sources: {
+      cable: { id: "303282550000e34f35d8e7-6bc8116b868dce", label: "LiveWatch cable", exact: "SYFY", country: "France" },
+      basic: { id: "210674861187fc41ac93dc-e21710927db2bc", label: "LiveWatch basic", exact: "SYFY", country: "France" },
+      satellite: { id: "338881895125230dd16046-79f5d23b21eb2b", label: "LiveWatch satellite", exact: "SYFY", country: "France" }
+    },
+    manualSources: {
+      direct: {
+        kind: "direct",
+        id: "legacy-direct-syfy",
+        label: "Direct SYFY",
+        button: "Direct",
+        directUrl: "https://cluone.dad:443/live/99F7CFCD396779DC13E1FEF9BA9F9AE8/12.m3u8"
+      }
+    }
+  },
+  screamin: {
+    label: "ScreamIN",
+    livewatchSearch: "ScreamIN",
+    livewatchExact: "ZYLO SCREAMIN",
+    defaultOrder: ["cable"],
+    sources: {
+      cable: { id: "34878716802d47c079973d-59800fbe67207e", label: "LiveWatch cable", exact: "ZYLO SCREAMIN", country: "France" }
+    },
+    manualSources: {
+      direct: {
+        kind: "direct",
+        id: "legacy-direct-screamin",
+        label: "Direct ScreamIN",
+        button: "Direct",
+        directUrl: "https://amg00711-zylo-amg00711c6-plex-us-935.playouts.now.amagi.tv/zylo-Screamin-lg/playlist.m3u8"
+      }
+    }
+  },
+  "disney-channel": {
+    label: "Disney Channel",
+    livewatchSearch: "Disney Channel",
+    livewatchExact: "DISNEY CHANNEL",
+    defaultOrder: ["basic", "satellite", "basic-backup"],
+    sources: {
+      basic: { id: "1762694647144af19e59b7-ba1042469cec01", label: "LiveWatch basic", exact: "DISNEY CHANNEL", country: "France" },
+      satellite: { id: "11741266772bc970bcdea5-c110925c6ccbbe", label: "LiveWatch satellite", exact: "DISNEY CHANNEL", country: "France" },
+      "basic-backup": { id: "2935158545a084ec18db23-0cbb5c10c9d8aa", label: "LiveWatch basic backup", exact: "DISNEY CHANNEL (BACKUP)", country: "France" }
+    }
+  },
+  gulli: {
+    label: "Gulli",
+    livewatchSearch: "Gulli",
+    livewatchExact: "GULLI",
+    defaultOrder: ["satellite-fhd", "basic", "cable", "satellite", "basic-backup"],
+    sources: {
+      "satellite-fhd": { id: "20969815201649b55a02e0-b4124547829182", label: "LiveWatch satellite FHD", exact: "GULLI", country: "France" },
+      basic: { id: "53641636bcf201d54b33-d912544e7994ac", label: "LiveWatch basic", exact: "GULLI", country: "France" },
+      cable: { id: "29885140037661f9e640d2-1ea70b09bec2aa", label: "LiveWatch cable", exact: "GULLI", country: "France" },
+      satellite: { id: "344510952158e0924d57b0-4b76b23b625fd0", label: "LiveWatch satellite", exact: "GULLI", country: "France" },
+      "basic-backup": { id: "39689712588404f896fddf-63490c44176a46", label: "LiveWatch basic backup", exact: "GULLI (BACKUP)", country: "France" }
+    },
+    manualSources: {
+      direct: {
+        kind: "direct",
+        id: "legacy-direct-gulli",
+        label: "Direct Gulli",
+        button: "Direct",
+        directUrl: "https://sr-m6web.live.6cloud.fr/out/v1/6play/6play-gulli/cmaf_q2hyb21h/hls-short-sd.m3u8"
+      }
+    }
+  },
+  "beyblade-tv": {
+    label: "Beyblade TV",
+    livewatchSearch: "Beyblade",
+    livewatchExact: "BEYBLADE",
+    defaultOrder: ["cable"],
+    sources: {
+      cable: { id: "2538067817ee3f0acbabdc-39646a404eb20f", label: "LiveWatch cable", exact: "BEYBLADE", country: "France" }
+    },
+    manualSources: {
+      direct: {
+        kind: "direct",
+        id: "legacy-direct-beyblade",
+        label: "Direct Beyblade",
+        button: "Direct",
+        directUrl: "https://amg01796-amg01796c6-rakuten-fr-5334.playouts.now.amagi.tv/playlist/amg01796-fastmediafast-beybladefr-rakutenfr/playlist.m3u8"
+      }
+    }
+  },
+  adn: {
+    label: "ADN",
+    livewatchSearch: "ADN",
+    livewatchExact: "ADN TV+",
+    defaultOrder: ["cable"],
+    sources: {
+      cable: { id: "3154735344f1a60a8f8e27-057abfb5ebe876", label: "LiveWatch cable", exact: "ADN TV+", country: "France" }
+    },
+    manualSources: {
+      direct: {
+        kind: "direct",
+        id: "legacy-direct-adn",
+        label: "Direct ADN",
+        button: "Direct",
+        directUrl: "https://d3b73b34o7cvkq.cloudfront.net/v1/master/3722c60a815c199d9c0ef36c5b73da68a62b09d1/cc-gz2sgqzp076kf/adn.m3u8"
+      }
+    }
+  },
+  "planete-a-e": {
+    label: "Planete+ A&E",
+    livewatchSearch: "Planete+ A&E",
+    livewatchExact: "PLANETE+ A&E",
+    defaultOrder: ["cable"],
+    sources: {
+      cable: { id: "3284684728b8789893366e-b4102127a68875", label: "LiveWatch cable", exact: "PLANETE+ A&E", country: "France" }
+    },
+    manualSources: {
+      direct: {
+        kind: "direct",
+        id: "legacy-direct-planete-a-e",
+        label: "Direct Planete+ A&E",
+        button: "Direct",
+        directUrl: "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/91.m3u8"
+      }
+    }
+  },
+  "canal-docs": {
+    label: "Canal+ Docs",
+    livewatchSearch: "CANAL+ Docs",
+    livewatchExact: "CANAL+ DOCS",
+    defaultOrder: ["cable", "satellite-hd"],
+    sources: {
+      cable: { id: "116160273261086bd8c99a-98c4ec739a9b4a", label: "LiveWatch cable", exact: "CANAL+ DOCS", country: "France" },
+      "satellite-hd": { id: "3625345371a7f0ef9f1db5-d82aa5a67b4f50", label: "LiveWatch satellite HD", exact: "CANAL+ DOCS", country: "France" }
+    },
+    manualSources: {
+      deviantart: {
+        kind: "lovetier",
+        id: "legacy-lovetier-canalpldocs",
+        label: "DeviantArt Canal+ Docs",
+        button: "DeviantArt",
+        lovetierChannel: "CANALPLDOCS"
+      }
+    }
+  }
+});
+
 const sourceCache = new Map();
 const epgCache = new Map();
 
@@ -2762,8 +3184,33 @@ function isAllowedCloudingUrl(url) {
     !url.password;
 }
 
+function configuredDirectPrefixes() {
+  const prefixes = [];
+  for (const channel of Object.values(CHANNELS)) {
+    for (const source of Object.values(channel.manualSources || {})) {
+      if (source.kind !== "direct" || !source.directUrl) continue;
+      try {
+        const directUrl = new URL(source.directUrl);
+        const slash = directUrl.pathname.lastIndexOf("/");
+        prefixes.push({
+          origin: directUrl.origin,
+          path: directUrl.pathname.slice(0, slash + 1).toLowerCase()
+        });
+      } catch (_) {}
+    }
+  }
+  return prefixes;
+}
+
+function isAllowedDirectUrl(url) {
+  return configuredDirectPrefixes().some((prefix) =>
+    url.origin === prefix.origin &&
+    url.pathname.toLowerCase().startsWith(prefix.path)
+  ) && !url.username && !url.password;
+}
+
 function isAllowedProxyUrl(url) {
-  return isAllowedLivewatchUrl(url) || isAllowedLovetierUrl(url) || isAllowedCloudingUrl(url);
+  return isAllowedLivewatchUrl(url) || isAllowedLovetierUrl(url) || isAllowedCloudingUrl(url) || isAllowedDirectUrl(url);
 }
 
 function makeProxyUrl(value, baseUrl, publicOrigin) {
@@ -3196,12 +3643,41 @@ async function resolveLovetierSource(channelKey, sourceName, source) {
   };
 }
 
+async function resolveDirectSource(channelKey, sourceName, source) {
+  if (!source?.directUrl) throw new Error("direct URL unavailable");
+  const upstreamUrl = new URL(source.directUrl);
+  if (!isAllowedDirectUrl(upstreamUrl)) throw new Error("direct URL refused");
+
+  const startedAt = Date.now();
+  const master = await fetchWithTimeout(upstreamUrl, {
+    headers: upstreamHeaders(upstreamUrl, "application/vnd.apple.mpegurl,application/x-mpegURL,*/*"),
+    redirect: "follow"
+  });
+  const latencyMs = Date.now() - startedAt;
+  const masterText = await master.text();
+  if (!master.ok || !masterText.trimStart().startsWith("#EXTM3U")) {
+    throw new Error(`direct master ${master.status}`);
+  }
+
+  return {
+    channelKey,
+    mode: sourceName,
+    source: sourceName,
+    sourceId: source.id,
+    label: source.label,
+    upstreamUrl,
+    masterText,
+    latencyMs
+  };
+}
+
 async function resolveSource(channelKey, channel, sourceName) {
   const source = allSources(channel)[sourceName];
   if (!source) throw new Error(`unknown source ${sourceName}`);
   if (source.kind === "livewatch-search") return resolveLivewatchSearchSource(channelKey, channel, sourceName, source);
   if (source.kind === "clouding") return resolveCloudingSource(channelKey, sourceName, source);
   if (source.kind === "lovetier") return resolveLovetierSource(channelKey, sourceName, source);
+  if (source.kind === "direct") return resolveDirectSource(channelKey, sourceName, source);
   return resolveLivewatchSourceWithDynamicFallback(channelKey, channel, sourceName, source);
 }
 

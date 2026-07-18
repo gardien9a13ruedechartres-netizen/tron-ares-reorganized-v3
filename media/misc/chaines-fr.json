@@ -149,33 +149,33 @@
     {
       "id": "rmc-story",
       "name": "RMC Story",
-      "url": "https://d15aro46bnpfm8.cloudfront.net/v1/master/3722c60a815c199d9c0ef36c5b73da68a62b09d1/cc-fqkqiax1078up/RMC_Story_FR.m3u8",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=rmc-story",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/RMC%20Story%202025.svg"
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": false,
+      "isIframe": true,
       "guideTntId": 80
     },
     {
       "id": "rmc-decouverte",
       "name": "RMC Découverte",
-      "url": "https://d16zzycxcd0m0r.cloudfront.net/v1/master/3722c60a815c199d9c0ef36c5b73da68a62b09d1/cc-hixvx5kymecr9/RMC_Decouverte_FR.m3u8",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=rmc-decouverte",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20RMC%20D%C3%A9couverte%202017.svg"
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": false,
+      "isIframe": true,
       "guideTntId": 131
     },
     {
       "id": "t18",
       "name": "T18",
-      "url": "/pages/t18.html",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=t18",
       "logo": {
         "type": "image",
         "value": "https://focus.telerama.fr/500x500/0000/00/01/clear-4139.png"
@@ -214,14 +214,14 @@
     {
       "id": "bfmtv",
       "name": "BFMTV",
-      "url": "https://live-cdn-bfmtv-euw1.bfmtv.bct.nextradiotv.com/m1/media.m3u8",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=bfmtv",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20BFMTV%202019.svg"
       },
       "group": "Info",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "bfm-business",
@@ -238,19 +238,19 @@
     {
       "id": "euronews",
       "name": "Euronews",
-      "url": "https://euronews-live-fre-fr.fast.rakuten.tv/v1/master/0547f18649bd788bec7b67b746e47670f558b6b2/production-LiveChannel-6564/bitok/e/26032/euronews-fr.m3u8",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=euronews",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Euronews%20Logo%202025.svg"
       },
       "group": "Info",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "cnews",
       "name": "CNEWS",
-      "url": "/pages/worker-iptv.html?channel=cnewsfr",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=cnews",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Canal%20News%20logo.svg"
@@ -274,14 +274,14 @@
     {
       "id": "lci",
       "name": "LCI",
-      "url": "https://tvradiozap.eu/tools/tf-m3u8.php/LCI.m3u8",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=lci",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Premier%20Logo%20de%20LCI.fr.jpg"
       },
       "group": "Info",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "fifa",
@@ -346,7 +346,7 @@
     {
       "id": "canal-sport-360",
       "name": "CANAL+ Sport 360",
-      "url": "/pages/worker-iptv.html?channel=canal-sport-360",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=canal-sport-360",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Canal%2BSport%20360.png"
@@ -372,7 +372,7 @@
     {
       "id": "canal-sport",
       "name": "CANAL+ Sport",
-      "url": "/pages/worker-iptv.html?channel=canal-sport",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=canal-sport",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Canal%2B%20Sport%20Logo%202013.png"
@@ -422,7 +422,7 @@
     {
       "id": "eurosport-1",
       "name": "EUROSPORT 1",
-      "url": "/pages/worker-iptv.html?channel=eurosport-1",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=eurosport-1",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Eurosport%20Logo%20%282011-2015%29.svg"
@@ -435,7 +435,7 @@
     {
       "id": "eurosport-2",
       "name": "EUROSPORT 2",
-      "url": "/pages/worker-iptv.html?channel=eurosport-2",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=eurosport-2",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Eurosport%202%20Logo%20%282011-2015%29.svg"
@@ -448,7 +448,7 @@
     {
       "id": "rmc-sport-1",
       "name": "RMC Sport 1",
-      "url": "/pages/worker-iptv.html?channel=rmc-sport-1",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=rmc-sport-1",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20RMC%20Sport%201%202018.svg"
@@ -460,7 +460,7 @@
     {
       "id": "rmc-sport-2",
       "name": "RMC Sport 2",
-      "url": "/pages/worker-iptv.html?channel=rmc-sport-2",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=rmc-sport-2",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20RMC%20Sport%202%202018.svg"
@@ -485,7 +485,7 @@
     {
       "id": "equidia-fr",
       "name": "EQUIDIA FR",
-      "url": "/pages/worker-iptv.html?channel=equidia",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=equidia-fr",
       "logo": {
         "type": "image",
         "value": "https://focus.telerama.fr/500x500/0000/00/01/clear-64.png"
@@ -712,27 +712,27 @@
     {
       "id": "syfy hd",
       "name": "SYFY HD",
-      "url": "https://cluone.dad:443/live/99F7CFCD396779DC13E1FEF9BA9F9AE8/12.m3u8",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=syfy",
       "logo": {
         "type": "image",
         "value": "https://witv.football/images/logo/syfy-logo.png"
       },
       "group": "Cinéma",
       "isFavorite": false,
-      "isIframe": false,
+      "isIframe": true,
       "guideTntId": 122
     },
     {
       "id": "screamin",
       "name": "ScreamIN",
-      "url": "https://amg00711-zylo-amg00711c6-plex-us-935.playouts.now.amagi.tv/zylo-Screamin-lg/playlist.m3u8",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=screamin",
       "logo": {
         "type": "image",
         "value": "https://images-3.rakuten.tv/storage/global-live-channel/translation/artwork/9632cedb-5638-4010-9528-3ebf0071d631-screamin-1639988850-width200-quality90.jpeg"
       },
       "group": "Cinéma",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "simpsons-fr",
@@ -761,7 +761,7 @@
     {
       "id": "disney-channel",
       "name": "Disney Channel",
-      "url": "/pages/disney-channel.html",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=disney-channel",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/2017%20Disney%20Channel%20logo.svg"
@@ -835,14 +835,14 @@
     {
       "id": "gulli",
       "name": "Gulli",
-      "url": "https://sr-m6web.live.6cloud.fr/out/v1/6play/6play-gulli/cmaf_q2hyb21h/hls-short-sd.m3u8",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=gulli",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Gulli%20logo%202023.png"
       },
       "group": "Jeunesse",
       "isFavorite": false,
-      "isIframe": false,
+      "isIframe": true,
       "guideTntId": 87
     },
     {
@@ -896,14 +896,14 @@
     {
       "id": "beyblade-tv",
       "name": "Beyblade TV",
-      "url": "https://amg01796-amg01796c6-rakuten-fr-5334.playouts.now.amagi.tv/playlist/amg01796-fastmediafast-beybladefr-rakutenfr/playlist.m3u8",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=beyblade-tv",
       "logo": {
         "type": "image",
         "value": "https://images-3.rakuten.tv/storage/global-live-channel/translation/artwork/eb57f7ea-895a-4a74-a3ae-f3c506f1661c-width200-quality90.jpeg"
       },
       "group": "Jeunesse",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "japanimtv",
@@ -932,14 +932,14 @@
     {
       "id": "adn",
       "name": "ADN",
-      "url": "https://d3b73b34o7cvkq.cloudfront.net/v1/master/3722c60a815c199d9c0ef36c5b73da68a62b09d1/cc-gz2sgqzp076kf/adn.m3u8",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=adn",
       "logo": {
         "type": "image",
         "value": "/media/adn.png"
       },
       "group": "Jeunesse",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "j-one",
@@ -1117,14 +1117,14 @@
     {
       "id": "planete-a-e",
       "name": "Planète+ A&E",
-      "url": "https://cluone.dad:443/live/388FAA8743C4E2980F7B4089B7E81087/91.m3u8",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=planete-a-e",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/PLAN%C3%88TE%2B%20A%26E.png"
       },
       "group": "Documentaire",
       "isFavorite": false,
-      "isIframe": false,
+      "isIframe": true,
       "guideTntId": 135
     },
     {
@@ -1182,7 +1182,7 @@
     {
       "id": "canal-docs",
       "name": "Canal+ Docs",
-      "url": "/pages/worker-iptv.html?channel=canal-docs",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=canal-docs",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Canal%2B%20Docs.png"
