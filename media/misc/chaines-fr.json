@@ -20,27 +20,27 @@
     {
       "id": "france-2",
       "name": "France 2",
-      "url": "https://raw.githubusercontent.com/schumijo/iptv/refs/heads/main/playlists/francetv/france2.m3u8",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=france-2",
       "logo": {
         "type": "image",
         "value": "/media/image/france-2.webp"
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": false,
+      "isIframe": true,
       "guideTntId": 59
     },
     {
       "id": "france-3",
       "name": "France 3",
-      "url": "https://raw.githubusercontent.com/schumijo/iptv/main/playlists/francetv/france3.m3u8",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=france-3",
       "logo": {
         "type": "image",
         "value": "/media/image/france-3.webp"
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": false,
+      "isIframe": true,
       "guideTntId": 60
     },
     {
@@ -58,14 +58,14 @@
     {
       "id": "france-5",
       "name": "France 5",
-      "url": "https://raw.githubusercontent.com/schumijo/iptv/refs/heads/main/playlists/francetv/france5.m3u8",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=france-5",
       "logo": {
         "type": "image",
         "value": "https://focus.telerama.fr/500x500/0000/00/01/clear-47.png"
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": false,
+      "isIframe": true,
       "guideTntId": 62
     },
     {
@@ -583,6 +583,18 @@
       "isIframe": true
     },
     {
+      "id": "canal-box-office",
+      "name": "CANAL+ BOX OFFICE",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=canal-box-office",
+      "logo": {
+        "type": "image",
+        "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/france/canal-plus-box-office-fr.png"
+      },
+      "group": "Cinéma",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
       "id": "cine-famiz",
       "name": "CINE FAMIZ",
       "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=cine-famiz",
@@ -807,6 +819,18 @@
       "isFavorite": false,
       "isIframe": true,
       "guideTntId": 102
+    },
+    {
+      "id": "piwi",
+      "name": "PIWI+",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=piwi",
+      "logo": {
+        "type": "image",
+        "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/france/piwi-plus-fr.png"
+      },
+      "group": "Jeunesse",
+      "isFavorite": false,
+      "isIframe": true
     },
     {
       "id": "gulli",
@@ -1249,6 +1273,18 @@
       "logo": {
         "type": "image",
         "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/france/nrj-hits-fr.png"
+      },
+      "group": "Musique",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "melody",
+      "name": "MELODY",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=melody",
+      "logo": {
+        "type": "image",
+        "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/france/melody-fr.png"
       },
       "group": "Musique",
       "isFavorite": false,

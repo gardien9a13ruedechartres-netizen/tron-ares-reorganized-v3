@@ -255,6 +255,148 @@ const CHANNELS = {
 
 // Imported LiveWatch channels from worker-iptv3.
 Object.assign(CHANNELS, {
+  "france-2": {
+    "label": "France 2",
+    "defaultOrder": [
+      "cable",
+      "basic-hd"
+    ],
+    "sources": {
+      "cable": {
+        "id": "876169338419a098525bf-fd4a65f0dfaae6",
+        "label": "LiveWatch cable"
+      },
+      "basic-hd": {
+        "id": "3118025835b0fa704b6345-76f2ce5ccf7f3d",
+        "label": "LiveWatch basic HD"
+      }
+    }
+  },
+  "france-3": {
+    "label": "France 3",
+    "defaultOrder": [
+      "cable",
+      "satellite",
+      "basic-hd",
+      "satellite-hd"
+    ],
+    "sources": {
+      "cable": {
+        "id": "1568526820de51fc140eb-f35c01c8288ad9",
+        "label": "LiveWatch cable"
+      },
+      "satellite": {
+        "id": "35330736891b9b36efb55f-64002a2a6108d3",
+        "label": "LiveWatch satellite"
+      },
+      "basic-hd": {
+        "id": "19704906138a30ce8ae2c6-9baac7118687e3",
+        "label": "LiveWatch basic HD"
+      },
+      "satellite-hd": {
+        "id": "183277419a167cd02f32e-5e611ea6e93258",
+        "label": "LiveWatch satellite HD"
+      }
+    }
+  },
+  "france-5": {
+    "label": "France 5",
+    "defaultOrder": [
+      "cable",
+      "satellite",
+      "basic-hd"
+    ],
+    "sources": {
+      "cable": {
+        "id": "2249823338273b7989b2e7-471988727c684d",
+        "label": "LiveWatch cable"
+      },
+      "satellite": {
+        "id": "15743448890eaf9d60a67b-fd8974aaa1e056",
+        "label": "LiveWatch satellite"
+      },
+      "basic-hd": {
+        "id": "3004974450980927089433-16c3884d0a9570",
+        "label": "LiveWatch basic HD"
+      }
+    }
+  },
+  "canal-box-office": {
+    "label": "CANAL+ BOX OFFICE",
+    "defaultOrder": [
+      "cable",
+      "satellite",
+      "basic-hd"
+    ],
+    "sources": {
+      "cable": {
+        "id": "3655983806eda3054f7e69-5af577f1866530",
+        "label": "LiveWatch cable"
+      },
+      "satellite": {
+        "id": "97238400212a5a98e376c-98c49186c89bf9",
+        "label": "LiveWatch satellite"
+      },
+      "basic-hd": {
+        "id": "8210443791c934dc94e58-a4fb90e828a5d0",
+        "label": "LiveWatch basic HD"
+      }
+    }
+  },
+  "piwi": {
+    "label": "PIWI+",
+    "defaultOrder": [
+      "satellite-fhd",
+      "satellite-hd",
+      "cable",
+      "satellite",
+      "basic"
+    ],
+    "sources": {
+      "satellite-fhd": {
+        "id": "278398746240f101d8ba5b-134babf4ce22f8",
+        "label": "LiveWatch satellite FHD"
+      },
+      "satellite-hd": {
+        "id": "2271253320e238452c66dd-39512ed4e07d6d",
+        "label": "LiveWatch satellite HD"
+      },
+      "cable": {
+        "id": "2272423077184c1838f29c-7e205f90c233d3",
+        "label": "LiveWatch cable"
+      },
+      "satellite": {
+        "id": "4161488231e1f6fd526d3e-25329b2e60362e",
+        "label": "LiveWatch satellite"
+      },
+      "basic": {
+        "id": "9123900987ab3db9ccaed-b1a56d730a6490",
+        "label": "LiveWatch basic"
+      }
+    }
+  },
+  "melody": {
+    "label": "MELODY",
+    "defaultOrder": [
+      "basic-hd",
+      "cable",
+      "basic-sd"
+    ],
+    "sources": {
+      "basic-hd": {
+        "id": "22146575819dfdff73d7d7-d79c41ff5e4ef6",
+        "label": "LiveWatch basic HD"
+      },
+      "cable": {
+        "id": "1406674139a49b095e524f-989f6477397b39",
+        "label": "LiveWatch cable"
+      },
+      "basic-sd": {
+        "id": "397731749366b9ee9a6933-8064923cc4ab33",
+        "label": "LiveWatch basic SD"
+      }
+    }
+  },
   "canal-gr-ecran": {
     "label": "CANAL+ GRAND ECRAN",
     "defaultOrder": [
