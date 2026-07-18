@@ -1760,6 +1760,77 @@ Object.assign(CHANNELS, {
       }
     }
   },
+  "arte": {
+    "label": "ARTE",
+    "defaultOrder": [
+      "satellite-fhd",
+      "cable",
+      "basic"
+    ],
+    "sources": {
+      "satellite-fhd": {
+        "id": "621108426057f0edcfe9d-21a6f308e7749c",
+        "label": "LiveWatch satellite FHD"
+      },
+      "cable": {
+        "id": "16663524193943bf4b5dde-0538bed1b396a8",
+        "label": "LiveWatch cable"
+      },
+      "basic": {
+        "id": "28525090523bed95eaf3d2-234eff5c35cdb8",
+        "label": "LiveWatch basic"
+      }
+    }
+  },
+  "tmc": {
+    "label": "TMC",
+    "defaultOrder": [
+      "basic-hd",
+      "satellite-hd",
+      "cable",
+      "satellite"
+    ],
+    "sources": {
+      "basic-hd": {
+        "id": "42285072155d6c7509c2ed-06fca5959a2b89",
+        "label": "LiveWatch basic HD"
+      },
+      "satellite-hd": {
+        "id": "354095306cf3cfce56f28-563de8c33e117a",
+        "label": "LiveWatch satellite HD"
+      },
+      "cable": {
+        "id": "361211396f33e971ef526-3e71d9bb6657c4",
+        "label": "LiveWatch cable"
+      },
+      "satellite": {
+        "id": "1149078876048c6fd8939d-a38d20aa2c72ca",
+        "label": "LiveWatch satellite"
+      }
+    }
+  },
+  "tfx": {
+    "label": "TFX",
+    "defaultOrder": [
+      "cable",
+      "satellite",
+      "basic"
+    ],
+    "sources": {
+      "cable": {
+        "id": "17522320208e62334baa89-3cc05f38724251",
+        "label": "LiveWatch cable"
+      },
+      "satellite": {
+        "id": "965401356d56a26be4f45-c5e4850c44e8ba",
+        "label": "LiveWatch satellite"
+      },
+      "basic": {
+        "id": "3794086467dcb3e9b1728b-037a336b29d3ba",
+        "label": "LiveWatch basic"
+      }
+    }
+  },
   "m6": {
     "label": "M6",
     "defaultOrder": [

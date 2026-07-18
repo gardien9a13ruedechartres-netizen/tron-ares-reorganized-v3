@@ -84,7 +84,7 @@
     {
       "id": "arte",
       "name": "Arte",
-      "url": "/pages/worker-iptv.html?channel=artefr",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=arte",
       "logo": {
         "type": "image",
         "value": "/media/image/arte.webp"
@@ -123,10 +123,10 @@
     {
       "id": "tmc",
       "name": "TMC",
-      "url": "https://salema-vic.github.io/Paradise/?channel=TMC.fr",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=tmc",
       "logo": {
         "type": "image",
-        "value": "https://commons.wikimedia.org/wiki/Special:FilePath/TMC%20logo.jpg"
+        "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/france/tmc-fr.png"
       },
       "group": "Généraliste",
       "isFavorite": false,
@@ -136,10 +136,10 @@
     {
       "id": "tfx",
       "name": "TFX",
-      "url": "https://salema-vic.github.io/Paradise/?channel=tfx",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=tfx",
       "logo": {
         "type": "image",
-        "value": "https://commons.wikimedia.org/wiki/Special:FilePath/TFX%20logo.svg"
+        "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/france/tfx-fr.png"
       },
       "group": "Généraliste",
       "isFavorite": false,
