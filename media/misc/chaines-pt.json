@@ -460,6 +460,54 @@
       "meoCallLetter": "VMAISTVI"
     },
     {
+      "id": "tvcine-top",
+      "name": "TVCINE TOP",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=tvcine-top",
+      "logo": {
+        "type": "image",
+        "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/tvcine-top-hd-pt.png"
+      },
+      "group": "Cinéma",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "tvcine-action",
+      "name": "TVCINE ACTION",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=tvcine-action",
+      "logo": {
+        "type": "image",
+        "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/tvcine-action-hd-pt.png"
+      },
+      "group": "Cinéma",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "tvcine-emotion",
+      "name": "TVCINE EMOTION",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=tvcine-emotion",
+      "logo": {
+        "type": "image",
+        "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/tvcine-emotion-hd-pt.png"
+      },
+      "group": "Cinéma",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "tvcine-edition",
+      "name": "TVCINE EDITION",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=tvcine-edition",
+      "logo": {
+        "type": "image",
+        "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/tvcine-edition-hd-pt.png"
+      },
+      "group": "Cinéma",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
       "id": "disney-pixar",
       "name": "DISNEY+ PIXAR",
       "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=disney-pixar",
@@ -478,6 +526,30 @@
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/2017%20Disney%20Channel%20logo.svg"
+      },
+      "group": "Jeunesse",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "panda-kids",
+      "name": "PANDA KIDS",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=panda-kids",
+      "logo": {
+        "type": "image",
+        "value": ""
+      },
+      "group": "Jeunesse",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "patrulha-pata",
+      "name": "PATRULHA PATA",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=patrulha-pata",
+      "logo": {
+        "type": "image",
+        "value": ""
       },
       "group": "Jeunesse",
       "isFavorite": false,

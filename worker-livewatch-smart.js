@@ -36,11 +36,17 @@ const PORTUGAL_LIVEWATCH_CHANNELS = new Set([
   "sport-tv-3",
   "sport-tv-4",
   "sport-tv-5",
+  "tvcine-action",
+  "tvcine-edition",
+  "tvcine-emotion",
+  "tvcine-top",
   "tvi",
   "tvi-ficcao",
   "tvi-internacional",
   "tvi-reality",
   "v-plus-tvi",
+  "panda-kids",
+  "patrulha-pata",
   "tv-globo"
 ]);
 
@@ -995,6 +1001,130 @@ Object.assign(CHANNELS, {
         "id": "1668808212073ea3ac1de7-d9ced7946bf115",
         "label": "LiveWatch basic",
         "exact": "DISNEY CHANNEL",
+        "country": "Portugal"
+      }
+    }
+  },
+  "tvcine-top": {
+    "label": "TVCINE TOP",
+    "livewatchSearch": "TVCINE TOP",
+    "livewatchExact": "TVCINE TOP",
+    "defaultOrder": [
+      "basic-hd",
+      "cable"
+    ],
+    "sources": {
+      "basic-hd": {
+        "id": "40561975950bd1a2ae20e-456dcf053d167c",
+        "label": "LiveWatch basic HD",
+        "exact": "TVCINE TOP",
+        "country": "Portugal"
+      },
+      "cable": {
+        "id": "11677026147f6051732333-21b69eb881757b",
+        "label": "LiveWatch cable",
+        "exact": "TVCINE TOP",
+        "country": "Portugal"
+      }
+    }
+  },
+  "tvcine-action": {
+    "label": "TVCINE ACTION",
+    "livewatchSearch": "TVCINE ACTION",
+    "livewatchExact": "TVCINE ACTION",
+    "defaultOrder": [
+      "basic-hd",
+      "cable"
+    ],
+    "sources": {
+      "basic-hd": {
+        "id": "7936318033db25a8648aa-2239c4532cdd4f",
+        "label": "LiveWatch basic HD",
+        "exact": "TVCINE ACTION",
+        "country": "Portugal"
+      },
+      "cable": {
+        "id": "3790970324f06b4796f2fe-25d11629b06530",
+        "label": "LiveWatch cable",
+        "exact": "TVCINE ACTION",
+        "country": "Portugal"
+      }
+    }
+  },
+  "tvcine-emotion": {
+    "label": "TVCINE EMOTION",
+    "livewatchSearch": "TVCINE EMOTION",
+    "livewatchExact": "TVCINE EMOTION",
+    "defaultOrder": [
+      "basic-hd",
+      "cable"
+    ],
+    "sources": {
+      "basic-hd": {
+        "id": "406450924438bf8ed91739-7d748d9e682daa",
+        "label": "LiveWatch basic HD",
+        "exact": "TVCINE EMOTION",
+        "country": "Portugal"
+      },
+      "cable": {
+        "id": "385958923062108a82180c-2cfe94b64f2afc",
+        "label": "LiveWatch cable",
+        "exact": "TVCINE EMOTION",
+        "country": "Portugal"
+      }
+    }
+  },
+  "tvcine-edition": {
+    "label": "TVCINE EDITION",
+    "livewatchSearch": "TVCINE EDITION",
+    "livewatchExact": "TVCINE EDITION",
+    "defaultOrder": [
+      "basic-hd",
+      "cable"
+    ],
+    "sources": {
+      "basic-hd": {
+        "id": "2599146036b6364834e9f6-4c39283bcab037",
+        "label": "LiveWatch basic HD",
+        "exact": "TVCINE EDITION",
+        "country": "Portugal"
+      },
+      "cable": {
+        "id": "1761868334d8c26523c126-580fc5dd141f80",
+        "label": "LiveWatch cable",
+        "exact": "TVCINE EDITION",
+        "country": "Portugal"
+      }
+    }
+  },
+  "panda-kids": {
+    "label": "PANDA KIDS",
+    "livewatchSearch": "PANDA KIDS",
+    "livewatchExact": "PANDA KIDS",
+    "defaultOrder": [
+      "cable"
+    ],
+    "sources": {
+      "cable": {
+        "id": "21712439520d828fed18d2-c57b572a10cfe6",
+        "label": "LiveWatch cable",
+        "exact": "PANDA KIDS",
+        "country": "Portugal"
+      }
+    }
+  },
+  "patrulha-pata": {
+    "label": "PATRULHA PATA",
+    "livewatchSearch": "PATRULHA PATA",
+    "livewatchExact": "PATRULHA PATA",
+    "defaultOrder": [
+      "cable"
+    ],
+    "sources": {
+      "cable": {
+        "id": "165571168486077e97f67f-3ae063ef148ac4",
+        "label": "LiveWatch cable",
+        "exact": "PATRULHA PATA",
         "country": "Portugal"
       }
     }
