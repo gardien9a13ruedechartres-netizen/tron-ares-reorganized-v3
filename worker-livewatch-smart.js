@@ -14,7 +14,11 @@ const PORTUGAL_LIVEWATCH_CHANNELS = new Set([
   "canal-panda",
   "cmtv",
   "disney-pixar",
+  "sport-tv-plus",
   "sport-tv-1",
+  "sport-tv-2",
+  "sport-tv-3",
+  "sport-tv-4",
   "sport-tv-5",
   "tvi",
   "tv-globo"
@@ -736,6 +740,32 @@ Object.assign(CHANNELS, {
       }
     }
   },
+  "sport-tv-plus": {
+    "label": "SPORT TV +",
+    "defaultOrder": [
+      "basic-hd",
+      "cable"
+    ],
+    "sources": {
+      "basic-hd": {
+        "id": "1822489426520c241aa6-cfb9a4c82b9ec4",
+        "label": "LiveWatch basic HD"
+      },
+      "cable": {
+        "id": "3862034077c5920f2e95e0-52cc72347dafc8",
+        "label": "LiveWatch cable"
+      }
+    },
+    "manualSources": {
+      "deviantart": {
+        "kind": "lovetier",
+        "id": "legacy-lovetier-sport-tv-plus",
+        "label": "DeviantArt SPORT TV +",
+        "button": "DeviantArt",
+        "lovetierChannel": "SPTPLUS"
+      }
+    }
+  },
   "sport-tv-1": {
     "label": "SPORT TV 1",
     "defaultOrder": [
@@ -774,6 +804,124 @@ Object.assign(CHANNELS, {
         "label": "DeviantArt SPORT TV 1",
         "button": "DeviantArt",
         "lovetierChannel": "SPT1"
+      }
+    }
+  },
+  "sport-tv-2": {
+    "label": "SPORT TV 2",
+    "defaultOrder": [
+      "basic-hd",
+      "basic-hd-backup",
+      "basic",
+      "cable",
+      "basic-backup"
+    ],
+    "sources": {
+      "basic-hd": {
+        "id": "165899391805b3c6eebe1e-d9b924959f3a27",
+        "label": "LiveWatch basic HD"
+      },
+      "basic-hd-backup": {
+        "id": "779445982b1306e3d0cd6-c9eeaaf5788a5f",
+        "label": "LiveWatch basic HD backup"
+      },
+      "basic": {
+        "id": "2080453864766690bc1444-e4c14445780a23",
+        "label": "LiveWatch basic"
+      },
+      "cable": {
+        "id": "234468235087a9bf800929-943405daf6989b",
+        "label": "LiveWatch cable"
+      },
+      "basic-backup": {
+        "id": "702454257ca89335a3714-3feca8ba7eb9be",
+        "label": "LiveWatch basic backup"
+      }
+    },
+    "manualSources": {
+      "deviantart": {
+        "kind": "lovetier",
+        "id": "legacy-lovetier-sport-tv-2",
+        "label": "DeviantArt SPORT TV 2",
+        "button": "DeviantArt",
+        "lovetierChannel": "SPT2"
+      }
+    }
+  },
+  "sport-tv-3": {
+    "label": "SPORT TV 3",
+    "defaultOrder": [
+      "basic-hd",
+      "basic-hd-backup",
+      "basic",
+      "cable",
+      "basic-backup"
+    ],
+    "sources": {
+      "basic-hd": {
+        "id": "29239696323c3367d22195-dac52e65491212",
+        "label": "LiveWatch basic HD"
+      },
+      "basic-hd-backup": {
+        "id": "284922204548cb511d23b0-b479d4e7d8e9b3",
+        "label": "LiveWatch basic HD backup"
+      },
+      "basic": {
+        "id": "1096883544ce7e759e123d-abd608cf755bc3",
+        "label": "LiveWatch basic"
+      },
+      "cable": {
+        "id": "3064015582353b13df33ce-504d04312be34d",
+        "label": "LiveWatch cable"
+      },
+      "basic-backup": {
+        "id": "3033626759881077a52574-5490cd9fc8c01c",
+        "label": "LiveWatch basic backup"
+      }
+    },
+    "manualSources": {
+      "deviantart": {
+        "kind": "lovetier",
+        "id": "legacy-lovetier-sport-tv-3",
+        "label": "DeviantArt SPORT TV 3",
+        "button": "DeviantArt",
+        "lovetierChannel": "SPT3"
+      }
+    }
+  },
+  "sport-tv-4": {
+    "label": "SPORT TV 4",
+    "defaultOrder": [
+      "basic-hd",
+      "basic",
+      "cable",
+      "basic-backup"
+    ],
+    "sources": {
+      "basic-hd": {
+        "id": "27607176894a7491650639-65d3f268a624fe",
+        "label": "LiveWatch basic HD"
+      },
+      "basic": {
+        "id": "40811728087a4ade7a88ca-158bcdde8b0787",
+        "label": "LiveWatch basic"
+      },
+      "cable": {
+        "id": "7562619003d91faa3445-a0c54f01eda1d7",
+        "label": "LiveWatch cable"
+      },
+      "basic-backup": {
+        "id": "3508326983f5dc4f61f1cb-3fa9a9b91d3525",
+        "label": "LiveWatch basic backup"
+      }
+    },
+    "manualSources": {
+      "deviantart": {
+        "kind": "lovetier",
+        "id": "legacy-lovetier-sport-tv-4",
+        "label": "DeviantArt SPORT TV 4",
+        "button": "DeviantArt",
+        "lovetierChannel": "SPT4"
       }
     }
   },
