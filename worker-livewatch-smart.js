@@ -4120,6 +4120,9 @@ function playerPage(origin, channelKey, channel) {
     const START_LABEL = ${scriptJson(startLabel)};
     const CONSOLE_PREFIX = ${scriptJson(`${channel.label} Smart`)};
     const LONG_STALL_MS = 3500;
+    const REAL_PLAYBACK_START_MS = 7000;
+    const PLAYHEAD_CHECK_MS = 3000;
+    const PLAYHEAD_FROZEN_MS = 13000;
     const BAD_EVENT_WINDOW_MS = 30000;
     const BAD_EVENT_LIMIT = 2;
     const SMART_RECOVERY_PROBE_MS = 25000;
@@ -4144,6 +4147,11 @@ function playerPage(origin, channelKey, channel) {
     let lastProgressLogAt = 0;
     let stallStartedAt = 0;
     let stallTimer = null;
+    let realPlaybackTimer = null;
+    let playheadWatchTimer = null;
+    let lastPlayheadValue = 0;
+    let lastPlayheadAdvanceAt = 0;
+    let loadEpoch = 0;
     let badEvents = [];
     let smartRecoveryTimer = null;
     let smartReturnConfirmTimer = null;
@@ -4223,6 +4231,18 @@ function playerPage(origin, channelKey, channel) {
         stallTimer = null;
       }
     }
+    function clearRealPlaybackTimer() {
+      if (realPlaybackTimer) {
+        clearTimeout(realPlaybackTimer);
+        realPlaybackTimer = null;
+      }
+    }
+    function clearPlayheadWatchTimer() {
+      if (playheadWatchTimer) {
+        clearInterval(playheadWatchTimer);
+        playheadWatchTimer = null;
+      }
+    }
     function clearSmartRecoveryTimers() {
       smartProbeInFlight = false;
       if (smartRecoveryTimer) {
@@ -4233,6 +4253,87 @@ function playerPage(origin, channelKey, channel) {
         clearTimeout(smartReturnConfirmTimer);
         smartReturnConfirmTimer = null;
       }
+    }
+    function notePlayheadAdvance(reason) {
+      const current = Number(video.currentTime || 0);
+      if (current > lastPlayheadValue + 0.25) {
+        lastPlayheadValue = current;
+        lastPlayheadAdvanceAt = Date.now();
+        clearRealPlaybackTimer();
+        return true;
+      }
+      if (reason === 'timeupdate' && current > 0.35 && !lastPlayheadValue) {
+        lastPlayheadValue = current;
+        lastPlayheadAdvanceAt = Date.now();
+        clearRealPlaybackTimer();
+        return true;
+      }
+      return false;
+    }
+    function startRealPlaybackWatchdog(reason) {
+      const epoch = loadEpoch;
+      const key = activeKey;
+      const src = activeSrc;
+      const startCurrent = Number(video.currentTime || 0);
+      clearRealPlaybackTimer();
+      realPlaybackTimer = setTimeout(function() {
+        realPlaybackTimer = null;
+        if (epoch !== loadEpoch || key !== activeKey || src !== activeSrc) return;
+        const current = Number(video.currentTime || 0);
+        const advanced = current - startCurrent;
+        const sinceAdvance = Date.now() - lastPlayheadAdvanceAt;
+        if (document.visibilityState === 'hidden') {
+          appendLog('real-playback-watch-paused-hidden', { key: key, reason: reason, currentTime: Number(current.toFixed(2)) });
+          startRealPlaybackWatchdog('hidden-resume-' + reason);
+          return;
+        }
+        if (video.paused && !video.ended) {
+          appendLog('real-playback-waiting-user-gesture', { key: key, reason: reason, currentTime: Number(current.toFixed(2)), paused: video.paused });
+          setLoadStatus('warn', 'Lecture en attente', 'Interaction navigateur necessaire');
+          startRealPlaybackWatchdog('paused-' + reason);
+          return;
+        }
+        if (advanced < 0.5 && sinceAdvance >= REAL_PLAYBACK_START_MS - 250) {
+          appendLog('no-real-playback', {
+            key: key,
+            reason: reason,
+            currentTime: Number(current.toFixed(2)),
+            bufferedEnd: bufferedEnd(),
+            readyState: video.readyState,
+            sinceAdvanceMs: sinceAdvance
+          });
+          setLoadStatus('warn', 'Flux sans progression reelle', (SOURCE_LABELS[key] || key) + ' bloque malgre HTTP 200');
+          tryFailover('no-real-playback-' + reason);
+          return;
+        }
+        appendLog('real-playback-confirmed', {
+          key: key,
+          reason: reason,
+          currentTime: Number(current.toFixed(2)),
+          bufferedEnd: bufferedEnd()
+        });
+      }, REAL_PLAYBACK_START_MS);
+    }
+    function startPlayheadWatch() {
+      const epoch = loadEpoch;
+      clearPlayheadWatchTimer();
+      playheadWatchTimer = setInterval(function() {
+        if (epoch !== loadEpoch) return;
+        if (!activeKey || video.paused || video.ended || document.visibilityState === 'hidden') return;
+        const advanced = notePlayheadAdvance('watch');
+        if (advanced) return;
+        const sinceAdvance = Date.now() - lastPlayheadAdvanceAt;
+        if (sinceAdvance < PLAYHEAD_FROZEN_MS) return;
+        appendLog('playhead-frozen', {
+          key: activeKey,
+          currentTime: Number((video.currentTime || 0).toFixed(2)),
+          bufferedEnd: bufferedEnd(),
+          readyState: video.readyState,
+          sinceAdvanceMs: sinceAdvance
+        });
+        setLoadStatus('warn', 'Lecture figee', (SOURCE_LABELS[activeKey] || activeKey) + ' ne progresse plus');
+        tryFailover('playhead-frozen');
+      }, PLAYHEAD_CHECK_MS);
     }
     function clearSelfRetryTimer() {
       if (smartSelfRetryTimer) {
@@ -4604,6 +4705,7 @@ function playerPage(origin, channelKey, channel) {
       }
     }
     async function load(src, label) {
+      loadEpoch += 1;
       activeLabel = label || 'source';
       activeSrc = src;
       lastProgressLogAt = 0;
@@ -4611,7 +4713,11 @@ function playerPage(origin, channelKey, channel) {
       badEvents = [];
       lastFragUrl = '';
       sameFragCount = 0;
+      lastPlayheadValue = 0;
+      lastPlayheadAdvanceAt = Date.now();
       clearStallTimer();
+      clearRealPlaybackTimer();
+      clearPlayheadWatchTimer();
       appendLog('load-start', src);
       setLoadStatus('loading', 'Connexion au flux', activeLabel || label || 'source');
       inspectSource(src);
@@ -4674,6 +4780,8 @@ function playerPage(origin, channelKey, channel) {
         video.src = src;
         attemptAutoplay('native-source');
       }
+      startRealPlaybackWatchdog('load');
+      startPlayheadWatch();
     }
     function loadSourceKey(key, label, sequence, index, reason) {
       smartRecoveryEpoch += 1;
@@ -4715,6 +4823,7 @@ function playerPage(origin, channelKey, channel) {
         if (name === 'playing') setLoadStatus('ok', 'Lecture active', 'buffer ' + (bufferedEnd() === null ? 'en cours' : bufferedEnd() + 's'), 1800);
         if (name === 'playing' || name === 'loadedmetadata') {
           if (name === 'playing') smartSelfRetryCount = 0;
+          if (name === 'playing') notePlayheadAdvance('playing');
           noteRecovered(name);
           if (hasBetterSource()) schedulePrimaryRecovery('fallback-' + name);
         }
@@ -4726,6 +4835,7 @@ function playerPage(origin, channelKey, channel) {
     });
     video.addEventListener('timeupdate', function() {
       const now = Date.now();
+      notePlayheadAdvance('timeupdate');
       if (now - lastProgressLogAt < 10000) return;
       lastProgressLogAt = now;
       appendLog('progress', { currentTime: Number(video.currentTime.toFixed(2)), bufferedEnd: bufferedEnd(), source: activeSrc });
