@@ -1998,6 +1998,45 @@ Object.assign(CHANNELS, {
       }
     }
   },
+  "canal-foot": {
+    "label": "CANAL+ Foot",
+    "livewatchSearch": "CANAL+ Foot",
+    "livewatchExact": "CANAL+ FOOT",
+    "defaultOrder": [
+      "satellite-fhd",
+      "satellite-hd",
+      "cable"
+    ],
+    "sources": {
+      "satellite-fhd": {
+        "id": "3010946034470bbc7286f0-f96dacdf4ccbc8",
+        "label": "LiveWatch satellite FHD",
+        "exact": "CANAL+ FOOT",
+        "country": "France"
+      },
+      "satellite-hd": {
+        "id": "182105768781f683a79796-f9ee11e2f66310",
+        "label": "LiveWatch satellite HD",
+        "exact": "CANAL+ FOOT",
+        "country": "France"
+      },
+      "cable": {
+        "id": "3271278010f4217cd17c4c-9481045a45a7d7",
+        "label": "LiveWatch cable",
+        "exact": "CANAL+ FOOT",
+        "country": "France"
+      }
+    },
+    "manualSources": {
+      "deviantart": {
+        "kind": "lovetier",
+        "id": "legacy-lovetier-footplusfr",
+        "label": "DeviantArt CANAL+ Foot",
+        "button": "DeviantArt",
+        "lovetierChannel": "FOOTPLUSFR"
+      }
+    }
+  },
   "eurosport-1-pt": {
     "label": "Eurosport 1 PT",
     "livewatchSearch": "Eurosport 1",

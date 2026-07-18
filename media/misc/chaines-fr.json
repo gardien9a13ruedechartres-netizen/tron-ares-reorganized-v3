@@ -359,10 +359,10 @@
     {
       "id": "canal-foot",
       "name": "CANAL+ Foot",
-      "url": "/pages/worker-iptv.html?channel=canal-foot",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=canal-foot",
       "logo": {
         "type": "image",
-        "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Foot%2B%20%28logo%2C%202011-%29.svg"
+        "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/france/canal-plus-foot-fr.png"
       },
       "group": "Sport",
       "isFavorite": false,
