@@ -3048,6 +3048,149 @@ async function __getMpdQualityChips(url) {
   return chips;
 }
 
+const LIVEWATCH_SMART_EPG_NOW_URL = 'https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/api/epg/now';
+let __livewatchEpgPanel = null;
+
+function __entryUsesLivewatchSmart(entry) {
+  return /^https:\/\/tron-ares-livewatch-smart\.victor-salema-53d\.workers\.dev\//i.test(String(entry?.url || ''));
+}
+
+function __livewatchEpgNameForEntry(entry) {
+  const explicit = String(entry?.livewatchEpgName || entry?.epgName || '').trim();
+  if (explicit) return explicit;
+  if (!__entryUsesLivewatchSmart(entry)) return '';
+  return String(entry?.name || '').trim();
+}
+
+function __formatEpgTime(value) {
+  if (!value && value !== 0) return '';
+  const date = typeof value === 'number'
+    ? new Date(value * 1000)
+    : new Date(String(value));
+  if (!Number.isFinite(date.getTime())) return '';
+  return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function __formatEpgRange(item) {
+  if (!item) return '';
+  const start = __formatEpgTime(item.start || item.start_iso);
+  const stop = __formatEpgTime(item.stop || item.stop_iso);
+  return start && stop ? `${start} - ${stop}` : (start || stop || '');
+}
+
+function __formatEpgRemaining(seconds) {
+  const total = Math.max(0, Number(seconds || 0));
+  if (!Number.isFinite(total) || total <= 0) return '';
+  const minutes = Math.round(total / 60);
+  if (minutes < 60) return `${minutes} min restantes`;
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  return rest ? `${hours} h ${rest} min restantes` : `${hours} h restantes`;
+}
+
+function __appendEpgText(parent, className, text) {
+  const el = document.createElement('div');
+  el.className = className;
+  el.textContent = text || '';
+  parent.appendChild(el);
+  return el;
+}
+
+function __appendEpgProgram(parent, label, item) {
+  const block = document.createElement('section');
+  block.className = 'livewatch-epg-program';
+  __appendEpgText(block, 'livewatch-epg-kicker', label);
+  __appendEpgText(block, 'livewatch-epg-program-title', item?.title || 'Programme indisponible');
+  const meta = [__formatEpgRange(item), item?.category || '', __formatEpgRemaining(item?.remaining_sec)]
+    .filter(Boolean)
+    .join(' | ');
+  if (meta) __appendEpgText(block, 'livewatch-epg-meta', meta);
+  if (item?.desc) __appendEpgText(block, 'livewatch-epg-desc', item.desc);
+  if (label === 'En cours' && item && Number.isFinite(Number(item.progress))) {
+    const track = document.createElement('div');
+    track.className = 'livewatch-epg-progress';
+    const bar = document.createElement('span');
+    bar.style.width = `${Math.max(0, Math.min(100, Number(item.progress) * 100)).toFixed(0)}%`;
+    track.appendChild(bar);
+    block.appendChild(track);
+  }
+  parent.appendChild(block);
+}
+
+function __ensureLivewatchEpgPanel() {
+  if (__livewatchEpgPanel) return __livewatchEpgPanel;
+  const overlay = document.createElement('div');
+  overlay.className = 'livewatch-epg-overlay hidden';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+
+  const panel = document.createElement('div');
+  panel.className = 'livewatch-epg-panel';
+  panel.addEventListener('click', (ev) => ev.stopPropagation());
+
+  const top = document.createElement('div');
+  top.className = 'livewatch-epg-top';
+  const title = document.createElement('h3');
+  title.textContent = 'Programme TV';
+  const close = document.createElement('button');
+  close.type = 'button';
+  close.className = 'livewatch-epg-close';
+  close.setAttribute('aria-label', 'Fermer');
+  close.textContent = 'x';
+  close.addEventListener('click', () => overlay.classList.add('hidden'));
+  top.appendChild(title);
+  top.appendChild(close);
+
+  const body = document.createElement('div');
+  body.className = 'livewatch-epg-body';
+  panel.appendChild(top);
+  panel.appendChild(body);
+  overlay.appendChild(panel);
+  overlay.addEventListener('click', () => overlay.classList.add('hidden'));
+  document.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Escape') overlay.classList.add('hidden');
+  });
+  document.body.appendChild(overlay);
+  __livewatchEpgPanel = { overlay, title, body };
+  return __livewatchEpgPanel;
+}
+
+function __renderLivewatchEpgLoading(entry) {
+  const panel = __ensureLivewatchEpgPanel();
+  panel.title.textContent = `Programme - ${normalizeName(entry?.name || '')}`;
+  panel.body.innerHTML = '';
+  __appendEpgText(panel.body, 'livewatch-epg-state', 'Chargement du programme...');
+  panel.overlay.classList.remove('hidden');
+  return panel;
+}
+
+function __renderLivewatchEpgData(panel, data) {
+  panel.body.innerHTML = '';
+  if (!data || (!data.current && !data.next)) {
+    __appendEpgText(panel.body, 'livewatch-epg-state', 'Programme indisponible pour cette chaine.');
+    return;
+  }
+  if (data.current) __appendEpgProgram(panel.body, 'En cours', data.current);
+  if (data.next) __appendEpgProgram(panel.body, 'A suivre', data.next);
+}
+
+async function __openLivewatchEpgNow(entry) {
+  const name = __livewatchEpgNameForEntry(entry);
+  if (!name) return;
+  const panel = __renderLivewatchEpgLoading(entry);
+  try {
+    const url = `${LIVEWATCH_SMART_EPG_NOW_URL}?name=${encodeURIComponent(name)}`;
+    const response = await fetch(url, { cache: 'no-store' });
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    const data = await response.json();
+    __renderLivewatchEpgData(panel, data);
+  } catch (error) {
+    panel.body.innerHTML = '';
+    __appendEpgText(panel.body, 'livewatch-epg-state', 'Programme indisponible pour le moment.');
+    console.warn('[LiveWatch EPG]', error);
+  }
+}
+
 
 
 
@@ -3067,6 +3210,8 @@ function createChannelElement(entry, index, sourceType, options) {
   if (entry?.programUrl) li.dataset.programUrl = String(entry.programUrl);
   if (entry?.meoCallLetter) li.dataset.meoCallLetter = String(entry.meoCallLetter);
   if (entry?.guideTntId) li.dataset.guideTntId = String(entry.guideTntId);
+  const livewatchEpgName = __livewatchEpgNameForEntry(entry);
+  if (livewatchEpgName) li.dataset.livewatchEpgName = livewatchEpgName;
 
   const enableTmdbPoster = !!(options && options.enableTmdbPoster);
 
@@ -3119,6 +3264,19 @@ function createChannelElement(entry, index, sourceType, options) {
   titleRow.appendChild(numDiv);
   titleRow.appendChild(titleDiv);
   titleRow.appendChild(statusBadge);
+  if (livewatchEpgName) {
+    const epgBtn = document.createElement('button');
+    epgBtn.type = 'button';
+    epgBtn.className = 'fr-program-badge';
+    epgBtn.title = 'Programme en cours';
+    epgBtn.setAttribute('aria-label', 'Programme en cours');
+    epgBtn.textContent = 'i';
+    epgBtn.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      __openLivewatchEpgNow(entry);
+    });
+    titleRow.appendChild(epgBtn);
+  }
   titleRow.appendChild(statusBadge);
   titleRow.appendChild(statusBadge);
 
@@ -4454,6 +4612,10 @@ function parsePlaylistJSON(raw, listType, defaultGroup, sourceId) {
       isIframe: !!(item && item.isIframe) || isYoutubeUrl(url),
       isFavorite: !!(item && item.isFavorite),
       listType: lt,
+      guideTntId: item?.guideTntId || item?.frGuideTntId || "",
+      programUrl: item?.programUrl || (item?.nosGuideId ? `https://nostv.pt/guia/${encodeURIComponent(String(item.nosGuideId))}` : ""),
+      meoCallLetter: item?.meoCallLetter || "",
+      livewatchEpgName: item?.livewatchEpgName || item?.epgName || "",
       // pour permettre l'auto-refresh stable + catégories
       sourceId: sourceId || ''
     });
@@ -7566,6 +7728,7 @@ async function __subtitleDoSearch() {
       guideTntId: item.guideTntId || item.frGuideTntId || "",
       programUrl: item.programUrl || (item.nosGuideId ? `https://nostv.pt/guia/${encodeURIComponent(String(item.nosGuideId))}` : ""),
       meoCallLetter: item.meoCallLetter || "",
+      livewatchEpgName: item.livewatchEpgName || item.epgName || "",
       listType: item.isIframe ? "iframe" : "playlist"
       });
 

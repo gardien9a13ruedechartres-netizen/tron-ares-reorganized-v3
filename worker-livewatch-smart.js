@@ -7,6 +7,7 @@ const CLOUDING_PLAYER_ORIGIN = "https://popcdn.day";
 const PROXY_PATH = "/api/proxy";
 const SOURCE_TEST_TIMEOUT_MS = 7000;
 const SOURCE_CACHE_TTL_MS = 30000;
+const EPG_CACHE_TTL_MS = 45000;
 
 const PORTUGAL_LIVEWATCH_CHANNELS = new Set([
   "btv",
@@ -1795,6 +1796,7 @@ Object.assign(CHANNELS, {
 });
 
 const sourceCache = new Map();
+const epgCache = new Map();
 
 function corsHeaders() {
   return {
@@ -3258,11 +3260,88 @@ function notFound(message) {
   });
 }
 
+function cleanEpgName(value) {
+  return String(value || "")
+    .trim()
+    .replace(/[\u0000-\u001f\u007f]/g, "")
+    .slice(0, 90);
+}
+
+async function handleLivewatchEpgNow(request, requestUrl) {
+  if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders() });
+  if (request.method !== "GET" && request.method !== "HEAD") {
+    return new Response("Method not allowed", { status: 405, headers: corsHeaders() });
+  }
+
+  let name = cleanEpgName(requestUrl.searchParams.get("name"));
+  const channelKey = normalizeChannelKey(requestUrl.searchParams.get("channel"));
+  if (!name && channelKey && CHANNELS[channelKey]) {
+    name = cleanEpgName(CHANNELS[channelKey].livewatchEpgName || CHANNELS[channelKey].label);
+  }
+  if (!name) {
+    return jsonResponse({ ok: false, error: "Missing EPG name" }, 400);
+  }
+
+  const cacheKey = name.toLowerCase();
+  const now = Date.now();
+  const cached = epgCache.get(cacheKey);
+  if (cached && cached.expiresAt > now) {
+    const headers = new Headers(corsHeaders());
+    headers.set("Content-Type", "application/json; charset=utf-8");
+    headers.set("Cache-Control", "public, max-age=30");
+    return new Response(request.method === "HEAD" ? null : cached.body, {
+      status: cached.status,
+      headers
+    });
+  }
+
+  const upstreamUrl = new URL("/api/epg/now", LIVEWATCH_ORIGIN);
+  upstreamUrl.searchParams.set("name", name);
+
+  let upstream;
+  try {
+    upstream = await fetchWithTimeout(upstreamUrl, {
+      headers: livewatchHeaders("application/json,text/plain,*/*"),
+      redirect: "follow"
+    }, 9000);
+  } catch (error) {
+    return jsonResponse({
+      ok: false,
+      name,
+      error: error?.message || "LiveWatch EPG fetch failed"
+    }, 502);
+  }
+
+  const text = await upstream.text();
+  const body = upstream.ok
+    ? text
+    : JSON.stringify({
+      ok: false,
+      name,
+      status: upstream.status,
+      error: text || "LiveWatch EPG unavailable"
+    });
+
+  const status = upstream.ok ? 200 : upstream.status;
+  epgCache.set(cacheKey, {
+    status,
+    body,
+    expiresAt: now + EPG_CACHE_TTL_MS
+  });
+
+  const headers = new Headers(corsHeaders());
+  headers.set("Content-Type", "application/json; charset=utf-8");
+  headers.set("Cache-Control", "public, max-age=30");
+  if (request.method === "HEAD") return new Response(null, { status, headers });
+  return new Response(body, { status, headers });
+}
+
 export default {
   async fetch(request) {
     const url = new URL(request.url);
     const path = url.pathname.toLowerCase();
     if (path === PROXY_PATH) return handleProxy(request, url);
+    if (path === "/api/epg/now") return handleLivewatchEpgNow(request, url);
     if (path === "/api/channels") {
       return jsonResponse(Object.entries(CHANNELS).map(([key, channel]) => ({
         key,
