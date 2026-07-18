@@ -3386,6 +3386,15 @@ function playerPage(origin, channelKey, channel) {
     html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #000; color: #e5edf7; font-family: Arial, sans-serif; }
     main { position: fixed; inset: 0; width: 100vw; height: 100vh; background: #000; }
     video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; background: #000; display: block; }
+    .load-status { position: fixed; left: 14px; bottom: 14px; z-index: 22; max-width: min(520px, calc(100vw - 28px)); display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 9px; border: 1px solid rgba(255,255,255,.16); background: rgba(6,9,14,.78); color: rgba(236,244,255,.94); box-shadow: 0 12px 32px rgba(0,0,0,.32); backdrop-filter: blur(8px); pointer-events: none; transition: opacity .18s ease, transform .18s ease; }
+    .load-status.hidden { opacity: 0; transform: translateY(6px); }
+    .load-dot { width: 8px; height: 8px; border-radius: 999px; flex: 0 0 auto; background: #5cc8ff; box-shadow: 0 0 12px rgba(92,200,255,.72); }
+    .load-status[data-state="ok"] .load-dot { background: #35e891; box-shadow: 0 0 12px rgba(53,232,145,.72); }
+    .load-status[data-state="warn"] .load-dot { background: #ffbf4d; box-shadow: 0 0 12px rgba(255,191,77,.72); }
+    .load-status[data-state="error"] .load-dot { background: #ff5c7a; box-shadow: 0 0 12px rgba(255,92,122,.72); }
+    .load-copy { min-width: 0; }
+    .load-title { font-size: 12px; font-weight: 700; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .load-meta { margin-top: 2px; font-size: 10px; line-height: 1.25; color: rgba(199,216,235,.75); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     #menuToggle { position: fixed; top: 10px; right: 10px; z-index: 30; width: 38px; height: 38px; padding: 0; display: grid; place-items: center; color: rgba(255,255,255,.9); background: rgba(0,0,0,.12); border: 1px solid rgba(255,255,255,.18); border-radius: 10px; cursor: pointer; backdrop-filter: blur(4px); }
     #menuPanel { position: fixed; top: 56px; right: 10px; z-index: 29; width: min(440px, calc(100vw - 20px)); max-height: calc(100vh - 66px); overflow: auto; padding: 14px; border: 1px solid rgba(255,255,255,.18); border-radius: 12px; background: rgba(5,7,11,.88); box-shadow: 0 14px 40px rgba(0,0,0,.4); backdrop-filter: blur(10px); }
     #menuPanel[hidden], #log[hidden] { display: none !important; }
@@ -3401,6 +3410,13 @@ function playerPage(origin, channelKey, channel) {
 <body>
   <main>
     <video id="video" controls autoplay playsinline></video>
+    <div id="loadStatus" class="load-status" data-state="loading" role="status" aria-live="polite">
+      <span class="load-dot" aria-hidden="true"></span>
+      <span class="load-copy">
+        <span id="loadStatusText" class="load-title">Chargement reel du flux</span>
+        <span id="loadStatusMeta" class="load-meta">Initialisation du lecteur</span>
+      </span>
+    </div>
     <button id="menuToggle" type="button" aria-label="Ouvrir le menu" aria-controls="menuPanel" aria-expanded="false">&#9776;</button>
     <section id="menuPanel" hidden>
       <h1>${escapeHtml(channel.label)} Smart LiveWatch</h1>
@@ -3428,6 +3444,9 @@ function playerPage(origin, channelKey, channel) {
     const copyLogButton = document.getElementById('copyLog');
     const clearLogButton = document.getElementById('clearLog');
     const activeSourceInfo = document.getElementById('activeSourceInfo');
+    const loadStatus = document.getElementById('loadStatus');
+    const loadStatusText = document.getElementById('loadStatusText');
+    const loadStatusMeta = document.getElementById('loadStatusMeta');
     const channelSelect = document.getElementById('channelSelect');
     const startSmartButton = document.getElementById('startSmart');
     video.defaultMuted = false;
@@ -3476,7 +3495,24 @@ function playerPage(origin, channelKey, channel) {
     let sourceFailureHistory = {};
     let lastFragUrl = '';
     let sameFragCount = 0;
+    let loadStatusHideTimer = null;
     function safeJson(value) { try { return JSON.stringify(value); } catch (_) { return String(value); } }
+    function setLoadStatus(state, text, meta, hideDelayMs) {
+      if (!loadStatus) return;
+      if (loadStatusHideTimer) {
+        clearTimeout(loadStatusHideTimer);
+        loadStatusHideTimer = null;
+      }
+      loadStatus.dataset.state = state || 'loading';
+      loadStatus.classList.remove('hidden');
+      if (loadStatusText) loadStatusText.textContent = text || 'Chargement reel du flux';
+      if (loadStatusMeta) loadStatusMeta.textContent = meta || '';
+      if (hideDelayMs) {
+        loadStatusHideTimer = setTimeout(function() {
+          loadStatus.classList.add('hidden');
+        }, hideDelayMs);
+      }
+    }
     function appendLog(event, details) {
       const suffix = details === undefined ? '' : ' ' + (typeof details === 'string' ? details : safeJson(details));
       const line = '[' + new Date().toISOString() + '] [' + activeLabel + '] ' + event + suffix;
@@ -3790,6 +3826,7 @@ function playerPage(origin, channelKey, channel) {
         attempt: smartSelfRetryCount,
         waitMs: waitMs
       });
+      setLoadStatus('warn', 'Nouvel essai programme', SOURCE_LABELS[activeKey] + ' dans ' + Math.round(waitMs / 1000) + 's');
       smartSelfRetryTimer = setTimeout(function() {
         smartSelfRetryTimer = null;
         if (!activeKey || !SOURCE_URLS[activeKey]) return;
@@ -3814,6 +3851,7 @@ function playerPage(origin, channelKey, channel) {
         if (!pendingFailoverTimer) {
           const waitMs = Math.max(120, failoverLockUntil - now + 60);
           appendLog('failover-delayed', { reason: reason, activeKey: activeKey, waitMs: waitMs });
+          setLoadStatus('warn', 'Bascule differee', SOURCE_LABELS[activeKey] + ' - attente ' + Math.round(waitMs / 1000) + 's');
           pendingFailoverTimer = setTimeout(function() {
             pendingFailoverTimer = null;
             tryFailover('delayed-' + reason);
@@ -3825,6 +3863,7 @@ function playerPage(origin, channelKey, channel) {
       if (!activeSequence.length || activeSequenceIndex >= activeSequence.length - 1) {
         failoverLockUntil = Date.now() + 3000;
         appendLog('failover-unavailable', { reason: reason, activeKey: activeKey, sequence: activeSequence });
+        setLoadStatus('warn', 'Source en attente', 'Aucune source suivante disponible - retry automatique');
         markSourceFailure(activeKey, reason);
         scheduleSelfRetry(reason);
         return;
@@ -3835,6 +3874,7 @@ function playerPage(origin, channelKey, channel) {
       const nextIndex = activeSequenceIndex + 1;
       const nextKey = activeSequence[nextIndex];
       appendLog('failover-switch', { reason: reason, from: from, to: nextKey, sequence: activeSequence });
+      setLoadStatus('warn', 'Bascule de source', (SOURCE_LABELS[from] || from) + ' -> ' + (SOURCE_LABELS[nextKey] || nextKey));
       loadSourceKey(nextKey, 'Auto failover ' + SOURCE_LABELS[nextKey], activeSequence, nextIndex, reason);
       schedulePrimaryRecovery('after-failover-' + reason);
     }
@@ -3843,6 +3883,7 @@ function playerPage(origin, channelKey, channel) {
       const current = Number(video.currentTime.toFixed(2));
       if (end !== null && current > end + 45) {
         appendLog('time-outside-buffer', { event: eventName, currentTime: current, bufferedEnd: end });
+        setLoadStatus('warn', 'Flux hors buffer', 'currentTime ' + current + 's / buffer ' + end + 's');
         tryFailover('time-outside-buffer');
         return;
       }
@@ -3850,6 +3891,7 @@ function playerPage(origin, channelKey, channel) {
         stallStartedAt = Date.now();
         appendLog('stall-start', { event: eventName, currentTime: Number(video.currentTime.toFixed(2)), bufferedEnd: bufferedEnd() });
       }
+      setLoadStatus('warn', 'Mise en memoire tampon', 'Evenement reel: ' + eventName + ' - buffer ' + (end === null ? 'vide' : end + 's'));
       clearStallTimer();
       stallTimer = setTimeout(function() { tryFailover('stall-timeout-' + eventName); }, LONG_STALL_MS);
     }
@@ -3862,8 +3904,9 @@ function playerPage(origin, channelKey, channel) {
     }
     async function inspectSource(src) {
       try {
+        setLoadStatus('loading', 'Verification de la source', activeLabel || src);
         const response = await fetch(src, { method: 'HEAD', cache: 'no-store' });
-        appendLog('source-head', {
+        const headInfo = {
           status: response.status,
           channel: response.headers.get('X-Livewatch-Smart-Channel'),
           mode: response.headers.get('X-Livewatch-Smart-Mode'),
@@ -3871,9 +3914,12 @@ function playerPage(origin, channelKey, channel) {
           sourceId: response.headers.get('X-Livewatch-Smart-Source-Id'),
           detection: response.headers.get('X-Livewatch-Smart-Detection'),
           latency: response.headers.get('X-Livewatch-Smart-Latency')
-        });
+        };
+        appendLog('source-head', headInfo);
+        setLoadStatus(response.ok ? 'loading' : 'warn', 'Source HTTP ' + response.status, (headInfo.source || headInfo.mode || 'source') + ' - ' + (headInfo.detection || 'verification'));
       } catch (error) {
         appendLog('source-head-error', error.message);
+        setLoadStatus('error', 'Verification source impossible', error.message || 'erreur reseau');
       }
     }
     function copyLogs() {
@@ -3905,6 +3951,7 @@ function playerPage(origin, channelKey, channel) {
       sameFragCount = 0;
       clearStallTimer();
       appendLog('load-start', src);
+      setLoadStatus('loading', 'Connexion au flux', activeLabel || label || 'source');
       inspectSource(src);
       if (hls) { hls.destroy(); hls = null; }
       video.loop = false;
@@ -3923,6 +3970,8 @@ function playerPage(origin, channelKey, channel) {
         });
         hls.on(Hls.Events.MANIFEST_PARSED, function(_, data) {
           appendLog('manifest-ok', { levels: data.levels ? data.levels.length : 0, heights: data.levels ? data.levels.map(function(level) { return level.height || 0; }) : [] });
+          const heights = data.levels ? data.levels.map(function(level) { return level.height || 0; }).filter(Boolean) : [];
+          setLoadStatus('loading', 'Manifest HLS recu', (data.levels ? data.levels.length : 0) + ' niveau(x)' + (heights.length ? ' - ' + heights.join('p, ') + 'p' : ''));
           attemptAutoplay('manifest-parsed');
         });
         hls.on(Hls.Events.LEVEL_SWITCHED, function(_, data) {
@@ -3948,6 +3997,7 @@ function playerPage(origin, channelKey, channel) {
         hls.on(Hls.Events.ERROR, function(_, data) {
           const summary = { type: data.type, details: data.details, fatal: data.fatal, status: data.response ? data.response.code : null };
           appendLog('hls-error', summary);
+          setLoadStatus(data.fatal ? 'error' : 'warn', data.fatal ? 'Erreur HLS fatale' : 'Incident HLS', (data.details || data.type || 'erreur') + (summary.status ? ' HTTP ' + summary.status : ''));
           if (data.fatal) {
             tryFailover('fatal-hls-' + (data.details || data.type || 'error'));
             return;
@@ -3975,6 +4025,7 @@ function playerPage(origin, channelKey, channel) {
       if (String(reason || '').indexOf('self-retry-') !== 0) smartSelfRetryCount = 0;
       if (activeSourceInfo) activeSourceInfo.textContent = SOURCE_LABELS[key] + ' (' + key + ')';
       appendLog('source-selected', { key: key, label: SOURCE_LABELS[key], reason: reason || 'manual', sequence: activeSequence });
+      setLoadStatus('loading', 'Source selectionnee', (SOURCE_LABELS[key] || key) + ' - ' + (reason || 'manual'));
       if (hasBetterSource()) {
         schedulePrimaryRecovery('source-selected-' + (reason || 'manual'));
       } else {
@@ -3996,13 +4047,19 @@ function playerPage(origin, channelKey, channel) {
     ['loadstart', 'loadedmetadata', 'playing', 'waiting', 'stalled', 'pause', 'ended', 'error'].forEach(function(name) {
       video.addEventListener(name, function() {
         appendLog('video-' + name, { currentTime: Number(video.currentTime.toFixed(2)), bufferedEnd: bufferedEnd(), paused: video.paused, muted: video.muted, volume: video.volume });
+        if (name === 'loadstart') setLoadStatus('loading', 'Chargement video demarre', activeLabel || activeKey || 'source');
         if (name === 'waiting' || name === 'stalled') noteStall(name);
+        if (name === 'loadedmetadata') setLoadStatus('loading', 'Metadonnees video recues', 'buffer ' + (bufferedEnd() === null ? 'en attente' : bufferedEnd() + 's'));
+        if (name === 'playing') setLoadStatus('ok', 'Lecture active', 'buffer ' + (bufferedEnd() === null ? 'en cours' : bufferedEnd() + 's'), 1800);
         if (name === 'playing' || name === 'loadedmetadata') {
           if (name === 'playing') smartSelfRetryCount = 0;
           noteRecovered(name);
           if (hasBetterSource()) schedulePrimaryRecovery('fallback-' + name);
         }
-        if (name === 'ended' || name === 'error') tryFailover('video-' + name);
+        if (name === 'ended' || name === 'error') {
+          setLoadStatus('error', name === 'ended' ? 'Flux termine' : 'Erreur video', 'Bascule ou retry en cours');
+          tryFailover('video-' + name);
+        }
       });
     });
     video.addEventListener('timeupdate', function() {
