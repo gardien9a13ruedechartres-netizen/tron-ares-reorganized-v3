@@ -3614,16 +3614,14 @@ html{ scrollbar-gutter: stable; }
 }
 
 .livewatch-epg-overlay {
-  position: fixed;
+  position: absolute;
   inset: 0;
-  z-index: 10080;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 18px;
-  background: rgba(0, 0, 0, 0.58);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
+  z-index: 18;
+  pointer-events: none;
+  color: #fff;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.58) 0%, rgba(0, 0, 0, 0.28) 28%, rgba(0, 0, 0, 0) 58%),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.34) 0%, rgba(0, 0, 0, 0) 54%);
 }
 
 .livewatch-epg-overlay.hidden {
@@ -3631,100 +3629,218 @@ html{ scrollbar-gutter: stable; }
 }
 
 .livewatch-epg-panel {
-  width: min(460px, calc(100vw - 28px));
-  max-height: min(76vh, 620px);
-  overflow: auto;
-  border: 1px solid rgba(0, 229, 255, 0.32);
-  border-radius: 8px;
-  background: rgba(2, 10, 18, 0.96);
-  color: #ecfbff;
-  box-shadow: 0 18px 54px rgba(0, 0, 0, 0.58), 0 0 28px rgba(0, 229, 255, 0.12);
-}
-
-.livewatch-epg-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  position: absolute;
+  top: 24px;
+  left: 30px;
+  right: 92px;
+  display: grid;
+  grid-template-columns: 50px minmax(0, 1fr);
+  align-items: start;
   gap: 12px;
-  padding: 13px 14px;
-  border-bottom: 1px solid rgba(0, 229, 255, 0.18);
-}
-
-.livewatch-epg-top h3 {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 800;
-  letter-spacing: 0;
-}
-
-.livewatch-epg-close {
-  width: 30px;
-  height: 30px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 6px;
-  color: #fff;
-  background: rgba(255, 255, 255, 0.08);
-  cursor: pointer;
-}
-
-.livewatch-epg-body {
-  padding: 12px 14px 14px;
-}
-
-.livewatch-epg-program {
-  padding: 12px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.livewatch-epg-program:last-child {
-  border-bottom: 0;
-}
-
-.livewatch-epg-kicker {
-  margin-bottom: 5px;
-  color: #ffd76a;
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-
-.livewatch-epg-program-title {
-  font-size: 15px;
-  font-weight: 800;
-}
-
-.livewatch-epg-meta {
-  margin-top: 5px;
-  color: #9fd7e4;
-  font-size: 12px;
-}
-
-.livewatch-epg-desc {
-  margin-top: 8px;
-  color: rgba(236, 251, 255, 0.84);
-  font-size: 12px;
-  line-height: 1.45;
+  max-width: min(720px, calc(100% - 120px));
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.78);
 }
 
 .livewatch-epg-progress {
-  height: 5px;
-  margin-top: 10px;
+  width: min(560px, 54vw);
+  height: 4px;
+  margin-top: 8px;
   overflow: hidden;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.36);
+  box-shadow: 0 1px 7px rgba(0, 0, 0, 0.42);
 }
 
 .livewatch-epg-progress span {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #00e5ff, #ffd76a);
+  background: #ff2d55;
 }
 
-.livewatch-epg-state {
-  padding: 16px 0;
-  color: #bfeef8;
+.livewatch-epg-logo {
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 10px;
+  background: rgba(10, 18, 24, 0.46);
+  box-shadow: 0 5px 16px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.livewatch-epg-logo img {
+  width: 82%;
+  height: 82%;
+  object-fit: contain;
+}
+
+.livewatch-epg-logo span {
+  padding: 0 5px;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.05;
+  text-align: center;
+}
+
+.livewatch-epg-content {
+  min-width: 0;
+}
+
+.livewatch-epg-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.livewatch-epg-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 26px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 45, 85, 0.48);
+  border-radius: 999px;
+  color: #ff315d;
+  background: rgba(35, 20, 34, 0.45);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  box-shadow: 0 0 14px rgba(255, 45, 85, 0.18);
+}
+
+.livewatch-epg-live::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff174f;
+  box-shadow: 0 0 10px rgba(255, 23, 79, 0.8);
+}
+
+.livewatch-epg-channel {
+  min-width: 0;
+  overflow: hidden;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.livewatch-epg-current {
+  margin-top: 8px;
+  min-width: 0;
+  color: rgba(255, 255, 255, 0.96);
+  font-size: 15px;
+  line-height: 1.25;
+}
+
+.livewatch-epg-current-time {
+  margin-right: 8px;
+  color: rgba(255, 255, 255, 0.86);
+  font-weight: 800;
+}
+
+.livewatch-epg-current-title {
+  font-weight: 900;
+}
+
+.livewatch-epg-next {
+  margin-top: 7px;
+  min-height: 18px;
+  max-width: min(620px, 58vw);
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.82);
   font-size: 13px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.livewatch-epg-close {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  width: 48px;
+  height: 48px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 50%;
+  color: #fff;
+  background: rgba(20, 20, 24, 0.34);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+  cursor: pointer;
+  font-size: 24px;
+  line-height: 1;
+  pointer-events: auto;
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+}
+
+.livewatch-epg-close:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.16);
+}
+
+@media (max-width: 680px) {
+  .livewatch-epg-panel {
+    top: 12px;
+    left: 12px;
+    right: 56px;
+    grid-template-columns: 38px minmax(0, 1fr);
+    gap: 9px;
+    max-width: calc(100% - 68px);
+  }
+
+  .livewatch-epg-logo {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+  }
+
+  .livewatch-epg-head {
+    gap: 7px;
+  }
+
+  .livewatch-epg-live {
+    min-height: 22px;
+    padding: 0 8px;
+    font-size: 9px;
+  }
+
+  .livewatch-epg-channel {
+    font-size: 16px;
+  }
+
+  .livewatch-epg-current {
+    margin-top: 5px;
+    font-size: 12px;
+  }
+
+  .livewatch-epg-progress {
+    width: min(310px, 62vw);
+    height: 3px;
+    margin-top: 6px;
+  }
+
+  .livewatch-epg-next {
+    max-width: 64vw;
+    font-size: 11px;
+  }
+
+  .livewatch-epg-close {
+    top: 10px;
+    right: 10px;
+    width: 38px;
+    height: 38px;
+    font-size: 20px;
+  }
 }
 
 
