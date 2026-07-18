@@ -1,6 +1,6 @@
 /*
   Ares Media Engine
-  Copyright © Salema vitor
+  Private media interface
   All rights reserved
 */
 
@@ -10,7 +10,7 @@
     if (window.__ARES_SIGNATURE_LOGGED__) return;
     window.__ARES_SIGNATURE_LOGGED__ = true;
     console.info("Ares Media Engine");
-    console.info("Copyright © Salema vitor — All rights reserved");
+    console.info("Ares Media Engine - All rights reserved");
   } catch (_) {}
 })();
 // =====================================================

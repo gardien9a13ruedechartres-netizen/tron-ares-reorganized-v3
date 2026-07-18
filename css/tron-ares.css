@@ -1,6 +1,6 @@
 /*
   Ares Media Engine
-  Copyright © Salema vitor
+  Private media interface
   All rights reserved
 */
 

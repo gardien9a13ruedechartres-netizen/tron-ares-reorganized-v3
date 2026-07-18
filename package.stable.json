@@ -13,7 +13,7 @@
     "deploy",
     "watcher"
   ],
-  "author": "victo",
+  "author": "Ares Media Engine",
   "license": "MIT",
   "dependencies": {
     "chokidar": "^4.0.3",
