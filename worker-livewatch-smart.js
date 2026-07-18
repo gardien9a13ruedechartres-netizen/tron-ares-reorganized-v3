@@ -13,6 +13,7 @@ const PORTUGAL_LIVEWATCH_CHANNELS = new Set([
   "btv",
   "canal-panda",
   "cmtv",
+  "disney-channel-pt",
   "disney-pixar",
   "a-bola",
   "canal-11",
@@ -979,6 +980,22 @@ Object.assign(CHANNELS, {
       "cable": {
         "id": "1616464273e04bb68a8a1c-ed3fcb510db31f",
         "label": "LiveWatch cable"
+      }
+    }
+  },
+  "disney-channel-pt": {
+    "label": "DISNEY CHANNEL PT",
+    "livewatchSearch": "DISNEY CHANNEL",
+    "livewatchExact": "DISNEY CHANNEL",
+    "defaultOrder": [
+      "basic"
+    ],
+    "sources": {
+      "basic": {
+        "id": "1668808212073ea3ac1de7-d9ced7946bf115",
+        "label": "LiveWatch basic",
+        "exact": "DISNEY CHANNEL",
+        "country": "Portugal"
       }
     }
   },

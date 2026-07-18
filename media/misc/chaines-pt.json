@@ -472,6 +472,18 @@
       "isIframe": true
     },
     {
+      "id": "disney-channel-pt",
+      "name": "DISNEY CHANNEL",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=disney-channel-pt",
+      "logo": {
+        "type": "image",
+        "value": "https://commons.wikimedia.org/wiki/Special:FilePath/2017%20Disney%20Channel%20logo.svg"
+      },
+      "group": "Jeunesse",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
       "id": "canal panda",
       "name": "CANAL PANDA",
       "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=canal-panda",
