@@ -14,6 +14,21 @@ const PORTUGAL_LIVEWATCH_CHANNELS = new Set([
   "canal-panda",
   "cmtv",
   "disney-pixar",
+  "a-bola",
+  "canal-11",
+  "cnn-portugal",
+  "dazn-1",
+  "dazn-2",
+  "dazn-3",
+  "dazn-4",
+  "dazn-5",
+  "eurosport-1-pt",
+  "eurosport-2-pt",
+  "porto-canal",
+  "rtp-africa",
+  "rtp3",
+  "sic-noticias",
+  "sporting",
   "sport-tv-plus",
   "sport-tv-1",
   "sport-tv-2",
@@ -21,6 +36,10 @@ const PORTUGAL_LIVEWATCH_CHANNELS = new Set([
   "sport-tv-4",
   "sport-tv-5",
   "tvi",
+  "tvi-ficcao",
+  "tvi-internacional",
+  "tvi-reality",
+  "v-plus-tvi",
   "tv-globo"
 ]);
 
@@ -1976,6 +1995,584 @@ Object.assign(CHANNELS, {
       "basic": {
         "id": "3794086467dcb3e9b1728b-037a336b29d3ba",
         "label": "LiveWatch basic"
+      }
+    }
+  },
+  "eurosport-1-pt": {
+    "label": "Eurosport 1 PT",
+    "livewatchSearch": "Eurosport 1",
+    "livewatchExact": "EUROSPORT 1",
+    "defaultOrder": [
+      "basic-hd",
+      "basic",
+      "cable"
+    ],
+    "sources": {
+      "basic-hd": {
+        "id": "16311580101fad1a8ee2ef-efccc4a2ab161d",
+        "label": "LiveWatch basic HD",
+        "exact": "EUROSPORT 1",
+        "country": "Portugal"
+      },
+      "basic": {
+        "id": "25495184398c97e1fbefd8-3355bbe79bd2ac",
+        "label": "LiveWatch basic",
+        "exact": "EUROSPORT 1",
+        "country": "Portugal"
+      },
+      "cable": {
+        "id": "36546124874bb339930031-def169e10792ff",
+        "label": "LiveWatch cable",
+        "exact": "EUROSPORT 1",
+        "country": "Portugal"
+      }
+    },
+    "manualSources": {
+      "deviantart": {
+        "kind": "lovetier",
+        "id": "legacy-lovetier-euro1pt",
+        "label": "DeviantArt Eurosport 1 PT",
+        "button": "DeviantArt",
+        "lovetierChannel": "EURO1PT"
+      }
+    }
+  },
+  "eurosport-2-pt": {
+    "label": "Eurosport 2 PT",
+    "livewatchSearch": "Eurosport 2",
+    "livewatchExact": "EUROSPORT 2",
+    "defaultOrder": [
+      "basic",
+      "cable",
+      "basic-backup"
+    ],
+    "sources": {
+      "basic": {
+        "id": "3495357111684554a016fd-b115fb10ca27fe",
+        "label": "LiveWatch basic",
+        "exact": "EUROSPORT 2",
+        "country": "Portugal"
+      },
+      "cable": {
+        "id": "26584383597fb214caeed9-f59f9c338f4433",
+        "label": "LiveWatch cable",
+        "exact": "EUROSPORT 2",
+        "country": "Portugal"
+      },
+      "basic-backup": {
+        "id": "5210413649af808380459-d767729e02fdce",
+        "label": "LiveWatch basic backup",
+        "exact": "EUROSPORT 2 (BACKUP)",
+        "country": "Portugal"
+      }
+    },
+    "manualSources": {
+      "deviantart": {
+        "kind": "lovetier",
+        "id": "legacy-lovetier-euro2pt",
+        "label": "DeviantArt Eurosport 2 PT",
+        "button": "DeviantArt",
+        "lovetierChannel": "EURO2PT"
+      }
+    }
+  },
+  "a-bola": {
+    "label": "A Bola TV",
+    "livewatchSearch": "A Bola",
+    "livewatchExact": "A BOLA TV",
+    "defaultOrder": [
+      "basic",
+      "cable"
+    ],
+    "sources": {
+      "basic": {
+        "id": "186535245741ba973dc10b-0fe7c132448ebb",
+        "label": "LiveWatch basic",
+        "exact": "A BOLA TV",
+        "country": "Portugal"
+      },
+      "cable": {
+        "id": "476765689e8fc3379448d-578072b8422a00",
+        "label": "LiveWatch cable",
+        "exact": "A BOLA TV",
+        "country": "Portugal"
+      }
+    },
+    "manualSources": {
+      "deviantart": {
+        "kind": "lovetier",
+        "id": "legacy-lovetier-abola",
+        "label": "DeviantArt A Bola TV",
+        "button": "DeviantArt",
+        "lovetierChannel": "ABOLA"
+      }
+    }
+  },
+  "dazn-1": {
+    "label": "DAZN 1 PT",
+    "livewatchSearch": "DAZN 1",
+    "livewatchExact": "DAZN 1",
+    "defaultOrder": [
+      "cable"
+    ],
+    "sources": {
+      "cable": {
+        "id": "288268168b686746a7a16-392d152d105289",
+        "label": "LiveWatch cable",
+        "exact": "DAZN 1",
+        "country": "Portugal"
+      }
+    },
+    "manualSources": {
+      "deviantart": {
+        "kind": "lovetier",
+        "id": "legacy-lovetier-eleven1",
+        "label": "DeviantArt DAZN 1 PT",
+        "button": "DeviantArt",
+        "lovetierChannel": "ELEVEN1"
+      }
+    }
+  },
+  "dazn-2": {
+    "label": "DAZN 2 PT",
+    "livewatchSearch": "DAZN 2",
+    "livewatchExact": "DAZN 2",
+    "defaultOrder": [
+      "cable"
+    ],
+    "sources": {
+      "cable": {
+        "id": "1452205400454b0a22c6ec-feb12a95b15d68",
+        "label": "LiveWatch cable",
+        "exact": "DAZN 2",
+        "country": "Portugal"
+      }
+    },
+    "manualSources": {
+      "deviantart": {
+        "kind": "lovetier",
+        "id": "legacy-lovetier-eleven2",
+        "label": "DeviantArt DAZN 2 PT",
+        "button": "DeviantArt",
+        "lovetierChannel": "ELEVEN2"
+      }
+    }
+  },
+  "dazn-3": {
+    "label": "DAZN 3 PT",
+    "livewatchSearch": "DAZN 3",
+    "livewatchExact": "DAZN 3",
+    "defaultOrder": [
+      "cable"
+    ],
+    "sources": {
+      "cable": {
+        "id": "1810812136b0581e0c39ab-ca53ebf7bb5e86",
+        "label": "LiveWatch cable",
+        "exact": "DAZN 3",
+        "country": "Portugal"
+      }
+    },
+    "manualSources": {
+      "deviantart": {
+        "kind": "lovetier",
+        "id": "legacy-lovetier-eleven3",
+        "label": "DeviantArt DAZN 3 PT",
+        "button": "DeviantArt",
+        "lovetierChannel": "ELEVEN3"
+      }
+    }
+  },
+  "dazn-4": {
+    "label": "DAZN 4 PT",
+    "livewatchSearch": "DAZN 4",
+    "livewatchExact": "DAZN 4",
+    "defaultOrder": [
+      "cable"
+    ],
+    "sources": {
+      "cable": {
+        "id": "36541606320e0b5747f04e-b568111d01525a",
+        "label": "LiveWatch cable",
+        "exact": "DAZN 4",
+        "country": "Portugal"
+      }
+    },
+    "manualSources": {
+      "deviantart": {
+        "kind": "lovetier",
+        "id": "legacy-lovetier-eleven4",
+        "label": "DeviantArt DAZN 4 PT",
+        "button": "DeviantArt",
+        "lovetierChannel": "ELEVEN4"
+      }
+    }
+  },
+  "dazn-5": {
+    "label": "DAZN 5 PT",
+    "livewatchSearch": "DAZN 5",
+    "livewatchExact": "DAZN 5",
+    "defaultOrder": [
+      "cable"
+    ],
+    "sources": {
+      "cable": {
+        "id": "3836623176848a0884f3da-be9714f6f44010",
+        "label": "LiveWatch cable",
+        "exact": "DAZN 5",
+        "country": "Portugal"
+      }
+    },
+    "manualSources": {
+      "deviantart": {
+        "kind": "lovetier",
+        "id": "legacy-lovetier-eleven5",
+        "label": "DeviantArt DAZN 5 PT",
+        "button": "DeviantArt",
+        "lovetierChannel": "ELEVEN5"
+      }
+    }
+  },
+  "tvi-reality": {
+    "label": "TVI Reality",
+    "livewatchSearch": "TVI Reality",
+    "livewatchExact": "TVI REALITY",
+    "defaultOrder": [
+      "cable",
+      "basic"
+    ],
+    "sources": {
+      "cable": {
+        "id": "34754147299c2a1920fed4-fa9328e5d7ac45",
+        "label": "LiveWatch cable",
+        "exact": "TVI REALITY",
+        "country": "Portugal"
+      },
+      "basic": {
+        "id": "2164586665059c27b25b07-947ce820a85f65",
+        "label": "LiveWatch basic",
+        "exact": "TVI REALITY",
+        "country": "Portugal"
+      }
+    },
+    "manualSources": {
+      "clouding": {
+        "kind": "clouding",
+        "id": "legacy-clouding-tvi-reality",
+        "label": "Clouding TVI Reality",
+        "button": "Clouding",
+        "cloudingChannel": "TVIReality"
+      }
+    }
+  },
+  "tvi-ficcao": {
+    "label": "TVI Ficcao",
+    "livewatchSearch": "TVI Ficção",
+    "livewatchExact": "TVI FICÇÃO",
+    "defaultOrder": [
+      "cable",
+      "basic"
+    ],
+    "sources": {
+      "cable": {
+        "id": "956832485d2ff166a0119-95ad11228ad1aa",
+        "label": "LiveWatch cable",
+        "exact": "TVI FICÇÃO",
+        "country": "Portugal"
+      },
+      "basic": {
+        "id": "26595946992b1d68be116-3764c10c3e1f07",
+        "label": "LiveWatch basic",
+        "exact": "TVI FIC",
+        "country": "Portugal"
+      }
+    },
+    "manualSources": {
+      "clouding": {
+        "kind": "clouding",
+        "id": "legacy-clouding-tvi-ficcao",
+        "label": "Clouding TVI Ficcao",
+        "button": "Clouding",
+        "cloudingChannel": "TVI_Ficcao"
+      }
+    }
+  },
+  "v-plus-tvi": {
+    "label": "V+ TVI",
+    "livewatchSearch": "V+ TVI",
+    "livewatchExact": "V+ TVI",
+    "defaultOrder": [
+      "cable"
+    ],
+    "sources": {
+      "cable": {
+        "id": "299880045b1202285e41a-4dc4db13641160",
+        "label": "LiveWatch cable",
+        "exact": "V+ TVI",
+        "country": "Portugal"
+      }
+    },
+    "manualSources": {
+      "clouding": {
+        "kind": "clouding",
+        "id": "legacy-clouding-v-plus-tvi",
+        "label": "Clouding V+ TVI",
+        "button": "Clouding",
+        "cloudingChannel": "VPlusTVI"
+      }
+    }
+  },
+  "sporting": {
+    "label": "Sporting TV",
+    "livewatchSearch": "Sporting TV",
+    "livewatchExact": "SPORTING TV",
+    "defaultOrder": [
+      "basic",
+      "cable",
+      "basic-backup"
+    ],
+    "sources": {
+      "basic": {
+        "id": "17190817580bb536b17325-d1e2c458b06a03",
+        "label": "LiveWatch basic",
+        "exact": "SPORTING TV",
+        "country": "Portugal"
+      },
+      "cable": {
+        "id": "676691326908891eb462f-66b38794538f84",
+        "label": "LiveWatch cable",
+        "exact": "SPORTING TV",
+        "country": "Portugal"
+      },
+      "basic-backup": {
+        "id": "324754431106bc8943cf0e-09a506abf95bf0",
+        "label": "LiveWatch basic backup",
+        "exact": "SPORTING TV (BACKUP)",
+        "country": "Portugal"
+      }
+    },
+    "manualSources": {
+      "deviantart": {
+        "kind": "lovetier",
+        "id": "legacy-lovetier-sporting",
+        "label": "DeviantArt Sporting TV",
+        "button": "DeviantArt",
+        "lovetierChannel": "SPORTING"
+      }
+    }
+  },
+  "porto-canal": {
+    "label": "Porto Canal",
+    "livewatchSearch": "Porto Canal",
+    "livewatchExact": "PORTO CANAL",
+    "defaultOrder": [
+      "basic",
+      "cable",
+      "basic-backup"
+    ],
+    "sources": {
+      "basic": {
+        "id": "186208766320a16e3dd9d2-6381eab12f0db5",
+        "label": "LiveWatch basic",
+        "exact": "PORTO CANAL",
+        "country": "Portugal"
+      },
+      "cable": {
+        "id": "5515073437274878805c3-c9b0a8cff8f4fc",
+        "label": "LiveWatch cable",
+        "exact": "PORTO CANAL",
+        "country": "Portugal"
+      },
+      "basic-backup": {
+        "id": "28643200289b1a684d1e2c-2ec7ebd291a185",
+        "label": "LiveWatch basic backup",
+        "exact": "PORTO CANAL (BACKUP)",
+        "country": "Portugal"
+      }
+    },
+    "manualSources": {
+      "clouding": {
+        "kind": "clouding",
+        "id": "legacy-clouding-porto-canal",
+        "label": "Clouding Porto Canal",
+        "button": "Clouding",
+        "cloudingChannel": "PortoCanal"
+      }
+    }
+  },
+  "canal-11": {
+    "label": "Canal 11",
+    "livewatchSearch": "Canal 11",
+    "livewatchExact": "CANAL 11",
+    "defaultOrder": [
+      "basic-hd",
+      "cable",
+      "basic-hd-backup"
+    ],
+    "sources": {
+      "basic-hd": {
+        "id": "18359357199e074371cdbd-b075e03a64ac74",
+        "label": "LiveWatch basic HD",
+        "exact": "CANAL 11",
+        "country": "Portugal"
+      },
+      "cable": {
+        "id": "199161253abd385871b30-4d6913878d13ff",
+        "label": "LiveWatch cable",
+        "exact": "CANAL 11",
+        "country": "Portugal"
+      },
+      "basic-hd-backup": {
+        "id": "29721594504acc680e4676-b7abf7178a214d",
+        "label": "LiveWatch basic HD backup",
+        "exact": "CANAL 11 (BACKUP)",
+        "country": "Portugal"
+      }
+    },
+    "manualSources": {
+      "deviantart": {
+        "kind": "lovetier",
+        "id": "legacy-lovetier-canal11",
+        "label": "DeviantArt Canal 11",
+        "button": "DeviantArt",
+        "lovetierChannel": "Canal11"
+      }
+    }
+  },
+  "cnn-portugal": {
+    "label": "CNN Portugal",
+    "livewatchSearch": "CNN Portugal",
+    "livewatchExact": "CNN PORTUGAL",
+    "defaultOrder": [
+      "cable"
+    ],
+    "sources": {
+      "cable": {
+        "id": "218268277581f3e112713e-4d558eac08eac1",
+        "label": "LiveWatch cable",
+        "exact": "CNN PORTUGAL",
+        "country": "Portugal"
+      }
+    },
+    "manualSources": {
+      "clouding": {
+        "kind": "clouding",
+        "id": "legacy-clouding-cnn-portugal",
+        "label": "Clouding CNN Portugal",
+        "button": "Clouding",
+        "cloudingChannel": "CNN-PT"
+      }
+    }
+  },
+  "sic-noticias": {
+    "label": "SIC Noticias",
+    "livewatchSearch": "SIC Noticias",
+    "livewatchExact": "SIC NOTICIAS",
+    "defaultOrder": [
+      "basic-hd",
+      "cable"
+    ],
+    "sources": {
+      "basic-hd": {
+        "id": "213263083005d8ef8a565c-da78dc57f11b57",
+        "label": "LiveWatch basic HD",
+        "exact": "SIC NOTICIAS",
+        "country": "Portugal"
+      },
+      "cable": {
+        "id": "41129700899740bd35f1f2-1ffa5e8ceeee28",
+        "label": "LiveWatch cable",
+        "exact": "SIC NOTICIAS",
+        "country": "Portugal"
+      }
+    },
+    "manualSources": {
+      "clouding": {
+        "kind": "clouding",
+        "id": "legacy-clouding-sic-noticias",
+        "label": "Clouding SIC Noticias",
+        "button": "Clouding",
+        "cloudingChannel": "SIC-NOTICIAS"
+      }
+    }
+  },
+  "rtp3": {
+    "label": "RTP3",
+    "livewatchSearch": "RTP 3",
+    "livewatchExact": "RTP 3",
+    "defaultOrder": [
+      "cable",
+      "basic"
+    ],
+    "sources": {
+      "cable": {
+        "id": "3310235454b9bd61572914-b82e7f08bfd190",
+        "label": "LiveWatch cable",
+        "exact": "RTP 3",
+        "country": "Portugal"
+      },
+      "basic": {
+        "id": "276534702ca211de21bd3-9381ce916540a3",
+        "label": "LiveWatch basic",
+        "exact": "RTP 3",
+        "country": "Portugal"
+      }
+    },
+    "manualSources": {
+      "clouding": {
+        "kind": "clouding",
+        "id": "legacy-clouding-rtp3",
+        "label": "Clouding RTP3",
+        "button": "Clouding",
+        "cloudingChannel": "RTP3"
+      }
+    }
+  },
+  "rtp-africa": {
+    "label": "RTP Africa",
+    "livewatchSearch": "RTP Africa",
+    "livewatchExact": "RTP AFRICA",
+    "defaultOrder": [
+      "cable",
+      "basic"
+    ],
+    "sources": {
+      "cable": {
+        "id": "3689682834a7c808634ed-c243161337d8d8",
+        "label": "LiveWatch cable",
+        "exact": "RTP ÁFRICA",
+        "country": "Portugal"
+      },
+      "basic": {
+        "id": "18853781741812579f3f42-1714957d3cb770",
+        "label": "LiveWatch basic",
+        "exact": "RTP AFRICA",
+        "country": "Portugal"
+      }
+    },
+    "manualSources": {
+      "clouding": {
+        "kind": "clouding",
+        "id": "legacy-clouding-rtp-africa",
+        "label": "Clouding RTP Africa",
+        "button": "Clouding",
+        "cloudingChannel": "RTPAfrica"
+      }
+    }
+  },
+  "tvi-internacional": {
+    "label": "TVI Internacional",
+    "defaultOrder": [
+      "clouding"
+    ],
+    "sources": {},
+    "manualSources": {
+      "clouding": {
+        "kind": "clouding",
+        "id": "legacy-clouding-tvi-internacional",
+        "label": "Clouding TVI Internacional",
+        "button": "Clouding",
+        "cloudingChannel": "TVI-INT"
       }
     }
   },

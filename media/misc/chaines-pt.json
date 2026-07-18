@@ -49,14 +49,14 @@
     {
       "id": "rtp-africa",
       "name": "RTP África",
-      "url": "https://player-engine.com/api/worker-live/rtp-africa/master.m3u8",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=rtp-africa",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/RTP%20%C3%81frica%202026.svg"
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": false,
+      "isIframe": true,
       "meoCallLetter": "RTPA"
     },
     {
@@ -75,14 +75,14 @@
     {
       "id": "tvi-int",
       "name": "TVI Internacional",
-      "url": "https://player-engine.com/api/worker-live/tvi-internacional/master.m3u8",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=tvi-internacional",
       "logo": {
         "type": "image",
         "value": "https://upload.wikimedia.org/wikipedia/commons/0/08/TVI_Internacional_%282017%29.png"
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "sic",
@@ -138,41 +138,41 @@
     },
     {
       "id": "rtpn",
-      "name": "RTPN",
-      "url": "https://player-engine.com/api/worker-live/rtp3/master.m3u8",
+      "name": "RTP3",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=rtp3",
       "logo": {
         "type": "image",
         "value": "/media/rtpn.png"
       },
       "group": "Info",
       "isFavorite": false,
-      "isIframe": false,
+      "isIframe": true,
       "meoCallLetter": "RTPN"
     },
     {
       "id": "sicn",
       "name": "SIC Notícias",
-      "url": "https://player-engine.com/api/worker-live/sic-noticias/master.m3u8",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=sic-noticias",
       "logo": {
         "type": "image",
         "value": "/media/SICN.webp"
       },
       "group": "Info",
       "isFavorite": false,
-      "isIframe": false,
+      "isIframe": true,
       "meoCallLetter": "SICN"
     },
     {
       "id": "cnnpt",
       "name": "CNN Portugal",
-      "url": "https://player-engine.com/api/worker-live/cnn-portugal/master.m3u8",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=cnn-portugal",
       "logo": {
         "type": "image",
         "value": "/media/cnn.png"
       },
       "group": "Info",
       "isFavorite": false,
-      "isIframe": false,
+      "isIframe": true,
       "meoCallLetter": "CNNPT"
     },
     {
@@ -190,7 +190,7 @@
     {
       "id": "canal11",
       "name": "Canal 11",
-      "url": "/pages/worker-iptv.html?channel=canal-11",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=canal-11",
       "logo": {
         "type": "image",
         "value": "https://www.zupimages.net/up/24/13/qj99.jpg"
@@ -215,8 +215,8 @@
     },
     {
       "id": "SCP",
-      "name": "SCP",
-      "url": "/pages/worker-iptv.html?channel=sporting",
+      "name": "Sporting TV",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=sporting",
       "logo": {
         "type": "image",
         "value": "https://pplware.sapo.pt/wp-content/uploads/2017/06/scp_00.jpg"
@@ -228,21 +228,21 @@
     },
     {
       "id": "PORTO canal",
-      "name": "PORTO canal",
-      "url": "https://player-engine.com/api/worker-live/porto-canal/master.m3u8",
+      "name": "Porto Canal",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=porto-canal",
       "logo": {
         "type": "image",
         "value": "https://www.freeshot.live/upload/source/Porto-Canal-logo.png"
       },
       "group": "Sport",
       "isFavorite": false,
-      "isIframe": false,
+      "isIframe": true,
       "meoCallLetter": "PORTO"
     },
     {
       "id": "eurosport1pt",
       "name": "Eurosport 1 PT",
-      "url": "/pages/worker-iptv.html?channel=eurosport-1-pt",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=eurosport-1-pt",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Eurosport%20Logo%20%282011-2015%29.svg"
@@ -255,7 +255,7 @@
     {
       "id": "eurosport2pt",
       "name": "Eurosport 2 PT",
-      "url": "/pages/worker-iptv.html?channel=eurosport-2-pt",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=eurosport-2-pt",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Eurosport%202%20Logo%20%282011-2015%29.svg"
@@ -268,7 +268,7 @@
     {
       "id": "abola",
       "name": "A Bola TV",
-      "url": "/pages/worker-iptv.html?channel=a-bola",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=a-bola",
       "logo": {
         "type": "image",
         "value": "https://www.telesatellite.com/images/actu/a/abolatv.jpg"
@@ -359,7 +359,7 @@
     {
       "id": "dazn1",
       "name": "DAZN 1 PT",
-      "url": "/pages/worker-iptv.html?channel=dazn-1",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=dazn-1",
       "logo": {
         "type": "image",
         "value": "https://upload.wikimedia.org/wikipedia/commons/7/71/DAZN_logo.svg"
@@ -372,7 +372,7 @@
     {
       "id": "dazn2",
       "name": "DAZN 2 PT",
-      "url": "/pages/worker-iptv.html?channel=dazn-2",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=dazn-2",
       "logo": {
         "type": "image",
         "value": "https://upload.wikimedia.org/wikipedia/commons/7/71/DAZN_logo.svg"
@@ -385,7 +385,7 @@
     {
       "id": "dazn3",
       "name": "DAZN 3 PT",
-      "url": "/pages/worker-iptv.html?channel=dazn-3",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=dazn-3",
       "logo": {
         "type": "image",
         "value": "https://upload.wikimedia.org/wikipedia/commons/7/71/DAZN_logo.svg"
@@ -398,7 +398,7 @@
     {
       "id": "dazn4",
       "name": "DAZN 4 PT",
-      "url": "/pages/worker-iptv.html?channel=dazn-4",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=dazn-4",
       "logo": {
         "type": "image",
         "value": "https://upload.wikimedia.org/wikipedia/commons/7/71/DAZN_logo.svg"
@@ -411,7 +411,7 @@
     {
       "id": "dazn5",
       "name": "DAZN 5 PT",
-      "url": "/pages/worker-iptv.html?channel=dazn-5",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=dazn-5",
       "logo": {
         "type": "image",
         "value": "https://upload.wikimedia.org/wikipedia/commons/7/71/DAZN_logo.svg"
@@ -424,39 +424,39 @@
     {
       "id": "tvir",
       "name": "TVI Reality",
-      "url": "https://player-engine.com/api/worker-live/tvi-reality/master.m3u8",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=tvi-reality",
       "logo": {
         "type": "image",
         "value": "/media/tvir.jpg"
       },
       "group": "Divertissement",
       "isFavorite": false,
-      "isIframe": false,
+      "isIframe": true,
       "meoCallLetter": "TVIR"
     },
     {
       "id": "tvif",
       "name": "TVI Ficção",
-      "url": "https://player-engine.com/api/worker-live/tvi-ficcao/master.m3u8",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=tvi-ficcao",
       "logo": {
         "type": "image",
         "value": "https://upload.wikimedia.org/wikipedia/commons/0/0d/TVI_Fic%C3%A7%C3%A3o_%282017%29.png"
       },
       "group": "Divertissement",
       "isFavorite": false,
-      "isIframe": false
+      "isIframe": true
     },
     {
       "id": "v-mais",
-      "name": "V MAIS",
-      "url": "https://player-engine.com/api/worker-live/v-plus-tvi/master.m3u8",
+      "name": "V+ TVI",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=v-plus-tvi",
       "logo": {
         "type": "image",
         "value": "https://upload.wikimedia.org/wikipedia/pt/e/ef/V%2BTVI_Logo.png"
       },
       "group": "Divertissement",
       "isFavorite": false,
-      "isIframe": false,
+      "isIframe": true,
       "meoCallLetter": "VMAISTVI"
     },
     {
@@ -550,5 +550,5 @@
       "programUrl": "https://nostv.pt/guia/139",
       "meoCallLetter": "CMTV"
     }
-    ]
-    }
+  ]
+}
