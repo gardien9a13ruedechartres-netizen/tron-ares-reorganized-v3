@@ -3344,21 +3344,6 @@ function createChannelElement(entry, index, sourceType, options) {
   titleRow.appendChild(numDiv);
   titleRow.appendChild(titleDiv);
   titleRow.appendChild(statusBadge);
-  if (livewatchEpgName) {
-    const epgBtn = document.createElement('button');
-    epgBtn.type = 'button';
-    epgBtn.className = 'fr-program-badge';
-    epgBtn.title = 'Programme en cours';
-    epgBtn.setAttribute('aria-label', 'Programme en cours');
-    epgBtn.textContent = 'i';
-    epgBtn.addEventListener('click', (ev) => {
-      ev.stopPropagation();
-      __openLivewatchEpgNow(entry);
-    });
-    titleRow.appendChild(epgBtn);
-  }
-  titleRow.appendChild(statusBadge);
-  titleRow.appendChild(statusBadge);
 
   const subDiv = document.createElement('div');
   subDiv.className = 'channel-sub';
