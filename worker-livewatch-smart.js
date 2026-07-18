@@ -375,6 +375,44 @@ Object.assign(CHANNELS, {
       }
     }
   },
+  "canal-kids": {
+    "label": "CANAL+ KIDS",
+    "defaultOrder": [
+      "basic-fhd",
+      "satellite-fhd",
+      "basic-4k",
+      "cable",
+      "basic-hd",
+      "satellite-hd"
+    ],
+    "sources": {
+      "basic-4k": {
+        "id": "4039804890236df77878d1-99077ddfe015db",
+        "label": "LiveWatch basic 4K",
+        "disableDynamicFallback": true
+      },
+      "basic-fhd": {
+        "id": "86925638869470b089467-2e16bdd61eefcf",
+        "label": "LiveWatch basic FHD"
+      },
+      "satellite-fhd": {
+        "id": "1508654689ee9eaa64cbd6-b99e0023d06f8d",
+        "label": "LiveWatch satellite FHD"
+      },
+      "cable": {
+        "id": "38048689943fa5994dbbf9-d05b0d03c899fa",
+        "label": "LiveWatch cable"
+      },
+      "basic-hd": {
+        "id": "242933169ce3a7d28a887-c87862ea204920",
+        "label": "LiveWatch basic HD"
+      },
+      "satellite-hd": {
+        "id": "579962899b774e7e9111f-ef7339a9f3d7f7",
+        "label": "LiveWatch satellite HD"
+      }
+    }
+  },
   "melody": {
     "label": "MELODY",
     "defaultOrder": [

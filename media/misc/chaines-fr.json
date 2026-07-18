@@ -1017,7 +1017,7 @@
     {
       "id": "canal-kids",
       "name": "Canal+ Kids",
-      "url": "/pages/players/canal-plus-kids.html",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=canal-kids",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Canal%2B%20Kids%20Logo%20%282021%29.png"
