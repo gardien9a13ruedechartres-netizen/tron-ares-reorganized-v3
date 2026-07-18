@@ -1028,6 +1028,16 @@ video { object-fit: fill; }
 
 .helper-text span { color: var(--tron-accent-soft); }
 
+.page-purpose-note {
+  width: 100%;
+  margin-top: 2px;
+  font-size: 9px;
+  line-height: 1.35;
+  color: rgba(184, 231, 255, 0.62);
+  text-align: center;
+  letter-spacing: 0;
+}
+
 .hidden { display: none !important; }
 
 /* =========================
