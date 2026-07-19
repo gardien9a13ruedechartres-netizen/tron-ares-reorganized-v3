@@ -888,10 +888,9 @@ video { object-fit: fill; }
 
 .bottom-bar {
   margin-top: 4px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(360px, 46%);
+  display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   min-width: 0;
   flex: 0 0 auto;
   padding: 6px 10px;
@@ -902,6 +901,7 @@ video { object-fit: fill; }
 }
 
 .bottom-controls {
+  flex: 1 1 auto;
   min-width: 0;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
@@ -910,14 +910,14 @@ video { object-fit: fill; }
 }
 
 .footer-info {
+  flex: 0 0 auto;
   min-width: 0;
-  align-self: stretch;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 3px;
-  padding-left: 12px;
-  border-left: 1px solid rgba(0, 229, 255, 0.18);
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 0;
+  border: 0;
 }
 
 .nav-btn {
@@ -1043,23 +1043,27 @@ video { object-fit: fill; }
 
 .helper-text {
   min-width: 0;
+  max-width: 320px;
   font-size: 10px;
   line-height: 1.25;
   color: var(--tron-muted);
-  text-align: left;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .helper-text span { color: var(--tron-accent-soft); }
 
+/* L'ancien texte légal reste volontairement masqué :
+   le footer ne montre que l'aide courte et son badge. */
 .page-purpose-note {
-  min-width: 0;
-  margin: 0;
-  font-size: 9px;
-  line-height: 1.35;
-  color: rgba(184, 231, 255, 0.62);
-  text-align: left;
-  letter-spacing: 0;
-  overflow-wrap: anywhere;
+  display: none !important;
+}
+
+.footer-info .help-i-btn {
+  flex: 0 0 auto;
+  margin-left: 0;
 }
 
 .hidden { display: none !important; }
@@ -1572,17 +1576,11 @@ body.theme-redblue .np-logo img {
    Responsive
    ========================= */
 
-/* Écrans intermédiaires : le texte légal passe sous les commandes
-   avant que le lecteur "now playing" ne soit compressé. */
+/* Écrans intermédiaires : on conserve la barre sur une seule ligne.
+   Le texte d'aide se masque avant de comprimer le lecteur actif. */
 @media (max-width: 1180px) and (min-width: 901px) {
-  .bottom-bar {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .footer-info {
-    padding: 6px 2px 0;
-    border-left: 0;
-    border-top: 1px solid rgba(0, 229, 255, 0.16);
+  .footer-info .helper-text {
+    display: none;
   }
 }
 
@@ -1603,19 +1601,25 @@ body.theme-redblue .np-logo img {
   }
 
   .bottom-bar {
-    grid-template-columns: minmax(0, 1fr);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
     gap: 6px;
   }
 
-  .footer-info {
-    padding: 6px 2px 0;
-    border-left: 0;
-    border-top: 1px solid rgba(0, 229, 255, 0.16);
+  .bottom-controls {
+    grid-column: 1;
+    min-width: 0;
   }
 
-  .helper-text {
-    width: 100%;
-    margin-top: 0;
+  .footer-info {
+    grid-column: 2;
+    padding: 0;
+    border: 0;
+  }
+
+  .footer-info .helper-text {
+    display: none;
   }
 
   .sidebar {
