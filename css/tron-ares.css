@@ -888,14 +888,36 @@ video { object-fit: fill; }
 
 .bottom-bar {
   margin-top: 4px;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 46%);
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  min-width: 0;
+  flex: 0 0 auto;
   padding: 6px 10px;
   border-radius: var(--radius-lg);
   border: 1px solid rgba(0, 229, 255, 0.24);
   background: linear-gradient(to right, rgba(0, 0, 0, 0.92), rgba(5, 18, 32, 0.92));
   box-shadow: 0 0 16px rgba(0, 229, 255, 0.18);
+}
+
+.bottom-controls {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.footer-info {
+  min-width: 0;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  padding-left: 12px;
+  border-left: 1px solid rgba(0, 229, 255, 0.18);
 }
 
 .nav-btn {
@@ -1020,22 +1042,24 @@ video { object-fit: fill; }
 
 
 .helper-text {
+  min-width: 0;
   font-size: 10px;
+  line-height: 1.25;
   color: var(--tron-muted);
-  text-align: right;
-  flex-shrink: 0;
+  text-align: left;
 }
 
 .helper-text span { color: var(--tron-accent-soft); }
 
 .page-purpose-note {
-  width: 100%;
-  margin-top: 2px;
+  min-width: 0;
+  margin: 0;
   font-size: 9px;
   line-height: 1.35;
   color: rgba(184, 231, 255, 0.62);
-  text-align: center;
+  text-align: left;
   letter-spacing: 0;
+  overflow-wrap: anywhere;
 }
 
 .hidden { display: none !important; }
@@ -1548,6 +1572,20 @@ body.theme-redblue .np-logo img {
    Responsive
    ========================= */
 
+/* Écrans intermédiaires : le texte légal passe sous les commandes
+   avant que le lecteur "now playing" ne soit compressé. */
+@media (max-width: 1180px) and (min-width: 901px) {
+  .bottom-bar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .footer-info {
+    padding: 6px 2px 0;
+    border-left: 0;
+    border-top: 1px solid rgba(0, 229, 255, 0.16);
+  }
+}
+
 @media (max-width: 900px) {
   body { align-items: stretch; }
 
@@ -1564,12 +1602,20 @@ body.theme-redblue .np-logo img {
     aspect-ratio: 16 / 9;
   }
 
-  .bottom-bar { flex-wrap: wrap; gap: 6px; }
+  .bottom-bar {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .footer-info {
+    padding: 6px 2px 0;
+    border-left: 0;
+    border-top: 1px solid rgba(0, 229, 255, 0.16);
+  }
 
   .helper-text {
-    text-align: left;
     width: 100%;
-    margin-top: 2px;
+    margin-top: 0;
   }
 
   .sidebar {
@@ -1621,10 +1667,24 @@ body.theme-redblue .np-logo img {
     margin-left: auto;
   }
 
-  .now-playing { order: -1; margin-bottom: 4px; }
+  .bottom-controls {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      "now now"
+      "prev next";
+  }
+
+  .now-playing {
+    grid-area: now;
+    width: 100%;
+    margin-bottom: 4px;
+  }
+
+  #prevBtn { grid-area: prev; }
+  #nextBtn { grid-area: next; }
 
   .nav-btn {
-    flex: 1 1 30%;
+    width: 100%;
     justify-content: center;
   }
 

@@ -259,7 +259,7 @@
   <script defer src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/dashjs@latest/dist/dash.all.min.js"></script>
  <!-- <link rel="stylesheet" href="css/tron-ares-assistant-3d-glb.css?v=2"> -->
-  <link rel="stylesheet" href="css/tron-ares.css?v=1">
+  <link rel="stylesheet" href="css/tron-ares.css?v=2">
   <link rel="stylesheet" href="css/ares-multi-view.css?v=1">
   <link rel="stylesheet" href="css/webtor-torrents-ui.v10.css">
   <link rel="stylesheet" href="css/webtor-rect-overlay.css">
@@ -588,62 +588,61 @@
 </div>
 
     <footer class="bottom-bar">
-      <button class="nav-btn" id="prevBtn">
-        <span class="nav-label-arrow">◀</span>
-        Prev
-      </button>
+      <div class="bottom-controls">
+        <button class="nav-btn" id="prevBtn">
+          <span class="nav-label-arrow">◀</span>
+          Prev
+        </button>
 
-      <div class="now-playing" id="nowPlaying">
-  <div class="np-logo" id="npLogo"></div>
-  <div class="np-text">
-    <div class="np-title" id="npTitle">Aucune chaîne sélectionnée</div>
-    <div class="np-sub" id="npSub">Choisissez une chaîne dans la liste</div>
-  </div>
-  <div class="np-badge" id="npBadge">IDLE</div>
-  <div class="np-counter" id="npCounter">-/-</div>
+        <div class="now-playing" id="nowPlaying">
+          <div class="np-logo" id="npLogo"></div>
+          <div class="np-text">
+            <div class="np-title" id="npTitle">Aucune chaîne sélectionnée</div>
+            <div class="np-sub" id="npSub">Choisissez une chaîne dans la liste</div>
+          </div>
+          <div class="np-badge" id="npBadge">IDLE</div>
+          <div class="np-counter" id="npCounter">-/-</div>
 
-  <!-- Actions (Cast, etc.) -->
-  <div class="np-actions" id="npActions">
-    <google-cast-launcher
-      id="castLauncher"
-      class="icon-btn np-action-btn cast-launcher cast-btn"
-      title="Chromecast"
-      aria-label="Chromecast"></google-cast-launcher>
-  </div>
+          <!-- Actions (Cast, etc.) -->
+          <div class="np-actions" id="npActions">
+            <google-cast-launcher
+              id="castLauncher"
+              class="icon-btn np-action-btn cast-launcher cast-btn"
+              title="Chromecast"
+              aria-label="Chromecast"></google-cast-launcher>
+          </div>
 
-  <!-- Nouveau bloc contrôles films (channelList) -->
-  <div class="np-tracks" id="npTracks">
+          <!-- Contrôles audio et sous-titres pour les films -->
+          <div class="np-tracks" id="npTracks">
+            <div class="np-track-group" id="audioGroup">
+              <button class="icon-btn np-track-btn" id="audioTrackBtn" title="Changer la piste audio">
+                🔊
+              </button>
+              <div class="np-track-menu" id="audioTrackMenu"></div>
+            </div>
 
-    <!-- Bouton Audio -->
-    <div class="np-track-group" id="audioGroup">
-      <button class="icon-btn np-track-btn" id="audioTrackBtn" title="Changer la piste audio">
-        🔊
-      </button>
-      <div class="np-track-menu" id="audioTrackMenu"></div>
-    </div>
+            <div class="np-track-group" id="subtitleGroup">
+              <button class="icon-btn np-track-btn" id="subtitleTrackBtn" title="Sous-titres">
+                💬
+              </button>
+              <div class="np-track-menu" id="subtitleTrackMenu"></div>
+            </div>
+          </div>
+        </div>
 
-    <!-- Bouton Sous-titres -->
-    <div class="np-track-group" id="subtitleGroup">
-      <button class="icon-btn np-track-btn" id="subtitleTrackBtn" title="Sous-titres">
-        💬
-      </button>
-      <div class="np-track-menu" id="subtitleTrackMenu"></div>
-    </div>
-
-  </div>
-</div>
-
-
-      <button class="nav-btn" id="nextBtn">
-        Next
-        <span class="nav-label-arrow">▶</span>
-      </button>
-
-      <div class="helper-text">
-        Next / Prev changent la chaîne <span>M3U</span> active.
+        <button class="nav-btn" id="nextBtn">
+          Next
+          <span class="nav-label-arrow">▶</span>
+        </button>
       </div>
-      <div class="page-purpose-note">
-        Player Engine est une interface personnelle et familiale de lecture multim&eacute;dia. Elle sert &agrave; organiser l'acc&egrave;s aux contenus, sans pr&eacute;tention de plateforme officielle de streaming commerciale.
+
+      <div class="footer-info">
+        <div class="helper-text">
+          Next / Prev changent la chaîne <span>M3U</span> active.
+        </div>
+        <div class="page-purpose-note">
+          Player Engine est une interface personnelle et familiale de lecture multim&eacute;dia. Elle sert &agrave; organiser l'acc&egrave;s aux contenus, sans pr&eacute;tention de plateforme officielle de streaming commerciale.
+        </div>
       </div>
     </footer>
   
