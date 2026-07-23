@@ -104,7 +104,7 @@ const CHANNELS = {
   },
   rtp2: {
     label: "RTP2",
-    defaultOrder: ["cable", "basic"],
+    defaultOrder: ["basic", "cable"],
     sources: {
       cable: {
         id: "416376590230300f8c5498-4f731e285a26f6",

@@ -623,14 +623,14 @@
     {
       "id": "cmtv",
       "name": "CMTV",
-      "url": "https://gardien9a13ruedechartres-netizen.github.io/cm-work-test/",
+      "url": "https://qmaalhy7acgxwhm.ngolpdkyoctjcddxshli469r.org/sunshine/xkwp5skMoILF4Yav00M2pfExNhz1tftvV6OEM6clipPL4NiZijIrRRPcsarSZr_TgSuooB98wivA5Ielwoi3hLgZs04oTRoH2PAgKTuYhlvXLLkBGXz34WaKlanRTu6uvIpINDTrXcCKwVXV58rxJxRzaeYTK7ogpX7bX0dUf_0przhcg4YyAO3kIjF1gwEzlfgCgLCoGS-Zg56iQjhaDrWizOppoXc146euEgNtqjRqQLIuqIcDvTj9IAJyPWOD/hls/index.m3u8",
       "logo": {
         "type": "image",
         "value": "/media/cmtv.png"
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": true,
+      "isIframe": false,
       "programUrl": "https://nostv.pt/guia/139",
       "meoCallLetter": "CMTV"
     }
