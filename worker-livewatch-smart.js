@@ -15,6 +15,11 @@ const PORTUGAL_LIVEWATCH_CHANNELS = new Set([
   "cmtv",
   "disney-channel-pt",
   "disney-pixar",
+  "cine-mundo",
+  "nos-studios",
+  "axn",
+  "axn-movies",
+  "axn-white",
   "a-bola",
   "canal-11",
   "cnn-portugal",
@@ -1093,6 +1098,114 @@ Object.assign(CHANNELS, {
         "id": "1761868334d8c26523c126-580fc5dd141f80",
         "label": "LiveWatch cable",
         "exact": "TVCINE EDITION",
+        "country": "Portugal"
+      }
+    }
+  },
+  "cine-mundo": {
+    "label": "CINE MUNDO",
+    "livewatchSearch": "CINE MUNDO",
+    "livewatchExact": "CINE MUNDO",
+    "defaultOrder": [
+      "cable"
+    ],
+    "sources": {
+      "cable": {
+        "id": "25960094757e6d362c5d5f-8ec88247f0f706",
+        "label": "LiveWatch cable",
+        "exact": "CINE MUNDO",
+        "country": "Portugal"
+      }
+    }
+  },
+  "nos-studios": {
+    "label": "NOS STUDIOS",
+    "livewatchSearch": "NOS STUDIOS",
+    "livewatchExact": "NOS STUDIOS",
+    "defaultOrder": [
+      "cable",
+      "basic"
+    ],
+    "sources": {
+      "cable": {
+        "id": "27261441035e4b72b92904-ee1368647917ea",
+        "label": "LiveWatch cable",
+        "exact": "NOS STUDIOS",
+        "country": "Portugal"
+      },
+      "basic": {
+        "id": "39657016396db00c2d9e81-4c78efbc98a64e",
+        "label": "LiveWatch basic",
+        "exact": "NOS STUDIOS",
+        "country": "Portugal"
+      }
+    }
+  },
+  "axn": {
+    "label": "AXN",
+    "livewatchSearch": "AXN",
+    "livewatchExact": "AXN",
+    "defaultOrder": [
+      "basic-hd",
+      "cable"
+    ],
+    "sources": {
+      "basic-hd": {
+        "id": "3143462075dfa9e885f3b2-845a69828b06f0",
+        "label": "LiveWatch basic HD",
+        "exact": "AXN",
+        "country": "Portugal"
+      },
+      "cable": {
+        "id": "538838100d0590731cf6d-696375212ea568",
+        "label": "LiveWatch cable",
+        "exact": "AXN",
+        "country": "Portugal"
+      }
+    }
+  },
+  "axn-movies": {
+    "label": "AXN MOVIES",
+    "livewatchSearch": "AXN MOVIES",
+    "livewatchExact": "AXN MOVIES",
+    "defaultOrder": [
+      "basic-hd",
+      "cable"
+    ],
+    "sources": {
+      "basic-hd": {
+        "id": "2370723370bb823495ff98-ce13f009f658e0",
+        "label": "LiveWatch basic HD",
+        "exact": "AXN MOVIES",
+        "country": "Portugal"
+      },
+      "cable": {
+        "id": "47475930279ac9dcfd9c1-79b27ba2033c61",
+        "label": "LiveWatch cable",
+        "exact": "AXN MOVIES",
+        "country": "Portugal"
+      }
+    }
+  },
+  "axn-white": {
+    "label": "AXN WHITE",
+    "livewatchSearch": "AXN WHITE",
+    "livewatchExact": "AXN WHITE",
+    "defaultOrder": [
+      "basic-hd",
+      "cable"
+    ],
+    "sources": {
+      "basic-hd": {
+        "id": "328698532772b83e8ca83a-4d75ceeee81428",
+        "label": "LiveWatch basic HD",
+        "exact": "AXN WHITE",
+        "country": "Portugal"
+      },
+      "cable": {
+        "id": "47702122617bfc7ea0a24-60a6df76d926e7",
+        "label": "LiveWatch cable",
+        "exact": "AXN WHITE",
         "country": "Portugal"
       }
     }

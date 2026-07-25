@@ -424,14 +424,14 @@
     {
       "id": "tvir",
       "name": "TVI Reality",
-      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=tvi-reality",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/api/live/tvi-reality/clouding/master.m3u8",
       "logo": {
         "type": "image",
         "value": "/media/tvir.jpg"
       },
       "group": "Divertissement",
       "isFavorite": false,
-      "isIframe": true,
+      "isIframe": false,
       "meoCallLetter": "TVIR"
     },
     {
@@ -458,6 +458,66 @@
       "isFavorite": false,
       "isIframe": true,
       "meoCallLetter": "VMAISTVI"
+    },
+    {
+      "id": "axn",
+      "name": "AXN",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=axn",
+      "logo": {
+        "type": "image",
+        "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/axn-hd-pt.png"
+      },
+      "group": "Divertissement",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "axn-white",
+      "name": "AXN WHITE",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=axn-white",
+      "logo": {
+        "type": "image",
+        "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/axn-white-hd-pt.png"
+      },
+      "group": "Divertissement",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "axn-movies",
+      "name": "AXN MOVIES",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=axn-movies",
+      "logo": {
+        "type": "image",
+        "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/axn-movies-hd-pt.png"
+      },
+      "group": "CinÃ©ma",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "cine-mundo",
+      "name": "CINE MUNDO",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=cine-mundo",
+      "logo": {
+        "type": "image",
+        "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/cine-mundo-pt.png"
+      },
+      "group": "CinÃ©ma",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "nos-studios",
+      "name": "NOS STUDIOS",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=nos-studios",
+      "logo": {
+        "type": "image",
+        "value": ""
+      },
+      "group": "CinÃ©ma",
+      "isFavorite": false,
+      "isIframe": true
     },
     {
       "id": "tvcine-top",
