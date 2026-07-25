@@ -469,7 +469,8 @@
       },
       "group": "Divertissement",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "meoCallLetter": "AXNHD"
     },
     {
       "id": "axn-white",
@@ -481,7 +482,8 @@
       },
       "group": "Divertissement",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "meoCallLetter": "AXWHD"
     },
     {
       "id": "axn-movies",
@@ -493,7 +495,8 @@
       },
       "group": "CinÃ©ma",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "meoCallLetter": "AXNMHD"
     },
     {
       "id": "cine-mundo",
@@ -505,7 +508,8 @@
       },
       "group": "CinÃ©ma",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "meoCallLetter": "CINEHD"
     },
     {
       "id": "nos-studios",
