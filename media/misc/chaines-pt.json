@@ -688,14 +688,14 @@
     {
       "id": "cmtv",
       "name": "CMTV",
-      "url": "https://cm-sunshine2.victor-salema-53d.workers.dev/api/live/cmtv/master.m3u8",
+      "url": "https://cm-sunshine2.victor-salema-53d.workers.dev",
       "logo": {
         "type": "image",
         "value": "/media/cmtv.png"
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": false,
+      "isIframe": true,
       "programUrl": "https://nostv.pt/guia/139",
       "meoCallLetter": "CMTV"
     }

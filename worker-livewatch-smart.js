@@ -5122,7 +5122,9 @@ export default {
     }
 
     if (path === "/" || path === "/index.html") {
-      const channelHit = getChannel(url.searchParams.get("channel") || "cmtv") || getChannel("cmtv");
+      const requestedChannel = url.searchParams.get("channel") || "cmtv";
+      const channelHit = getChannel(requestedChannel);
+      if (!channelHit) return notFound(`Unknown channel: ${normalizeChannelKey(requestedChannel)}`);
       const headers = new Headers(corsHeaders());
       headers.set("Content-Type", "text/html; charset=utf-8");
       headers.set("Cache-Control", "no-store");
