@@ -232,7 +232,7 @@
       "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=porto-canal",
       "logo": {
         "type": "image",
-        "value": "/media/Porto.png"
+        "value": "/media/porto.png"
       },
       "group": "Sport",
       "isFavorite": false,
