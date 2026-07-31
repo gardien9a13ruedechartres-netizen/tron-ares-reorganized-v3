@@ -639,7 +639,7 @@
       "url": "https://player-engine.com/api/worker-live/odisseia-pt/master.m3u8",
       "logo": {
         "type": "image",
-        "value": "/media/Odisseia.png"
+        "value": "/media/odisseia.png"
       },
       "group": "Documentaire",
       "isFavorite": false,
