@@ -81,14 +81,6 @@ const CHANNELS = {
         label: "Clouding CMTV",
         button: "Clouding",
         cloudingChannel: "CMTVPT"
-      },
-      direct: {
-        kind: "direct",
-        id: "cm-sunshine2-cmtv",
-        label: "Direct CMTV",
-        button: "Direct",
-        directUrl: "https://cm-sunshine2.victor-salema-53d.workers.dev/api/live/cmtv/master.m3u8",
-        browserRedirect: true
       }
     }
   },
@@ -188,7 +180,6 @@ const CHANNELS = {
   btv: {
     label: "BTV",
     defaultOrder: ["basic", "cable"],
-    manualFallbackOrder: ["direct", "basic", "cable", "deviantart"],
     sources: {
       basic: {
         id: "419434034c29c7a3c7b07-c30c1297e6e5ce",
@@ -206,14 +197,6 @@ const CHANNELS = {
         label: "DeviantArt BTV",
         button: "DeviantArt",
         lovetierChannel: "BTV1"
-      },
-      direct: {
-        kind: "direct",
-        id: "cm-sunshine-btv",
-        label: "Direct BTV",
-        button: "Direct",
-        directUrl: "https://btv-sunshine.victor-salema-53d.workers.dev/api/live/Benfica/master.m3u8",
-        browserRedirect: true
       }
     }
   },
@@ -3925,20 +3908,6 @@ async function resolveDirectSource(channelKey, sourceName, source) {
   const upstreamUrl = new URL(source.directUrl);
   if (!isAllowedDirectUrl(upstreamUrl)) throw new Error("direct URL refused");
 
-  if (source.browserRedirect) {
-    return {
-      channelKey,
-      mode: sourceName,
-      source: sourceName,
-      sourceId: source.id,
-      label: source.label,
-      upstreamUrl,
-      redirectUrl: upstreamUrl.href,
-      masterText: "#EXTM3U\n",
-      latencyMs: 0
-    };
-  }
-
   const startedAt = Date.now();
   const master = await fetchWithTimeout(upstreamUrl, {
     headers: upstreamHeaders(upstreamUrl, "application/vnd.apple.mpegurl,application/x-mpegURL,*/*"),
@@ -4038,11 +4007,6 @@ async function handleMaster(request, requestUrl, channelKey, channel, mode) {
     });
   }
   const headers = masterHeaders(channelKey, selected, mode);
-  if (selected.redirectUrl) {
-    headers.set("Location", selected.redirectUrl);
-    headers.set("Access-Control-Expose-Headers", `${headers.get("Access-Control-Expose-Headers") || ""}, Location`);
-    return new Response(null, { status: 302, headers });
-  }
   if (request.method === "HEAD") return new Response(null, { status: 200, headers });
   return new Response(rewritePlaylist(selected.masterText, selected.upstreamUrl, requestUrl.origin), {
     status: 200,
@@ -4122,8 +4086,7 @@ async function sourceStatus(channelKey, channel, sourceName) {
       sourceId: resolved.sourceId,
       latencyMs: Date.now() - startedAt,
       manifestLatencyMs: resolved.latencyMs,
-      lines: resolved.masterText.split(/\r?\n/).length,
-      redirect: Boolean(resolved.redirectUrl)
+      lines: resolved.masterText.split(/\r?\n/).length
     };
   } catch (error) {
     return {
@@ -4174,9 +4137,6 @@ function playerPage(origin, channelKey, channel) {
   const sourceLabels = {};
   const sources = allSources(channel);
   const smartOrder = smartDefaultOrder(channel);
-  const manualFallbackOrder = Array.isArray(channel.manualFallbackOrder)
-    ? channel.manualFallbackOrder.filter((key) => sources[key])
-    : [];
   for (const [key, source] of Object.entries(sources)) {
     sourceUrls[key] = `${origin}/api/live/${channelKey}/${key}/master.m3u8`;
     sourceLabels[key] = source.label;
@@ -4270,7 +4230,6 @@ function playerPage(origin, channelKey, channel) {
     const SOURCE_URLS = ${scriptJson(sourceUrls)};
     const SOURCE_LABELS = ${scriptJson(sourceLabels)};
     const START_SEQUENCE = ${scriptJson(smartOrder)};
-    const MANUAL_FALLBACK_ORDER = ${scriptJson(manualFallbackOrder)};
     const START_LABEL = ${scriptJson(startLabel)};
     const CONSOLE_PREFIX = ${scriptJson(`${channel.label} Smart`)};
     const LONG_STALL_MS = 3500;
@@ -4761,10 +4720,6 @@ function playerPage(origin, channelKey, channel) {
       appendLog('stall-recovered', { event: eventName, durationMs: Date.now() - stallStartedAt, currentTime: Number(video.currentTime.toFixed(2)), bufferedEnd: bufferedEnd() });
       stallStartedAt = 0;
       clearStallTimer();
-      if (smartSelfRetryTimer) {
-        clearSelfRetryTimer();
-        appendLog('smart-self-retry-cancelled', { key: activeKey, reason: 'stall-recovered', event: eventName });
-      }
     }
     function tryFailover(reason) {
       const now = Date.now();
@@ -4967,11 +4922,6 @@ function playerPage(origin, channelKey, channel) {
       loadSourceKey(clean[0], label + ' -> ' + SOURCE_LABELS[clean[0]], clean, 0, 'sequence-start');
     }
     function sequenceFromSource(key) {
-      if (MANUAL_FALLBACK_ORDER.length && MANUAL_FALLBACK_ORDER.indexOf(key) >= 0) {
-        return MANUAL_FALLBACK_ORDER.slice(MANUAL_FALLBACK_ORDER.indexOf(key)).filter(function(value) {
-          return SOURCE_URLS[value];
-        });
-      }
       const base = START_SEQUENCE && START_SEQUENCE.length ? START_SEQUENCE : [key];
       const startAt = base.indexOf(key);
       if (startAt < 0) return [key].filter(function(value) { return SOURCE_URLS[value]; });

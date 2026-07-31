@@ -232,7 +232,7 @@
       "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=porto-canal",
       "logo": {
         "type": "image",
-        "value": "https://www.freeshot.live/upload/source/Porto-Canal-logo.png"
+        "value": "/media/Porto.png"
       },
       "group": "Sport",
       "isFavorite": false,
@@ -639,7 +639,7 @@
       "url": "https://player-engine.com/api/worker-live/odisseia-pt/master.m3u8",
       "logo": {
         "type": "image",
-        "value": "https://www.freeshot.live/upload/source/CanalOdisseia-logo.png"
+        "value": "/media/Odisseia.png"
       },
       "group": "Documentaire",
       "isFavorite": false,
