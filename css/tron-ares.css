@@ -367,6 +367,24 @@ body {
   align-items: center;
   gap: 6px;
 }
+.series-episode-thumb {
+  width: 58px;
+  height: 34px;
+  flex: 0 0 58px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(0, 229, 255, 0.28);
+  border-radius: 5px;
+  color: var(--tron-muted);
+  background: rgba(0, 0, 0, 0.45);
+  font-size: 10px;
+}
+.series-episode-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 .series-episode-btn,
 .series-source-btn {
   min-width: 0;

@@ -2790,11 +2790,12 @@ function playSeriesEpisode(series, episode) {
   }
 
   const title = `${series?.title || 'Série'} - ${episode?.title || ('Épisode ' + (episode?.number || ''))}`;
+  const entryLogo = String(series?.image || episode?.image || '').trim();
   const entry = {
     id: `series-${series?.id || 'item'}-${episode?.id || episode?.number || Date.now()}`,
     name: title,
     url: mp4,
-    logo: series?.image ? { type: 'image', value: series.image } : deriveLogoFromName(series?.title || 'S'),
+    logo: entryLogo ? { type: 'image', value: entryLogo } : deriveLogoFromName(series?.title || 'S'),
     group: 'Séries',
     isIframe: false,
     isFavorite: false,
@@ -2829,9 +2830,13 @@ function createSeriesCatalogCard(series) {
 
   const poster = document.createElement('div');
   poster.className = 'series-card-poster';
-  if (series?.image) {
+  const firstEpisodeImage = Array.isArray(series?.episodes)
+    ? String(series.episodes.find(episode => String(episode?.image || '').trim())?.image || '').trim()
+    : '';
+  const posterUrl = String(series?.image || firstEpisodeImage).trim();
+  if (posterUrl) {
     const img = document.createElement('img');
-    img.src = series.image;
+    img.src = posterUrl;
     img.alt = series.title || 'Série';
     img.loading = 'lazy';
     img.decoding = 'async';
@@ -2866,6 +2871,20 @@ function createSeriesCatalogCard(series) {
     const row = document.createElement('div');
     row.className = 'series-episode-row';
 
+    const thumb = document.createElement('div');
+    thumb.className = 'series-episode-thumb';
+    const episodeImage = String(episode?.image || '').trim();
+    if (episodeImage) {
+      const img = document.createElement('img');
+      img.src = episodeImage;
+      img.alt = episode?.title || 'Épisode';
+      img.loading = 'lazy';
+      img.decoding = 'async';
+      thumb.appendChild(img);
+    } else {
+      thumb.textContent = String(episode?.number || '');
+    }
+
     const playBtn = document.createElement('button');
     playBtn.type = 'button';
     playBtn.className = 'series-episode-btn';
@@ -2885,7 +2904,7 @@ function createSeriesCatalogCard(series) {
     sourceBtn.rel = 'noopener noreferrer';
     sourceBtn.addEventListener('click', event => event.stopPropagation());
 
-    row.append(playBtn, sourceBtn);
+    row.append(thumb, playBtn, sourceBtn);
     episodes.appendChild(row);
   });
   card.appendChild(episodes);
