@@ -237,13 +237,6 @@ const CHANNELS = {
         label: "DeviantArt TF1",
         button: "DeviantArt",
         lovetierChannel: "TF1FR"
-      },
-      direct: {
-        kind: "direct",
-        id: "direct-tf1-tvradiozap",
-        label: "Direct TF1",
-        button: "Direct",
-        directUrl: "https://tvradiozap.eu/tools/m3u-m3u8.php/para/tf1.m3u8"
       }
     }
   },

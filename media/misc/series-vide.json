@@ -1,0 +1,99 @@
+{
+  "version": 1,
+  "updatedAt": "2026-08-09",
+  "rightsNote": "Renseigne uniquement des fichiers et URLs dont tu possedes les droits ou l'autorisation de diffusion.",
+  "series": [
+    {
+      "id": "daha-17",
+      "title": "Daha 17",
+      "season": 1,
+      "language": "fr",
+      "image": "",
+      "description": "Aras recherche son frere disparu et se retrouve au coeur de la famille Akkaya a Bodrum.",
+      "sourcePage": "https://romancetv.site/saisons/daha-17-saison-1/",
+      "episodes": [
+        {
+          "id": "daha-17-s1e1",
+          "number": 1,
+          "title": "Episode 1",
+          "pageUrl": "https://romancetv.site/episodes/daha-17-1x1/",
+          "mp4": "",
+          "vtt": "",
+          "image": ""
+        },
+        {
+          "id": "daha-17-s1e2",
+          "number": 2,
+          "title": "Episode 2",
+          "pageUrl": "https://romancetv.site/episodes/daha-17-1x2/",
+          "mp4": "",
+          "vtt": "",
+          "image": ""
+        },
+        {
+          "id": "daha-17-s1e3",
+          "number": 3,
+          "title": "Episode 3",
+          "pageUrl": "https://romancetv.site/episodes/daha-17-1x3/",
+          "mp4": "",
+          "vtt": "",
+          "image": ""
+        },
+        {
+          "id": "daha-17-s1e4",
+          "number": 4,
+          "title": "Episode 4",
+          "pageUrl": "https://romancetv.site/episodes/daha-17-1x4/",
+          "mp4": "",
+          "vtt": "",
+          "image": ""
+        },
+        {
+          "id": "daha-17-s1e5",
+          "number": 5,
+          "title": "Episode 5",
+          "pageUrl": "https://romancetv.site/episodes/daha-17-1x5/",
+          "mp4": "",
+          "vtt": "",
+          "image": ""
+        },
+        {
+          "id": "daha-17-s1e6",
+          "number": 6,
+          "title": "Episode 6",
+          "pageUrl": "https://romancetv.site/episodes/daha-17-1x6/",
+          "mp4": "",
+          "vtt": "",
+          "image": ""
+        },
+        {
+          "id": "daha-17-s1e7",
+          "number": 7,
+          "title": "Episode 7",
+          "pageUrl": "https://romancetv.site/episodes/daha-17-1x7/",
+          "mp4": "",
+          "vtt": "",
+          "image": ""
+        },
+        {
+          "id": "daha-17-s1e8",
+          "number": 8,
+          "title": "Episode 8",
+          "pageUrl": "https://romancetv.site/episodes/daha-17-1x8/",
+          "mp4": "",
+          "vtt": "",
+          "image": ""
+        },
+        {
+          "id": "daha-17-s1e9",
+          "number": 9,
+          "title": "Episode 9",
+          "pageUrl": "https://romancetv.site/episodes/daha-17-1x9/",
+          "mp4": "",
+          "vtt": "",
+          "image": ""
+        }
+      ]
+    }
+  ]
+}

@@ -10,6 +10,9 @@ build/
 *.log
 log.txt
 
+# Large local episode file; keep it out of GitHub and Cloudflare assets.
+/media/media/Daha 17 9.mp4
+
 .DS_Store
 Thumbs.db
 
