@@ -256,6 +256,8 @@ async function runWithConcurrency(tasks, limit, onProgress) {
 const frChannels = [];    // Liste M3U FR
 const channels = [];      // Liste M3U principale
 const iframeItems = [];   // Overlays / iFrames
+let seriesView = [];      // Vue virtuelle des chaînes de séries (FR + PT + playlists)
+let seriesCatalog = [];   // Séries et épisodes éditables dans media/misc/series.json
 
 // ✅ UID GLOBAL UNIQUE (PERSISTANT) + HELPERS ID/LOGO
 // =====================================================
@@ -277,6 +279,7 @@ function normalizeLogo(logo, fallbackName) {
 let currentIndex = -1;
 let currentFrIndex = -1;
 let currentIframeIndex = -1;
+let currentSeriesIndex = -1;
 
 let favoritesView = [];
 
@@ -460,7 +463,7 @@ function toggleNewAdditionsMode(){
 let currentFavPos = -1;   // position dans favoritesView
 
 // FR par défaut
-let currentListType = 'fr'; // 'channels' | 'fr' | 'iframe' | 'favorites'
+let currentListType = 'fr'; // 'channels' | 'fr' | 'iframe' | 'favorites' | 'series'
 
 let overlayMode = false;
 let activePlaybackMode = 'stream'; // 'stream' | 'iframe'
@@ -658,9 +661,12 @@ const channelFrListEl = document.getElementById('channelFrList');
 const channelListEl = document.getElementById('channelList');
 const iframeListEl = document.getElementById('iframeList');
 const favoriteListEl = document.getElementById('favoriteList');
+const seriesListEl = document.getElementById('seriesList');
 
 const newAdditionsContainer = document.getElementById('newAdditionsContainer');
 const newAdditionsBtn = document.getElementById('newAdditionsBtn');
+
+loadSeriesCatalog();
 
 // =====================================================
 // 🆕 Derniers ajouts - INIT (après DOM refs)
@@ -2357,6 +2363,7 @@ function renderLists() {
   renderChannelList();
   renderChannelFrList();
   renderIframeList();
+  renderSeriesList();
   renderFavoritesList();
 }
 
@@ -2608,11 +2615,71 @@ function flushPendingRender() {
   requestAnimationFrame(() => renderLists());
 }
 
+function __seriesFold(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/\u00c3\u00a9/g, 'e')
+    .replace(/\u00c3\u00a8/g, 'e')
+    .replace(/\u00c3\u00aa/g, 'e')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+function __isSeriesEntry(entry) {
+  if (!entry) return false;
+  const name = __seriesFold(entry.name);
+  const group = __seriesFold(entry.group);
+  return /\bseries?\b|\bserie\b/.test(name) || /\bseries?\b|\bserie\b/.test(group);
+}
+
+function rebuildSeriesView() {
+  const next = [];
+  const seen = new Set();
+  const append = (items, sourceType) => {
+    (Array.isArray(items) ? items : []).forEach((entry, sourceIndex) => {
+      if (!__isSeriesEntry(entry)) return;
+      const key = String(entry.id || entry.url || `${sourceType}-${sourceIndex}`);
+      if (seen.has(key)) return;
+      seen.add(key);
+      next.push({ entry, sourceType, sourceIndex });
+    });
+  };
+
+  append(frChannels, 'fr');
+  append(iframeItems, 'iframe');
+  append(channels, 'channels');
+  seriesView = next;
+}
+
+function __seriesCatalogMatchesSearch(series) {
+  if (!currentSearch) return true;
+  const text = [
+    series?.title,
+    series?.description,
+    ...(Array.isArray(series?.episodes) ? series.episodes.flatMap(ep => [ep?.title, ep?.number]) : [])
+  ].filter(Boolean).join(' ');
+  return __seriesFold(text).includes(__seriesFold(currentSearch));
+}
+
+async function loadSeriesCatalog() {
+  try {
+    const res = await fetch('media/misc/series.json?_=' + Date.now(), { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    seriesCatalog = Array.isArray(data?.series) ? data.series : [];
+    renderSeriesList();
+  } catch (error) {
+    console.warn('[Series] catalogue indisponible:', error);
+    seriesCatalog = [];
+  }
+}
+
 function refreshActiveListsUI() {
   if (currentListType === 'channels') renderChannelList();
   else if (currentListType === 'fr') renderChannelFrList();
   else if (currentListType === 'iframe') renderIframeList();
   else if (currentListType === 'favorites') renderFavoritesList();
+  else if (currentListType === 'series') renderSeriesList();
 
   // si l’onglet Favoris est affiché (liste active), on refresh aussi
   if (favoriteListEl?.classList.contains('active') && currentListType !== 'favorites') {
@@ -2712,6 +2779,142 @@ function renderIframeList() {
   iframeItems.forEach((it, idx) => {
     if (!matchesSearch(it)) return;
     iframeListEl.appendChild(createChannelElement(it, idx, 'iframe', { enableTmdbPoster: false }));
+  });
+}
+
+function playSeriesEpisode(series, episode) {
+  const mp4 = String(episode?.mp4 || '').trim();
+  if (!mp4) {
+    setStatus('Ajoute d’abord l’URL MP4 de cet épisode dans series.json');
+    return;
+  }
+
+  const title = `${series?.title || 'Série'} - ${episode?.title || ('Épisode ' + (episode?.number || ''))}`;
+  const entry = {
+    id: `series-${series?.id || 'item'}-${episode?.id || episode?.number || Date.now()}`,
+    name: title,
+    url: mp4,
+    logo: series?.image ? { type: 'image', value: series.image } : deriveLogoFromName(series?.title || 'S'),
+    group: 'Séries',
+    isIframe: false,
+    isFavorite: false,
+    listType: 'direct',
+    seriesEpisodeId: episode?.id || ''
+  };
+
+  currentListType = 'series';
+  playUrl(entry);
+
+  const vtt = String(episode?.vtt || '').trim();
+  if (vtt && /^https?:\/\//i.test(vtt)) {
+    fetch(vtt, { cache: 'no-store' })
+      .then(res => {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.text();
+      })
+      .then(text => {
+        if (currentEntry?.id !== entry.id) return;
+        __subtitleAddTrackFromVttText(text, 'Séries', series?.language || 'fr');
+      })
+      .catch(error => console.warn('[Series] sous-titres VTT indisponibles:', error));
+  }
+}
+
+function createSeriesCatalogCard(series) {
+  const card = document.createElement('article');
+  card.className = 'series-card';
+
+  const header = document.createElement('div');
+  header.className = 'series-card-header';
+
+  const poster = document.createElement('div');
+  poster.className = 'series-card-poster';
+  if (series?.image) {
+    const img = document.createElement('img');
+    img.src = series.image;
+    img.alt = series.title || 'Série';
+    img.loading = 'lazy';
+    img.decoding = 'async';
+    poster.appendChild(img);
+  } else {
+    poster.textContent = (series?.title || 'S').trim().charAt(0).toUpperCase() || 'S';
+  }
+
+  const info = document.createElement('div');
+  info.className = 'series-card-info';
+  const title = document.createElement('div');
+  title.className = 'series-card-title';
+  title.textContent = series?.title || 'Série sans titre';
+  const meta = document.createElement('div');
+  meta.className = 'series-card-meta';
+  const count = Array.isArray(series?.episodes) ? series.episodes.length : 0;
+  meta.textContent = `Saison ${series?.season || 1} · ${count} épisode${count > 1 ? 's' : ''}`;
+  info.append(title, meta);
+  header.append(poster, info);
+  card.appendChild(header);
+
+  if (series?.description) {
+    const description = document.createElement('p');
+    description.className = 'series-card-description';
+    description.textContent = series.description;
+    card.appendChild(description);
+  }
+
+  const episodes = document.createElement('div');
+  episodes.className = 'series-episodes';
+  (Array.isArray(series?.episodes) ? series.episodes : []).forEach((episode) => {
+    const row = document.createElement('div');
+    row.className = 'series-episode-row';
+
+    const playBtn = document.createElement('button');
+    playBtn.type = 'button';
+    playBtn.className = 'series-episode-btn';
+    playBtn.textContent = `▶ ${episode?.title || ('Épisode ' + (episode?.number || ''))}`;
+    playBtn.disabled = !String(episode?.mp4 || '').trim();
+    playBtn.title = playBtn.disabled ? 'Ajoute une URL MP4 dans series.json' : 'Lire cet épisode';
+    playBtn.addEventListener('click', (event) => {
+      event.stopPropagation();
+      playSeriesEpisode(series, episode);
+    });
+
+    const sourceBtn = document.createElement('a');
+    sourceBtn.className = 'series-source-btn';
+    sourceBtn.textContent = 'Source';
+    sourceBtn.href = episode?.pageUrl || series?.sourcePage || '#';
+    sourceBtn.target = '_blank';
+    sourceBtn.rel = 'noopener noreferrer';
+    sourceBtn.addEventListener('click', event => event.stopPropagation());
+
+    row.append(playBtn, sourceBtn);
+    episodes.appendChild(row);
+  });
+  card.appendChild(episodes);
+  return card;
+}
+
+function renderSeriesList() {
+  if (!seriesListEl) return;
+  rebuildSeriesView();
+  seriesListEl.innerHTML = '';
+
+  seriesCatalog.forEach(series => {
+    if (__seriesCatalogMatchesSearch(series)) {
+      seriesListEl.appendChild(createSeriesCatalogCard(series));
+    }
+  });
+
+  const visible = seriesView.filter(({ entry }) => matchesSearch(entry));
+  if (!visible.length && !seriesListEl.children.length) {
+    const empty = document.createElement('div');
+    empty.className = 'series-empty';
+    empty.textContent = 'Aucune série configurée';
+    seriesListEl.appendChild(empty);
+    return;
+  }
+
+  seriesView.forEach((item, index) => {
+    if (!matchesSearch(item.entry)) return;
+    seriesListEl.appendChild(createChannelElement(item.entry, index, 'series', { enableTmdbPoster: false }));
   });
 }
 
@@ -3416,6 +3619,7 @@ function createChannelElement(entry, index, sourceType, options) {
     if (sourceType === 'channels') currentIndex = index;
     else if (sourceType === 'fr') currentFrIndex = index;
     else if (sourceType === 'iframe') currentIframeIndex = index;
+    else if (sourceType === 'series') currentSeriesIndex = index;
 
     activePlaybackMode = 'iframe';
     playEntryAsOverlay(entry);
@@ -3436,6 +3640,7 @@ function createChannelElement(entry, index, sourceType, options) {
     if (sourceType === 'channels') playChannel(index);
     else if (sourceType === 'fr') playFrChannel(index);
     else if (sourceType === 'iframe') playIframe(index);
+    else if (sourceType === 'series') playSeries(index);
   });
 
   hydrateBadgeFromCache(li, entry);
@@ -3627,6 +3832,21 @@ function syncPlaybackPositionFromEntry() {
       }
     }
 
+    if (type === 'series') {
+      rebuildSeriesView();
+      const idx = seriesView.findIndex(x => _entryMatch(x?.entry, currentEntry));
+      if (idx >= 0) {
+        currentListType = 'series';
+        currentSeriesIndex = idx;
+        return true;
+      }
+      if (currentEntry?.seriesEpisodeId) {
+        currentListType = 'series';
+        currentSeriesIndex = -1;
+        return true;
+      }
+    }
+
     if (type === 'fr') {
       const idx = frChannels.findIndex(x => _entryMatch(x, currentEntry));
       if (idx >= 0) {
@@ -3691,11 +3911,15 @@ function updateNowPlayingCounter() {
     pos = currentFrIndex >= 0 ? (currentFrIndex + 1) : 0;
   } else if (currentListType === 'iframe') {
     pos = currentIframeIndex >= 0 ? (currentIframeIndex + 1) : 0;
+  } else if (currentListType === 'series') {
+    rebuildSeriesView();
+    pos = currentSeriesIndex >= 0 ? (currentSeriesIndex + 1) : 0;
   } else {
     pos = currentIndex >= 0 ? (currentIndex + 1) : 0;
   }
 
-  const newText = totalAll ? `${pos}/${totalAll}` : '-/-';
+  const total = currentListType === 'series' ? seriesView.length : totalAll;
+  const newText = total ? `${pos}/${total}` : '-/-';
   if (npCounter.textContent !== newText) {
     npCounter.textContent = newText;
     // Tick animation sans reflow de layout (transform/opacity seulement)
@@ -4426,6 +4650,19 @@ function playIframe(index) {
   scrollToActiveItem();
 }
 
+function playSeries(index) {
+  rebuildSeriesView();
+  if (index < 0 || index >= seriesView.length) return;
+  currentListType = 'series';
+  currentSeriesIndex = index;
+  const item = seriesView[index];
+  if (!item?.entry) return;
+  playUrl(item.entry);
+  renderSeriesList();
+  if (favoriteListEl?.classList.contains('active')) renderFavoritesList();
+  scrollToActiveItem();
+}
+
 // =====================================================
 // NEXT / PREV (avec support FAVORITES)
 // =====================================================
@@ -4453,6 +4690,11 @@ function playNext() {
     if (!iframeItems.length) return;
     if (currentIframeIndex === -1) playIframe(0);
     else playIframe((currentIframeIndex + 1) % iframeItems.length);
+  } else if (currentListType === 'series') {
+    rebuildSeriesView();
+    if (!seriesView.length) return;
+    if (currentSeriesIndex === -1) playSeries(0);
+    else playSeries((currentSeriesIndex + 1) % seriesView.length);
   } else {
     if (!channels.length) return;
     if (currentIndex === -1) playChannel(0);
@@ -4484,6 +4726,11 @@ function playPrev() {
     if (!iframeItems.length) return;
     if (currentIframeIndex === -1) playIframe(iframeItems.length - 1);
     else playIframe((currentIframeIndex - 1 + iframeItems.length) % iframeItems.length);
+  } else if (currentListType === 'series') {
+    rebuildSeriesView();
+    if (!seriesView.length) return;
+    if (currentSeriesIndex === -1) playSeries(seriesView.length - 1);
+    else playSeries((currentSeriesIndex - 1 + seriesView.length) % seriesView.length);
   } else {
     if (!channels.length) return;
     if (currentIndex === -1) playChannel(channels.length - 1);
@@ -4498,6 +4745,7 @@ function scrollToActiveItem() {
   else if (currentListType === 'fr') listEl = channelFrListEl;
   else if (currentListType === 'iframe') listEl = iframeListEl;
   else if (currentListType === 'favorites') listEl = favoriteListEl;
+  else if (currentListType === 'series') listEl = seriesListEl;
   else return;
 
   if (!listEl) return;
@@ -5041,6 +5289,20 @@ function autoplayFirstInList(listType) {
     return;
   }
 
+  if (listType === 'series') {
+    const firstEpisode = seriesCatalog
+      .flatMap(series => (Array.isArray(series?.episodes) ? series.episodes.map(episode => ({ series, episode })) : []))
+      .find(item => String(item.episode?.mp4 || '').trim());
+    if (firstEpisode) {
+      playSeriesEpisode(firstEpisode.series, firstEpisode.episode);
+      return;
+    }
+    rebuildSeriesView();
+    if (!seriesView.length) return;
+    playSeries(0);
+    return;
+  }
+
   // channels
   if (!channels.length) return;
   playChannel(0);
@@ -5092,6 +5354,11 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
       currentListType = 'favorites';
       favoriteListEl?.classList.add('active');
       renderFavoritesList();
+    }
+    if (tab === 'series') {
+      currentListType = 'series';
+      seriesListEl?.classList.add('active');
+      renderSeriesList();
     }
 
     // Auto-diffuse la première chaîne quand on change de liste
@@ -5307,6 +5574,7 @@ prevBtn?.addEventListener('click', playPrev);
     else if (tab === 'fr') currentListType = 'fr';
     else if (tab === 'iframes') currentListType = 'iframe';
     else if (tab === 'favorites') currentListType = 'favorites';
+    else if (tab === 'series') currentListType = 'series';
   }
 
   function ensureIframeWheelCatcher() {
@@ -7873,6 +8141,7 @@ function playIntroLoop() {
   currentIndex = -1;
   currentFrIndex = -1;
   currentIframeIndex = -1;
+  currentSeriesIndex = -1;
   currentFavPos = -1;
 
   // Mettre l’UI en mode vidéo
@@ -7941,7 +8210,9 @@ async function refreshPlaylistsSilently() {
   __autoRefreshInFlight = true;
 
   const playingUrl = currentEntry && currentEntry.url ? currentEntry.url : null;
-  const playingListType = currentEntry && currentEntry.listType ? currentEntry.listType : currentListType;
+  const playingListType = currentListType === 'series'
+    ? 'series'
+    : (currentEntry && currentEntry.listType ? currentEntry.listType : currentListType);
 
   const favUrls = __collectFavoriteUrls();
 
@@ -8062,8 +8333,20 @@ async function refreshPlaylistsSilently() {
     const idxCh = __findIndexByUrl(channels, playingUrl);
     const idxFr = __findIndexByUrl(frChannels, playingUrl);
     const idxIf = __findIndexByUrl(iframeItems, playingUrl);
+    rebuildSeriesView();
+    const idxSeries = seriesView.findIndex(({ entry }) =>
+      entry && (
+        entry.url === playingUrl ||
+        entry.id === currentEntry?.id ||
+        entry.url === currentEntry?.originalPageUrl
+      )
+    );
 
-    if (playingListType === 'fr' && idxFr !== -1) {
+    if (playingListType === 'series' && idxSeries !== -1) {
+      currentSeriesIndex = idxSeries;
+      currentIndex = -1; currentFrIndex = -1; currentIframeIndex = -1;
+      found = seriesView[idxSeries].entry;
+    } else if (playingListType === 'fr' && idxFr !== -1) {
       currentFrIndex = idxFr;
       currentIndex = -1; currentIframeIndex = -1;
       found = frChannels[idxFr];

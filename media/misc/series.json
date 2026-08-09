@@ -1,0 +1,108 @@
+{
+  "version": 1,
+  "updatedAt": "2026-08-09",
+  "rightsNote": "Renseigne uniquement des fichiers et URLs dont tu possedes les droits ou l'autorisation de diffusion.",
+  "series": [
+    {
+      "id": "daha-17",
+      "title": "Daha 17",
+      "season": 1,
+      "language": "fr",
+      "image": "",
+      "description": "Aras recherche son frere disparu et se retrouve au coeur de la famille Akkaya a Bodrum.",
+      "sourcePage": "https://romancetv.site/saisons/daha-17-saison-1/",
+      "episodes": [
+        {
+          "id": "daha-17-s1e1",
+          "number": 1,
+          "title": "Episode 1",
+          "pageUrl": "https://romancetv.site/episodes/daha-17-1x1/",
+          "mp4": "https://cdn.alldizi.com/videos/Daha17/Daha%2017%201.%20B%C3%B6l%C3%BCm%20%5B720p%5D.mp4",
+          "vtt": "https://romancetv.site/videoplayer/subtitles/videof7a5f3bd.vtt",
+          "image": "https://romancetv.site/videoplayer/thumbnails/videof7a5f3bd.webp"
+        },
+        {
+          "id": "daha-17-s1e2",
+          "number": 2,
+          "title": "Episode 2",
+          "pageUrl": "https://romancetv.site/episodes/daha-17-1x2/",
+          "mp4": "https://cdn.alldizi.com/videos/Daha17/Daha%2017%20%EF%BD%9C%202.%20B%C3%B6l%C3%BCm%20%5B720p%5D.mp4",
+          "vtt": "https://romancetv.site/videoplayer/subtitles/video5f394281.vtt",
+          "image": "https://romancetv.site/videoplayer/thumbnails/video5f394281.webp"
+        },
+        {
+          "id": "daha-17-s1e3",
+          "number": 3,
+          "title": "Episode 3",
+          "pageUrl": "https://romancetv.site/episodes/daha-17-1x3/",
+          "mp4": "https://cdn.alldizi.com/videos/Daha17/Daha%2017%20%EF%BD%9C%203.%20B%C3%B6l%C3%BCm%20%5B720p%5D.mp4",
+          "vtt": "https://romancetv.site/videoplayer/subtitles/video3e50198d.vtt",
+          "image": "https://romancetv.site/videoplayer/thumbnails/video3e50198d.webp"
+        },
+        {
+          "id": "daha-17-s1e4",
+          "number": 4,
+          "title": "Episode 4",
+          "pageUrl": "https://romancetv.site/episodes/daha-17-1x4/",
+          "mp4": "https://cdn.alldizi.com/videos/Daha17/Daha%2017%20%EF%BD%9C%204.%20B%C3%B6l%C3%BCm%20%5B720p%5D.mp4",
+          "vtt": "https://romancetv.site/videoplayer/subtitles/video60028681.vtt",
+          "image": "https://romancetv.site/videoplayer/thumbnails/video60028681.png"
+        },
+        {
+          "id": "daha-17-s1e5",
+          "number": 5,
+          "title": "Episode 5",
+          "pageUrl": "https://romancetv.site/episodes/daha-17-1x5/",
+          "mp4": "https://cdn.alldizi.com/videos/Daha17/Daha%2017%20%EF%BD%9C%205.%20B%C3%B6l%C3%BCm%20%5B720p%5D.mp4",
+          "vtt": "https://romancetv.site/videoplayer/subtitles/video4d0cefb1.vtt",
+          "image": "https://romancetv.site/videoplayer/thumbnails/video4d0cefb1.webp"
+        },
+        {
+          "id": "daha-17-s1e6",
+          "number": 6,
+          "title": "Episode 6",
+          "pageUrl": "https://romancetv.site/episodes/daha-17-1x6/",
+          "mp4": "https://cdn.alldizi.com/videos/Daha17/Daha%2017%20%EF%BD%9C%206.%20B%C3%B6l%C3%BCm%20%5B720p%5D.mp4",
+          "vtt": "https://romancetv.site/videoplayer/subtitles/videoa4795e30.vtt",
+          "image": "https://romancetv.site/videoplayer/thumbnails/videoa4795e30.jpg"
+        },
+        {
+          "id": "daha-17-s1e7",
+          "number": 7,
+          "title": "Episode 7",
+          "pageUrl": "https://romancetv.site/episodes/daha-17-1x7/",
+          "mp4": "https://cdn.alldizi.com/videos/Daha17/Daha%2017%20%EF%BD%9C%207.%20B%C3%B6l%C3%BCm%20%5B720p%5D.mp4",
+          "vtt": "https://romancetv.site/videoplayer/subtitles/videoc4062679.vtt",
+          "image": "https://romancetv.site/videoplayer/thumbnails/videoc4062679.webp"
+        },
+        {
+          "id": "daha-17-s1e8",
+          "number": 8,
+          "title": "Episode 8",
+          "pageUrl": "https://romancetv.site/episodes/daha-17-1x8/",
+          "mp4": "https://cdn.alldizi.com/videos/Daha17/Daha%2017%20%EF%BD%9C%208.%20B%C3%B6l%C3%BCm%20%5B720p%5D.mp4",
+          "vtt": "https://romancetv.site/videoplayer/subtitles/video3e4ef121.vtt",
+          "image": "https://romancetv.site/videoplayer/thumbnails/video3e4ef121.webp"
+        },
+        {
+          "id": "daha-17-s1e9",
+          "number": 9,
+          "title": "Episode 9",
+          "pageUrl": "https://romancetv.site/episodes/daha-17-1x9/",
+          "mp4": "https://cdn.alldizi.com/videos/Daha17/Daha%2017%20%EF%BD%9C%209.%20B%C3%B6l%C3%BCm%20%5B720p%5D.mp4",
+          "vtt": "https://romancetv.site/videoplayer/subtitles/videoba2e1b29.vtt",
+          "image": "https://romancetv.site/videoplayer/thumbnails/videoba2e1b29.webp"
+        },
+        {
+          "id": "daha-17-s1e10",
+          "number": 10,
+          "title": "Episode 10",
+          "pageUrl": "https://romancetv.site/episodes/daha-17-1x10/",
+          "mp4": "https://cdn.alldizi.com/videos/Daha17/Daha%2017%20%EF%BD%9C%2010.%20B%C3%B6l%C3%BCm%20%5B720p%5D.mp4",
+          "vtt": "https://romancetv.site/videoplayer/subtitles/videoc50d47a7.vtt",
+          "image": "https://romancetv.site/videoplayer/thumbnails/videoc50d47a7.webp"
+        }
+      ]
+    }
+  ]
+}
