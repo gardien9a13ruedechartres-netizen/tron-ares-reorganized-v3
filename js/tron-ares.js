@@ -2807,8 +2807,9 @@ function playSeriesEpisode(series, episode) {
   playUrl(entry);
 
   const vtt = String(episode?.vtt || '').trim();
-  if (vtt && /^https?:\/\//i.test(vtt)) {
-    fetch(vtt, { cache: 'no-store' })
+  if (vtt) {
+    const vttUrl = new URL(vtt, window.location.href).href;
+    fetch(vttUrl, { cache: 'no-store' })
       .then(res => {
         if (!res.ok) throw new Error('HTTP ' + res.status);
         return res.text();
