@@ -256,8 +256,8 @@ async function runWithConcurrency(tasks, limit, onProgress) {
 const frChannels = [];    // Liste M3U FR
 const channels = [];      // Liste M3U principale
 const iframeItems = [];   // Overlays / iFrames
-let seriesView = [];      // Vue virtuelle des chaînes de séries (FR + PT + playlists)
-let seriesCatalog = [];   // Séries et épisodes éditables dans media/misc/series.json
+let seriesView = [];      // Entrées de chaînes explicitement marquées comme séries
+let seriesCatalog = [];   // Catalogue éditorial indépendant dans media/misc/series.json
 
 // ✅ UID GLOBAL UNIQUE (PERSISTANT) + HELPERS ID/LOGO
 // =====================================================
@@ -2626,10 +2626,28 @@ function __seriesFold(value) {
 }
 
 function __isSeriesEntry(entry) {
-  if (!entry) return false;
-  const name = __seriesFold(entry.name);
-  const group = __seriesFold(entry.group);
-  return /\bseries?\b|\bserie\b/.test(name) || /\bseries?\b|\bserie\b/.test(group);
+  // Une chaîne n'entre dans cette vue que si elle le demande explicitement.
+  // Le catalogue éditorial de series.json reste indépendant des playlists.
+  return Boolean(
+    entry &&
+    String(entry.contentType || '').toLowerCase() === 'series' &&
+    String(entry.seriesId || '').trim()
+  );
+}
+
+function __seriesPlayableEpisodes() {
+  const items = [];
+  (Array.isArray(seriesCatalog) ? seriesCatalog : []).forEach(series => {
+    (Array.isArray(series?.episodes) ? series.episodes : []).forEach(episode => {
+      if (String(episode?.mp4 || '').trim()) items.push({ series, episode });
+    });
+  });
+  return items;
+}
+
+function __seriesEpisodeIndex(episodeId) {
+  if (!episodeId) return -1;
+  return __seriesPlayableEpisodes().findIndex(item => item.episode?.id === episodeId);
 }
 
 function rebuildSeriesView() {
@@ -2645,6 +2663,9 @@ function rebuildSeriesView() {
     });
   };
 
+  // Les playlists restent dans leurs onglets. Seules des entrées explicitement
+  // marquées { contentType: "series", seriesId: "..." } peuvent être ajoutées
+  // ici à l'avenir; series.json n'est jamais injecté dans channelList.
   append(frChannels, 'fr');
   append(iframeItems, 'iframe');
   append(channels, 'channels');
@@ -2914,7 +2935,6 @@ function createSeriesCatalogCard(series) {
 
 function renderSeriesList() {
   if (!seriesListEl) return;
-  rebuildSeriesView();
   seriesListEl.innerHTML = '';
 
   seriesCatalog.forEach(series => {
@@ -2923,19 +2943,12 @@ function renderSeriesList() {
     }
   });
 
-  const visible = seriesView.filter(({ entry }) => matchesSearch(entry));
-  if (!visible.length && !seriesListEl.children.length) {
+  if (!seriesListEl.children.length) {
     const empty = document.createElement('div');
     empty.className = 'series-empty';
     empty.textContent = 'Aucune série configurée';
     seriesListEl.appendChild(empty);
-    return;
   }
-
-  seriesView.forEach((item, index) => {
-    if (!matchesSearch(item.entry)) return;
-    seriesListEl.appendChild(createChannelElement(item.entry, index, 'series', { enableTmdbPoster: false }));
-  });
 }
 
 function renderFavoritesList() {
@@ -3932,13 +3945,13 @@ function updateNowPlayingCounter() {
   } else if (currentListType === 'iframe') {
     pos = currentIframeIndex >= 0 ? (currentIframeIndex + 1) : 0;
   } else if (currentListType === 'series') {
-    rebuildSeriesView();
-    pos = currentSeriesIndex >= 0 ? (currentSeriesIndex + 1) : 0;
+    const episodePos = __seriesEpisodeIndex(currentEntry?.seriesEpisodeId);
+    pos = episodePos >= 0 ? episodePos + 1 : (currentSeriesIndex >= 0 ? currentSeriesIndex + 1 : 0);
   } else {
     pos = currentIndex >= 0 ? (currentIndex + 1) : 0;
   }
 
-  const total = currentListType === 'series' ? seriesView.length : totalAll;
+  const total = currentListType === 'series' ? __seriesPlayableEpisodes().length : totalAll;
   const newText = total ? `${pos}/${total}` : '-/-';
   if (npCounter.textContent !== newText) {
     npCounter.textContent = newText;
@@ -4711,10 +4724,14 @@ function playNext() {
     if (currentIframeIndex === -1) playIframe(0);
     else playIframe((currentIframeIndex + 1) % iframeItems.length);
   } else if (currentListType === 'series') {
-    rebuildSeriesView();
-    if (!seriesView.length) return;
-    if (currentSeriesIndex === -1) playSeries(0);
-    else playSeries((currentSeriesIndex + 1) % seriesView.length);
+    const episodes = __seriesPlayableEpisodes();
+    if (!episodes.length) return;
+    const current = __seriesEpisodeIndex(currentEntry?.seriesEpisodeId);
+    const nextIndex = current < 0 ? 0 : (current + 1) % episodes.length;
+    currentSeriesIndex = nextIndex;
+    playSeriesEpisode(episodes[nextIndex].series, episodes[nextIndex].episode);
+    renderSeriesList();
+    scrollToActiveItem();
   } else {
     if (!channels.length) return;
     if (currentIndex === -1) playChannel(0);
@@ -4747,10 +4764,14 @@ function playPrev() {
     if (currentIframeIndex === -1) playIframe(iframeItems.length - 1);
     else playIframe((currentIframeIndex - 1 + iframeItems.length) % iframeItems.length);
   } else if (currentListType === 'series') {
-    rebuildSeriesView();
-    if (!seriesView.length) return;
-    if (currentSeriesIndex === -1) playSeries(seriesView.length - 1);
-    else playSeries((currentSeriesIndex - 1 + seriesView.length) % seriesView.length);
+    const episodes = __seriesPlayableEpisodes();
+    if (!episodes.length) return;
+    const current = __seriesEpisodeIndex(currentEntry?.seriesEpisodeId);
+    const prevIndex = current < 0 ? episodes.length - 1 : (current - 1 + episodes.length) % episodes.length;
+    currentSeriesIndex = prevIndex;
+    playSeriesEpisode(episodes[prevIndex].series, episodes[prevIndex].episode);
+    renderSeriesList();
+    scrollToActiveItem();
   } else {
     if (!channels.length) return;
     if (currentIndex === -1) playChannel(channels.length - 1);
@@ -5310,16 +5331,11 @@ function autoplayFirstInList(listType) {
   }
 
   if (listType === 'series') {
-    const firstEpisode = seriesCatalog
-      .flatMap(series => (Array.isArray(series?.episodes) ? series.episodes.map(episode => ({ series, episode })) : []))
-      .find(item => String(item.episode?.mp4 || '').trim());
+    const firstEpisode = __seriesPlayableEpisodes()[0];
     if (firstEpisode) {
       playSeriesEpisode(firstEpisode.series, firstEpisode.episode);
       return;
     }
-    rebuildSeriesView();
-    if (!seriesView.length) return;
-    playSeries(0);
     return;
   }
 
@@ -8362,7 +8378,13 @@ async function refreshPlaylistsSilently() {
       )
     );
 
-    if (playingListType === 'series' && idxSeries !== -1) {
+    if (playingListType === 'series' && currentEntry?.seriesEpisodeId) {
+      // Un épisode de series.json n'est pas une entrée de playlist : on
+      // conserve l'entrée directe pendant le rafraîchissement des chaînes.
+      currentSeriesIndex = __seriesEpisodeIndex(currentEntry.seriesEpisodeId);
+      currentIndex = -1; currentFrIndex = -1; currentIframeIndex = -1;
+      found = currentEntry;
+    } else if (playingListType === 'series' && idxSeries !== -1) {
       currentSeriesIndex = idxSeries;
       currentIndex = -1; currentFrIndex = -1; currentIframeIndex = -1;
       found = seriesView[idxSeries].entry;

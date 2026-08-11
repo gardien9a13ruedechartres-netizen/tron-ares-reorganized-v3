@@ -5,6 +5,8 @@
   "series": [
     {
       "id": "daha-17",
+      "seriesId": "daha-17",
+      "contentType": "series",
       "title": "Daha 17",
       "season": 1,
       "language": "fr",
