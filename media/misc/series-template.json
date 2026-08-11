@@ -1,0 +1,37 @@
+{
+  "version": 2,
+  "rightsNote": "Utilise uniquement des fichiers et URLs dont tu possedes les droits ou l'autorisation de diffusion.",
+  "series": [
+    {
+      "id": "ma-serie",
+      "seriesId": "ma-serie",
+      "contentType": "series",
+      "title": "Nom de la serie",
+      "slug": "ma-serie",
+      "language": "fr",
+      "status": "active",
+      "image": "",
+      "description": "Resume de la serie.",
+      "sourcePage": "",
+      "seasons": [
+        {
+          "id": "ma-serie-s1",
+          "number": 1,
+          "title": "Saison 1",
+          "episodes": [
+            {
+              "id": "ma-serie-s1e1",
+              "number": 1,
+              "title": "Episode 1",
+              "duration": "",
+              "pageUrl": "",
+              "mp4": "",
+              "vtt": "",
+              "image": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

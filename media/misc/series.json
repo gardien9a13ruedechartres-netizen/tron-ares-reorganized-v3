@@ -1,6 +1,6 @@
 {
-  "version": 1,
-  "updatedAt": "2026-08-09",
+  "version": 2,
+  "updatedAt": "2026-08-11",
   "rightsNote": "Renseigne uniquement des fichiers et URLs dont tu possedes les droits ou l'autorisation de diffusion.",
   "series": [
     {
@@ -8,8 +8,10 @@
       "seriesId": "daha-17",
       "contentType": "series",
       "title": "Daha 17",
+      "slug": "daha-17",
       "season": 1,
       "language": "fr",
+      "status": "active",
       "image": "",
       "description": "Aras recherche son frere disparu et se retrouve au coeur de la famille Akkaya a Bodrum.",
       "sourcePage": "https://romancetv.site/saisons/daha-17-saison-1/",

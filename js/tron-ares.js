@@ -2635,10 +2635,23 @@ function __isSeriesEntry(entry) {
   );
 }
 
+function __seriesEpisodes(series) {
+  if (Array.isArray(series?.episodes)) return series.episodes;
+  if (!Array.isArray(series?.seasons)) return [];
+
+  return series.seasons.flatMap(season => {
+    const seasonNumber = season?.number ?? season?.season;
+    return (Array.isArray(season?.episodes) ? season.episodes : []).map(episode => ({
+      ...episode,
+      season: episode?.season ?? seasonNumber
+    }));
+  });
+}
+
 function __seriesPlayableEpisodes() {
   const items = [];
   (Array.isArray(seriesCatalog) ? seriesCatalog : []).forEach(series => {
-    (Array.isArray(series?.episodes) ? series.episodes : []).forEach(episode => {
+    __seriesEpisodes(series).forEach(episode => {
       if (String(episode?.mp4 || '').trim()) items.push({ series, episode });
     });
   });
@@ -2677,7 +2690,7 @@ function __seriesCatalogMatchesSearch(series) {
   const text = [
     series?.title,
     series?.description,
-    ...(Array.isArray(series?.episodes) ? series.episodes.flatMap(ep => [ep?.title, ep?.number]) : [])
+    ...__seriesEpisodes(series).flatMap(ep => [ep?.title, ep?.number])
   ].filter(Boolean).join(' ');
   return __seriesFold(text).includes(__seriesFold(currentSearch));
 }
@@ -2852,9 +2865,9 @@ function createSeriesCatalogCard(series) {
 
   const poster = document.createElement('div');
   poster.className = 'series-card-poster';
-  const firstEpisodeImage = Array.isArray(series?.episodes)
-    ? String(series.episodes.find(episode => String(episode?.image || '').trim())?.image || '').trim()
-    : '';
+  const firstEpisodeImage = String(
+    __seriesEpisodes(series).find(episode => String(episode?.image || '').trim())?.image || ''
+  ).trim();
   const posterUrl = String(series?.image || firstEpisodeImage).trim();
   if (posterUrl) {
     const img = document.createElement('img');
@@ -2874,7 +2887,7 @@ function createSeriesCatalogCard(series) {
   title.textContent = series?.title || 'Série sans titre';
   const meta = document.createElement('div');
   meta.className = 'series-card-meta';
-  const count = Array.isArray(series?.episodes) ? series.episodes.length : 0;
+  const count = __seriesEpisodes(series).length;
   meta.textContent = `Saison ${series?.season || 1} · ${count} épisode${count > 1 ? 's' : ''}`;
   info.append(title, meta);
   header.append(poster, info);
@@ -2889,7 +2902,7 @@ function createSeriesCatalogCard(series) {
 
   const episodes = document.createElement('div');
   episodes.className = 'series-episodes';
-  (Array.isArray(series?.episodes) ? series.episodes : []).forEach((episode) => {
+  __seriesEpisodes(series).forEach((episode) => {
     const row = document.createElement('div');
     row.className = 'series-episode-row';
 
