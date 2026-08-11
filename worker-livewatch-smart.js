@@ -164,6 +164,14 @@ const CHANNELS = {
         label: "Clouding TVI",
         button: "Clouding",
         cloudingChannel: "TVI"
+      },
+      direct: {
+        kind: "direct",
+        id: "tvi-github-direct",
+        label: "Direct TVI",
+        button: "Direct",
+        directUrl: "https://raw.githubusercontent.com/LITUATUI/M3UPT/refs/heads/main/M3U/TVI.m3u8",
+        proxyPrefixes: ["https://video-auth7.iol.pt/live_tvi/live_tvi/"]
       }
     }
   },
@@ -3481,6 +3489,19 @@ function configuredDirectPrefixes() {
           path: directUrl.pathname.slice(0, slash + 1).toLowerCase()
         });
       } catch (_) {}
+
+      for (const value of Array.isArray(source.proxyPrefixes) ? source.proxyPrefixes : []) {
+        try {
+          const companionUrl = new URL(value);
+          const path = companionUrl.pathname.endsWith("/")
+            ? companionUrl.pathname
+            : `${companionUrl.pathname}/`;
+          prefixes.push({
+            origin: companionUrl.origin,
+            path: path.toLowerCase()
+          });
+        } catch (_) {}
+      }
     }
   }
   return prefixes;
