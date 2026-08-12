@@ -3401,7 +3401,8 @@ function upstreamHeaders(url, accept = "*/*") {
     "User-Agent": "Mozilla/5.0"
   };
   if (url.origin === LIVEWATCH_ORIGIN) headers.Referer = `${LIVEWATCH_ORIGIN}/`;
-  if (url.origin === LOVETIER_ORIGIN || url.origin === BLUETIER_ORIGIN) headers.Referer = `${LOVETIER_PLAYER_ORIGIN}/`;
+  if (url.origin === LOVETIER_ORIGIN) headers.Referer = `${LOVETIER_PLAYER_ORIGIN}/`;
+  if (isBluetierOrigin(url)) headers.Referer = `${WIDEIPTV_PLAYER_ORIGIN}/`;
   if (url.origin === CLOUDING_ORIGIN) headers.Referer = `${CLOUDING_PLAYER_ORIGIN}/`;
   return headers;
 }
@@ -3463,10 +3464,16 @@ function isAllowedLivewatchUrl(url) {
 
 function isAllowedLovetierUrl(url) {
   const paths = configuredManualPaths("lovetier", "lovetierChannel");
-  return (url.origin === LOVETIER_ORIGIN || url.origin === BLUETIER_ORIGIN) &&
+  return (url.origin === LOVETIER_ORIGIN || isBluetierOrigin(url)) &&
     Array.from(paths).some((path) => url.pathname.toLowerCase().startsWith(path)) &&
     !url.username &&
     !url.password;
+}
+
+function isBluetierOrigin(url) {
+  const hostname = String(url?.hostname || "").toLowerCase();
+  return url?.protocol === "https:" &&
+    (hostname === "bluetier.top" || hostname.endsWith(".bluetier.top"));
 }
 
 function isAllowedCloudingUrl(url) {
@@ -3902,10 +3909,9 @@ async function resolveLovetierSource(channelKey, sourceName, source) {
   const channel = String(source.lovetierChannel || "");
   if (!channel || !/^[a-z0-9_-]+$/i.test(channel)) throw new Error("lovetier channel refused");
 
-  // Les anciennes entrées "DeviantArt" sont désormais résolues par
-  // l'endpoint WideIPTV qui fournit le token Clouding correspondant.
-  const sourceUrl = new URL("/player.php", WIDEIPTV_PLAYER_ORIGIN);
-  sourceUrl.searchParams.set("stream", channel);
+  // WideIPTV expose le flux HLS Bluetier et renouvelle son token sur chaque
+  // appel de la page player.
+  const sourceUrl = new URL(`/player/${encodeURIComponent(channel)}`, WIDEIPTV_PLAYER_ORIGIN);
   const sourceResponse = await fetchWithTimeout(sourceUrl, {
     headers: {
       Accept: "text/html,application/xhtml+xml",
@@ -3916,37 +3922,27 @@ async function resolveLovetierSource(channelKey, sourceName, source) {
   if (!sourceResponse.ok) throw new Error(`wideiptv source ${sourceResponse.status}`);
 
   const sourceHtml = await sourceResponse.text();
-  const pattern = /https:\/\/clouding\.wideiptv\.top\/([^/]+)\/embed\.html\?token=([^"'\s<>&]+)/i;
+  const pattern = /streamUrl:\s*"((?:\\.|[^"])*)"/i;
   const match = sourceHtml.match(pattern);
-  if (!match || !match[1]) throw new Error("wideiptv token unavailable");
+  if (!match || !match[1]) throw new Error("wideiptv stream URL unavailable");
 
   const startedAt = Date.now();
-  const upstreamPath = `/${match[1]}/`;
-  const masterUrls = [
-    new URL(`${upstreamPath}index.fmp4.m3u8`, CLOUDING_ORIGIN),
-    new URL(`${upstreamPath}index.m3u8`, CLOUDING_ORIGIN)
-  ];
-  let upstreamUrl = null;
-  let master = null;
-  let masterText = "";
-  for (const candidateUrl of masterUrls) {
-    candidateUrl.searchParams.set("token", match[2]);
-    if (!isAllowedCloudingUrl(candidateUrl)) continue;
-    const candidate = await fetchWithTimeout(candidateUrl, {
-      headers: upstreamHeaders(candidateUrl, "application/vnd.apple.mpegurl,application/x-mpegURL,*/*"),
-      redirect: "follow"
-    });
-    const candidateText = await candidate.text();
-    if (candidate.ok && candidateText.trimStart().startsWith("#EXTM3U")) {
-      upstreamUrl = candidateUrl;
-      master = candidate;
-      masterText = candidateText;
-      break;
-    }
+  const upstreamUrl = new URL(match[1]
+    .replace(/\\\//g, "/")
+    .replace(/\\u0026/gi, "&"));
+  if (!isAllowedLovetierUrl(upstreamUrl) ||
+      !upstreamUrl.pathname.toLowerCase().endsWith(".m3u8") ||
+      !upstreamUrl.searchParams.has("token")) {
+    throw new Error("wideiptv stream URL refused");
   }
+  const master = await fetchWithTimeout(upstreamUrl, {
+    headers: upstreamHeaders(upstreamUrl, "application/vnd.apple.mpegurl,application/x-mpegURL,*/*"),
+    redirect: "follow"
+  });
+  const masterText = await master.text();
   const latencyMs = Date.now() - startedAt;
-  if (!upstreamUrl || !master) {
-    throw new Error("wideiptv master unavailable");
+  if (!master.ok || !masterText.trimStart().startsWith("#EXTM3U")) {
+    throw new Error(`wideiptv master ${master.status}`);
   }
 
   return {
