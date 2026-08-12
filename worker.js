@@ -606,7 +606,7 @@ async function resolveWorkerLive(request, requestUrl, channelKey) {
   const channel = LIVE_CHANNELS.get(channelKey);
   if (!channel) return new Response('Unknown channel', { status: 404, headers: streamCorsHeaders() });
 
-  const sourceUrl = `https://popcdn.day/player.php?stream=${channel}`;
+    const sourceUrl = `https://wideiptv.top/player.php?stream=${channel}`;
   const source = await fetch(sourceUrl, {
     headers: {
       Accept: 'text/html,application/xhtml+xml',
