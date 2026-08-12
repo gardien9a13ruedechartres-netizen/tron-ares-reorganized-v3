@@ -5017,6 +5017,13 @@ function playerPage(origin, channelKey, channel) {
       loadSourceKey(clean[0], label + ' -> ' + SOURCE_LABELS[clean[0]], clean, 0, 'sequence-start');
     }
     function sequenceFromSource(key) {
+      // WideIPTV is a manual legacy fallback. If it is unavailable, return to
+      // the channel's normal sources instead of retrying the same dead route.
+      if (key === 'deviantart') {
+        const base = START_SEQUENCE && START_SEQUENCE.length ? START_SEQUENCE : [];
+        return [key].concat(base.filter(function(value) { return value !== key; }))
+          .filter(function(value) { return SOURCE_URLS[value]; });
+      }
       if (MANUAL_FALLBACK_ORDER.length && MANUAL_FALLBACK_ORDER.indexOf(key) >= 0) {
         return MANUAL_FALLBACK_ORDER.slice(MANUAL_FALLBACK_ORDER.indexOf(key)).filter(function(value) {
           return SOURCE_URLS[value];
