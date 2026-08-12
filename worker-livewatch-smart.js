@@ -1,6 +1,7 @@
 const LIVEWATCH_ORIGIN = "https://livewatch.top";
 const LOVETIER_ORIGIN = "https://deviantart.lovetier.bz";
 const LOVETIER_PLAYER_ORIGIN = "https://lovetier.bz";
+const WIDEIPTV_PLAYER_ORIGIN = "https://wideiptv.top";
 const BLUETIER_ORIGIN = "https://cdn.bluetier.top";
 const CLOUDING_ORIGIN = "https://clouding.wideiptv.top";
 const CLOUDING_PLAYER_ORIGIN = "https://wideiptv.top";
@@ -3469,7 +3470,10 @@ function isAllowedLovetierUrl(url) {
 }
 
 function isAllowedCloudingUrl(url) {
-  const paths = configuredManualPaths("clouding", "cloudingChannel");
+  const paths = new Set([
+    ...configuredManualPaths("clouding", "cloudingChannel"),
+    ...configuredManualPaths("lovetier", "lovetierChannel")
+  ]);
   return url.origin === CLOUDING_ORIGIN &&
     Array.from(paths).some((path) => url.pathname.toLowerCase().startsWith(path)) &&
     !url.username &&
@@ -3811,7 +3815,7 @@ async function resolveLivewatchSource(channelKey, sourceName, source) {
     mode: sourceName,
     source: sourceName,
     sourceId: source.id,
-    label: source.label,
+    label: sourceDisplayName(source),
     upstreamUrl,
     masterText,
     latencyMs
@@ -3887,7 +3891,7 @@ async function resolveCloudingSource(channelKey, sourceName, source) {
     mode: sourceName,
     source: sourceName,
     sourceId: source.id,
-    label: source.label,
+    label: sourceDisplayName(source),
     upstreamUrl,
     masterText,
     latencyMs
@@ -3898,7 +3902,10 @@ async function resolveLovetierSource(channelKey, sourceName, source) {
   const channel = String(source.lovetierChannel || "");
   if (!channel || !/^[a-z0-9_-]+$/i.test(channel)) throw new Error("lovetier channel refused");
 
-  const sourceUrl = new URL(`/player/${channel}`, LOVETIER_PLAYER_ORIGIN);
+  // Les anciennes entrées "DeviantArt" sont désormais résolues par
+  // l'endpoint WideIPTV qui fournit le token Clouding correspondant.
+  const sourceUrl = new URL("/player.php", WIDEIPTV_PLAYER_ORIGIN);
+  sourceUrl.searchParams.set("stream", channel);
   const sourceResponse = await fetchWithTimeout(sourceUrl, {
     headers: {
       Accept: "text/html,application/xhtml+xml",
@@ -3906,34 +3913,40 @@ async function resolveLovetierSource(channelKey, sourceName, source) {
     },
     redirect: "follow"
   });
-  if (!sourceResponse.ok) throw new Error(`lovetier source ${sourceResponse.status}`);
+  if (!sourceResponse.ok) throw new Error(`wideiptv source ${sourceResponse.status}`);
 
   const sourceHtml = await sourceResponse.text();
-  const match = sourceHtml.match(/streamUrl:\s*"([^"]+)"/i);
-  if (!match || !match[1]) throw new Error("lovetier stream URL unavailable");
-
-  const upstreamUrl = new URL(
-    match[1]
-      .replace(/\\\//g, "/")
-      .replace(/\\u0026/gi, "&")
-  );
-  if (
-    !isAllowedLovetierUrl(upstreamUrl) ||
-    !upstreamUrl.pathname.toLowerCase().endsWith(".m3u8") ||
-    !upstreamUrl.searchParams.has("token")
-  ) {
-    throw new Error("lovetier stream URL refused");
-  }
+  const pattern = /https:\/\/clouding\.wideiptv\.top\/([^/]+)\/embed\.html\?token=([^"'\s<>&]+)/i;
+  const match = sourceHtml.match(pattern);
+  if (!match || !match[1]) throw new Error("wideiptv token unavailable");
 
   const startedAt = Date.now();
-  const master = await fetchWithTimeout(upstreamUrl, {
-    headers: upstreamHeaders(upstreamUrl, "application/vnd.apple.mpegurl,application/x-mpegURL,*/*"),
-    redirect: "follow"
-  });
+  const upstreamPath = `/${match[1]}/`;
+  const masterUrls = [
+    new URL(`${upstreamPath}index.fmp4.m3u8`, CLOUDING_ORIGIN),
+    new URL(`${upstreamPath}index.m3u8`, CLOUDING_ORIGIN)
+  ];
+  let upstreamUrl = null;
+  let master = null;
+  let masterText = "";
+  for (const candidateUrl of masterUrls) {
+    candidateUrl.searchParams.set("token", match[2]);
+    if (!isAllowedCloudingUrl(candidateUrl)) continue;
+    const candidate = await fetchWithTimeout(candidateUrl, {
+      headers: upstreamHeaders(candidateUrl, "application/vnd.apple.mpegurl,application/x-mpegURL,*/*"),
+      redirect: "follow"
+    });
+    const candidateText = await candidate.text();
+    if (candidate.ok && candidateText.trimStart().startsWith("#EXTM3U")) {
+      upstreamUrl = candidateUrl;
+      master = candidate;
+      masterText = candidateText;
+      break;
+    }
+  }
   const latencyMs = Date.now() - startedAt;
-  const masterText = await master.text();
-  if (!master.ok || !masterText.trimStart().startsWith("#EXTM3U")) {
-    throw new Error(`lovetier master ${master.status}`);
+  if (!upstreamUrl || !master) {
+    throw new Error("wideiptv master unavailable");
   }
 
   return {
@@ -3941,7 +3954,7 @@ async function resolveLovetierSource(channelKey, sourceName, source) {
     mode: sourceName,
     source: sourceName,
     sourceId: source.id,
-    label: source.label,
+    label: sourceDisplayName(source),
     upstreamUrl,
     masterText,
     latencyMs
@@ -4197,6 +4210,13 @@ function scriptJson(value) {
   return JSON.stringify(value).replace(/</g, "\\u003c");
 }
 
+function sourceDisplayName(source, fallback = "") {
+  const label = String(source?.button || source?.label || fallback);
+  return source?.kind === "lovetier"
+    ? label.replace(/^DeviantArt\b/i, "WideIPTV")
+    : label;
+}
+
 function playerPage(origin, channelKey, channel) {
   const sourceUrls = {};
   const sourceLabels = {};
@@ -4207,17 +4227,19 @@ function playerPage(origin, channelKey, channel) {
     : [];
   for (const [key, source] of Object.entries(sources)) {
     sourceUrls[key] = `${origin}/api/live/${channelKey}/${key}/master.m3u8`;
-    sourceLabels[key] = source.label;
+    sourceLabels[key] = sourceDisplayName(source);
   }
   const sourceButtons = Object.entries(sources).map(([key, source]) => {
     const className = channel.manualSources?.[key] ? ` class="secondary"` : "";
-    return `<button data-source="${escapeHtml(key)}"${className}>${escapeHtml(source.button || source.label)}</button>`;
+    return `<button data-source="${escapeHtml(key)}"${className}>${escapeHtml(sourceDisplayName(source))}</button>`;
   }).join("\n        ");
   const channelOptions = Object.entries(CHANNELS).map(([key, value]) => {
     const selected = key === channelKey ? " selected" : "";
     return `<option value="${escapeHtml(key)}"${selected}>${escapeHtml(value.label)}</option>`;
   }).join("");
-  const startLabel = `Smart ${smartOrder.join(" -> ")}`;
+  const startLabel = `Smart ${smartOrder
+    .map((key) => sourceDisplayName(sources[key], key))
+    .join(" -> ")}`;
   return `<!doctype html>
 <html lang="fr">
 <head>

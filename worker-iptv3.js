@@ -1,6 +1,7 @@
 const LIVEWATCH_ORIGIN = 'https://livewatch.top';
 const LOVETIER_ORIGIN = 'https://deviantart.lovetier.bz';
 const LOVETIER_PLAYER_ORIGIN = 'https://lovetier.bz';
+const WIDEIPTV_PLAYER_ORIGIN = 'https://wideiptv.top';
 const LOVETIER_WORKER_ORIGIN = 'https://tron-ares-iptv.victor-salema-53d.workers.dev';
 const ENGINE_WORKER_ORIGIN = 'https://tron-ares-engine.victor-salema-53d.workers.dev';
 const CLOUDING_ORIGIN = 'https://clouding.wideiptv.top';
@@ -18,13 +19,14 @@ const LOVETIER_ALLOWED_PATHS = [
   '/TF1FR/'
 ];
 const CLOUDING_ALLOWED_PATHS = [
-  '/CMTVPT/'
+  '/CMTVPT/',
+  ...LOVETIER_ALLOWED_PATHS
 ];
 
 function legacyLovetierFallback(channelKey, label, lovetierChannel = channelKey.toUpperCase()) {
   return {
     id: `legacy-lovetier-${channelKey}`,
-    name: `${label} Lovetier worker`,
+    name: `${label} WideIPTV worker`,
     quality: null,
     source: 'lovetier',
     lovetierChannel
@@ -342,6 +344,7 @@ function upstreamHeaders(url, accept = '*/*') {
   };
   if (url.origin === LIVEWATCH_ORIGIN) headers.Referer = `${LIVEWATCH_ORIGIN}/`;
   if (url.origin === LOVETIER_ORIGIN) headers.Referer = `${LOVETIER_ORIGIN}/`;
+  if (url.origin === CLOUDING_ORIGIN) headers.Referer = `${CLOUDING_PLAYER_ORIGIN}/`;
   return headers;
 }
 
@@ -612,7 +615,8 @@ async function resolveLovetierFallback(fallback) {
   const channel = String(fallback.lovetierChannel || '');
   if (!channel || !/^[a-z0-9-]+$/i.test(channel)) throw new Error('lovetier channel refused');
 
-  const sourceUrl = new URL(`/player/${channel}`, LOVETIER_PLAYER_ORIGIN);
+  const sourceUrl = new URL('/player.php', WIDEIPTV_PLAYER_ORIGIN);
+  sourceUrl.searchParams.set('stream', channel);
   const source = await fetchTextWithTimeout(sourceUrl, {
     headers: {
       Accept: 'text/html,application/xhtml+xml',
@@ -620,35 +624,40 @@ async function resolveLovetierFallback(fallback) {
     },
     redirect: 'follow'
   });
-  if (!source.ok) throw new Error(`lovetier source ${source.status}`);
+  if (!source.ok) throw new Error(`wideiptv source ${source.status}`);
 
   const sourceHtml = await source.text();
-  const match = sourceHtml.match(/streamUrl:\s*"([^"]+)"/i);
-  if (!match || !match[1]) throw new Error('lovetier stream URL unavailable');
-
-  const upstreamUrl = new URL(
-    match[1]
-      .replace(/\\\//g, '/')
-      .replace(/\\u0026/gi, '&')
-  );
-  const expectedPath = `/${channel}/index.m3u8`.toLowerCase();
-  if (
-    !isAllowedLovetierUrl(upstreamUrl) ||
-    upstreamUrl.pathname.toLowerCase() !== expectedPath ||
-    !upstreamUrl.searchParams.has('token')
-  ) {
-    throw new Error('lovetier stream URL refused');
-  }
+  const pattern = /https:\/\/clouding\.wideiptv\.top\/([^/]+)\/embed\.html\?token=([^"'\s<>&]+)/i;
+  const match = sourceHtml.match(pattern);
+  if (!match || !match[1]) throw new Error('wideiptv token unavailable');
 
   const startedAt = Date.now();
-  const master = await fetchTextWithTimeout(upstreamUrl, {
-    headers: upstreamHeaders(upstreamUrl, 'application/vnd.apple.mpegurl,application/x-mpegURL,*/*'),
-    redirect: 'follow'
-  });
+  const upstreamPath = `/${match[1]}/`;
+  const masterUrls = [
+    new URL(`${upstreamPath}index.fmp4.m3u8`, CLOUDING_ORIGIN),
+    new URL(`${upstreamPath}index.m3u8`, CLOUDING_ORIGIN)
+  ];
+  let upstreamUrl = null;
+  let master = null;
+  let masterText = '';
+  for (const candidateUrl of masterUrls) {
+    candidateUrl.searchParams.set('token', match[2]);
+    if (!isAllowedCloudingUrl(candidateUrl)) continue;
+    const candidate = await fetchTextWithTimeout(candidateUrl, {
+      headers: upstreamHeaders(candidateUrl, 'application/vnd.apple.mpegurl,application/x-mpegURL,*/*'),
+      redirect: 'follow'
+    });
+    const candidateText = await candidate.text();
+    if (candidate.ok && candidateText.trimStart().startsWith('#EXTM3U')) {
+      upstreamUrl = candidateUrl;
+      master = candidate;
+      masterText = candidateText;
+      break;
+    }
+  }
   const latencyMs = Date.now() - startedAt;
-  const masterText = await master.text();
-  if (!master.ok || !masterText.trimStart().startsWith('#EXTM3U')) {
-    throw new Error(`lovetier master ${master.status}`);
+  if (!upstreamUrl || !master) {
+    throw new Error('wideiptv master unavailable');
   }
 
   return { candidate: fallback, upstreamUrl, masterText, latencyMs };
