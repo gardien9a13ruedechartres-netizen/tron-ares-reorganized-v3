@@ -2879,7 +2879,11 @@ function __seriesShowSynopsisPopover(row, series, episode) {
   );
   __seriesPositionPopover(row);
 
-  if (__seriesLocalSynopsis(episode)) return;
+  if (__seriesLocalSynopsis(episode)) {
+    const source = __seriesSynopsisPopover.querySelector('.series-episode-synopsis-source');
+    if (source) source.textContent = 'FR locale';
+    return;
+  }
   __seriesLoadTmdbSeason(series)
     .then(data => {
       if (__seriesSynopsisContext !== context) return;
