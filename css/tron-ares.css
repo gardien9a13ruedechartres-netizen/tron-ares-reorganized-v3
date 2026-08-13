@@ -363,9 +363,49 @@ body {
   gap: 5px;
 }
 .series-episode-row {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+.series-episode-synopsis-popover {
+  position: fixed;
+  z-index: 10050;
+  display: none;
+  max-height: min(230px, calc(100vh - 24px));
+  overflow: auto;
+  padding: 10px 11px;
+  border: 1px solid rgba(0, 229, 255, .42);
+  border-radius: 8px;
+  background: rgba(3, 11, 24, .96);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, .48), 0 0 18px rgba(0, 229, 255, .12);
+  color: var(--tron-text);
+  pointer-events: none;
+}
+
+.series-episode-synopsis-popover.is-visible {
+  display: grid;
+  gap: 5px;
+}
+
+.series-episode-synopsis-title {
+  color: var(--tron-text);
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+.series-episode-synopsis-body {
+  color: var(--tron-muted);
+  font-size: 11px;
+  line-height: 1.42;
+}
+
+.series-episode-synopsis-source {
+  color: var(--tron-accent);
+  font-size: 9px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
 }
 .series-episode-thumb {
   width: 58px;

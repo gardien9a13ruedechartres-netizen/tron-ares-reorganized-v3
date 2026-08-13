@@ -2708,6 +2708,200 @@ async function loadSeriesCatalog() {
   }
 }
 
+const __seriesTmdbMemory = new Map();
+const __seriesTmdbPending = new Map();
+const __seriesTmdbCacheTtl = 14 * 24 * 60 * 60 * 1000;
+let __seriesSynopsisPopover = null;
+let __seriesSynopsisContext = null;
+let __seriesSynopsisHideTimer = null;
+
+function __seriesTmdbId(series) {
+  const value = series?.tmdbId ?? series?.tmdb_id ?? series?.tmdb?.id;
+  return /^\d+$/.test(String(value || '').trim()) ? String(value).trim() : '';
+}
+
+function __seriesTmdbCacheKey(series) {
+  const id = __seriesTmdbId(series) || __seriesFold(series?.title || 'unknown');
+  const season = Number(series?.season || 1);
+  return `ares_series_tmdb_v1:${id}:${Number.isFinite(season) ? season : 1}`;
+}
+
+function __seriesReadTmdbCache(key) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const cached = JSON.parse(raw);
+    if (!cached || !cached.savedAt || Date.now() - cached.savedAt > __seriesTmdbCacheTtl) {
+      localStorage.removeItem(key);
+      return null;
+    }
+    return cached.data || null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function __seriesWriteTmdbCache(key, data) {
+  try {
+    localStorage.setItem(key, JSON.stringify({ savedAt: Date.now(), data }));
+  } catch (_) {}
+}
+
+async function __seriesTmdbRequest(path, params = {}) {
+  if (!TMDB_API_KEY) throw new Error('TMDB_API_KEY manquant');
+  const query = new URLSearchParams({ api_key: TMDB_API_KEY, ...params });
+  const response = await fetch(`https://api.themoviedb.org/3${path}?${query.toString()}`, {
+    cache: 'no-store'
+  });
+  if (!response.ok) throw new Error(`TMDb HTTP ${response.status}`);
+  return response.json();
+}
+
+async function __seriesLoadTmdbSeason(series) {
+  const cacheKey = __seriesTmdbCacheKey(series);
+  if (__seriesTmdbMemory.has(cacheKey)) return __seriesTmdbMemory.get(cacheKey);
+  const stored = __seriesReadTmdbCache(cacheKey);
+  if (stored) {
+    __seriesTmdbMemory.set(cacheKey, stored);
+    return stored;
+  }
+  if (__seriesTmdbPending.has(cacheKey)) return __seriesTmdbPending.get(cacheKey);
+
+  const task = (async () => {
+    let tmdbId = __seriesTmdbId(series);
+    if (!tmdbId) {
+      const search = await __seriesTmdbRequest('/search/tv', {
+        query: String(series?.title || '').trim(),
+        language: 'fr-FR',
+        include_adult: 'false'
+      });
+      tmdbId = String(search?.results?.[0]?.id || '');
+    }
+    if (!tmdbId) throw new Error('Série introuvable dans TMDb');
+
+    const season = Number(series?.season || 1);
+    let data = await __seriesTmdbRequest(`/tv/${tmdbId}/season/${season}`, {
+      language: 'fr-FR'
+    });
+    let language = 'fr-FR';
+    const hasOverview = Array.isArray(data?.episodes) && data.episodes.some(item => String(item?.overview || '').trim());
+    if (!hasOverview) {
+      const fallback = await __seriesTmdbRequest(`/tv/${tmdbId}/season/${season}`, {
+        language: 'en-US'
+      });
+      if (Array.isArray(fallback?.episodes) && fallback.episodes.some(item => String(item?.overview || '').trim())) {
+        data = fallback;
+        language = 'en-US';
+      }
+    }
+
+    const normalized = {
+      tmdbId,
+      season,
+      language,
+      episodes: Array.isArray(data?.episodes) ? data.episodes.map(item => ({
+        number: Number(item?.episode_number || 0),
+        overview: String(item?.overview || '').trim(),
+        airDate: String(item?.air_date || '').trim(),
+        runtime: item?.runtime || null,
+        stillPath: String(item?.still_path || '').trim()
+      })) : []
+    };
+    __seriesTmdbMemory.set(cacheKey, normalized);
+    __seriesWriteTmdbCache(cacheKey, normalized);
+    return normalized;
+  })();
+
+  __seriesTmdbPending.set(cacheKey, task);
+  try {
+    return await task;
+  } finally {
+    __seriesTmdbPending.delete(cacheKey);
+  }
+}
+
+function __seriesLocalSynopsis(episode) {
+  return String(episode?.synopsis || episode?.overview || '').trim();
+}
+
+function __seriesSetPopoverText(title, text, language = '') {
+  if (!__seriesSynopsisPopover) return;
+  __seriesSynopsisPopover.innerHTML = '';
+  const heading = document.createElement('strong');
+  heading.className = 'series-episode-synopsis-title';
+  heading.textContent = title || 'Synopsis de l’épisode';
+  const body = document.createElement('span');
+  body.className = 'series-episode-synopsis-body';
+  body.textContent = text || 'Synopsis indisponible dans TMDb.';
+  const source = document.createElement('small');
+  source.className = 'series-episode-synopsis-source';
+  source.textContent = language ? `TMDb · ${language}` : 'TMDb';
+  __seriesSynopsisPopover.append(heading, body, source);
+}
+
+function __seriesPositionPopover(row) {
+  if (!__seriesSynopsisPopover || !row) return;
+  const rect = row.getBoundingClientRect();
+  const margin = 12;
+  const width = Math.min(360, window.innerWidth - margin * 2);
+  __seriesSynopsisPopover.style.width = `${width}px`;
+  __seriesSynopsisPopover.style.left = `${Math.max(margin, Math.min(rect.left, window.innerWidth - width - margin))}px`;
+  const height = __seriesSynopsisPopover.offsetHeight || 120;
+  const below = rect.bottom + 8;
+  const top = below + height <= window.innerHeight - margin
+    ? below
+    : Math.max(margin, rect.top - height - 8);
+  __seriesSynopsisPopover.style.top = `${top}px`;
+}
+
+function __seriesHideSynopsisPopover() {
+  if (__seriesSynopsisHideTimer) clearTimeout(__seriesSynopsisHideTimer);
+  __seriesSynopsisHideTimer = setTimeout(() => {
+    __seriesSynopsisContext = null;
+    __seriesSynopsisPopover?.classList.remove('is-visible');
+  }, 90);
+}
+
+function __seriesShowSynopsisPopover(row, series, episode) {
+  if (__seriesSynopsisHideTimer) clearTimeout(__seriesSynopsisHideTimer);
+  if (!__seriesSynopsisPopover) {
+    __seriesSynopsisPopover = document.createElement('div');
+    __seriesSynopsisPopover.className = 'series-episode-synopsis-popover';
+    __seriesSynopsisPopover.setAttribute('role', 'tooltip');
+    document.body.appendChild(__seriesSynopsisPopover);
+  }
+  const context = { row, series, episode };
+  __seriesSynopsisContext = context;
+  __seriesSynopsisPopover.classList.add('is-visible');
+  __seriesSetPopoverText(
+    `${series?.title || 'Série'} · ${episode?.title || `Épisode ${episode?.number || ''}`}`,
+    __seriesLocalSynopsis(episode) || 'Recherche du synopsis…'
+  );
+  __seriesPositionPopover(row);
+
+  if (__seriesLocalSynopsis(episode)) return;
+  __seriesLoadTmdbSeason(series)
+    .then(data => {
+      if (__seriesSynopsisContext !== context) return;
+      const match = data.episodes.find(item => item.number === Number(episode?.number));
+      __seriesSetPopoverText(
+        `${series?.title || 'Série'} · ${episode?.title || `Épisode ${episode?.number || ''}`}`,
+        match?.overview || 'Synopsis indisponible dans TMDb.',
+        data.language
+      );
+      __seriesPositionPopover(row);
+    })
+    .catch(error => {
+      if (__seriesSynopsisContext !== context) return;
+      console.warn('[Series] synopsis TMDb indisponible:', error);
+      __seriesSetPopoverText(
+        `${series?.title || 'Série'} · ${episode?.title || `Épisode ${episode?.number || ''}`}`,
+        'Synopsis indisponible pour le moment.'
+      );
+      __seriesPositionPopover(row);
+    });
+}
+
 function refreshActiveListsUI() {
   if (currentListType === 'channels') renderChannelList();
   else if (currentListType === 'fr') renderChannelFrList();
@@ -2905,6 +3099,10 @@ function createSeriesCatalogCard(series) {
   __seriesEpisodes(series).forEach((episode) => {
     const row = document.createElement('div');
     row.className = 'series-episode-row';
+    row.addEventListener('mouseenter', () => __seriesShowSynopsisPopover(row, series, episode));
+    row.addEventListener('mouseleave', __seriesHideSynopsisPopover);
+    row.addEventListener('focusin', () => __seriesShowSynopsisPopover(row, series, episode));
+    row.addEventListener('focusout', __seriesHideSynopsisPopover);
 
     const thumb = document.createElement('div');
     thumb.className = 'series-episode-thumb';
