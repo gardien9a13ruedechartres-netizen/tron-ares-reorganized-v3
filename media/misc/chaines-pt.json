@@ -688,7 +688,7 @@
     {
       "id": "cmtv",
       "name": "CMTV",
-      "url": "https://cm-sunshine2.victor-salema-53d.workers.dev",
+      "url": "https://player-universel.victor-salema-53d.workers.dev/?https://tf1-work.victor-salema-53d.workers.dev/live.m3u8",
       "logo": {
         "type": "image",
         "value": "/media/cmtv.png"
