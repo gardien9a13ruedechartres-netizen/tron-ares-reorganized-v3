@@ -4285,6 +4285,7 @@ function playerPage(origin, channelKey, channel) {
       <select id="channelSelect" aria-label="Chaine">${channelOptions}</select>
       <div class="bar">
         <button id="startSmart" type="button">${escapeHtml(startLabel)}</button>
+        <button id="yoyoToggle" class="secondary" type="button" aria-pressed="true" title="Activer ou verrouiller les bascules automatiques">Yoyo : actif</button>
         <button data-src="${escapeHtml(`${origin}/api/live/${channelKey}/master.m3u8`)}">Auto worker</button>
         ${sourceButtons}
         <a href="${escapeHtml(`${origin}/api/live/${channelKey}/health`)}" target="_blank" rel="noreferrer">Status JSON</a>
@@ -4310,6 +4311,7 @@ function playerPage(origin, channelKey, channel) {
     const loadStatusMeta = document.getElementById('loadStatusMeta');
     const channelSelect = document.getElementById('channelSelect');
     const startSmartButton = document.getElementById('startSmart');
+    const yoyoToggleButton = document.getElementById('yoyoToggle');
     video.defaultMuted = false;
     video.muted = false;
     video.volume = 1;
@@ -4366,7 +4368,43 @@ function playerPage(origin, channelKey, channel) {
     let lastFragUrl = '';
     let sameFragCount = 0;
     let loadStatusHideTimer = null;
+    let yoyoEnabled = true;
+    let lastYoyoBlockedLogAt = 0;
     function safeJson(value) { try { return JSON.stringify(value); } catch (_) { return String(value); } }
+    const YOYO_STORAGE_KEY = ${scriptJson(`ares-smart-yoyo:${channelKey}`)};
+    function readYoyoPreference() {
+      try {
+        return window.localStorage.getItem(YOYO_STORAGE_KEY) !== 'off';
+      } catch (_) {
+        return true;
+      }
+    }
+    function updateYoyoButton() {
+      if (!yoyoToggleButton) return;
+      yoyoToggleButton.textContent = yoyoEnabled ? 'Yoyo : actif' : 'Yoyo : verrouille';
+      yoyoToggleButton.setAttribute('aria-pressed', yoyoEnabled ? 'true' : 'false');
+      yoyoToggleButton.title = yoyoEnabled
+        ? 'Le lecteur peut basculer et revenir automatiquement entre les sources'
+        : 'La source actuelle reste fixe ; les changements restent manuels';
+    }
+    function setYoyoEnabled(enabled, reason) {
+      yoyoEnabled = !!enabled;
+      try {
+        window.localStorage.setItem(YOYO_STORAGE_KEY, yoyoEnabled ? 'on' : 'off');
+      } catch (_) {}
+      if (!yoyoEnabled) {
+        clearSmartRecoveryTimers();
+        clearSelfRetryTimer();
+        clearPendingFailoverTimer();
+        clearStallTimer();
+        badEvents = [];
+      }
+      updateYoyoButton();
+      appendLog('yoyo-state', { enabled: yoyoEnabled, reason: reason || 'manual', activeKey: activeKey || null });
+      if (yoyoEnabled && hasBetterSource()) {
+        schedulePrimaryRecovery('yoyo-enabled');
+      }
+    }
     function setLoadStatus(state, text, meta, hideDelayMs) {
       if (!loadStatus) return;
       if (loadStatusHideTimer) {
@@ -4765,6 +4803,7 @@ function playerPage(origin, channelKey, channel) {
       return Math.max(5000, waitMs);
     }
     function schedulePrimaryRecovery(reason) {
+      if (!yoyoEnabled) return;
       if (!hasBetterSource() || smartRecoveryTimer || smartReturnConfirmTimer || smartProbeInFlight) return;
       reason = compactReason(reason);
       const waitMs = recoveryWaitMs();
@@ -4777,6 +4816,7 @@ function playerPage(origin, channelKey, channel) {
       smartRecoveryTimer = setTimeout(function() { attemptPrimaryReturn(reason || 'scheduled'); }, waitMs);
     }
     function scheduleSelfRetry(reason) {
+      if (!yoyoEnabled) return;
       if (!activeKey || !SOURCE_URLS[activeKey] || smartSelfRetryTimer) return;
       smartSelfRetryCount += 1;
       const waitMs = Math.min(
@@ -4813,6 +4853,15 @@ function playerPage(origin, channelKey, channel) {
       }
     }
     function tryFailover(reason) {
+      if (!yoyoEnabled) {
+        const blockedNow = Date.now();
+        if (blockedNow - lastYoyoBlockedLogAt >= 5000) {
+          lastYoyoBlockedLogAt = blockedNow;
+          appendLog('yoyo-locked', { reason: reason, activeKey: activeKey || null });
+          setLoadStatus('warn', 'Yoyo verrouille', SOURCE_LABELS[activeKey] || 'Source actuelle maintenue');
+        }
+        return;
+      }
       const now = Date.now();
       if (now < failoverLockUntil) {
         if (!pendingFailoverTimer) {
@@ -5059,6 +5108,13 @@ function playerPage(origin, channelKey, channel) {
       if (hasBetterSource()) schedulePrimaryRecovery('fallback-progress');
     });
     startSmartButton.addEventListener('click', function() { startSequence(START_SEQUENCE, START_LABEL); });
+    if (yoyoToggleButton) {
+      yoyoEnabled = readYoyoPreference();
+      updateYoyoButton();
+      yoyoToggleButton.addEventListener('click', function() {
+        setYoyoEnabled(!yoyoEnabled, 'manual');
+      });
+    }
     document.querySelectorAll('button[data-source]').forEach(function(btn) {
       btn.addEventListener('click', function() {
         const key = btn.dataset.source;
