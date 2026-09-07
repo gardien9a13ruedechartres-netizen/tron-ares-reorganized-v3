@@ -65,6 +65,7 @@ const CHANNELS = {
   cmtv: {
     label: "CMTV",
     defaultOrder: ["cable", "basic"],
+    manualFallbackOrder: ["direct", "cable", "basic", "clouding"],
     sources: {
       cable: {
         id: "805844173b05e1a81e31d-579768661fe265",

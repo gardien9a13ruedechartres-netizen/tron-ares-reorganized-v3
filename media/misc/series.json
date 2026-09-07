@@ -152,9 +152,9 @@
           "number": 14,
           "title": "Episode 14",
           "pageUrl": "",
-          "mp4": "",
-          "vtt": "",
-          "image": ""
+          "mp4": "https://videos.turkvost.fr/Daha%2017%2014.%20Bolum.mp4",
+          "vtt": "/media/Daha 17 14. Bolum_fr.vtt",
+          "image": "https://media.themoviedb.org/t/p/w454_and_h254_face/r5hlqRuYhaqB2QC1Fn0fcvRv3t7.jpg"
         },
         {
           "id": "daha-17-s1e15",

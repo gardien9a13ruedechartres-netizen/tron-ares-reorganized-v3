@@ -4372,28 +4372,12 @@ function playerPage(origin, channelKey, channel) {
     let lastYoyoBlockedLogAt = 0;
     function safeJson(value) { try { return JSON.stringify(value); } catch (_) { return String(value); } }
     const YOYO_STORAGE_KEY = ${scriptJson(`ares-smart-yoyo:${channelKey}`)};
-    const SOURCE_MEMORY_KEY = ${scriptJson(`ares-smart-source:${channelKey}`)};
     function readYoyoPreference() {
       try {
         return window.localStorage.getItem(YOYO_STORAGE_KEY) !== 'off';
       } catch (_) {
         return true;
       }
-    }
-    function readRememberedSource() {
-      try {
-        const key = String(window.localStorage.getItem(SOURCE_MEMORY_KEY) || '').trim();
-        return SOURCE_URLS[key] ? key : '';
-      } catch (_) {
-        return '';
-      }
-    }
-    function rememberSource(key, reason) {
-      if (!key || !SOURCE_URLS[key]) return;
-      try {
-        window.localStorage.setItem(SOURCE_MEMORY_KEY, key);
-      } catch (_) {}
-      appendLog('source-memory-saved', { key: key, reason: reason || 'manual' });
     }
     function updateYoyoButton() {
       if (!yoyoToggleButton) return;
@@ -4409,7 +4393,6 @@ function playerPage(origin, channelKey, channel) {
         window.localStorage.setItem(YOYO_STORAGE_KEY, yoyoEnabled ? 'on' : 'off');
       } catch (_) {}
       if (!yoyoEnabled) {
-        if (SOURCE_URLS[activeKey]) rememberSource(activeKey, 'yoyo-locked');
         clearSmartRecoveryTimers();
         clearSelfRetryTimer();
         clearPendingFailoverTimer();
@@ -5059,7 +5042,6 @@ function playerPage(origin, channelKey, channel) {
       clearPendingFailoverTimer();
       activeLabel = label || SOURCE_LABELS[key];
       activeKey = key;
-      if (reason === 'manual') rememberSource(key, 'manual');
       activeSequence = sequence && sequence.length ? sequence.slice() : [key];
       activeSequenceIndex = typeof index === 'number' ? index : activeSequence.indexOf(key);
       if (activeSequenceIndex < 0) activeSequenceIndex = 0;
@@ -5078,21 +5060,6 @@ function playerPage(origin, channelKey, channel) {
       const clean = sequence.filter(function(key) { return SOURCE_URLS[key]; });
       if (!clean.length) return;
       loadSourceKey(clean[0], label + ' -> ' + SOURCE_LABELS[clean[0]], clean, 0, 'sequence-start');
-    }
-    function startInitialSequence() {
-      const rememberedKey = !yoyoEnabled ? readRememberedSource() : '';
-      if (rememberedKey) {
-        appendLog('source-memory-restored', { key: rememberedKey, locked: true });
-        loadSourceKey(
-          rememberedKey,
-          'Source verrouillee ' + SOURCE_LABELS[rememberedKey],
-          [rememberedKey],
-          0,
-          'remembered-lock'
-        );
-        return;
-      }
-      startSequence(START_SEQUENCE, START_LABEL);
     }
     function sequenceFromSource(key) {
       // WideIPTV is a manual legacy fallback. If it is unavailable, return to
@@ -5190,7 +5157,7 @@ function playerPage(origin, channelKey, channel) {
       appendLog('log-cleared');
     });
     appendLog('lab-ready', location.href);
-    startInitialSequence();
+    startSequence(START_SEQUENCE, START_LABEL);
   <\/script>
 </body>
 </html>`;
