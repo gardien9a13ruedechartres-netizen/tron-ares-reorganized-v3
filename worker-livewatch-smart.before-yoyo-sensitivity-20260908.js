@@ -4321,14 +4321,12 @@ function playerPage(origin, channelKey, channel) {
     const MANUAL_FALLBACK_ORDER = ${scriptJson(manualFallbackOrder)};
     const START_LABEL = ${scriptJson(startLabel)};
     const CONSOLE_PREFIX = ${scriptJson(`${channel.label} Smart`)};
-    const LONG_STALL_MS = 6000;
-    const INITIAL_STALL_MS = 14000;
-    const REAL_PLAYBACK_START_MS = 14000;
+    const LONG_STALL_MS = 3500;
+    const REAL_PLAYBACK_START_MS = 7000;
     const PLAYHEAD_CHECK_MS = 3000;
     const PLAYHEAD_FROZEN_MS = 13000;
-    const BAD_EVENT_WINDOW_MS = 45000;
-    const BAD_EVENT_LIMIT = 3;
-    const HEALTHY_BUFFER_SECONDS = 8;
+    const BAD_EVENT_WINDOW_MS = 30000;
+    const BAD_EVENT_LIMIT = 2;
     const SMART_RECOVERY_PROBE_MS = 25000;
     const SMART_RECOVERY_CONFIRM_MS = 12000;
     const SMART_RETURN_COOLDOWN_MS = 60000;
@@ -4916,8 +4914,6 @@ function playerPage(origin, channelKey, channel) {
     function noteStall(eventName) {
       const end = bufferedEnd();
       const current = Number(video.currentTime.toFixed(2));
-      const startupStall = !lastPlayheadValue && current < 0.5 && !video.ended;
-      const stallTimeout = startupStall ? INITIAL_STALL_MS : LONG_STALL_MS;
       if (end !== null && current > end + 45) {
         appendLog('time-outside-buffer', { event: eventName, currentTime: current, bufferedEnd: end });
         setLoadStatus('warn', 'Flux hors buffer', 'currentTime ' + current + 's / buffer ' + end + 's');
@@ -4926,43 +4922,17 @@ function playerPage(origin, channelKey, channel) {
       }
       if (!stallStartedAt) {
         stallStartedAt = Date.now();
-        appendLog('stall-start', {
-          event: eventName,
-          currentTime: Number(video.currentTime.toFixed(2)),
-          bufferedEnd: bufferedEnd(),
-          startup: startupStall,
-          timeoutMs: stallTimeout
-        });
+        appendLog('stall-start', { event: eventName, currentTime: Number(video.currentTime.toFixed(2)), bufferedEnd: bufferedEnd() });
       }
       setLoadStatus('warn', 'Mise en memoire tampon', 'Evenement reel: ' + eventName + ' - buffer ' + (end === null ? 'vide' : end + 's'));
       clearStallTimer();
-      stallTimer = setTimeout(function() { tryFailover('stall-timeout-' + eventName); }, stallTimeout);
+      stallTimer = setTimeout(function() { tryFailover('stall-timeout-' + eventName); }, LONG_STALL_MS);
     }
     function recordBadEvent(kind, details) {
       const now = Date.now();
-      const end = bufferedEnd();
-      const current = Number(video.currentTime || 0);
-      const bufferAhead = end === null ? 0 : Math.max(0, end - current);
-      const isLevelRefreshError = kind === 'levelLoadError' || kind === 'levelLoadTimeOut';
-      const playbackLooksHealthy = !video.paused && video.readyState >= 2 &&
-        now - lastPlayheadAdvanceAt < 10000 && bufferAhead >= HEALTHY_BUFFER_SECONDS;
-      if (isLevelRefreshError && playbackLooksHealthy) {
-        appendLog('hls-transient-ignored', {
-          kind: kind,
-          bufferAhead: Number(bufferAhead.toFixed(2)),
-          details: details || null
-        });
-        return;
-      }
       badEvents.push(now);
       badEvents = badEvents.filter(function(time) { return now - time <= BAD_EVENT_WINDOW_MS; });
-      appendLog('bad-event-count', {
-        kind: kind,
-        count: badEvents.length,
-        limit: BAD_EVENT_LIMIT,
-        bufferAhead: Number(bufferAhead.toFixed(2)),
-        details: details || null
-      });
+      appendLog('bad-event-count', { kind: kind, count: badEvents.length, limit: BAD_EVENT_LIMIT, details: details || null });
       if (badEvents.length >= BAD_EVENT_LIMIT) tryFailover('repeated-' + kind);
     }
     async function inspectSource(src) {
