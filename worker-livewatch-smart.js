@@ -4235,6 +4235,7 @@ function playerPage(origin, channelKey, channel) {
   const sourceUrls = {};
   const sourceRedirects = {};
   const sourceLabels = {};
+  const stableHlsSourceKeys = [];
   const sources = allSources(channel);
   const smartOrder = smartDefaultOrder(channel);
   const manualFallbackOrder = Array.isArray(channel.manualFallbackOrder)
@@ -4244,6 +4245,7 @@ function playerPage(origin, channelKey, channel) {
     sourceUrls[key] = `${origin}/api/live/${channelKey}/${key}/master.m3u8`;
     sourceLabels[key] = sourceDisplayName(source);
     if (source.iframeUrl) sourceRedirects[key] = source.iframeUrl;
+    if (source.kind === "clouding") stableHlsSourceKeys.push(key);
   }
   const sourceButtons = Object.entries(sources).map(([key, source]) => {
     const className = channel.manualSources?.[key] ? ` class="secondary"` : "";
@@ -4337,6 +4339,7 @@ function playerPage(origin, channelKey, channel) {
     video.volume = 1;
     const SOURCE_URLS = ${scriptJson(sourceUrls)};
     const SOURCE_REDIRECTS = ${scriptJson(sourceRedirects)};
+    const STABLE_HLS_SOURCE_KEYS = ${scriptJson(stableHlsSourceKeys)};
     const SOURCE_LABELS = ${scriptJson(sourceLabels)};
     const START_SEQUENCE = ${scriptJson(smartOrder)};
     const MANUAL_FALLBACK_ORDER = ${scriptJson(manualFallbackOrder)};
@@ -4361,6 +4364,7 @@ function playerPage(origin, channelKey, channel) {
     const SMART_SELF_RETRY_MS = 12000;
     const SMART_SELF_RETRY_BACKOFF_MS = 8000;
     const SMART_SELF_RETRY_MAX_MS = 45000;
+    const STABLE_HLS_RESTART_COOLDOWN_MS = 14000;
     const logs = [];
     let hls = null;
     let activeLabel = 'auto';
@@ -4388,6 +4392,10 @@ function playerPage(origin, channelKey, channel) {
     let lastSourceFailureAt = {};
     let lastSourceReturnAt = {};
     let sourceFailureHistory = {};
+    let lastStableHlsRestartAt = 0;
+    function isStableHlsSource(key) {
+      return STABLE_HLS_SOURCE_KEYS.indexOf(String(key || '')) >= 0;
+    }
     let lastFragUrl = '';
     let sameFragCount = 0;
     let loadStatusHideTimer = null;
@@ -4571,7 +4579,8 @@ function playerPage(origin, channelKey, channel) {
           startRealPlaybackWatchdog('paused-' + reason);
           return;
         }
-        if (advanced < 0.5 && sinceAdvance >= REAL_PLAYBACK_START_MS - 250) {
+        const playbackStartThresholdMs = isStableHlsSource(key) ? 26000 : REAL_PLAYBACK_START_MS;
+        if (advanced < 0.5 && sinceAdvance >= playbackStartThresholdMs - 250) {
           appendLog('no-real-playback', {
             key: key,
             reason: reason,
@@ -4601,7 +4610,8 @@ function playerPage(origin, channelKey, channel) {
         const advanced = notePlayheadAdvance('watch');
         if (advanced) return;
         const sinceAdvance = Date.now() - lastPlayheadAdvanceAt;
-        if (sinceAdvance < PLAYHEAD_FROZEN_MS) return;
+        const frozenThresholdMs = isStableHlsSource(activeKey) ? 22000 : PLAYHEAD_FROZEN_MS;
+        if (sinceAdvance < frozenThresholdMs) return;
         appendLog('playhead-frozen', {
           key: activeKey,
           currentTime: Number((video.currentTime || 0).toFixed(2)),
@@ -4948,7 +4958,10 @@ function playerPage(origin, channelKey, channel) {
       const end = bufferedEnd();
       const current = Number(video.currentTime.toFixed(2));
       const startupStall = !lastPlayheadValue && current < 0.5 && !video.ended;
-      const stallTimeout = startupStall ? INITIAL_STALL_MS : LONG_STALL_MS;
+      const stableHlsSource = isStableHlsSource(activeKey);
+      const stallTimeout = stableHlsSource
+        ? (startupStall ? 26000 : 12000)
+        : (startupStall ? INITIAL_STALL_MS : LONG_STALL_MS);
       if (end !== null && current > end + 45) {
         appendLog('time-outside-buffer', { event: eventName, currentTime: current, bufferedEnd: end });
         setLoadStatus('warn', 'Flux hors buffer', 'currentTime ' + current + 's / buffer ' + end + 's');
@@ -5035,10 +5048,32 @@ function playerPage(origin, channelKey, channel) {
         done();
       }
     }
-    async function load(src, label) {
+    function restartStableHlsSource(reason) {
+      const now = Date.now();
+      if (!isStableHlsSource(activeKey)) return false;
+      if (now - lastStableHlsRestartAt < STABLE_HLS_RESTART_COOLDOWN_MS) return false;
+      lastStableHlsRestartAt = now;
+      appendLog('stable-hls-restart', {
+        key: activeKey,
+        reason: reason || 'hls-error',
+        cooldownMs: STABLE_HLS_RESTART_COOLDOWN_MS
+      });
+      setLoadStatus('warn', 'Reconnexion stable du flux', SOURCE_LABELS[activeKey] || activeKey);
+      loadSourceKey(
+        activeKey,
+        'Reconnexion stable ' + (SOURCE_LABELS[activeKey] || activeKey),
+        activeSequence && activeSequence.length ? activeSequence : [activeKey],
+        activeSequenceIndex,
+        'stable-hls-restart-' + String(reason || 'error')
+      );
+      return true;
+    }
+
+    async function load(src, label, sourceKey) {
       loadEpoch += 1;
       activeLabel = label || 'source';
       activeSrc = src;
+      const stableHlsSource = isStableHlsSource(sourceKey || activeKey);
       lastProgressLogAt = 0;
       stallStartedAt = 0;
       badEvents = [];
@@ -5057,7 +5092,7 @@ function playerPage(origin, channelKey, channel) {
       video.removeAttribute('src');
       video.load();
       if (window.Hls && Hls.isSupported()) {
-        hls = new Hls({
+        const hlsConfig = {
           enableWorker: true,
           lowLatencyMode: true,
           liveSyncDurationCount: 3,
@@ -5066,7 +5101,41 @@ function playerPage(origin, channelKey, channel) {
           manifestLoadingTimeOut: 8000,
           levelLoadingTimeOut: 8000,
           fragLoadingTimeOut: 10000
-        });
+        };
+        if (stableHlsSource) {
+          Object.assign(hlsConfig, {
+            lowLatencyMode: false,
+            backBufferLength: 30,
+            maxBufferLength: 95,
+            maxMaxBufferLength: 180,
+            liveSyncDurationCount: 5,
+            liveMaxLatencyDurationCount: 14,
+            manifestLoadingTimeOut: 18000,
+            levelLoadingTimeOut: 18000,
+            fragLoadingTimeOut: 24000,
+            manifestLoadingMaxRetry: 8,
+            levelLoadingMaxRetry: 14,
+            fragLoadingMaxRetry: 10,
+            manifestLoadingRetryDelay: 800,
+            levelLoadingRetryDelay: 800,
+            fragLoadingRetryDelay: 900,
+            manifestLoadingMaxRetryTimeout: 9000,
+            levelLoadingMaxRetryTimeout: 9000,
+            fragLoadingMaxRetryTimeout: 9000,
+            maxBufferHole: 1.8,
+            maxSeekHole: 3.5,
+            nudgeOffset: 0.35,
+            nudgeMaxRetry: 8,
+            highBufferWatchdogPeriod: 2
+          });
+          appendLog('hls-profile', {
+            profile: 'stable-clouding',
+            key: sourceKey || activeKey,
+            maxBufferLength: hlsConfig.maxBufferLength,
+            liveSyncDurationCount: hlsConfig.liveSyncDurationCount
+          });
+        }
+        hls = new Hls(hlsConfig);
         hls.on(Hls.Events.MANIFEST_PARSED, function(_, data) {
           appendLog('manifest-ok', { levels: data.levels ? data.levels.length : 0, heights: data.levels ? data.levels.map(function(level) { return level.height || 0; }) : [] });
           const heights = data.levels ? data.levels.map(function(level) { return level.height || 0; }).filter(Boolean) : [];
@@ -5097,6 +5166,36 @@ function playerPage(origin, channelKey, channel) {
           const summary = { type: data.type, details: data.details, fatal: data.fatal, status: data.response ? data.response.code : null };
           appendLog('hls-error', summary);
           setLoadStatus(data.fatal ? 'error' : 'warn', data.fatal ? 'Erreur HLS fatale' : 'Incident HLS', (data.details || data.type || 'erreur') + (summary.status ? ' HTTP ' + summary.status : ''));
+          const isMediaError = data.type === Hls.ErrorTypes.MEDIA_ERROR;
+          const isNetworkError = data.type === Hls.ErrorTypes.NETWORK_ERROR;
+          const isBufferError = ['bufferStalledError', 'bufferNudgeOnStall', 'bufferSeekOverHole'].indexOf(data.details) !== -1;
+          if (stableHlsSource && isMediaError) {
+            if (isBufferError) {
+              setLoadStatus('warn', 'Rattrapage stable du buffer', 'Correction locale avant bascule');
+              seamlessBufferRecover('Erreur buffer Clouding: ' + data.details, hlsErrorCount >= 3 ? 'hard' : 'soft');
+            }
+            if (data.fatal) {
+              try {
+                hls.recoverMediaError();
+                notePlayheadAdvance('clouding-media-recovery');
+                return;
+              } catch (_) {}
+            }
+            if (isBufferError) return;
+          }
+          if (stableHlsSource && isNetworkError) {
+            setLoadStatus('warn', 'Reconnexion HLS stable', 'Tentatives Clouding en cours');
+            try {
+              hls.startLoad(-1);
+              notePlayheadAdvance('clouding-network-recovery');
+            } catch (_) {}
+            if (summary.status === 401 || summary.status === 403 || summary.status === 410 || hlsErrorCount >= 12 || data.fatal) {
+              if (!restartStableHlsSource('network-' + (summary.status || data.details || 'error'))) {
+                tryFailover('clouding-network-' + (summary.status || data.details || 'error'));
+              }
+            }
+            return;
+          }
           if (data.fatal) {
             tryFailover('fatal-hls-' + (data.details || data.type || 'error'));
             return;
@@ -5138,7 +5237,7 @@ function playerPage(origin, channelKey, channel) {
         window.location.assign(SOURCE_REDIRECTS[key]);
         return;
       }
-      load(SOURCE_URLS[key], label || SOURCE_LABELS[key]);
+      load(SOURCE_URLS[key], label || SOURCE_LABELS[key], key);
     }
     function startSequence(sequence, label) {
       const clean = sequence.filter(function(key) { return SOURCE_URLS[key]; });
@@ -5226,7 +5325,7 @@ function playerPage(origin, channelKey, channel) {
         activeSequence = [];
         activeSequenceIndex = 0;
         if (activeSourceInfo) activeSourceInfo.textContent = btn.textContent.trim();
-        load(btn.dataset.src, btn.textContent.trim());
+        load(btn.dataset.src, btn.textContent.trim(), 'auto');
       });
     });
     channelSelect.addEventListener('change', function() {
