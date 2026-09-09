@@ -3435,11 +3435,106 @@ function getChannel(channelKey) {
   return CHANNELS[normalized] ? { key: normalized, config: CHANNELS[normalized] } : null;
 }
 
+const CLOUDING_HTML_FALLBACKS = {
+  RTP1: {
+    kind: "iframe",
+    id: "rtp1-html-fallback",
+    label: "Secours HTML RTP1",
+    button: "Secours HTML",
+    iframeUrl: "https://amazingtier.top/player/RTP1"
+  },
+  RTP2: {
+    kind: "iframe",
+    id: "rtp2-html-fallback",
+    label: "Secours HTML RTP2",
+    button: "Secours HTML",
+    iframeUrl: "https://amazingtier.top/player/RTP2"
+  },
+  TVI: {
+    kind: "iframe",
+    id: "tvi-html-fallback",
+    label: "Secours HTML TVI",
+    button: "Secours HTML",
+    iframeUrl: "https://amazingtier.top/player/TVI"
+  },
+  TVIReality: {
+    kind: "iframe",
+    id: "tvi-reality-html-fallback",
+    label: "Secours HTML TVI Reality",
+    button: "Secours HTML",
+    iframeUrl: "https://amazingtier.top/player/TVIReality"
+  },
+  TVI_Ficcao: {
+    kind: "iframe",
+    id: "tvi-ficcao-html-fallback",
+    label: "Secours HTML TVI Ficcao",
+    button: "Secours HTML",
+    iframeUrl: "https://amazingtier.top/player/TVI_Ficcao"
+  },
+  VPlusTVI: {
+    kind: "iframe",
+    id: "v-plus-tvi-html-fallback",
+    label: "Secours HTML V+ TVI",
+    button: "Secours HTML",
+    iframeUrl: "https://amazingtier.top/player/VPlusTVI"
+  },
+  PortoCanal: {
+    kind: "iframe",
+    id: "porto-canal-html-fallback",
+    label: "Secours HTML Porto Canal",
+    button: "Secours HTML",
+    iframeUrl: "https://wideiptv.top/player/PortoCanal"
+  },
+  "CNN-PT": {
+    kind: "iframe",
+    id: "cnn-portugal-html-fallback",
+    label: "Secours HTML CNN Portugal",
+    button: "Secours HTML",
+    iframeUrl: "https://amazingtier.top/player/CNN-PT"
+  },
+  "SIC-NOTICIAS": {
+    kind: "iframe",
+    id: "sic-noticias-html-fallback",
+    label: "Secours HTML SIC Noticias",
+    button: "Secours HTML",
+    iframeUrl: "https://amazingtier.top/player/SIC-NOTICIAS"
+  },
+  RTP3: {
+    kind: "iframe",
+    id: "rtp3-html-fallback",
+    label: "Secours HTML RTP3",
+    button: "Secours HTML",
+    iframeUrl: "https://amazingtier.top/player/RTP3"
+  },
+  RTPAfrica: {
+    kind: "iframe",
+    id: "rtp-africa-html-fallback",
+    label: "Secours HTML RTP Africa",
+    button: "Secours HTML",
+    iframeUrl: "https://amazingtier.top/player/RTPAfrica"
+  },
+  "TVI-INT": {
+    kind: "iframe",
+    id: "tvi-international-html-fallback",
+    label: "Secours HTML TVI Internacional",
+    button: "Secours HTML",
+    iframeUrl: "https://amazingtier.top/player/TVI-INT"
+  }
+};
+
 function allSources(channel) {
+  const cloudingChannel = String(channel.manualSources?.clouding?.cloudingChannel || "");
+  const htmlFallback = CLOUDING_HTML_FALLBACKS[cloudingChannel];
   return {
     ...(channel.sources || {}),
-    ...(channel.manualSources || {})
+    ...(channel.manualSources || {}),
+    ...(htmlFallback ? { html: htmlFallback } : {})
   };
+}
+
+function manualSourceNames(channel) {
+  const automatic = new Set(Object.keys(channel.sources || {}));
+  return Object.keys(allSources(channel)).filter((key) => !automatic.has(key));
 }
 
 function configuredManualPaths(kind, property) {
@@ -3572,7 +3667,7 @@ function smartDefaultOrder(channel) {
   const order = [];
   for (const value of [
     ...(channel.defaultOrder || []),
-    ...Object.keys(channel.manualSources || {})
+    ...manualSourceNames(channel)
   ]) {
     const key = String(value || "").trim().toLowerCase();
     if (!key || seen.has(key) || !sources[key]) continue;
@@ -4205,7 +4300,7 @@ async function handleStatus(request, channelKey, channel) {
     defaultOrder: channel.defaultOrder,
     smartOrder: smartDefaultOrder(channel),
     automaticSources: Object.keys(channel.sources || {}),
-    manualSources: Object.keys(channel.manualSources || {}),
+    manualSources: manualSourceNames(channel),
     availableSources: sourceNames,
     results
   }, null, 2), { status: 200, headers });
@@ -5464,7 +5559,7 @@ export default {
         defaultOrder: channel.defaultOrder,
         smartOrder: smartDefaultOrder(channel),
         automaticSources: Object.keys(channel.sources || {}),
-        manualSources: Object.keys(channel.manualSources || {}),
+        manualSources: manualSourceNames(channel),
         sources: Object.keys(allSources(channel))
       })));
     }
