@@ -424,14 +424,14 @@
     {
       "id": "tvir",
       "name": "TVI Reality",
-      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/api/live/tvi-reality/clouding/master.m3u8",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=tvi-reality",
       "logo": {
         "type": "image",
         "value": "/media/tvir.jpg"
       },
       "group": "Divertissement",
       "isFavorite": false,
-      "isIframe": false,
+      "isIframe": true,
       "meoCallLetter": "TVIR"
     },
     {
