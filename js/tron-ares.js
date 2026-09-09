@@ -8332,6 +8332,7 @@ async function __subtitleDoSearch() {
       programUrl: item.programUrl || (item.nosGuideId ? `https://nostv.pt/guia/${encodeURIComponent(String(item.nosGuideId))}` : ""),
       meoCallLetter: item.meoCallLetter || "",
       livewatchEpgName: item.livewatchEpgName || item.epgName || "",
+      htmlFallbackUrl: item.htmlFallbackUrl || item.fallbackHtmlUrl || "",
       listType: item.isIframe ? "iframe" : "playlist"
       });
 
