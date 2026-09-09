@@ -64,7 +64,7 @@ const LIVEWATCH_NAME_ALIASES = {
 const CHANNELS = {
   cmtv: {
     label: "CMTV",
-    defaultOrder: ["cable", "basic"],
+    defaultOrder: ["cable", "direct", "basic"],
     sources: {
       cable: {
         id: "805844173b05e1a81e31d-579768661fe265",
@@ -77,18 +77,18 @@ const CHANNELS = {
     },
     manualSources: {
       clouding: {
-        kind: "clouding",
-        id: "legacy-clouding-cmtvpt",
-        label: "Clouding CMTV",
-        button: "Clouding",
-        cloudingChannel: "CMTVPT"
+        kind: "iframe",
+        id: "cmtv-secour-iframe",
+        label: "Secours CMTV",
+        button: "Secours HTML",
+        iframeUrl: "https://player-engine.com/pages/cmtv-secour.html"
       },
       direct: {
         kind: "direct",
-        id: "cm-sunshine2-cmtv",
+        id: "cmtv-work-direct",
         label: "Direct CMTV",
         button: "Direct",
-        directUrl: "https://cm-sunshine2.victor-salema-53d.workers.dev/api/live/cmtv/master.m3u8",
+        directUrl: "https://cmtv-work.victor-salema-53d.workers.dev/live.m3u8",
         browserRedirect: true
       }
     }
@@ -3999,6 +3999,23 @@ async function resolveDirectSource(channelKey, sourceName, source) {
   };
 }
 
+function resolveIframeSource(channelKey, sourceName, source) {
+  if (!source?.iframeUrl) throw new Error("iframe URL unavailable");
+  const iframeUrl = new URL(source.iframeUrl);
+  if (iframeUrl.protocol !== "https:") throw new Error("iframe URL refused");
+  return {
+    channelKey,
+    mode: sourceName,
+    source: sourceName,
+    sourceId: source.id,
+    label: sourceDisplayName(source),
+    upstreamUrl: iframeUrl,
+    redirectUrl: iframeUrl.href,
+    masterText: "#EXTM3U\n",
+    latencyMs: 0
+  };
+}
+
 async function resolveSource(channelKey, channel, sourceName) {
   const source = allSources(channel)[sourceName];
   if (!source) throw new Error(`unknown source ${sourceName}`);
@@ -4006,6 +4023,7 @@ async function resolveSource(channelKey, channel, sourceName) {
   if (source.kind === "clouding") return resolveCloudingSource(channelKey, sourceName, source);
   if (source.kind === "lovetier") return resolveLovetierSource(channelKey, sourceName, source);
   if (source.kind === "direct") return resolveDirectSource(channelKey, sourceName, source);
+  if (source.kind === "iframe") return resolveIframeSource(channelKey, sourceName, source);
   return resolveLivewatchSourceWithDynamicFallback(channelKey, channel, sourceName, source);
 }
 
@@ -4215,6 +4233,7 @@ function sourceDisplayName(source, fallback = "") {
 
 function playerPage(origin, channelKey, channel) {
   const sourceUrls = {};
+  const sourceRedirects = {};
   const sourceLabels = {};
   const sources = allSources(channel);
   const smartOrder = smartDefaultOrder(channel);
@@ -4224,6 +4243,7 @@ function playerPage(origin, channelKey, channel) {
   for (const [key, source] of Object.entries(sources)) {
     sourceUrls[key] = `${origin}/api/live/${channelKey}/${key}/master.m3u8`;
     sourceLabels[key] = sourceDisplayName(source);
+    if (source.iframeUrl) sourceRedirects[key] = source.iframeUrl;
   }
   const sourceButtons = Object.entries(sources).map(([key, source]) => {
     const className = channel.manualSources?.[key] ? ` class="secondary"` : "";
@@ -4316,6 +4336,7 @@ function playerPage(origin, channelKey, channel) {
     video.muted = false;
     video.volume = 1;
     const SOURCE_URLS = ${scriptJson(sourceUrls)};
+    const SOURCE_REDIRECTS = ${scriptJson(sourceRedirects)};
     const SOURCE_LABELS = ${scriptJson(sourceLabels)};
     const START_SEQUENCE = ${scriptJson(smartOrder)};
     const MANUAL_FALLBACK_ORDER = ${scriptJson(manualFallbackOrder)};
@@ -4898,9 +4919,19 @@ function playerPage(origin, channelKey, channel) {
       if (!activeSequence.length || activeSequenceIndex >= activeSequence.length - 1) {
         failoverLockUntil = Date.now() + 3000;
         appendLog('failover-unavailable', { reason: reason, activeKey: activeKey, sequence: activeSequence });
-        setLoadStatus('warn', 'Source en attente', 'Aucune source suivante disponible - retry automatique');
         markSourceFailure(activeKey, reason);
-        scheduleSelfRetry(reason);
+        if (hasBetterSource()) {
+          setLoadStatus('warn', 'Retour vers une source precedente', 'La source finale a echoue - verification Clouding/precedentes');
+          appendLog('terminal-source-recovery-scheduled', {
+            failedKey: activeKey,
+            candidates: betterSourceKeys(),
+            reason: reason
+          });
+          schedulePrimaryRecovery('after-terminal-' + reason);
+        } else {
+          setLoadStatus('warn', 'Source en attente', 'Aucune source precedente disponible - retry automatique');
+          scheduleSelfRetry(reason);
+        }
         return;
       }
       failoverLockUntil = Date.now() + 3000;
@@ -5101,6 +5132,11 @@ function playerPage(origin, channelKey, channel) {
         schedulePrimaryRecovery('source-selected-' + (reason || 'manual'));
       } else {
         clearSmartRecoveryTimers();
+      }
+      if (SOURCE_REDIRECTS[key]) {
+        appendLog('source-redirect', { key: key, url: SOURCE_REDIRECTS[key], reason: reason || 'manual' });
+        window.location.assign(SOURCE_REDIRECTS[key]);
+        return;
       }
       load(SOURCE_URLS[key], label || SOURCE_LABELS[key]);
     }
