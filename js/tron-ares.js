@@ -3824,6 +3824,22 @@ function createChannelElement(entry, index, sourceType, options) {
   const actionsDiv = document.createElement('div');
   actionsDiv.className = 'channel-actions';
 
+  const htmlFallbackUrl = String(entry?.htmlFallbackUrl || '').trim();
+  if (htmlFallbackUrl) {
+    const htmlFallbackBtn = document.createElement('button');
+    htmlFallbackBtn.type = 'button';
+    htmlFallbackBtn.className = 'icon-btn html-fallback-btn';
+    htmlFallbackBtn.textContent = 'HTML';
+    htmlFallbackBtn.title = 'Ouvrir le secours HTML';
+    htmlFallbackBtn.setAttribute('aria-label', `Ouvrir le secours HTML de ${normalizeName(entry.name)}`);
+    htmlFallbackBtn.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      const targetUrl = new URL(htmlFallbackUrl, window.location.href).href;
+      window.location.assign(targetUrl);
+    });
+    actionsDiv.appendChild(htmlFallbackBtn);
+  }
+
   // 🎞️ Badge "Trailer" (Films / channelList) — placé avant le bouton Favori
   // (uniquement sur la liste Films et ses favoris)
   if (sourceType === 'channels') {
@@ -5183,6 +5199,7 @@ function parsePlaylistJSON(raw, listType, defaultGroup, sourceId) {
       isIframe: !!(item && item.isIframe) || isYoutubeUrl(url),
       isFavorite: !!(item && item.isFavorite),
       listType: lt,
+      htmlFallbackUrl: item?.htmlFallbackUrl || item?.fallbackHtmlUrl || "",
       guideTntId: item?.guideTntId || item?.frGuideTntId || "",
       programUrl: item?.programUrl || (item?.nosGuideId ? `https://nostv.pt/guia/${encodeURIComponent(String(item.nosGuideId))}` : ""),
       meoCallLetter: item?.meoCallLetter || "",
