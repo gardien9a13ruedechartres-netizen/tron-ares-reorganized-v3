@@ -12,6 +12,7 @@
       margin: 0;
       overflow: hidden;
       background: #000;
+      font-family: Arial, sans-serif;
     }
 
     iframe {
@@ -20,9 +21,65 @@
       height: 100%;
       border: 0;
     }
+
+    #menuToggle {
+      position: fixed;
+      top: 14px;
+      right: 14px;
+      z-index: 2;
+      width: 44px;
+      height: 44px;
+      border: 1px solid rgba(0, 220, 255, 0.8);
+      border-radius: 50%;
+      background: rgba(0, 9, 18, 0.86);
+      color: #fff;
+      cursor: pointer;
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    #menuPanel {
+      position: fixed;
+      top: 66px;
+      right: 14px;
+      z-index: 2;
+      display: grid;
+      gap: 8px;
+      width: min(260px, calc(100vw - 28px));
+      padding: 12px;
+      border: 1px solid rgba(0, 220, 255, 0.55);
+      border-radius: 8px;
+      background: rgba(0, 9, 18, 0.94);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    }
+
+    #menuPanel[hidden] {
+      display: none;
+    }
+
+    #menuPanel button {
+      min-height: 38px;
+      border: 1px solid rgba(0, 220, 255, 0.65);
+      border-radius: 6px;
+      background: transparent;
+      color: #fff;
+      cursor: pointer;
+      font: inherit;
+    }
+
+    #menuPanel button:hover,
+    #menuToggle:hover {
+      background: rgba(0, 220, 255, 0.18);
+    }
   </style>
 </head>
 <body>
+  <button id="menuToggle" type="button" aria-label="Ouvrir le menu" aria-controls="menuPanel" aria-expanded="false">&#9776;</button>
+  <div id="menuPanel" hidden>
+    <button id="returnToPlayer" type="button">Retour au lecteur CMTV</button>
+    <button id="reloadFallback" type="button">Recharger le secours</button>
+  </div>
+
   <iframe
     src="https://amazingtier.top/player/CMTVPT"
     title="Lecteur CMTVPT"
@@ -30,5 +87,28 @@
     allowfullscreen
     scrolling="no"
   ></iframe>
+
+  <script>
+    const menuToggle = document.getElementById('menuToggle');
+    const menuPanel = document.getElementById('menuPanel');
+    const returnToPlayer = document.getElementById('returnToPlayer');
+    const reloadFallback = document.getElementById('reloadFallback');
+    const playerUrl = 'https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=cmtv';
+
+    menuToggle.addEventListener('click', () => {
+      const isOpen = menuToggle.getAttribute('aria-expanded') === 'true';
+      menuToggle.setAttribute('aria-expanded', String(!isOpen));
+      menuToggle.setAttribute('aria-label', isOpen ? 'Ouvrir le menu' : 'Fermer le menu');
+      menuPanel.hidden = isOpen;
+    });
+
+    returnToPlayer.addEventListener('click', () => {
+      window.location.assign(playerUrl);
+    });
+
+    reloadFallback.addEventListener('click', () => {
+      window.location.reload();
+    });
+  </script>
 </body>
 </html>
