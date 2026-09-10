@@ -17,7 +17,6 @@
       "group": "Généraliste",
       "isFavorite": false,
       "isIframe": true,
-      "htmlFallbackUrl": "/pages/cmtv-secour.html",
       "programUrl": "https://nostv.pt/guia/139",
       "meoCallLetter": "CMTV"
     },
@@ -32,7 +31,6 @@
       "group": "Généraliste",
       "isFavorite": false,
       "isIframe": true,
-      "htmlFallbackUrl": "/pages/rtp1-secour.html",
       "meoCallLetter": "RTP1"
     },
     {
@@ -46,7 +44,6 @@
       "group": "Généraliste",
       "isFavorite": false,
       "isIframe": true,
-      "htmlFallbackUrl": "/pages/rtp2-secour.html",
       "meoCallLetter": "RTP2"
     },
     {
@@ -60,7 +57,6 @@
       "group": "Généraliste",
       "isFavorite": false,
       "isIframe": true,
-      "htmlFallbackUrl": "/pages/rtp-africa-secour.html",
       "meoCallLetter": "RTPA"
     },
     {
@@ -74,7 +70,6 @@
       "group": "Généraliste",
       "isFavorite": false,
       "isIframe": true,
-      "htmlFallbackUrl": "/pages/tvi-secour.html",
       "meoCallLetter": "TVI"
     },
     {
@@ -87,8 +82,7 @@
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": true,
-      "htmlFallbackUrl": "/pages/tvi-internacional-secour.html"
+      "isIframe": true
     },
     {
       "id": "sic",
@@ -153,7 +147,6 @@
       "group": "Info",
       "isFavorite": false,
       "isIframe": true,
-      "htmlFallbackUrl": "/pages/rtp3-secour.html",
       "meoCallLetter": "RTPN"
     },
     {
@@ -167,7 +160,6 @@
       "group": "Info",
       "isFavorite": false,
       "isIframe": true,
-      "htmlFallbackUrl": "/pages/sic-noticias-secour.html",
       "meoCallLetter": "SICN"
     },
     {
@@ -181,7 +173,6 @@
       "group": "Info",
       "isFavorite": false,
       "isIframe": true,
-      "htmlFallbackUrl": "/pages/cnn-portugal-secour.html",
       "meoCallLetter": "CNNPT"
     },
     {
@@ -246,7 +237,6 @@
       "group": "Sport",
       "isFavorite": false,
       "isIframe": true,
-      "htmlFallbackUrl": "/pages/porto-canal-secour.html",
       "meoCallLetter": "PORTO"
     },
     {
@@ -442,7 +432,6 @@
       "group": "Divertissement",
       "isFavorite": false,
       "isIframe": true,
-      "htmlFallbackUrl": "/pages/tvi-reality-secour.html",
       "meoCallLetter": "TVIR"
     },
     {
@@ -455,8 +444,7 @@
       },
       "group": "Divertissement",
       "isFavorite": false,
-      "isIframe": true,
-      "htmlFallbackUrl": "/pages/tvi-ficcao-secour.html"
+      "isIframe": true
     },
     {
       "id": "v-mais",
@@ -469,7 +457,6 @@
       "group": "Divertissement",
       "isFavorite": false,
       "isIframe": true,
-      "htmlFallbackUrl": "/pages/v-plus-tvi-secour.html",
       "meoCallLetter": "VMAISTVI"
     },
     {

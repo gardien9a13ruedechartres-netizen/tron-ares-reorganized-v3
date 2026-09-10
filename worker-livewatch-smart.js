@@ -3,8 +3,9 @@ const LOVETIER_ORIGIN = "https://deviantart.lovetier.bz";
 const LOVETIER_PLAYER_ORIGIN = "https://lovetier.bz";
 const WIDEIPTV_PLAYER_ORIGIN = "https://wideiptv.top";
 const BLUETIER_ORIGIN = "https://cdn.bluetier.top";
-const CLOUDING_ORIGIN = "https://clouding.wideiptv.top";
-const CLOUDING_PLAYER_ORIGIN = "https://wideiptv.top";
+// Legacy source key kept for route compatibility; the upstream is now AmazingTier.
+const AMAZINGTIER_ORIGIN = "https://simple.amazingtier.top";
+const AMAZINGTIER_PLAYER_ORIGIN = "https://amazingtier.top";
 const PROXY_PATH = "/api/proxy";
 const SOURCE_TEST_TIMEOUT_MS = 7000;
 const SOURCE_CACHE_TTL_MS = 30000;
@@ -64,7 +65,7 @@ const LIVEWATCH_NAME_ALIASES = {
 const CHANNELS = {
   cmtv: {
     label: "CMTV",
-    defaultOrder: ["cable", "direct", "basic"],
+    defaultOrder: ["cable", "direct", "basic", "amazingtier"],
     sources: {
       cable: {
         id: "805844173b05e1a81e31d-579768661fe265",
@@ -76,13 +77,6 @@ const CHANNELS = {
       }
     },
     manualSources: {
-      html: {
-        kind: "iframe",
-        id: "cmtv-secour-iframe",
-        label: "Secours CMTV",
-        button: "Secours HTML",
-        iframeUrl: "https://player-engine.com/pages/cmtv-secour.html"
-      },
       direct: {
         kind: "direct",
         id: "cmtv-work-direct",
@@ -90,6 +84,14 @@ const CHANNELS = {
         button: "Direct",
         directUrl: "https://cmtv-work.victor-salema-53d.workers.dev/live.m3u8",
         browserRedirect: true
+      },
+      amazingtier: {
+        // Keep this as an independent HLS source.
+        kind: "clouding",
+        id: "amazingtier-cmtv",
+        label: "AmazingTier CMTV",
+        button: "AmazingTier",
+        cloudingChannel: "CMTVPT"
       }
     }
   },
@@ -110,8 +112,8 @@ const CHANNELS = {
       clouding: {
         kind: "clouding",
         id: "legacy-clouding-rtp1",
-        label: "Clouding RTP1",
-        button: "Clouding",
+        label: "AmazingTier RTP1",
+        button: "AmazingTier",
         cloudingChannel: "RTP1"
       }
     }
@@ -133,8 +135,8 @@ const CHANNELS = {
       clouding: {
         kind: "clouding",
         id: "legacy-clouding-rtp2",
-        label: "Clouding RTP2",
-        button: "Clouding",
+        label: "AmazingTier RTP2",
+        button: "AmazingTier",
         cloudingChannel: "RTP2"
       }
     }
@@ -162,8 +164,8 @@ const CHANNELS = {
       clouding: {
         kind: "clouding",
         id: "legacy-clouding-tvi",
-        label: "Clouding TVI",
-        button: "Clouding",
+        label: "AmazingTier TVI",
+        button: "AmazingTier",
         cloudingChannel: "TVI"
       },
       direct: {
@@ -2591,8 +2593,8 @@ Object.assign(CHANNELS, {
       "clouding": {
         "kind": "clouding",
         "id": "legacy-clouding-tvi-reality",
-        "label": "Clouding TVI Reality",
-        "button": "Clouding",
+        "label": "AmazingTier TVI Reality",
+        "button": "AmazingTier",
         "cloudingChannel": "TVIReality"
       }
     }
@@ -2623,8 +2625,8 @@ Object.assign(CHANNELS, {
       "clouding": {
         "kind": "clouding",
         "id": "legacy-clouding-tvi-ficcao",
-        "label": "Clouding TVI Ficcao",
-        "button": "Clouding",
+        "label": "AmazingTier TVI Ficcao",
+        "button": "AmazingTier",
         "cloudingChannel": "TVI_Ficcao"
       }
     }
@@ -2648,8 +2650,8 @@ Object.assign(CHANNELS, {
       "clouding": {
         "kind": "clouding",
         "id": "legacy-clouding-v-plus-tvi",
-        "label": "Clouding V+ TVI",
-        "button": "Clouding",
+        "label": "AmazingTier V+ TVI",
+        "button": "AmazingTier",
         "cloudingChannel": "VPlusTVI"
       }
     }
@@ -2726,8 +2728,8 @@ Object.assign(CHANNELS, {
       "clouding": {
         "kind": "clouding",
         "id": "legacy-clouding-porto-canal",
-        "label": "Clouding Porto Canal",
-        "button": "Clouding",
+        "label": "AmazingTier Porto Canal",
+        "button": "AmazingTier",
         "cloudingChannel": "PortoCanal"
       }
     }
@@ -2790,8 +2792,8 @@ Object.assign(CHANNELS, {
       "clouding": {
         "kind": "clouding",
         "id": "legacy-clouding-cnn-portugal",
-        "label": "Clouding CNN Portugal",
-        "button": "Clouding",
+        "label": "AmazingTier CNN Portugal",
+        "button": "AmazingTier",
         "cloudingChannel": "CNN-PT"
       }
     }
@@ -2822,8 +2824,8 @@ Object.assign(CHANNELS, {
       "clouding": {
         "kind": "clouding",
         "id": "legacy-clouding-sic-noticias",
-        "label": "Clouding SIC Noticias",
-        "button": "Clouding",
+        "label": "AmazingTier SIC Noticias",
+        "button": "AmazingTier",
         "cloudingChannel": "SIC-NOTICIAS"
       }
     }
@@ -2854,8 +2856,8 @@ Object.assign(CHANNELS, {
       "clouding": {
         "kind": "clouding",
         "id": "legacy-clouding-rtp3",
-        "label": "Clouding RTP3",
-        "button": "Clouding",
+        "label": "AmazingTier RTP3",
+        "button": "AmazingTier",
         "cloudingChannel": "RTP3"
       }
     }
@@ -2886,8 +2888,8 @@ Object.assign(CHANNELS, {
       "clouding": {
         "kind": "clouding",
         "id": "legacy-clouding-rtp-africa",
-        "label": "Clouding RTP Africa",
-        "button": "Clouding",
+        "label": "AmazingTier RTP Africa",
+        "button": "AmazingTier",
         "cloudingChannel": "RTPAfrica"
       }
     }
@@ -2902,8 +2904,8 @@ Object.assign(CHANNELS, {
       "clouding": {
         "kind": "clouding",
         "id": "legacy-clouding-tvi-internacional",
-        "label": "Clouding TVI Internacional",
-        "button": "Clouding",
+        "label": "AmazingTier TVI Internacional",
+        "button": "AmazingTier",
         "cloudingChannel": "TVI-INT"
       }
     }
@@ -3403,7 +3405,7 @@ function upstreamHeaders(url, accept = "*/*") {
   if (url.origin === LIVEWATCH_ORIGIN) headers.Referer = `${LIVEWATCH_ORIGIN}/`;
   if (url.origin === LOVETIER_ORIGIN) headers.Referer = `${LOVETIER_PLAYER_ORIGIN}/`;
   if (isBluetierOrigin(url)) headers.Referer = `${WIDEIPTV_PLAYER_ORIGIN}/`;
-  if (url.origin === CLOUDING_ORIGIN) headers.Referer = `${CLOUDING_PLAYER_ORIGIN}/`;
+  if (url.origin === AMAZINGTIER_ORIGIN) headers.Referer = `${AMAZINGTIER_PLAYER_ORIGIN}/`;
   return headers;
 }
 
@@ -3435,110 +3437,11 @@ function getChannel(channelKey) {
   return CHANNELS[normalized] ? { key: normalized, config: CHANNELS[normalized] } : null;
 }
 
-const CLOUDING_HTML_FALLBACKS = {
-  RTP1: {
-    kind: "iframe",
-    id: "rtp1-html-fallback",
-    label: "Secours HTML RTP1",
-    button: "Secours HTML",
-    iframeUrl: "https://amazingtier.top/player/RTP1"
-  },
-  RTP2: {
-    kind: "iframe",
-    id: "rtp2-html-fallback",
-    label: "Secours HTML RTP2",
-    button: "Secours HTML",
-    iframeUrl: "https://amazingtier.top/player/RTP2"
-  },
-  TVI: {
-    kind: "iframe",
-    id: "tvi-html-fallback",
-    label: "Secours HTML TVI",
-    button: "Secours HTML",
-    iframeUrl: "https://amazingtier.top/player/TVI"
-  },
-  TVIReality: {
-    kind: "iframe",
-    id: "tvi-reality-html-fallback",
-    label: "Secours HTML TVI Reality",
-    button: "Secours HTML",
-    iframeUrl: "https://amazingtier.top/player/TVIReality"
-  },
-  TVI_Ficcao: {
-    kind: "iframe",
-    id: "tvi-ficcao-html-fallback",
-    label: "Secours HTML TVI Ficcao",
-    button: "Secours HTML",
-    iframeUrl: "https://amazingtier.top/player/TVI_Ficcao"
-  },
-  VPlusTVI: {
-    kind: "iframe",
-    id: "v-plus-tvi-html-fallback",
-    label: "Secours HTML V+ TVI",
-    button: "Secours HTML",
-    iframeUrl: "https://amazingtier.top/player/VPlusTVI"
-  },
-  PortoCanal: {
-    kind: "iframe",
-    id: "porto-canal-html-fallback",
-    label: "Secours HTML Porto Canal",
-    button: "Secours HTML",
-    iframeUrl: "https://wideiptv.top/player/PortoCanal"
-  },
-  "CNN-PT": {
-    kind: "iframe",
-    id: "cnn-portugal-html-fallback",
-    label: "Secours HTML CNN Portugal",
-    button: "Secours HTML",
-    iframeUrl: "https://amazingtier.top/player/CNN-PT"
-  },
-  "SIC-NOTICIAS": {
-    kind: "iframe",
-    id: "sic-noticias-html-fallback",
-    label: "Secours HTML SIC Noticias",
-    button: "Secours HTML",
-    iframeUrl: "https://amazingtier.top/player/SIC-NOTICIAS"
-  },
-  RTP3: {
-    kind: "iframe",
-    id: "rtp3-html-fallback",
-    label: "Secours HTML RTP3",
-    button: "Secours HTML",
-    iframeUrl: "https://amazingtier.top/player/RTP3"
-  },
-  RTPAfrica: {
-    kind: "iframe",
-    id: "rtp-africa-html-fallback",
-    label: "Secours HTML RTP Africa",
-    button: "Secours HTML",
-    iframeUrl: "https://amazingtier.top/player/RTPAfrica"
-  },
-  "TVI-INT": {
-    kind: "iframe",
-    id: "tvi-international-html-fallback",
-    label: "Secours HTML TVI Internacional",
-    button: "Secours HTML",
-    iframeUrl: "https://amazingtier.top/player/TVI-INT"
-  }
-};
-
 function allSources(channel) {
-  const cloudingChannel = String(channel.manualSources?.clouding?.cloudingChannel || "");
-  const htmlFallback = CLOUDING_HTML_FALLBACKS[cloudingChannel];
   return {
     ...(channel.sources || {}),
-    ...(channel.manualSources || {}),
-    ...(htmlFallback ? { html: htmlFallback } : {})
+    ...(channel.manualSources || {})
   };
-}
-
-// CMTV used the key "clouding" for its HTML fallback in older versions.
-// Keep that route compatible while exposing the source with its correct "html" role.
-function canonicalSourceKey(channelKey, sourceName) {
-  if (channelKey === "cmtv" && String(sourceName || "").toLowerCase() === "clouding") {
-    return "html";
-  }
-  return sourceName;
 }
 
 function manualSourceNames(channel) {
@@ -3580,12 +3483,12 @@ function isBluetierOrigin(url) {
     (hostname === "bluetier.top" || hostname.endsWith(".bluetier.top"));
 }
 
-function isAllowedCloudingUrl(url) {
+function isAllowedAmazingTierUrl(url) {
   const paths = new Set([
     ...configuredManualPaths("clouding", "cloudingChannel"),
     ...configuredManualPaths("lovetier", "lovetierChannel")
   ]);
-  return url.origin === CLOUDING_ORIGIN &&
+  return url.origin === AMAZINGTIER_ORIGIN &&
     Array.from(paths).some((path) => url.pathname.toLowerCase().startsWith(path)) &&
     !url.username &&
     !url.password;
@@ -3630,7 +3533,7 @@ function isAllowedDirectUrl(url) {
 }
 
 function isAllowedProxyUrl(url) {
-  return isAllowedLivewatchUrl(url) || isAllowedLovetierUrl(url) || isAllowedCloudingUrl(url) || isAllowedDirectUrl(url);
+  return isAllowedLivewatchUrl(url) || isAllowedLovetierUrl(url) || isAllowedAmazingTierUrl(url) || isAllowedDirectUrl(url);
 }
 
 function makeProxyUrl(value, baseUrl, publicOrigin) {
@@ -3959,12 +3862,11 @@ async function resolveLivewatchSourceWithDynamicFallback(channelKey, channel, so
   }
 }
 
-async function resolveCloudingSource(channelKey, sourceName, source) {
+async function resolveAmazingTierSource(channelKey, sourceName, source) {
   const channel = String(source.cloudingChannel || "");
-  if (!channel || !/^[a-z0-9_-]+$/i.test(channel)) throw new Error("clouding channel refused");
+  if (!channel || !/^[a-z0-9_-]+$/i.test(channel)) throw new Error("amazingtier channel refused");
 
-  const sourceUrl = new URL("/player.php", CLOUDING_PLAYER_ORIGIN);
-  sourceUrl.searchParams.set("stream", channel);
+  const sourceUrl = new URL(`/player/${encodeURIComponent(channel)}`, AMAZINGTIER_PLAYER_ORIGIN);
   const sourceResponse = await fetchWithTimeout(sourceUrl, {
     headers: {
       Accept: "text/html,application/xhtml+xml",
@@ -3972,19 +3874,22 @@ async function resolveCloudingSource(channelKey, sourceName, source) {
     },
     redirect: "follow"
   });
-  if (!sourceResponse.ok) throw new Error(`clouding source ${sourceResponse.status}`);
+  if (!sourceResponse.ok) throw new Error(`amazingtier source ${sourceResponse.status}`);
 
   const sourceHtml = await sourceResponse.text();
-  const pattern = new RegExp(
-    `https://clouding\\.wideiptv\\.top/${escapeRegex(channel)}/embed\\.html\\?token=([^"'\\s<>&]+)`,
-    "i"
-  );
+  const pattern = /streamUrl:\s*"((?:\\.|[^"])*)"/i;
   const match = sourceHtml.match(pattern);
-  if (!match || !match[1]) throw new Error("clouding token unavailable");
+  if (!match || !match[1]) throw new Error("amazingtier stream URL unavailable");
 
-  const upstreamUrl = new URL(`${CLOUDING_ORIGIN}/${channel}/index.fmp4.m3u8`);
-  upstreamUrl.searchParams.set("token", match[1]);
-  if (!isAllowedCloudingUrl(upstreamUrl)) throw new Error("clouding stream URL refused");
+  const upstreamUrl = new URL(match[1]
+    .replace(/\\\//g, "/")
+    .replace(/\\u0026/gi, "&"));
+  if (!isAllowedAmazingTierUrl(upstreamUrl) ||
+      !upstreamUrl.pathname.toLowerCase().startsWith(`/${channel.toLowerCase()}/`) ||
+      !upstreamUrl.pathname.toLowerCase().endsWith("/index.m3u8") ||
+      !upstreamUrl.searchParams.has("token")) {
+    throw new Error("amazingtier stream URL refused");
+  }
 
   const startedAt = Date.now();
   const master = await fetchWithTimeout(upstreamUrl, {
@@ -3994,7 +3899,7 @@ async function resolveCloudingSource(channelKey, sourceName, source) {
   const latencyMs = Date.now() - startedAt;
   const masterText = await master.text();
   if (!master.ok || !masterText.trimStart().startsWith("#EXTM3U")) {
-    throw new Error(`clouding master ${master.status}`);
+    throw new Error(`amazingtier master ${master.status}`);
   }
 
   return {
@@ -4121,15 +4026,13 @@ function resolveIframeSource(channelKey, sourceName, source) {
 }
 
 async function resolveSource(channelKey, channel, sourceName) {
-  const canonicalName = canonicalSourceKey(channelKey, sourceName);
-  const source = allSources(channel)[canonicalName];
+  const source = allSources(channel)[sourceName];
   if (!source) throw new Error(`unknown source ${sourceName}`);
-  if (source.kind === "livewatch-search") return resolveLivewatchSearchSource(channelKey, channel, canonicalName, source);
-  if (source.kind === "clouding") return resolveCloudingSource(channelKey, canonicalName, source);
-  if (source.kind === "lovetier") return resolveLovetierSource(channelKey, canonicalName, source);
-  if (source.kind === "direct") return resolveDirectSource(channelKey, canonicalName, source);
-  if (source.kind === "iframe") return resolveIframeSource(channelKey, canonicalName, source);
-  return resolveLivewatchSourceWithDynamicFallback(channelKey, channel, canonicalName, source);
+  if (source.kind === "livewatch-search") return resolveLivewatchSearchSource(channelKey, channel, sourceName, source);
+  if (source.kind === "clouding") return resolveAmazingTierSource(channelKey, sourceName, source);
+  if (source.kind === "lovetier") return resolveLovetierSource(channelKey, sourceName, source);
+  if (source.kind === "direct") return resolveDirectSource(channelKey, sourceName, source);
+  return resolveLivewatchSourceWithDynamicFallback(channelKey, channel, sourceName, source);
 }
 
 async function resolveAutoSource(channelKey, channel, requestUrl) {
@@ -4161,9 +4064,8 @@ async function resolveAutoSource(channelKey, channel, requestUrl) {
 
 async function resolveMode(channelKey, channel, mode, requestUrl) {
   if (mode === "auto") return resolveAutoSource(channelKey, channel, requestUrl);
-  const canonicalName = canonicalSourceKey(channelKey, mode);
-  if (!allSources(channel)[canonicalName]) throw new Error(`unknown mode ${mode}`);
-  const resolved = await resolveSource(channelKey, channel, canonicalName);
+  if (!allSources(channel)[mode]) throw new Error(`unknown mode ${mode}`);
+  const resolved = await resolveSource(channelKey, channel, mode);
   return { ...resolved, detection: `forced-${mode}` };
 }
 
@@ -5037,7 +4939,7 @@ function playerPage(origin, channelKey, channel) {
         appendLog('failover-unavailable', { reason: reason, activeKey: activeKey, sequence: activeSequence });
         markSourceFailure(activeKey, reason);
         if (hasBetterSource()) {
-          setLoadStatus('warn', 'Retour vers une source precedente', 'La source finale a echoue - verification Clouding/precedentes');
+          setLoadStatus('warn', 'Retour vers une source precedente', 'La source finale a echoue - verification AmazingTier/precedentes');
           appendLog('terminal-source-recovery-scheduled', {
             failedKey: activeKey,
             candidates: betterSourceKeys(),
@@ -5278,7 +5180,7 @@ function playerPage(origin, channelKey, channel) {
           if (stableHlsSource && isMediaError) {
             if (isBufferError) {
               setLoadStatus('warn', 'Rattrapage stable du buffer', 'Correction locale avant bascule');
-              seamlessBufferRecover('Erreur buffer Clouding: ' + data.details, hlsErrorCount >= 3 ? 'hard' : 'soft');
+              seamlessBufferRecover('Erreur buffer AmazingTier: ' + data.details, hlsErrorCount >= 3 ? 'hard' : 'soft');
             }
             if (data.fatal) {
               try {
@@ -5290,7 +5192,7 @@ function playerPage(origin, channelKey, channel) {
             if (isBufferError) return;
           }
           if (stableHlsSource && isNetworkError) {
-            setLoadStatus('warn', 'Reconnexion HLS stable', 'Tentatives Clouding en cours');
+            setLoadStatus('warn', 'Reconnexion HLS stable', 'Tentatives AmazingTier en cours');
             try {
               hls.startLoad(-1);
               notePlayheadAdvance('clouding-network-recovery');
