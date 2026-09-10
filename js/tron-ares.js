@@ -3837,7 +3837,9 @@ function createChannelElement(entry, index, sourceType, options) {
       const targetUrl = new URL(htmlFallbackUrl, window.location.href).href;
       window.location.assign(targetUrl);
     });
-    actionsDiv.appendChild(htmlFallbackBtn);
+    // Keep the HTML fallback visible with the card tags, where it cannot be
+    // squeezed out by the other action buttons (info, favorite, overlay).
+    tagsDiv.appendChild(htmlFallbackBtn);
   }
 
   // 🎞️ Badge "Trailer" (Films / channelList) — placé avant le bouton Favori

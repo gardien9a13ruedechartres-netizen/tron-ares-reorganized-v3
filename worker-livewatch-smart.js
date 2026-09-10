@@ -76,7 +76,7 @@ const CHANNELS = {
       }
     },
     manualSources: {
-      clouding: {
+      html: {
         kind: "iframe",
         id: "cmtv-secour-iframe",
         label: "Secours CMTV",
@@ -3532,6 +3532,15 @@ function allSources(channel) {
   };
 }
 
+// CMTV used the key "clouding" for its HTML fallback in older versions.
+// Keep that route compatible while exposing the source with its correct "html" role.
+function canonicalSourceKey(channelKey, sourceName) {
+  if (channelKey === "cmtv" && String(sourceName || "").toLowerCase() === "clouding") {
+    return "html";
+  }
+  return sourceName;
+}
+
 function manualSourceNames(channel) {
   const automatic = new Set(Object.keys(channel.sources || {}));
   return Object.keys(allSources(channel)).filter((key) => !automatic.has(key));
@@ -4112,14 +4121,15 @@ function resolveIframeSource(channelKey, sourceName, source) {
 }
 
 async function resolveSource(channelKey, channel, sourceName) {
-  const source = allSources(channel)[sourceName];
+  const canonicalName = canonicalSourceKey(channelKey, sourceName);
+  const source = allSources(channel)[canonicalName];
   if (!source) throw new Error(`unknown source ${sourceName}`);
-  if (source.kind === "livewatch-search") return resolveLivewatchSearchSource(channelKey, channel, sourceName, source);
-  if (source.kind === "clouding") return resolveCloudingSource(channelKey, sourceName, source);
-  if (source.kind === "lovetier") return resolveLovetierSource(channelKey, sourceName, source);
-  if (source.kind === "direct") return resolveDirectSource(channelKey, sourceName, source);
-  if (source.kind === "iframe") return resolveIframeSource(channelKey, sourceName, source);
-  return resolveLivewatchSourceWithDynamicFallback(channelKey, channel, sourceName, source);
+  if (source.kind === "livewatch-search") return resolveLivewatchSearchSource(channelKey, channel, canonicalName, source);
+  if (source.kind === "clouding") return resolveCloudingSource(channelKey, canonicalName, source);
+  if (source.kind === "lovetier") return resolveLovetierSource(channelKey, canonicalName, source);
+  if (source.kind === "direct") return resolveDirectSource(channelKey, canonicalName, source);
+  if (source.kind === "iframe") return resolveIframeSource(channelKey, canonicalName, source);
+  return resolveLivewatchSourceWithDynamicFallback(channelKey, channel, canonicalName, source);
 }
 
 async function resolveAutoSource(channelKey, channel, requestUrl) {
@@ -4151,8 +4161,9 @@ async function resolveAutoSource(channelKey, channel, requestUrl) {
 
 async function resolveMode(channelKey, channel, mode, requestUrl) {
   if (mode === "auto") return resolveAutoSource(channelKey, channel, requestUrl);
-  if (!allSources(channel)[mode]) throw new Error(`unknown mode ${mode}`);
-  const resolved = await resolveSource(channelKey, channel, mode);
+  const canonicalName = canonicalSourceKey(channelKey, mode);
+  if (!allSources(channel)[canonicalName]) throw new Error(`unknown mode ${mode}`);
+  const resolved = await resolveSource(channelKey, channel, canonicalName);
   return { ...resolved, detection: `forced-${mode}` };
 }
 

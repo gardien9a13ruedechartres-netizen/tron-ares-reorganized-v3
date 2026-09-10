@@ -135,7 +135,7 @@
 
     function isChannelActionTarget(target) {
       return !!(target && target.closest && target.closest(
-        '.channel-actions button, .channel-actions a, .fav-btn, .tmdb-trailer-btn, .fr-program-badge, .pt-program-badge'
+        '.channel-actions button, .channel-actions a, .fav-btn, .tmdb-trailer-btn, .fr-program-badge, .pt-program-badge, .html-fallback-btn'
       ));
     }
 
