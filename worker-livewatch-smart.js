@@ -4390,6 +4390,7 @@ function playerPage(origin, channelKey, channel) {
     let lastPlayheadAdvanceAt = 0;
     let loadEpoch = 0;
     let badEvents = [];
+    let hlsErrorCount = 0;
     let smartRecoveryTimer = null;
     let smartReturnConfirmTimer = null;
     let smartSelfRetryTimer = null;
@@ -4546,6 +4547,28 @@ function playerPage(origin, channelKey, channel) {
       if (smartReturnConfirmTimer) {
         clearTimeout(smartReturnConfirmTimer);
         smartReturnConfirmTimer = null;
+      }
+    }
+    function seamlessBufferRecover(reason, mode) {
+      if (!hls) return false;
+      try {
+        if (mode === 'hard' && typeof hls.recoverMediaError === 'function') {
+          hls.recoverMediaError();
+        } else if (typeof hls.startLoad === 'function') {
+          hls.startLoad(-1);
+        }
+        appendLog('stable-buffer-recovery', {
+          reason: reason || 'buffer-error',
+          mode: mode || 'soft'
+        });
+        return true;
+      } catch (error) {
+        appendLog('stable-buffer-recovery-error', {
+          reason: reason || 'buffer-error',
+          mode: mode || 'soft',
+          message: error && error.message ? error.message : String(error)
+        });
+        return false;
       }
     }
     function notePlayheadAdvance(reason) {
@@ -4901,10 +4924,20 @@ function playerPage(origin, channelKey, channel) {
       }, waitMs);
     }
     function noteRecovered(eventName) {
-      if (!stallStartedAt) return;
-      appendLog('stall-recovered', { event: eventName, durationMs: Date.now() - stallStartedAt, currentTime: Number(video.currentTime.toFixed(2)), bufferedEnd: bufferedEnd() });
-      stallStartedAt = 0;
-      clearStallTimer();
+      const hadStall = Boolean(stallStartedAt);
+      if (hadStall) {
+        appendLog('stall-recovered', { event: eventName, durationMs: Date.now() - stallStartedAt, currentTime: Number(video.currentTime.toFixed(2)), bufferedEnd: bufferedEnd() });
+        stallStartedAt = 0;
+        clearStallTimer();
+      }
+      if (badEvents.length) {
+        appendLog('bad-event-history-cleared', { event: eventName, previousCount: badEvents.length });
+        badEvents = [];
+      }
+      if (hlsErrorCount) {
+        appendLog('hls-error-count-cleared', { event: eventName, previousCount: hlsErrorCount });
+        hlsErrorCount = 0;
+      }
       if (smartSelfRetryTimer) {
         clearSelfRetryTimer();
         appendLog('smart-self-retry-cancelled', { key: activeKey, reason: 'stall-recovered', event: eventName });
@@ -5085,6 +5118,7 @@ function playerPage(origin, channelKey, channel) {
       lastProgressLogAt = 0;
       stallStartedAt = 0;
       badEvents = [];
+      hlsErrorCount = 0;
       lastFragUrl = '';
       sameFragCount = 0;
       lastPlayheadValue = 0;
@@ -5171,6 +5205,7 @@ function playerPage(origin, channelKey, channel) {
           }
         });
         hls.on(Hls.Events.ERROR, function(_, data) {
+          hlsErrorCount += 1;
           const summary = { type: data.type, details: data.details, fatal: data.fatal, status: data.response ? data.response.code : null };
           appendLog('hls-error', summary);
           setLoadStatus(data.fatal ? 'error' : 'warn', data.fatal ? 'Erreur HLS fatale' : 'Incident HLS', (data.details || data.type || 'erreur') + (summary.status ? ' HTTP ' + summary.status : ''));
