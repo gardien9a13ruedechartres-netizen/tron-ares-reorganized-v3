@@ -1811,6 +1811,22 @@ function isProbablyHls(url) {
 function isProbablyDash(url) {
   return /\.mpd(\?|$)/i.test(url);
 }
+
+function dashProtectionDataForEntry(entry) {
+  const clearKeys = entry?.drm?.clearKeys;
+  if (!clearKeys || typeof clearKeys !== 'object') return null;
+
+  const clearkeys = {};
+  Object.entries(clearKeys).forEach(([kid, key]) => {
+    const normalizedKid = String(kid || '').trim();
+    const normalizedKey = String(key || '').trim();
+    if (normalizedKid && normalizedKey) clearkeys[normalizedKid] = normalizedKey;
+  });
+
+  return Object.keys(clearkeys).length
+    ? { 'org.w3.clearkey': { clearkeys } }
+    : null;
+}
 function isProbablyPlaylist(url) {
   return /\.m3u8?(\?|$)/i.test(url);
 }
@@ -4792,7 +4808,11 @@ currentEntry = entry;
   if (isProbablyDash(url) && window.dashjs) {
     try {
       dashInstance = dashjs.MediaPlayer().create();
+      const protectionData = dashProtectionDataForEntry(entry);
       dashInstance.initialize(videoEl, url, true);
+      if (protectionData && typeof dashInstance.setProtectionData === 'function') {
+        dashInstance.setProtectionData(protectionData);
+      }
       // Keep track menus in sync with DASH manifests and track changes
 if (typeof dashjs !== 'undefined' && dashjs.MediaPlayer && dashjs.MediaPlayer.events) {
   const ev = dashjs.MediaPlayer.events;
@@ -5201,6 +5221,7 @@ function parsePlaylistJSON(raw, listType, defaultGroup, sourceId) {
       isIframe: !!(item && item.isIframe) || isYoutubeUrl(url),
       isFavorite: !!(item && item.isFavorite),
       listType: lt,
+      drm: item?.drm && typeof item.drm === 'object' ? item.drm : null,
       htmlFallbackUrl: item?.htmlFallbackUrl || item?.fallbackHtmlUrl || "",
       guideTntId: item?.guideTntId || item?.frGuideTntId || "",
       programUrl: item?.programUrl || (item?.nosGuideId ? `https://nostv.pt/guia/${encodeURIComponent(String(item.nosGuideId))}` : ""),

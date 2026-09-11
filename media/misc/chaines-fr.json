@@ -188,15 +188,22 @@
     {
       "id": "novo19",
       "name": "novo19",
-      "url": "/pages/novo-192.html",
+      "url": "https://5eb46ec-rbm-hilv-fsly.cdn.redbee.live/L6/8e2b4270/9fc956ca.isml/.mpd",
       "logo": {
         "type": "image",
         "value": "https://focus.telerama.fr/500x500/0000/00/01/clear-4138.png"
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": true,
-      "guideTntId": 78
+      "isIframe": false,
+      "htmlFallbackUrl": "/pages/novo-192.html",
+      "guideTntId": 78,
+      "drm": {
+        "type": "org.w3.clearkey",
+        "clearKeys": {
+          "d49c8fa0c3a546e2ad4185d5e38611cd": "363ee79a774e401bfaa88cf22cad0099"
+        }
+      }
     },
     {
       "id": "6ter",
