@@ -572,6 +572,18 @@
       "isIframe": true
     },
     {
+      "id": "syfy-pt",
+      "name": "SYFY",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=syfy",
+      "logo": {
+        "type": "image",
+        "value": "https://witv.football/images/logo/syfy-logo.png"
+      },
+      "group": "Cinéma",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
       "id": "disney-pixar",
       "name": "DISNEY+ PIXAR",
       "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=disney-pixar",
