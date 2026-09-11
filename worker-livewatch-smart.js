@@ -17,6 +17,10 @@ const PORTUGAL_LIVEWATCH_CHANNELS = new Set([
   "cmtv",
   "disney-channel-pt",
   "disney-pixar",
+  "odisseia-pt",
+  "national-geographic-pt",
+  "historia-pt",
+  "discovery-pt",
   "cine-mundo",
   "nos-studios",
   "axn",
@@ -1041,6 +1045,84 @@ Object.assign(CHANNELS, {
         "id": "1668808212073ea3ac1de7-d9ced7946bf115",
         "label": "LiveWatch basic",
         "exact": "DISNEY CHANNEL",
+        "country": "Portugal"
+      }
+    }
+  },
+  "odisseia-pt": {
+    "label": "ODISSEIA PT",
+    "livewatchSearch": "ODISSEIA",
+    "livewatchExact": "ODISSEIA",
+    "defaultOrder": [
+      "basic",
+      "cable"
+    ],
+    "sources": {
+      "basic": {
+        "id": "892615341748ec31a1ac1-1c2ac08873b43f",
+        "label": "LiveWatch basic",
+        "exact": "ODISSEIA",
+        "country": "Portugal"
+      },
+      "cable": {
+        "id": "21117855506273662f1163-e3dff0e26272b4",
+        "label": "LiveWatch cable",
+        "exact": "ODISSEIA",
+        "country": "Portugal"
+      }
+    }
+  },
+  "national-geographic-pt": {
+    "label": "NATIONAL GEOGRAPHIC PT",
+    "livewatchSearch": "NATIONAL GEOGRAPHIC",
+    "livewatchExact": "NATIONAL GEOGRAPHIC",
+    "defaultOrder": [
+      "basic"
+    ],
+    "sources": {
+      "basic": {
+        "id": "503347396572e08f52c01-7fc37792a0acfc",
+        "label": "LiveWatch basic",
+        "exact": "NATIONAL GEOGRAPHIC",
+        "country": "Portugal"
+      }
+    }
+  },
+  "historia-pt": {
+    "label": "HISTORIA PT",
+    "livewatchSearch": "HISTORIA",
+    "livewatchExact": "HISTORIA",
+    "defaultOrder": [
+      "basic",
+      "cable"
+    ],
+    "sources": {
+      "basic": {
+        "id": "1471702249632c76c543a9-c99b7898cb8d82",
+        "label": "LiveWatch basic",
+        "exact": "HISTORIA",
+        "country": "Portugal"
+      },
+      "cable": {
+        "id": "52553831439c933d566ef-30bc6a5155e0b0",
+        "label": "LiveWatch cable",
+        "exact": "HISTORIA",
+        "country": "Portugal"
+      }
+    }
+  },
+  "discovery-pt": {
+    "label": "DISCOVERY CHANNEL PT",
+    "livewatchSearch": "DISCOVERY CHANNEL",
+    "livewatchExact": "DISCOVERY CHANNEL",
+    "defaultOrder": [
+      "basic-hd"
+    ],
+    "sources": {
+      "basic-hd": {
+        "id": "78318791484a7ab86cea1-b674f88455ef71",
+        "label": "LiveWatch basic HD",
+        "exact": "DISCOVERY CHANNEL",
         "country": "Portugal"
       }
     }
@@ -4520,6 +4602,36 @@ function playerPage(origin, channelKey, channel) {
         return null;
       }
     }
+    function recoverPlayheadInsideBuffer(eventName, current, end) {
+      try {
+        if (!video.buffered || !video.buffered.length || end === null) return false;
+        const lastRange = video.buffered.length - 1;
+        const start = Number(video.buffered.start(lastRange).toFixed(2));
+        const target = Number(Math.max(start + 0.25, end - 1).toFixed(2));
+        if (!Number.isFinite(target)) return false;
+        video.currentTime = target;
+        lastPlayheadValue = target;
+        lastPlayheadAdvanceAt = Date.now();
+        clearStallTimer();
+        clearRealPlaybackTimer();
+        appendLog('time-outside-buffer-recovered', {
+          event: eventName,
+          previousTime: current,
+          bufferedStart: start,
+          bufferedEnd: end,
+          targetTime: target
+        });
+        setLoadStatus('warn', 'Chronologie HLS recalee', 'Lecture replacee dans le buffer actif');
+        attemptAutoplay('time-outside-buffer-recovery');
+        return true;
+      } catch (error) {
+        appendLog('time-outside-buffer-recovery-error', {
+          event: eventName,
+          message: error && error.message ? error.message : String(error)
+        });
+        return false;
+      }
+    }
     function clearStallTimer() {
       if (stallTimer) {
         clearTimeout(stallTimer);
@@ -5006,6 +5118,7 @@ function playerPage(origin, channelKey, channel) {
       if (end !== null && current > end + 45) {
         appendLog('time-outside-buffer', { event: eventName, currentTime: current, bufferedEnd: end });
         setLoadStatus('warn', 'Flux hors buffer', 'currentTime ' + current + 's / buffer ' + end + 's');
+        if (recoverPlayheadInsideBuffer(eventName, current, end)) return;
         tryFailover('time-outside-buffer');
         return;
       }

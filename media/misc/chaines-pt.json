@@ -636,53 +636,53 @@
     {
       "id": "odisseia-pt",
       "name": "Odisseia PT",
-      "url": "https://player-engine.com/api/worker-live/odisseia-pt/master.m3u8",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=odisseia-pt",
       "logo": {
         "type": "image",
         "value": "/media/odisseia.png"
       },
       "group": "Documentaire",
       "isFavorite": false,
-      "isIframe": false,
+      "isIframe": true,
       "meoCallLetter": "ODISSHD"
     },
     {
       "id": "national-geographic-pt",
       "name": "National Geographic PT",
-      "url": "https://player-engine.com/api/worker-live/national-geographic-pt/master.m3u8",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=national-geographic-pt",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/National%20Geographic%20Channel.svg"
       },
       "group": "Documentaire",
       "isFavorite": false,
-      "isIframe": false,
+      "isIframe": true,
       "meoCallLetter": "NGHD"
     },
     {
       "id": "historia-pt",
       "name": "História PT",
-      "url": "https://player-engine.com/api/worker-live/historia-pt/master.m3u8",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=historia-pt",
       "logo": {
         "type": "image",
         "value": "https://upload.wikimedia.org/wikipedia/commons/0/07/Historia_2022_logo.webp"
       },
       "group": "Documentaire",
       "isFavorite": false,
-      "isIframe": false,
+      "isIframe": true,
       "meoCallLetter": "HISTHD"
     },
     {
       "id": "discovery-pt",
       "name": "Discovery PT",
-      "url": "https://player-engine.com/api/worker-live/discovery-pt/master.m3u8",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=discovery-pt",
       "logo": {
         "type": "image",
         "value": "https://cdn.jsdelivr.net/gh/imagesloads/images@main/img_f3aea22ba48bd5da.png"
       },
       "group": "Documentaire",
       "isFavorite": false,
-      "isIframe": false,
+      "isIframe": true,
       "meoCallLetter": "DISCVHD"
     },
     {
