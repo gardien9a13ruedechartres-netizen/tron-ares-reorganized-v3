@@ -1812,6 +1812,17 @@ function isProbablyDash(url) {
   return /\.mpd(\?|$)/i.test(url);
 }
 
+function dashBase64Url(value) {
+  const compact = String(value || '').trim().replace(/-/g, '');
+  if (!/^[0-9a-f]+$/i.test(compact) || compact.length % 2) return String(value || '').trim();
+
+  let binary = '';
+  for (let index = 0; index < compact.length; index += 2) {
+    binary += String.fromCharCode(parseInt(compact.slice(index, index + 2), 16));
+  }
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+
 function dashProtectionDataForEntry(entry) {
   const clearKeys = entry?.drm?.clearKeys;
   if (!clearKeys || typeof clearKeys !== 'object') return null;
@@ -1820,13 +1831,26 @@ function dashProtectionDataForEntry(entry) {
   Object.entries(clearKeys).forEach(([kid, key]) => {
     const normalizedKid = String(kid || '').trim();
     const normalizedKey = String(key || '').trim();
-    if (normalizedKid && normalizedKey) clearkeys[normalizedKid] = normalizedKey;
+    if (normalizedKid && normalizedKey) {
+      clearkeys[dashBase64Url(normalizedKid)] = dashBase64Url(normalizedKey);
+    }
   });
 
   return Object.keys(clearkeys).length
     ? { 'org.w3.clearkey': { clearkeys } }
     : null;
 }
+
+function bindDashEvent(player, events, eventName, handler) {
+  const eventType = events && events[eventName];
+  if (typeof eventType !== 'string' || !eventType) return;
+  try {
+    player.on(eventType, handler);
+  } catch (error) {
+    console.warn('Événement dash.js ignoré:', eventName, error);
+  }
+}
+
 function isProbablyPlaylist(url) {
   return /\.m3u8?(\?|$)/i.test(url);
 }
@@ -4814,14 +4838,12 @@ currentEntry = entry;
         dashInstance.setProtectionData(protectionData);
       }
       // Keep track menus in sync with DASH manifests and track changes
-if (typeof dashjs !== 'undefined' && dashjs.MediaPlayer && dashjs.MediaPlayer.events) {
-  const ev = dashjs.MediaPlayer.events;
-  dashInstance.on(ev.STREAM_INITIALIZED, refreshTrackMenus);
-  dashInstance.on(ev.TRACKS_ADDED, refreshTrackMenus);
-  if (ev.TRACK_CHANGE_RENDERED) dashInstance.on(ev.TRACK_CHANGE_RENDERED, refreshTrackMenus);
-}
-modeLabel = 'DASH';
-      dashInstance.on(dashjs.MediaPlayer.events.ERROR, e => {
+      const dashEvents = dashjs.MediaPlayer.events || {};
+      bindDashEvent(dashInstance, dashEvents, 'STREAM_INITIALIZED', refreshTrackMenus);
+      bindDashEvent(dashInstance, dashEvents, 'TRACKS_ADDED', refreshTrackMenus);
+      bindDashEvent(dashInstance, dashEvents, 'TRACK_CHANGE_RENDERED', refreshTrackMenus);
+      modeLabel = 'DASH';
+      bindDashEvent(dashInstance, dashEvents, 'ERROR', e => {
         console.error('DASH error:', e);
         if (currentEntry && !offlineMode) {
           enterOfflineMode('DASH error');
