@@ -1404,6 +1404,15 @@ Object.assign(CHANNELS, {
         "exact": "TV RECORD",
         "country": "Portugal"
       }
+    },
+    "manualSources": {
+      "amazingtier": {
+        "kind": "clouding",
+        "id": "amazingtier-record-europa",
+        "label": "AmazingTier Record Europa",
+        "button": "AmazingTier",
+        "cloudingChannel": "RecordEuropa"
+      }
     }
   },
   "tcv-int": {
@@ -1419,6 +1428,15 @@ Object.assign(CHANNELS, {
         "label": "LiveWatch cable",
         "exact": "TCV INTERNACIONAL",
         "country": "Portugal"
+      }
+    },
+    "manualSources": {
+      "amazingtier": {
+        "kind": "clouding",
+        "id": "amazingtier-tcv-int",
+        "label": "AmazingTier TCV Internacional",
+        "button": "AmazingTier",
+        "cloudingChannel": "TCV-INT"
       }
     }
   },
