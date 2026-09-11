@@ -58,7 +58,9 @@ const PORTUGAL_LIVEWATCH_CHANNELS = new Set([
   "v-plus-tvi",
   "panda-kids",
   "patrulha-pata",
-  "tv-globo"
+  "tv-globo",
+  "record",
+  "tcv-int"
 ]);
 
 const LIVEWATCH_NAME_ALIASES = {
@@ -1378,6 +1380,45 @@ Object.assign(CHANNELS, {
       "basic-2": {
         "id": "20994889228f6a91cba570-41e5862131242f",
         "label": "LiveWatch basic"
+      }
+    }
+  },
+  "record": {
+    "label": "RECORD TV",
+    "livewatchSearch": "RECORD",
+    "livewatchExact": "RECORD TV",
+    "defaultOrder": [
+      "cable",
+      "basic"
+    ],
+    "sources": {
+      "cable": {
+        "id": "12117782260a191a43e8a0-7223a99c0eeb9f",
+        "label": "LiveWatch cable",
+        "exact": "RECORD TV",
+        "country": "Portugal"
+      },
+      "basic": {
+        "id": "22917764163ef8589ac5db-f1cbad64b17241",
+        "label": "LiveWatch basic",
+        "exact": "TV RECORD",
+        "country": "Portugal"
+      }
+    }
+  },
+  "tcv-int": {
+    "label": "TCV INTERNACIONAL",
+    "livewatchSearch": "TCV INTERNACIONAL",
+    "livewatchExact": "TCV INTERNACIONAL",
+    "defaultOrder": [
+      "cable"
+    ],
+    "sources": {
+      "cable": {
+        "id": "169953235399a868965ac0-4878f5e91896e0",
+        "label": "LiveWatch cable",
+        "exact": "TCV INTERNACIONAL",
+        "country": "Portugal"
       }
     }
   },
