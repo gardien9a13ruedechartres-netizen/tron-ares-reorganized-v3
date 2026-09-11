@@ -742,18 +742,6 @@
       "isIframe": true
     },
     {
-      "id": "simpsons-fr",
-      "name": "simpsons.fr",
-      "url": "https://player-engine.com/pages/simpsons-vf.m3u8",
-      "logo": {
-        "type": "image",
-        "value": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/The_Simpsons_yellow_logo.svg/1280px-The_Simpsons_yellow_logo.svg.png"
-      },
-      "group": "Jeunesse",
-      "isFavorite": false,
-      "isIframe": false
-    },
-    {
       "id": "disney-cinema",
       "name": "Disney Cinema",
       "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=disney-cinema",
