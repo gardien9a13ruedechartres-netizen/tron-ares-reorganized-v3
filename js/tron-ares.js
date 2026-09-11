@@ -470,6 +470,7 @@ let activePlaybackMode = 'stream'; // 'stream' | 'iframe'
 
 let hlsInstance = null;
 let dashInstance = null;
+let shakaInstance = null;
 
 let currentEntry = null;
 let externalFallbackTried = false;
@@ -4668,6 +4669,66 @@ function destroyDash() {
     try { dashInstance.reset(); } catch {}
     dashInstance = null;
   }
+  destroyShaka();
+}
+
+function destroyShaka() {
+  if (!shakaInstance) return;
+  const instance = shakaInstance;
+  shakaInstance = null;
+  try {
+    const result = instance.destroy();
+    if (result && typeof result.catch === 'function') result.catch(() => {});
+  } catch {}
+}
+
+function playShakaDashSource(entry, url) {
+  const shaka = window.shaka;
+  if (!shaka || typeof shaka.Player !== 'function') return false;
+
+  try {
+    if (shaka.polyfill && typeof shaka.polyfill.installAll === 'function') {
+      shaka.polyfill.installAll();
+    }
+    if (typeof shaka.Player.isBrowserSupported === 'function' && !shaka.Player.isBrowserSupported()) {
+      console.warn('Shaka DASH non supporte par ce navigateur');
+      return false;
+    }
+
+    const player = new shaka.Player();
+    shakaInstance = player;
+    videoEl.controls = true;
+    player.configure({ drm: { clearKeys: entry?.drm?.clearKeys || {} } });
+
+    player.addEventListener('error', (event) => {
+      if (shakaInstance !== player) return;
+      console.error('Shaka DASH error:', event.detail || event);
+      if (currentEntry && !offlineMode) enterOfflineMode('DASH error');
+    });
+
+    updateNowPlaying(entry, 'DASH');
+    setStatus('Chargement DASH');
+    const loading = Promise.resolve(player.attach(videoEl)).then(() => player.load(url));
+    if (loading && typeof loading.then === 'function') {
+      loading.then(() => {
+        if (shakaInstance !== player) return;
+        refreshTrackMenus();
+        setStatus('Lecture en cours');
+        markProgress();
+        videoEl.play().catch(() => {});
+      }).catch((error) => {
+        if (shakaInstance !== player) return;
+        console.error('Shaka DASH init error:', error);
+        if (currentEntry && !offlineMode) enterOfflineMode('DASH error');
+        else setStatus('Erreur DASH');
+      });
+    }
+    return true;
+  } catch (error) {
+    console.error('Shaka DASH init error:', error);
+    destroyShaka();
+    return false;
+  }
 }
 
 function showVideo() {
@@ -4828,6 +4889,10 @@ currentEntry = entry;
   videoEl.load();
 
   let modeLabel = 'VIDEO';
+
+  if (isProbablyDash(url) && entry?.drm?.clearKeys && window.shaka?.Player) {
+    if (playShakaDashSource(entry, url)) return;
+  }
 
   if (isProbablyDash(url) && window.dashjs) {
     try {
