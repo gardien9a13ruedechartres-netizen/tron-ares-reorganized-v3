@@ -17,6 +17,7 @@
       "group": "Généraliste",
       "isFavorite": false,
       "isIframe": true,
+      "htmlFallbackUrl": "/pages/cmtv-secour.html",
       "programUrl": "https://nostv.pt/guia/139",
       "meoCallLetter": "CMTV"
     },
@@ -31,6 +32,7 @@
       "group": "Généraliste",
       "isFavorite": false,
       "isIframe": true,
+      "htmlFallbackUrl": "/pages/rtp1-secour.html",
       "meoCallLetter": "RTP1"
     },
     {
@@ -44,6 +46,7 @@
       "group": "Généraliste",
       "isFavorite": false,
       "isIframe": true,
+      "htmlFallbackUrl": "/pages/rtp2-secour.html",
       "meoCallLetter": "RTP2"
     },
     {
@@ -57,6 +60,7 @@
       "group": "Généraliste",
       "isFavorite": false,
       "isIframe": true,
+      "htmlFallbackUrl": "/pages/rtp-africa-secour.html",
       "meoCallLetter": "RTPA"
     },
     {
@@ -70,6 +74,7 @@
       "group": "Généraliste",
       "isFavorite": false,
       "isIframe": true,
+      "htmlFallbackUrl": "/pages/tvi-secour.html",
       "meoCallLetter": "TVI"
     },
     {
@@ -82,7 +87,8 @@
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "htmlFallbackUrl": "/pages/tvi-internacional-secour.html"
     },
     {
       "id": "sic",
@@ -147,6 +153,7 @@
       "group": "Info",
       "isFavorite": false,
       "isIframe": true,
+      "htmlFallbackUrl": "/pages/rtp3-secour.html",
       "meoCallLetter": "RTPN"
     },
     {
@@ -160,6 +167,7 @@
       "group": "Info",
       "isFavorite": false,
       "isIframe": true,
+      "htmlFallbackUrl": "/pages/sic-noticias-secour.html",
       "meoCallLetter": "SICN"
     },
     {
@@ -173,6 +181,7 @@
       "group": "Info",
       "isFavorite": false,
       "isIframe": true,
+      "htmlFallbackUrl": "/pages/cnn-portugal-secour.html",
       "meoCallLetter": "CNNPT"
     },
     {
@@ -237,6 +246,7 @@
       "group": "Sport",
       "isFavorite": false,
       "isIframe": true,
+      "htmlFallbackUrl": "/pages/porto-canal-secour.html",
       "meoCallLetter": "PORTO"
     },
     {
@@ -432,6 +442,7 @@
       "group": "Divertissement",
       "isFavorite": false,
       "isIframe": true,
+      "htmlFallbackUrl": "/pages/tvi-reality-secour.html",
       "meoCallLetter": "TVIR"
     },
     {
@@ -444,7 +455,8 @@
       },
       "group": "Divertissement",
       "isFavorite": false,
-      "isIframe": true
+      "isIframe": true,
+      "htmlFallbackUrl": "/pages/tvi-ficcao-secour.html"
     },
     {
       "id": "v-mais",
@@ -457,6 +469,7 @@
       "group": "Divertissement",
       "isFavorite": false,
       "isIframe": true,
+      "htmlFallbackUrl": "/pages/v-plus-tvi-secour.html",
       "meoCallLetter": "VMAISTVI"
     },
     {
@@ -636,55 +649,66 @@
     {
       "id": "odisseia-pt",
       "name": "Odisseia PT",
-      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=odisseia-pt",
+      "url": "https://player-engine.com/api/worker-live/odisseia-pt/master.m3u8",
       "logo": {
         "type": "image",
         "value": "/media/odisseia.png"
       },
       "group": "Documentaire",
       "isFavorite": false,
-      "isIframe": true,
+      "isIframe": false,
       "meoCallLetter": "ODISSHD"
     },
     {
       "id": "national-geographic-pt",
       "name": "National Geographic PT",
-      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=national-geographic-pt",
+      "url": "https://player-engine.com/api/worker-live/national-geographic-pt/master.m3u8",
       "logo": {
         "type": "image",
         "value": "https://commons.wikimedia.org/wiki/Special:FilePath/National%20Geographic%20Channel.svg"
       },
       "group": "Documentaire",
       "isFavorite": false,
-      "isIframe": true,
+      "isIframe": false,
       "meoCallLetter": "NGHD"
     },
     {
       "id": "historia-pt",
       "name": "História PT",
-      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=historia-pt",
+      "url": "https://player-engine.com/api/worker-live/historia-pt/master.m3u8",
       "logo": {
         "type": "image",
         "value": "https://upload.wikimedia.org/wikipedia/commons/0/07/Historia_2022_logo.webp"
       },
       "group": "Documentaire",
       "isFavorite": false,
-      "isIframe": true,
+      "isIframe": false,
       "meoCallLetter": "HISTHD"
     },
     {
       "id": "discovery-pt",
       "name": "Discovery PT",
-      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=discovery-pt",
+      "url": "https://player-engine.com/api/worker-live/discovery-pt/master.m3u8",
       "logo": {
         "type": "image",
         "value": "https://cdn.jsdelivr.net/gh/imagesloads/images@main/img_f3aea22ba48bd5da.png"
       },
       "group": "Documentaire",
       "isFavorite": false,
-      "isIframe": true,
+      "isIframe": false,
       "meoCallLetter": "DISCVHD"
-    
+    },
+    {
+      "id": "cmtv2",
+      "name": "CMTV",
+      "url": "https://tf1-work.victor-salema-53d.workers.dev/live.m3u8",
+      "logo": {
+        "type": "image",
+        "value": "/media/cmtv.png"
+      },
+      "group": "Généraliste",
+      "isFavorite": false,
+      "isIframe": false
       
       
     }
