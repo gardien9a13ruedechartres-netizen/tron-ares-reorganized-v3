@@ -942,7 +942,7 @@
       "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=j-one",
       "logo": {
         "type": "image",
-        "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Karakteristieke%20boerderij%2C%20Aldlansdyk%20in%20Cornjum%2002.jpg"
+        "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/france/j-one-fr.png"
       },
       "group": "Jeunesse",
       "isFavorite": false,
@@ -978,7 +978,7 @@
       "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=nickelodeon",
       "logo": {
         "type": "image",
-        "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Amphiprion%20ocellaris%20%28Clown%20anemonefish%29%20by%20Nick%20Hobgood.jpg"
+        "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/france/nickelodeon-fr.png"
       },
       "group": "Jeunesse",
       "isFavorite": false,
@@ -1053,7 +1053,7 @@
       "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=nat-geo",
       "logo": {
         "type": "image",
-        "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20Nat%20Geo%20Wild.svg"
+        "value": "https://upload.wikimedia.org/wikipedia/commons/1/13/National_Geographic_Channel.svg"
       },
       "group": "Documentaire",
       "isFavorite": false,
@@ -1066,7 +1066,7 @@
       "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=nat-geo-wild",
       "logo": {
         "type": "image",
-        "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20Nat%20Geo%20Wild.svg"
+        "value": "https://upload.wikimedia.org/wikipedia/commons/2/26/Logo_Nat_Geo_Wild.svg"
       },
       "group": "Documentaire",
       "isFavorite": false,
