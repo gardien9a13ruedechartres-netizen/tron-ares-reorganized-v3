@@ -1,0 +1,704 @@
+{
+  "type": "tron-channels",
+  "version": 2,
+  "listType": "pt",
+  "title": "Chaînes Portugal",
+  "country": "PT",
+  "exportedAt": "2026-03-10T21:00:00Z",
+  "items": [
+    {
+      "id": "cmtv",
+      "name": "CMTV",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=cmtv",
+      "logo": {
+        "type": "image",
+        "value": "/media/cmtv.png"
+      },
+      "group": "Généraliste",
+      "isFavorite": false,
+      "isIframe": true,
+      "programUrl": "https://nostv.pt/guia/139",
+      "meoCallLetter": "CMTV"
+    },
+    {
+      "id": "rtp1",
+      "name": "RTP1",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=rtp1",
+      "logo": {
+        "type": "image",
+        "value": "/media/rtp1.jpg"
+      },
+      "group": "Généraliste",
+      "isFavorite": false,
+      "isIframe": true,
+      "meoCallLetter": "RTP1"
+    },
+    {
+      "id": "rtp2",
+      "name": "RTP2",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=rtp2",
+      "logo": {
+        "type": "image",
+        "value": "https://upload.wikimedia.org/wikipedia/commons/f/f9/RTP2_logo_2016.svg"
+      },
+      "group": "Généraliste",
+      "isFavorite": false,
+      "isIframe": true,
+      "meoCallLetter": "RTP2"
+    },
+    {
+      "id": "rtp-africa",
+      "name": "RTP África",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=rtp-africa",
+      "logo": {
+        "type": "image",
+        "value": "https://commons.wikimedia.org/wiki/Special:FilePath/RTP%20%C3%81frica%202026.svg"
+      },
+      "group": "Généraliste",
+      "isFavorite": false,
+      "isIframe": true,
+      "meoCallLetter": "RTPA"
+    },
+    {
+      "id": "tvi",
+      "name": "TVI",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=tvi",
+      "logo": {
+        "type": "image",
+        "value": "/media/TVI.png"
+      },
+      "group": "Généraliste",
+      "isFavorite": false,
+      "isIframe": true,
+      "meoCallLetter": "TVI"
+    },
+    {
+      "id": "tvi-int",
+      "name": "TVI Internacional",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=tvi-internacional",
+      "logo": {
+        "type": "image",
+        "value": "https://upload.wikimedia.org/wikipedia/commons/0/08/TVI_Internacional_%282017%29.png"
+      },
+      "group": "Généraliste",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "sic",
+      "name": "SIC",
+      "url": "https://player-engine.com/api/worker-live/sic/master.m3u8",
+      "logo": {
+        "type": "image",
+        "value": "/media/sic.jpg"
+      },
+      "group": "Généraliste",
+      "isFavorite": false,
+      "isIframe": false,
+      "meoCallLetter": "SIC"
+    },
+    {
+      "id": "tv-globo",
+      "name": "TV GLOBO",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=tv-globo",
+      "logo": {
+        "type": "image",
+        "value": "https://upload.wikimedia.org/wikipedia/commons/1/1f/TV_Globo_logo_%28April_2025%29.png"
+      },
+      "group": "Généraliste",
+      "isFavorite": false,
+      "isIframe": true,
+      "meoCallLetter": "GLOB"
+    },
+    {
+      "id": "Record",
+      "name": "RECORD",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=record",
+      "logo": {
+        "type": "image",
+        "value": "https://upload.wikimedia.org/wikipedia/commons/5/58/Logomarca_da_Record_%282023%29.webp"
+      },
+      "group": "Généraliste",
+      "isFavorite": false,
+      "isIframe": true,
+      "meoCallLetter": "REC HD"
+    },
+    {
+      "id": "tcv-int",
+      "name": "TCV Internacional",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=tcv-int",
+      "logo": {
+        "type": "image",
+        "value": "https://cdn.jsdelivr.net/gh/imagesloads/images@main/img_43acca95f234ef0a.png"
+      },
+      "group": "Généraliste",
+      "isFavorite": false,
+      "isIframe": true,
+      "meoCallLetter": "TCV"
+    },
+    {
+      "id": "rtpn",
+      "name": "RTP3",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=rtp3",
+      "logo": {
+        "type": "image",
+        "value": "/media/rtpn.png"
+      },
+      "group": "Info",
+      "isFavorite": false,
+      "isIframe": true,
+      "meoCallLetter": "RTPN"
+    },
+    {
+      "id": "sicn",
+      "name": "SIC Notícias",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=sic-noticias",
+      "logo": {
+        "type": "image",
+        "value": "/media/SICN.webp"
+      },
+      "group": "Info",
+      "isFavorite": false,
+      "isIframe": true,
+      "meoCallLetter": "SICN"
+    },
+    {
+      "id": "cnnpt",
+      "name": "CNN Portugal",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=cnn-portugal",
+      "logo": {
+        "type": "image",
+        "value": "/media/cnn.png"
+      },
+      "group": "Info",
+      "isFavorite": false,
+      "isIframe": true,
+      "meoCallLetter": "CNNPT"
+    },
+    {
+      "id": "fifaplus",
+      "name": "FIFA+",
+      "url": "https://f7ccf7fc.wurl.com/master/f36d25e7e52f1ba8d7e56eb859c636563214f541/UmFrdXRlblRWLXB0X0ZJRkFQbHVzUG9ydHVndWVzZV9ITFM/playlist.m3u8",
+      "logo": {
+        "type": "image",
+        "value": "https://toppng.com/uploads/preview/fifa-logo-png-hd-11659693816tfaadada2y.png"
+      },
+      "group": "Sport",
+      "isFavorite": false,
+      "isIframe": false
+    },
+    {
+      "id": "canal11",
+      "name": "Canal 11",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=canal-11",
+      "logo": {
+        "type": "image",
+        "value": "https://www.zupimages.net/up/24/13/qj99.jpg"
+      },
+      "group": "Sport",
+      "isFavorite": false,
+      "isIframe": true,
+      "meoCallLetter": "C11"
+    },
+    {
+      "id": "btv",
+      "name": "BTV",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=btv",
+      "logo": {
+        "type": "image",
+        "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/btv-hd-pt.png"
+      },
+      "group": "Sport",
+      "isFavorite": false,
+      "isIframe": true,
+      "meoCallLetter": "SLBHD"
+    },
+    {
+      "id": "SCP",
+      "name": "Sporting TV",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=sporting",
+      "logo": {
+        "type": "image",
+        "value": "https://pplware.sapo.pt/wp-content/uploads/2017/06/scp_00.jpg"
+      },
+      "group": "Sport",
+      "isFavorite": false,
+      "isIframe": true,
+      "meoCallLetter": "SCPHD"
+    },
+    {
+      "id": "PORTO canal",
+      "name": "Porto Canal",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=porto-canal",
+      "logo": {
+        "type": "image",
+        "value": "/media/porto.png"
+      },
+      "group": "Sport",
+      "isFavorite": false,
+      "isIframe": true,
+      "meoCallLetter": "PORTO"
+    },
+    {
+      "id": "eurosport1pt",
+      "name": "Eurosport 1 PT",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=eurosport-1-pt",
+      "logo": {
+        "type": "image",
+        "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Eurosport%20Logo%20%282011-2015%29.svg"
+      },
+      "group": "Sport",
+      "isFavorite": false,
+      "isIframe": true,
+      "meoCallLetter": "EURHD"
+    },
+    {
+      "id": "eurosport2pt",
+      "name": "Eurosport 2 PT",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=eurosport-2-pt",
+      "logo": {
+        "type": "image",
+        "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Eurosport%202%20Logo%20%282011-2015%29.svg"
+      },
+      "group": "Sport",
+      "isFavorite": false,
+      "isIframe": true,
+      "meoCallLetter": "EURS2HD"
+    },
+    {
+      "id": "abola",
+      "name": "A Bola TV",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=a-bola",
+      "logo": {
+        "type": "image",
+        "value": "https://www.telesatellite.com/images/actu/a/abolatv.jpg"
+      },
+      "group": "Sport",
+      "isFavorite": false,
+      "isIframe": true,
+      "meoCallLetter": "ABOLA"
+    },
+    {
+      "id": "sporttv+",
+      "name": "Sport TV +",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=sport-tv-plus",
+      "logo": {
+        "type": "image",
+        "value": "https://cdn.jsdelivr.net/gh/imagesloads/images@main/img_1a740cf3fae8c219.png"
+      },
+      "group": "Sport",
+      "isFavorite": false,
+      "isIframe": true,
+      "meoCallLetter": "SPTVHD"
+    },
+    {
+      "id": "sporttv1",
+      "name": "Sport TV 1",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=sport-tv-1",
+      "logo": {
+        "type": "image",
+        "value": "/media/sport-tv-1.png"
+      },
+      "group": "Sport",
+      "isFavorite": false,
+      "isIframe": true,
+      "meoCallLetter": "SPT1HD"
+    },
+    {
+      "id": "sporttv2",
+      "name": "Sport TV 2",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=sport-tv-2",
+      "logo": {
+        "type": "image",
+        "value": "/media/sport-tv-2.png"
+      },
+      "group": "Sport",
+      "isFavorite": false,
+      "isIframe": true,
+      "meoCallLetter": "SPT2HD"
+    },
+    {
+      "id": "sporttv3",
+      "name": "Sport TV 3",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=sport-tv-3",
+      "logo": {
+        "type": "image",
+        "value": "/media/sport-tv-3.png"
+      },
+      "group": "Sport",
+      "isFavorite": false,
+      "isIframe": true,
+      "meoCallLetter": "SPT3HD"
+    },
+    {
+      "id": "sporttv4",
+      "name": "Sport TV 4",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=sport-tv-4",
+      "logo": {
+        "type": "image",
+        "value": "/media/sport-tv-4.png"
+      },
+      "group": "Sport",
+      "isFavorite": false,
+      "isIframe": true,
+      "meoCallLetter": "SPT4HD"
+    },
+    {
+      "id": "sporttv5",
+      "name": "Sport TV 5",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=sport-tv-5",
+      "logo": {
+        "type": "image",
+        "value": "/media/sport-tv-5.png"
+      },
+      "group": "Sport",
+      "isFavorite": false,
+      "isIframe": true,
+      "meoCallLetter": "SPT5HD"
+    },
+    {
+      "id": "dazn1",
+      "name": "DAZN 1 PT",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=dazn-1",
+      "logo": {
+        "type": "image",
+        "value": "https://upload.wikimedia.org/wikipedia/commons/7/71/DAZN_logo.svg"
+      },
+      "group": "Sport",
+      "isFavorite": false,
+      "isIframe": true,
+      "meoCallLetter": "DAZN1"
+    },
+    {
+      "id": "dazn2",
+      "name": "DAZN 2 PT",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=dazn-2",
+      "logo": {
+        "type": "image",
+        "value": "https://upload.wikimedia.org/wikipedia/commons/7/71/DAZN_logo.svg"
+      },
+      "group": "Sport",
+      "isFavorite": false,
+      "isIframe": true,
+      "meoCallLetter": "DAZN2"
+    },
+    {
+      "id": "dazn3",
+      "name": "DAZN 3 PT",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=dazn-3",
+      "logo": {
+        "type": "image",
+        "value": "https://upload.wikimedia.org/wikipedia/commons/7/71/DAZN_logo.svg"
+      },
+      "group": "Sport",
+      "isFavorite": false,
+      "isIframe": true,
+      "meoCallLetter": "DAZN3"
+    },
+    {
+      "id": "dazn4",
+      "name": "DAZN 4 PT",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=dazn-4",
+      "logo": {
+        "type": "image",
+        "value": "https://upload.wikimedia.org/wikipedia/commons/7/71/DAZN_logo.svg"
+      },
+      "group": "Sport",
+      "isFavorite": false,
+      "isIframe": true,
+      "meoCallLetter": "DAZN4"
+    },
+    {
+      "id": "dazn5",
+      "name": "DAZN 5 PT",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=dazn-5",
+      "logo": {
+        "type": "image",
+        "value": "https://upload.wikimedia.org/wikipedia/commons/7/71/DAZN_logo.svg"
+      },
+      "group": "Sport",
+      "isFavorite": false,
+      "isIframe": true,
+      "meoCallLetter": "DAZN5"
+    },
+    {
+      "id": "tvir",
+      "name": "TVI Reality",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=tvi-reality",
+      "logo": {
+        "type": "image",
+        "value": "/media/tvir.jpg"
+      },
+      "group": "Divertissement",
+      "isFavorite": false,
+      "isIframe": true,
+      "meoCallLetter": "TVIR"
+    },
+    {
+      "id": "tvif",
+      "name": "TVI Ficção",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=tvi-ficcao",
+      "logo": {
+        "type": "image",
+        "value": "https://upload.wikimedia.org/wikipedia/commons/0/0d/TVI_Fic%C3%A7%C3%A3o_%282017%29.png"
+      },
+      "group": "Divertissement",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "v-mais",
+      "name": "V+ TVI",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=v-plus-tvi",
+      "logo": {
+        "type": "image",
+        "value": "https://upload.wikimedia.org/wikipedia/pt/e/ef/V%2BTVI_Logo.png"
+      },
+      "group": "Divertissement",
+      "isFavorite": false,
+      "isIframe": true,
+      "meoCallLetter": "VMAISTVI"
+    },
+    {
+      "id": "axn",
+      "name": "AXN",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=axn",
+      "logo": {
+        "type": "image",
+        "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/axn-hd-pt.png"
+      },
+      "group": "Divertissement",
+      "isFavorite": false,
+      "isIframe": true,
+      "meoCallLetter": "AXNHD"
+    },
+    {
+      "id": "axn-white",
+      "name": "AXN WHITE",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=axn-white",
+      "logo": {
+        "type": "image",
+        "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/axn-white-hd-pt.png"
+      },
+      "group": "Divertissement",
+      "isFavorite": false,
+      "isIframe": true,
+      "meoCallLetter": "AXWHD"
+    },
+    {
+      "id": "axn-movies",
+      "name": "AXN MOVIES",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=axn-movies",
+      "logo": {
+        "type": "image",
+        "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/axn-movies-hd-pt.png"
+      },
+      "group": "CinÃ©ma",
+      "isFavorite": false,
+      "isIframe": true,
+      "meoCallLetter": "AXNMHD"
+    },
+    {
+      "id": "cine-mundo",
+      "name": "CINE MUNDO",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=cine-mundo",
+      "logo": {
+        "type": "image",
+        "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/cine-mundo-pt.png"
+      },
+      "group": "CinÃ©ma",
+      "isFavorite": false,
+      "isIframe": true,
+      "meoCallLetter": "CINEHD"
+    },
+    {
+      "id": "nos-studios",
+      "name": "NOS STUDIOS",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=nos-studios",
+      "logo": {
+        "type": "image",
+        "value": "/media/N-studios.png"
+      },
+      "group": "CinÃ©ma",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "tvcine-top",
+      "name": "TVCINE TOP",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=tvcine-top",
+      "logo": {
+        "type": "image",
+        "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/tvcine-top-hd-pt.png"
+      },
+      "group": "Cinéma",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "tvcine-action",
+      "name": "TVCINE ACTION",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=tvcine-action",
+      "logo": {
+        "type": "image",
+        "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/tvcine-action-hd-pt.png"
+      },
+      "group": "Cinéma",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "tvcine-emotion",
+      "name": "TVCINE EMOTION",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=tvcine-emotion",
+      "logo": {
+        "type": "image",
+        "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/tvcine-emotion-hd-pt.png"
+      },
+      "group": "Cinéma",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "tvcine-edition",
+      "name": "TVCINE EDITION",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=tvcine-edition",
+      "logo": {
+        "type": "image",
+        "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/tvcine-edition-hd-pt.png"
+      },
+      "group": "Cinéma",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "syfy-pt",
+      "name": "SYFY",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=syfy",
+      "logo": {
+        "type": "image",
+        "value": "https://witv.football/images/logo/syfy-logo.png"
+      },
+      "group": "Cinéma",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "disney-pixar",
+      "name": "DISNEY+ PIXAR",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=disney-pixar",
+      "logo": {
+        "type": "image",
+        "value": "/media/disney-pixar.png"
+      },
+      "group": "Jeunesse",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "disney-channel-pt",
+      "name": "DISNEY CHANNEL",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=disney-channel-pt",
+      "logo": {
+        "type": "image",
+        "value": "https://commons.wikimedia.org/wiki/Special:FilePath/2017%20Disney%20Channel%20logo.svg"
+      },
+      "group": "Jeunesse",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "panda-kids",
+      "name": "PANDA KIDS",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=panda-kids",
+      "logo": {
+        "type": "image",
+        "value": "/media/Panda_Kids_logo.png"
+      },
+      "group": "Jeunesse",
+      "isFavorite": false,
+      "isIframe": true,
+      "meoCallLetter": "PANDA"
+    },
+    {
+      "id": "patrulha-pata",
+      "name": "PATRULHA PATA",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=patrulha-pata",
+      "logo": {
+        "type": "image",
+        "value": "/media/patrulha-pata.png"
+      },
+      "group": "Jeunesse",
+      "isFavorite": false,
+      "isIframe": true
+    },
+    {
+      "id": "canal panda",
+      "name": "CANAL PANDA",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=canal-panda",
+      "logo": {
+        "type": "image",
+        "value": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/portugal/canal-panda-pt.png"
+      },
+      "group": "Jeunesse",
+      "isFavorite": false,
+      "isIframe": true,
+      "meoCallLetter": "PANDA"
+    },
+    {
+      "id": "odisseia-pt",
+      "name": "Odisseia PT",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=odisseia-pt",
+      "logo": {
+        "type": "image",
+        "value": "/media/odisseia.png"
+      },
+      "group": "Documentaire",
+      "isFavorite": false,
+      "isIframe": true,
+      "meoCallLetter": "ODISSHD"
+    },
+    {
+      "id": "national-geographic-pt",
+      "name": "National Geographic PT",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=national-geographic-pt",
+      "logo": {
+        "type": "image",
+        "value": "https://commons.wikimedia.org/wiki/Special:FilePath/National%20Geographic%20Channel.svg"
+      },
+      "group": "Documentaire",
+      "isFavorite": false,
+      "isIframe": true,
+      "meoCallLetter": "NGHD"
+    },
+    {
+      "id": "historia-pt",
+      "name": "História PT",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=historia-pt",
+      "logo": {
+        "type": "image",
+        "value": "https://upload.wikimedia.org/wikipedia/commons/0/07/Historia_2022_logo.webp"
+      },
+      "group": "Documentaire",
+      "isFavorite": false,
+      "isIframe": true,
+      "meoCallLetter": "HISTHD"
+    },
+    {
+      "id": "discovery-pt",
+      "name": "Discovery PT",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=discovery-pt",
+      "logo": {
+        "type": "image",
+        "value": "https://cdn.jsdelivr.net/gh/imagesloads/images@main/img_f3aea22ba48bd5da.png"
+      },
+      "group": "Documentaire",
+      "isFavorite": false,
+      "isIframe": true,
+      "meoCallLetter": "DISCVHD"
+    
+      
+      
+    }
+  ]
+}

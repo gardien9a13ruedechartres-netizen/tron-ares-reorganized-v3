@@ -882,7 +882,7 @@
       "url": "https://amg01796-amg01796c16-rakuten-fr-7493.playouts.now.amagi.tv/1080p/index.m3u8",
       "logo": {
         "type": "image",
-        "value": "https://logos-world.net/wp-content/uploads/2024/09/Yu-Gi-Oh-Logo.png"
+        "value": "https://upload.wikimedia.org/wikipedia/fr/a/a5/Yu-Gi-Oh_Logo.JPG"
       },
       "group": "Jeunesse",
       "isFavorite": false,
@@ -894,7 +894,7 @@
       "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=beyblade-tv",
       "logo": {
         "type": "image",
-        "value": "https://static.wikia.nocookie.net/beyblade/images/1/1e/Beyblade.png"
+        "value": "https://images-3.rakuten.tv/storage/global-live-channel/translation/artwork/eb57f7ea-895a-4a74-a3ae-f3c506f1661c-width200-quality90.jpeg"
       },
       "group": "Jeunesse",
       "isFavorite": false,
@@ -1053,7 +1053,7 @@
       "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=nat-geo",
       "logo": {
         "type": "image",
-        "value": "https://upload.wikimedia.org/wikipedia/commons/1/13/National_Geographic_Channel.svg"
+        "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20Nat%20Geo%20Wild.svg"
       },
       "group": "Documentaire",
       "isFavorite": false,
@@ -1066,7 +1066,7 @@
       "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=nat-geo-wild",
       "logo": {
         "type": "image",
-        "value": "https://upload.wikimedia.org/wikipedia/commons/2/26/Logo_Nat_Geo_Wild.svg"
+        "value": "https://commons.wikimedia.org/wiki/Special:FilePath/Logo%20Nat%20Geo%20Wild.svg"
       },
       "group": "Documentaire",
       "isFavorite": false,
