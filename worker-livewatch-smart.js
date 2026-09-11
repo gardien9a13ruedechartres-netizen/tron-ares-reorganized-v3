@@ -39,6 +39,7 @@ const PORTUGAL_LIVEWATCH_CHANNELS = new Set([
   "porto-canal",
   "rtp-africa",
   "rtp3",
+  "sic",
   "sic-noticias",
   "sporting",
   "sport-tv-plus",
@@ -1412,6 +1413,38 @@ Object.assign(CHANNELS, {
         "label": "AmazingTier Record Europa",
         "button": "AmazingTier",
         "cloudingChannel": "RecordEuropa"
+      }
+    }
+  },
+  "sic": {
+    "label": "SIC",
+    "livewatchSearch": "SIC",
+    "livewatchExact": "SIC",
+    "defaultOrder": [
+      "cable",
+      "basic-hd"
+    ],
+    "sources": {
+      "cable": {
+        "id": "3762658364bbe49f476ccc-0fdfaea3b937ad",
+        "label": "LiveWatch cable",
+        "exact": "SIC",
+        "country": "Portugal"
+      },
+      "basic-hd": {
+        "id": "3099098765ec02550cde6f-ceadc68c7d88d0",
+        "label": "LiveWatch basic HD",
+        "exact": "SIC",
+        "country": "Portugal"
+      }
+    },
+    "manualSources": {
+      "amazingtier": {
+        "kind": "clouding",
+        "id": "amazingtier-sic",
+        "label": "AmazingTier SIC",
+        "button": "AmazingTier",
+        "cloudingChannel": "SIC"
       }
     }
   },

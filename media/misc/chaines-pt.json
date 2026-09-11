@@ -87,14 +87,14 @@
     {
       "id": "sic",
       "name": "SIC",
-      "url": "https://player-engine.com/api/worker-live/sic/master.m3u8",
+      "url": "https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=sic",
       "logo": {
         "type": "image",
         "value": "/media/sic.jpg"
       },
       "group": "Généraliste",
       "isFavorite": false,
-      "isIframe": false,
+      "isIframe": true,
       "meoCallLetter": "SIC"
     },
     {
