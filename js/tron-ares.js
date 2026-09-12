@@ -1871,6 +1871,14 @@ function resolveWorkerPageDirectMediaUrl(sourceUrl) {
   const path = pageUrl.pathname.toLowerCase();
   const channel = String(pageUrl.searchParams.get('channel') || '').trim().toLowerCase();
 
+  if (
+    pageUrl.origin === 'https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev' &&
+    path === '/' &&
+    channel === 'tvi-reality'
+  ) {
+    return `https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/api/live/${encodeURIComponent(channel)}/master.m3u8`;
+  }
+
   if (path === '/pages/worker-iptv3.html' && channel) {
     return `https://tron-ares-iptv3.victor-salema-53d.workers.dev/api/iptv/live/${encodeURIComponent(channel)}/master.m3u8`;
   }
