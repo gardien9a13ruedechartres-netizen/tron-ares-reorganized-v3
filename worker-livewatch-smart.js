@@ -99,6 +99,13 @@ const CHANNELS = {
         label: "AmazingTier CMTV",
         button: "AmazingTier",
         cloudingChannel: "CMTVPT"
+      },
+      html: {
+        kind: "iframe",
+        id: "cmtv-secour-iframe",
+        label: "Secours CMTV",
+        button: "Secours HTML",
+        iframeUrl: "https://player-engine.com/pages/cmtv-secour.html"
       }
     }
   },
@@ -4206,6 +4213,7 @@ async function resolveSource(channelKey, channel, sourceName) {
   if (source.kind === "clouding") return resolveAmazingTierSource(channelKey, sourceName, source);
   if (source.kind === "lovetier") return resolveLovetierSource(channelKey, sourceName, source);
   if (source.kind === "direct") return resolveDirectSource(channelKey, sourceName, source);
+  if (source.kind === "iframe") return resolveIframeSource(channelKey, sourceName, source);
   return resolveLivewatchSourceWithDynamicFallback(channelKey, channel, sourceName, source);
 }
 
