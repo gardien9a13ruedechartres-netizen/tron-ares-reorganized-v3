@@ -701,10 +701,6 @@ const npTitle = document.getElementById('npTitle');
 const npSub = document.getElementById('npSub');
 const npBadge = document.getElementById('npBadge');
 const npCounter = document.getElementById('npCounter');
-const smartSourceControl = document.getElementById('npSmartSource');
-const smartSourceBtn = document.getElementById('smartSourceBtn');
-const smartSourceLabel = document.getElementById('smartSourceLabel');
-const smartSourceMenu = document.getElementById('smartSourceMenu');
 
 // Counter: retire la classe d'animation une fois terminée (permet de rejouer l'effet à chaque update)
 if (npCounter) {
@@ -761,33 +757,6 @@ const audioTrackBtn = document.getElementById('audioTrackBtn');
 const subtitleTrackBtn = document.getElementById('subtitleTrackBtn');
 const audioTrackMenu = document.getElementById('audioTrackMenu');
 const subtitleTrackMenu = document.getElementById('subtitleTrackMenu');
-
-smartSourceBtn?.addEventListener('click', () => {
-  const isOpen = smartSourceMenu?.classList.toggle('open') || false;
-  smartSourceBtn.setAttribute('aria-expanded', String(isOpen));
-  smartSourceBtn.classList.toggle('active', isOpen);
-  if (isOpen) updateLivewatchSmartNativeControls();
-});
-
-smartSourceMenu?.addEventListener('click', event => {
-  const item = event.target?.closest?.('.np-smart-source-item');
-  const key = item?.dataset?.source;
-  const session = livewatchSmartNativeSession;
-  if (!key || !session || !session.config.sourceOrder.includes(key)) return;
-
-  closeLivewatchSmartNativeMenu();
-  if (key === session.activeKey) return;
-  session.failureAt[key] = 0;
-  switchLivewatchSmartNativeSource(key, 'manual-selection');
-});
-
-document.addEventListener('pointerdown', event => {
-  if (!smartSourceControl?.contains(event.target)) closeLivewatchSmartNativeMenu();
-});
-
-document.addEventListener('keydown', event => {
-  if (event.key === 'Escape') closeLivewatchSmartNativeMenu();
-});
 
 // --- Sous-titres externes (import + recherche) ---
 const subtitleFileInput = document.getElementById('subtitleFileInput');
@@ -1892,33 +1861,12 @@ function isYoutubeUrl(url) {
 }
 
 const LIVEWATCH_SMART_NATIVE_ORIGIN = 'https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev';
-const LIVEWATCH_SMART_NATIVE_CONFIGS = Object.freeze({
-  cmtv: { sourceOrder: Object.freeze(['cable', 'direct', 'basic', 'amazingtier']) },
-  rtp1: { sourceOrder: Object.freeze(['cable', 'basic-hd', 'clouding']) },
-  rtp2: { sourceOrder: Object.freeze(['basic', 'cable', 'clouding']) },
-  tvi: { sourceOrder: Object.freeze(['basic-hd', 'cable', 'clouding', 'direct']) },
-  record: { sourceOrder: Object.freeze(['cable', 'basic', 'amazingtier']) },
-  sic: { sourceOrder: Object.freeze(['cable', 'basic-hd', 'amazingtier']) },
-  'tcv-int': { sourceOrder: Object.freeze(['cable', 'amazingtier']) },
-  'tvi-reality': { sourceOrder: Object.freeze(['cable', 'basic', 'clouding']) },
-  'tvi-ficcao': { sourceOrder: Object.freeze(['cable', 'basic', 'clouding']) },
-  'v-plus-tvi': { sourceOrder: Object.freeze(['cable', 'clouding']) },
-  'porto-canal': { sourceOrder: Object.freeze(['basic', 'cable', 'basic-backup', 'clouding']) },
-  'cnn-portugal': { sourceOrder: Object.freeze(['cable', 'clouding']) },
-  'sic-noticias': { sourceOrder: Object.freeze(['basic-hd', 'cable', 'clouding']) },
-  rtp3: { sourceOrder: Object.freeze(['cable', 'basic', 'clouding']) },
-  'rtp-africa': { sourceOrder: Object.freeze(['cable', 'basic', 'clouding']) },
-  'tvi-internacional': { sourceOrder: Object.freeze(['clouding']) }
-});
-const LIVEWATCH_SMART_NATIVE_CHANNELS = new Set(Object.keys(LIVEWATCH_SMART_NATIVE_CONFIGS));
+const LIVEWATCH_SMART_NATIVE_CHANNELS = new Set(['tvi-reality']);
+const LIVEWATCH_SMART_NATIVE_SOURCE_ORDER = Object.freeze(['cable', 'basic', 'clouding']);
 const LIVEWATCH_SMART_NATIVE_SOURCE_LABELS = Object.freeze({
   cable: 'LiveWatch cable',
   basic: 'LiveWatch basic',
-  'basic-hd': 'LiveWatch basic HD',
-  'basic-backup': 'LiveWatch basic backup',
-  direct: 'Direct',
-  clouding: 'AmazingTier',
-  amazingtier: 'AmazingTier'
+  clouding: 'AmazingTier'
 });
 const LIVEWATCH_SMART_NATIVE_STALL_DELAY_MS = 14000;
 const LIVEWATCH_SMART_NATIVE_RECOVERY_DELAY_MS = 60000;
@@ -1948,74 +1896,9 @@ function getLivewatchSmartNativeConfig(sourceUrl) {
   return {
     channel,
     rootUrl: pageUrl.href,
-    sourceOrder: LIVEWATCH_SMART_NATIVE_CONFIGS[channel].sourceOrder.slice(),
-    initialKey: LIVEWATCH_SMART_NATIVE_CONFIGS[channel].sourceOrder[0]
+    sourceOrder: LIVEWATCH_SMART_NATIVE_SOURCE_ORDER.slice(),
+    initialKey: LIVEWATCH_SMART_NATIVE_SOURCE_ORDER[0]
   };
-}
-
-function livewatchSmartNativeSourceLabel(key) {
-  return LIVEWATCH_SMART_NATIVE_SOURCE_LABELS[key] || String(key || '')
-    .replace(/[-_]+/g, ' ')
-    .replace(/\b\w/g, char => char.toUpperCase());
-}
-
-function closeLivewatchSmartNativeMenu() {
-  if (!smartSourceBtn || !smartSourceMenu) return;
-  smartSourceBtn.setAttribute('aria-expanded', 'false');
-  smartSourceBtn.classList.remove('active');
-  smartSourceMenu.classList.remove('open');
-}
-
-function updateLivewatchSmartNativeControls(entry = currentEntry) {
-  if (!smartSourceControl || !smartSourceBtn || !smartSourceMenu) return;
-
-  const config = entry?.livewatchSmartNative ||
-    getLivewatchSmartNativeConfig(entry?.originalPageUrl || entry?.url);
-  if (!config || !config.sourceOrder.length) {
-    closeLivewatchSmartNativeMenu();
-    smartSourceControl.classList.add('hidden');
-    if (smartSourceLabel) smartSourceLabel.textContent = '';
-    smartSourceMenu.innerHTML = '';
-    return;
-  }
-
-  const activeKey = entry?.livewatchSmartNativeSourceKey ||
-    livewatchSmartNativeSession?.activeKey || config.initialKey;
-  const activeLabel = livewatchSmartNativeSourceLabel(activeKey);
-  smartSourceControl.classList.remove('hidden');
-  smartSourceBtn.title = `Source active : ${activeLabel}`;
-  smartSourceBtn.setAttribute('aria-label', `Source active : ${activeLabel}. Ouvrir les sources`);
-  if (smartSourceLabel) smartSourceLabel.textContent = activeLabel;
-
-  smartSourceMenu.innerHTML = '';
-  const header = document.createElement('div');
-  header.className = 'np-smart-source-menu-header';
-  header.textContent = `${entry?.name || config.channel} • yoyo`;
-  smartSourceMenu.appendChild(header);
-
-  config.sourceOrder.forEach(key => {
-    const item = document.createElement('button');
-    item.type = 'button';
-    item.className = 'np-smart-source-item';
-    item.dataset.source = key;
-    item.setAttribute('role', 'menuitem');
-
-    const failed = livewatchSmartNativeFailureIsRecent(key);
-    const isActive = key === activeKey;
-    if (isActive) item.classList.add('active');
-    if (failed && !isActive) item.classList.add('failed');
-
-    const label = document.createElement('span');
-    label.className = 'np-smart-source-item-label';
-    label.textContent = livewatchSmartNativeSourceLabel(key);
-
-    const state = document.createElement('span');
-    state.className = 'np-smart-source-item-state';
-    state.textContent = isActive ? 'actif' : (failed ? 'en attente' : 'disponible');
-
-    item.append(label, state);
-    smartSourceMenu.appendChild(item);
-  });
 }
 
 function livewatchSmartNativeSourceUrl(config, key) {
@@ -2078,9 +1961,9 @@ function livewatchSmartNativeMarkFailure(key, reason) {
   const session = livewatchSmartNativeSession;
   if (!session || !key) return;
   session.failureAt[key] = Date.now();
-  console.warn('[LiveWatch Smart] source failure', {
+  console.warn('[TVI Reality Smart] source failure', {
     key,
-    label: livewatchSmartNativeSourceLabel(key),
+    label: LIVEWATCH_SMART_NATIVE_SOURCE_LABELS[key] || key,
     reason
   });
 }
@@ -2106,13 +1989,8 @@ function switchLivewatchSmartNativeSource(key, reason, recoveryFromKey = '') {
     livewatchSmartNativeSourceKey: key,
     livewatchSmartNativeRecoveryFromKey: recoveryFromKey || ''
   };
-  const label = livewatchSmartNativeSourceLabel(key);
-  console.info('[LiveWatch Smart] source switch', {
-    channel: session.config.channel,
-    from: session.activeKey,
-    to: key,
-    reason
-  });
+  const label = LIVEWATCH_SMART_NATIVE_SOURCE_LABELS[key] || key;
+  console.info('[TVI Reality Smart] source switch', { from: session.activeKey, to: key, reason });
   setStatus('Bascule vers ' + label);
   playUrl(nextEntry);
   return true;
@@ -2212,8 +2090,7 @@ function noteLivewatchSmartNativePlaying() {
     session.stallTimer = null;
   }
   if (session.recoveryFromKey) {
-    console.info('[LiveWatch Smart] recovery confirmed', {
-      channel: session.config.channel,
+    console.info('[TVI Reality Smart] recovery confirmed', {
       from: session.recoveryFromKey,
       to: session.activeKey
     });
@@ -2235,9 +2112,12 @@ function resolveWorkerPageDirectMediaUrl(sourceUrl) {
   const path = pageUrl.pathname.toLowerCase();
   const channel = String(pageUrl.searchParams.get('channel') || '').trim().toLowerCase();
 
-  if (pageUrl.origin === LIVEWATCH_SMART_NATIVE_ORIGIN && path === '/' && LIVEWATCH_SMART_NATIVE_CHANNELS.has(channel)) {
-    const config = getLivewatchSmartNativeConfig(sourceUrl);
-    return livewatchSmartNativeSourceUrl(config, config?.initialKey || '');
+  if (
+    pageUrl.origin === 'https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev' &&
+    path === '/' &&
+    channel === 'tvi-reality'
+  ) {
+    return `https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/api/live/${encodeURIComponent(channel)}/cable/master.m3u8`;
   }
 
   if (path === '/pages/worker-iptv3.html' && channel) {
@@ -4453,7 +4333,6 @@ function updateNowPlaying(entry, modeLabel) {
   if (!npLogo || !npTitle || !npSub || !npBadge) return;
 
   if (!entry) {
-    updateLivewatchSmartNativeControls(null);
     npLogo.textContent = '';
     npTitle.textContent = 'Aucune chaîne sélectionnée';
     npSub.textContent = 'Choisissez une chaîne dans la liste';
@@ -4481,7 +4360,6 @@ function updateNowPlaying(entry, modeLabel) {
   npTitle.textContent = normalizeName(entry.name);
   npSub.textContent = entry.group || (entry.isIframe ? 'Overlay / iFrame' : 'Flux M3U');
   npBadge.textContent = modeLabel;
-  updateLivewatchSmartNativeControls(entry);
   __renderNowPlayingLangBadge(entry);
   __maybeOpenLivewatchEpgAutomatically(entry);
 }
@@ -5233,7 +5111,6 @@ if (typeof radioPlaying !== 'undefined' && radioPlaying) {
 }
 
 currentEntry = entry;
-  updateLivewatchSmartNativeControls(entry);
   // Met à jour la zone helper-text (qualité du film) dès la sélection
   try { __updateHelperTextForEntry(entry); } catch {}
   // Met à jour tout de suite l'affichage des contrôles pistes (évite tout clignotement)
