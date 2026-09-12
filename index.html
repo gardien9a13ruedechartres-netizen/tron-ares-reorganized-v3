@@ -608,6 +608,20 @@
           <div class="np-badge" id="npBadge">IDLE</div>
           <div class="np-counter" id="npCounter">-/-</div>
 
+          <!-- Sources LiveWatch Smart : visible uniquement pour les chaînes configurées -->
+          <div class="np-smart-source hidden" id="npSmartSource">
+            <button
+              class="icon-btn np-smart-source-btn"
+              id="smartSourceBtn"
+              type="button"
+              title="Choisir la source et le yoyo"
+              aria-label="Choisir la source et le yoyo"
+              aria-haspopup="menu"
+              aria-expanded="false">↻</button>
+            <span class="np-smart-source-label" id="smartSourceLabel"></span>
+            <div class="np-smart-source-menu" id="smartSourceMenu" role="menu" aria-label="Sources disponibles"></div>
+          </div>
+
           <!-- Actions (Cast, etc.) -->
           <div class="np-actions" id="npActions">
             <google-cast-launcher
@@ -746,7 +760,7 @@
 <script defer src="js/tmdb-cache-manager.js?v=5"></script>
 <script defer src="js/overlay-ttl.js"></script>
 <script defer src="js/tron-ares-fullscreen-media.js?v=2"></script>
-<script defer src="js/tron-ares.js?v=10"></script>
+<script defer src="js/tron-ares.js?v=11"></script>
 <script defer src="js/ares-multi-view.js?v=1"></script>
 <script defer src="js/ares-tv-refresh-bridge.js?v=1"></script>
 <script defer src="js/tv-remote-nav.js?v=1"></script>

@@ -1186,6 +1186,127 @@ video { object-fit: fill; }
   text-align: center;
 }
 
+/* Sources LiveWatch Smart : compactes, mais toujours accessibles depuis videoEl */
+.np-smart-source {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.np-smart-source-btn {
+  width: 28px;
+  height: 28px;
+  font-size: 17px;
+  line-height: 1;
+}
+
+.np-smart-source-btn.active {
+  border-color: var(--tron-accent);
+  color: var(--tron-accent-soft);
+  box-shadow: 0 0 10px var(--tron-accent);
+}
+
+.np-smart-source-label {
+  max-width: 11ch;
+  overflow: hidden;
+  color: var(--tron-accent-soft);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.np-smart-source-menu {
+  position: fixed;
+  right: 310px;
+  bottom: 108px;
+  min-width: 200px;
+  max-width: min(260px, calc(100vw - 20px));
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 8px;
+  border: 1px solid rgba(0, 229, 255, 0.6);
+  border-radius: 12px;
+  background: radial-gradient(circle at top, rgba(3, 18, 36, 0.98), rgba(0, 0, 0, 0.98));
+  box-shadow: 0 0 18px rgba(0, 229, 255, 0.45), 0 0 26px rgba(255, 145, 0, 0.28);
+  z-index: 70;
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+  transition: opacity 0.18s ease-out, transform 0.18s ease-out;
+}
+
+.np-smart-source-menu.open {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.np-smart-source-menu-header {
+  padding: 2px 5px 6px;
+  color: var(--tron-muted);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.np-smart-source-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 30px;
+  padding: 5px 8px;
+  border: 1px solid rgba(0, 229, 255, 0.25);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.58);
+  color: var(--tron-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  text-align: left;
+}
+
+.np-smart-source-item + .np-smart-source-item { margin-top: 4px; }
+
+.np-smart-source-item:hover,
+.np-smart-source-item:focus-visible {
+  border-color: var(--tron-accent-soft);
+  box-shadow: var(--shadow-neon-amber);
+  outline: none;
+}
+
+.np-smart-source-item.active {
+  border-color: var(--tron-accent);
+  background: radial-gradient(circle at left, rgba(255, 145, 0, 0.25), rgba(0, 0, 0, 0.9));
+}
+
+.np-smart-source-item.failed { color: var(--tron-muted); }
+
+.np-smart-source-item-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.np-smart-source-item-state {
+  flex: 0 0 auto;
+  color: var(--tron-muted);
+  font-size: 9px;
+  text-transform: uppercase;
+}
+
+@media (max-width: 720px) {
+  .np-smart-source-label { display: none; }
+
+  .np-smart-source-menu {
+    right: 10px;
+    bottom: 102px;
+  }
+}
+
 /* Counter tick (Now Playing) */
 .np-counter.tick {
   animation: npTick 220ms ease-out;
