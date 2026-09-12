@@ -129,6 +129,13 @@ const CHANNELS = {
         label: "AmazingTier RTP1",
         button: "AmazingTier",
         cloudingChannel: "RTP1"
+      },
+      html: {
+        kind: "iframe",
+        id: "rtp1-secour-iframe",
+        label: "Secours RTP1",
+        button: "Secours HTML",
+        iframeUrl: "https://player-engine.com/pages/rtp1-secour.html"
       }
     }
   },
@@ -152,6 +159,13 @@ const CHANNELS = {
         label: "AmazingTier RTP2",
         button: "AmazingTier",
         cloudingChannel: "RTP2"
+      },
+      html: {
+        kind: "iframe",
+        id: "rtp2-secour-iframe",
+        label: "Secours RTP2",
+        button: "Secours HTML",
+        iframeUrl: "https://player-engine.com/pages/rtp2-secour.html"
       }
     }
   },
@@ -181,6 +195,13 @@ const CHANNELS = {
         label: "AmazingTier TVI",
         button: "AmazingTier",
         cloudingChannel: "TVI"
+      },
+      html: {
+        kind: "iframe",
+        id: "tvi-secour-iframe",
+        label: "Secours TVI",
+        button: "Secours HTML",
+        iframeUrl: "https://player-engine.com/pages/tvi-secour.html"
       },
       direct: {
         kind: "direct",
@@ -1420,6 +1441,13 @@ Object.assign(CHANNELS, {
         "label": "AmazingTier Record Europa",
         "button": "AmazingTier",
         "cloudingChannel": "RecordEuropa"
+      },
+      "html": {
+        "kind": "iframe",
+        "id": "record-secour-iframe",
+        "label": "Secours Record TV",
+        "button": "Secours HTML",
+        "iframeUrl": "https://amazingtier.top/player/RecordEuropa"
       }
     }
   },
@@ -1452,6 +1480,13 @@ Object.assign(CHANNELS, {
         "label": "AmazingTier SIC",
         "button": "AmazingTier",
         "cloudingChannel": "SIC"
+      },
+      "html": {
+        "kind": "iframe",
+        "id": "sic-secour-iframe",
+        "label": "Secours SIC",
+        "button": "Secours HTML",
+        "iframeUrl": "https://amazingtier.top/player/SIC"
       }
     }
   },
@@ -1477,6 +1512,13 @@ Object.assign(CHANNELS, {
         "label": "AmazingTier TCV Internacional",
         "button": "AmazingTier",
         "cloudingChannel": "TCV-INT"
+      },
+      "html": {
+        "kind": "iframe",
+        "id": "tcv-int-secour-iframe",
+        "label": "Secours TCV Internacional",
+        "button": "Secours HTML",
+        "iframeUrl": "https://amazingtier.top/player/TCV-INT"
       }
     }
   },
@@ -2777,6 +2819,13 @@ Object.assign(CHANNELS, {
         "label": "AmazingTier TVI Reality",
         "button": "AmazingTier",
         "cloudingChannel": "TVIReality"
+      },
+      "html": {
+        "kind": "iframe",
+        "id": "tvi-reality-secour-iframe",
+        "label": "Secours TVI Reality",
+        "button": "Secours HTML",
+        "iframeUrl": "https://player-engine.com/pages/tvi-reality-secour.html"
       }
     }
   },
@@ -2809,6 +2858,13 @@ Object.assign(CHANNELS, {
         "label": "AmazingTier TVI Ficcao",
         "button": "AmazingTier",
         "cloudingChannel": "TVI_Ficcao"
+      },
+      "html": {
+        "kind": "iframe",
+        "id": "tvi-ficcao-secour-iframe",
+        "label": "Secours TVI Ficcao",
+        "button": "Secours HTML",
+        "iframeUrl": "https://player-engine.com/pages/tvi-ficcao-secour.html"
       }
     }
   },
@@ -2834,6 +2890,13 @@ Object.assign(CHANNELS, {
         "label": "AmazingTier V+ TVI",
         "button": "AmazingTier",
         "cloudingChannel": "VPlusTVI"
+      },
+      "html": {
+        "kind": "iframe",
+        "id": "v-plus-tvi-secour-iframe",
+        "label": "Secours V+ TVI",
+        "button": "Secours HTML",
+        "iframeUrl": "https://player-engine.com/pages/v-plus-tvi-secour.html"
       }
     }
   },
@@ -2912,6 +2975,13 @@ Object.assign(CHANNELS, {
         "label": "AmazingTier Porto Canal",
         "button": "AmazingTier",
         "cloudingChannel": "PortoCanal"
+      },
+      "html": {
+        "kind": "iframe",
+        "id": "porto-canal-secour-iframe",
+        "label": "Secours Porto Canal",
+        "button": "Secours HTML",
+        "iframeUrl": "https://player-engine.com/pages/porto-canal-secour.html"
       }
     }
   },
@@ -2976,6 +3046,13 @@ Object.assign(CHANNELS, {
         "label": "AmazingTier CNN Portugal",
         "button": "AmazingTier",
         "cloudingChannel": "CNN-PT"
+      },
+      "html": {
+        "kind": "iframe",
+        "id": "cnn-portugal-secour-iframe",
+        "label": "Secours CNN Portugal",
+        "button": "Secours HTML",
+        "iframeUrl": "https://player-engine.com/pages/cnn-portugal-secour.html"
       }
     }
   },
@@ -3008,6 +3085,13 @@ Object.assign(CHANNELS, {
         "label": "AmazingTier SIC Noticias",
         "button": "AmazingTier",
         "cloudingChannel": "SIC-NOTICIAS"
+      },
+      "html": {
+        "kind": "iframe",
+        "id": "sic-noticias-secour-iframe",
+        "label": "Secours SIC Noticias",
+        "button": "Secours HTML",
+        "iframeUrl": "https://player-engine.com/pages/sic-noticias-secour.html"
       }
     }
   },
@@ -3040,6 +3124,13 @@ Object.assign(CHANNELS, {
         "label": "AmazingTier RTP3",
         "button": "AmazingTier",
         "cloudingChannel": "RTP3"
+      },
+      "html": {
+        "kind": "iframe",
+        "id": "rtp3-secour-iframe",
+        "label": "Secours RTP3",
+        "button": "Secours HTML",
+        "iframeUrl": "https://player-engine.com/pages/rtp3-secour.html"
       }
     }
   },
@@ -3072,6 +3163,13 @@ Object.assign(CHANNELS, {
         "label": "AmazingTier RTP Africa",
         "button": "AmazingTier",
         "cloudingChannel": "RTPAfrica"
+      },
+      "html": {
+        "kind": "iframe",
+        "id": "rtp-africa-secour-iframe",
+        "label": "Secours RTP Africa",
+        "button": "Secours HTML",
+        "iframeUrl": "https://player-engine.com/pages/rtp-africa-secour.html"
       }
     }
   },
@@ -3088,6 +3186,13 @@ Object.assign(CHANNELS, {
         "label": "AmazingTier TVI Internacional",
         "button": "AmazingTier",
         "cloudingChannel": "TVI-INT"
+      },
+      "html": {
+        "kind": "iframe",
+        "id": "tvi-internacional-secour-iframe",
+        "label": "Secours TVI Internacional",
+        "button": "Secours HTML",
+        "iframeUrl": "https://player-engine.com/pages/tvi-internacional-secour.html"
       }
     }
   },
