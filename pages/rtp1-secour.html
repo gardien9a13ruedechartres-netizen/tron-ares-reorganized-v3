@@ -92,6 +92,10 @@
 
   <script>
     const menuToggle = document.getElementById('menuToggle');
+    document.querySelectorAll('#menuToggle').forEach((button, index) => {
+      if (index > 0) button.remove();
+    });
+    menuToggle.innerHTML = '&#9776;';
     const menuPanel = document.getElementById('menuPanel');
     const returnToPlayer = document.getElementById('returnToPlayer');
     const reloadFallback = document.getElementById('reloadFallback');
