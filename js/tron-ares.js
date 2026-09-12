@@ -516,6 +516,7 @@ function startStallWatchdog() {
     const now = Date.now();
     const stuckMs = now - (lastProgressTs || now);
     if (stuckMs > 18000) {
+      if (handleLivewatchSmartNativeFailure('watchdog-stall')) return;
       if (switchCurrentEntryToDirectFallback('Flux interrompu / plus de données')) return;
       enterOfflineMode('Flux interrompu / plus de données');
     }
@@ -1858,6 +1859,246 @@ function isProbablyPlaylist(url) {
 function isYoutubeUrl(url) {
   return /youtu\.be|youtube\.com|youtube\-nocookie\.com/i.test(url);
 }
+
+const LIVEWATCH_SMART_NATIVE_ORIGIN = 'https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev';
+const LIVEWATCH_SMART_NATIVE_CHANNELS = new Set(['tvi-reality']);
+const LIVEWATCH_SMART_NATIVE_SOURCE_ORDER = Object.freeze(['cable', 'basic', 'clouding']);
+const LIVEWATCH_SMART_NATIVE_SOURCE_LABELS = Object.freeze({
+  cable: 'LiveWatch cable',
+  basic: 'LiveWatch basic',
+  clouding: 'AmazingTier'
+});
+const LIVEWATCH_SMART_NATIVE_STALL_DELAY_MS = 14000;
+const LIVEWATCH_SMART_NATIVE_RECOVERY_DELAY_MS = 60000;
+const LIVEWATCH_SMART_NATIVE_FAILURE_COOLDOWN_MS = 45000;
+const LIVEWATCH_SMART_NATIVE_PROBE_TIMEOUT_MS = 8000;
+let livewatchSmartNativeSession = null;
+
+function getLivewatchSmartNativeConfig(sourceUrl) {
+  if (!sourceUrl) return null;
+
+  let pageUrl;
+  try {
+    pageUrl = new URL(String(sourceUrl).trim(), window.location.origin);
+  } catch {
+    return null;
+  }
+
+  const channel = String(pageUrl.searchParams.get('channel') || '').trim().toLowerCase();
+  if (
+    pageUrl.origin !== LIVEWATCH_SMART_NATIVE_ORIGIN ||
+    pageUrl.pathname !== '/' ||
+    !LIVEWATCH_SMART_NATIVE_CHANNELS.has(channel)
+  ) {
+    return null;
+  }
+
+  return {
+    channel,
+    rootUrl: pageUrl.href,
+    sourceOrder: LIVEWATCH_SMART_NATIVE_SOURCE_ORDER.slice(),
+    initialKey: LIVEWATCH_SMART_NATIVE_SOURCE_ORDER[0]
+  };
+}
+
+function livewatchSmartNativeSourceUrl(config, key) {
+  if (!config || !config.sourceOrder.includes(key)) return '';
+  return `${LIVEWATCH_SMART_NATIVE_ORIGIN}/api/live/${encodeURIComponent(config.channel)}/${encodeURIComponent(key)}/master.m3u8`;
+}
+
+function clearLivewatchSmartNativeTimers() {
+  if (!livewatchSmartNativeSession) return;
+  if (livewatchSmartNativeSession.stallTimer) clearTimeout(livewatchSmartNativeSession.stallTimer);
+  if (livewatchSmartNativeSession.recoveryTimer) clearTimeout(livewatchSmartNativeSession.recoveryTimer);
+  livewatchSmartNativeSession.stallTimer = null;
+  livewatchSmartNativeSession.recoveryTimer = null;
+}
+
+function resetLivewatchSmartNativeSession() {
+  clearLivewatchSmartNativeTimers();
+  livewatchSmartNativeSession = null;
+}
+
+function syncLivewatchSmartNativeSession(entry, config, sourceKey) {
+  if (!config) {
+    resetLivewatchSmartNativeSession();
+    return null;
+  }
+
+  const sameSession = livewatchSmartNativeSession &&
+    livewatchSmartNativeSession.entryId === String(entry?.id || '') &&
+    livewatchSmartNativeSession.rootUrl === config.rootUrl;
+
+  if (!sameSession) {
+    resetLivewatchSmartNativeSession();
+    livewatchSmartNativeSession = {
+      entryId: String(entry?.id || ''),
+      rootUrl: config.rootUrl,
+      config,
+      activeKey: sourceKey,
+      activeIndex: Math.max(0, config.sourceOrder.indexOf(sourceKey)),
+      failureAt: {},
+      recoveryFromKey: '',
+      stallTimer: null,
+      recoveryTimer: null,
+      recoveryInFlight: false
+    };
+  } else {
+    clearLivewatchSmartNativeTimers();
+    livewatchSmartNativeSession.activeKey = sourceKey;
+    livewatchSmartNativeSession.activeIndex = Math.max(0, config.sourceOrder.indexOf(sourceKey));
+  }
+
+  livewatchSmartNativeSession.recoveryFromKey = String(entry?.livewatchSmartNativeRecoveryFromKey || '');
+  return livewatchSmartNativeSession;
+}
+
+function isLivewatchSmartNativeEntry(entry = currentEntry) {
+  return Boolean(entry?.livewatchSmartNative && livewatchSmartNativeSession);
+}
+
+function livewatchSmartNativeMarkFailure(key, reason) {
+  const session = livewatchSmartNativeSession;
+  if (!session || !key) return;
+  session.failureAt[key] = Date.now();
+  console.warn('[TVI Reality Smart] source failure', {
+    key,
+    label: LIVEWATCH_SMART_NATIVE_SOURCE_LABELS[key] || key,
+    reason
+  });
+}
+
+function livewatchSmartNativeFailureIsRecent(key) {
+  const at = livewatchSmartNativeSession?.failureAt?.[key] || 0;
+  return at > 0 && Date.now() - at < LIVEWATCH_SMART_NATIVE_FAILURE_COOLDOWN_MS;
+}
+
+function switchLivewatchSmartNativeSource(key, reason, recoveryFromKey = '') {
+  const session = livewatchSmartNativeSession;
+  if (!session || !currentEntry || !session.config) return false;
+  const nextUrl = livewatchSmartNativeSourceUrl(session.config, key);
+  if (!nextUrl) return false;
+
+  clearLivewatchSmartNativeTimers();
+  const nextEntry = {
+    ...currentEntry,
+    url: nextUrl,
+    originalPageUrl: session.rootUrl,
+    isIframe: false,
+    livewatchSmartNative: session.config,
+    livewatchSmartNativeSourceKey: key,
+    livewatchSmartNativeRecoveryFromKey: recoveryFromKey || ''
+  };
+  const label = LIVEWATCH_SMART_NATIVE_SOURCE_LABELS[key] || key;
+  console.info('[TVI Reality Smart] source switch', { from: session.activeKey, to: key, reason });
+  setStatus('Bascule vers ' + label);
+  playUrl(nextEntry);
+  return true;
+}
+
+function scheduleLivewatchSmartNativeRecovery(reason) {
+  const session = livewatchSmartNativeSession;
+  if (!session || session.activeIndex <= 0 || session.recoveryTimer || session.recoveryInFlight) return;
+
+  session.recoveryTimer = setTimeout(async () => {
+    session.recoveryTimer = null;
+    if (!isLivewatchSmartNativeEntry() || session.activeIndex <= 0) return;
+
+    const candidate = session.config.sourceOrder
+      .slice(0, session.activeIndex)
+      .find(key => !livewatchSmartNativeFailureIsRecent(key));
+    if (!candidate) {
+      scheduleLivewatchSmartNativeRecovery('candidate-cooldown-' + reason);
+      return;
+    }
+
+    session.recoveryInFlight = true;
+    const probeUrl = livewatchSmartNativeSourceUrl(session.config, candidate) +
+      (livewatchSmartNativeSourceUrl(session.config, candidate).includes('?') ? '&' : '?') +
+      'smartProbe=' + Date.now();
+    let probeOk = false;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), LIVEWATCH_SMART_NATIVE_PROBE_TIMEOUT_MS);
+    try {
+      const response = await fetch(probeUrl, { cache: 'no-store', signal: controller.signal });
+      const text = await response.text();
+      probeOk = response.ok && text.trimStart().startsWith('#EXTM3U');
+    } catch (_) {
+      probeOk = false;
+    } finally {
+      clearTimeout(timeout);
+      session.recoveryInFlight = false;
+    }
+
+    if (!isLivewatchSmartNativeEntry() || session.activeIndex <= 0) return;
+    if (!probeOk) {
+      livewatchSmartNativeMarkFailure(candidate, 'recovery-probe-' + reason);
+      scheduleLivewatchSmartNativeRecovery('probe-failed-' + candidate);
+      return;
+    }
+
+    switchLivewatchSmartNativeSource(candidate, 'yoyo-recovery-' + reason, session.activeKey);
+  }, LIVEWATCH_SMART_NATIVE_RECOVERY_DELAY_MS);
+}
+
+function handleLivewatchSmartNativeFailure(reason) {
+  const session = livewatchSmartNativeSession;
+  if (!isLivewatchSmartNativeEntry() || !session) return false;
+
+  const currentKey = session.activeKey;
+  livewatchSmartNativeMarkFailure(currentKey, reason);
+
+  if (session.recoveryFromKey && session.config.sourceOrder.includes(session.recoveryFromKey)) {
+    const recoveryKey = session.recoveryFromKey;
+    session.recoveryFromKey = '';
+    return switchLivewatchSmartNativeSource(recoveryKey, 'yoyo-recovery-failed-' + reason);
+  }
+
+  const nextKey = session.config.sourceOrder[session.activeIndex + 1];
+  if (nextKey) return switchLivewatchSmartNativeSource(nextKey, reason);
+
+  // The last fallback failed: keep the player alive by returning to the
+  // previous source instead of immediately replacing the live stream by OFFLINE.
+  for (let index = session.activeIndex - 1; index >= 0; index -= 1) {
+    const candidate = session.config.sourceOrder[index];
+    if (!livewatchSmartNativeFailureIsRecent(candidate)) {
+      return switchLivewatchSmartNativeSource(candidate, 'yoyo-terminal-recovery-' + reason);
+    }
+  }
+
+  return false;
+}
+
+function scheduleLivewatchSmartNativeStall(reason) {
+  const session = livewatchSmartNativeSession;
+  if (!isLivewatchSmartNativeEntry() || !session || session.stallTimer) return;
+
+  session.stallTimer = setTimeout(() => {
+    session.stallTimer = null;
+    if (!isLivewatchSmartNativeEntry() || videoEl?.paused || videoEl?.ended) return;
+    if (Date.now() - lastProgressTs >= LIVEWATCH_SMART_NATIVE_STALL_DELAY_MS) {
+      handleLivewatchSmartNativeFailure('stall-' + reason);
+    }
+  }, LIVEWATCH_SMART_NATIVE_STALL_DELAY_MS);
+}
+
+function noteLivewatchSmartNativePlaying() {
+  const session = livewatchSmartNativeSession;
+  if (!isLivewatchSmartNativeEntry() || !session) return;
+  if (session.stallTimer) {
+    clearTimeout(session.stallTimer);
+    session.stallTimer = null;
+  }
+  if (session.recoveryFromKey) {
+    console.info('[TVI Reality Smart] recovery confirmed', {
+      from: session.recoveryFromKey,
+      to: session.activeKey
+    });
+    session.recoveryFromKey = '';
+  }
+  scheduleLivewatchSmartNativeRecovery('playing');
+}
+
 function resolveWorkerPageDirectMediaUrl(sourceUrl) {
   if (!sourceUrl) return '';
 
@@ -1876,7 +2117,7 @@ function resolveWorkerPageDirectMediaUrl(sourceUrl) {
     path === '/' &&
     channel === 'tvi-reality'
   ) {
-    return `https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/api/live/${encodeURIComponent(channel)}/master.m3u8`;
+    return `https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/api/live/${encodeURIComponent(channel)}/cable/master.m3u8`;
   }
 
   if (path === '/pages/worker-iptv3.html' && channel) {
@@ -4835,14 +5076,29 @@ function fallbackToExternalPlayer(entry) {
 function playUrl(entry) {
   if (!entry || !entry.url || !videoEl) return;
 
+  const requestedSmartConfig = entry.livewatchSmartNative || getLivewatchSmartNativeConfig(entry.url);
   const directWorkerUrl = resolveWorkerPageDirectMediaUrl(entry.url);
   if (directWorkerUrl) {
+    const smartSourceKey = entry.livewatchSmartNativeSourceKey || requestedSmartConfig?.initialKey || '';
     entry = {
       ...entry,
-      url: directWorkerUrl,
+      url: requestedSmartConfig
+        ? livewatchSmartNativeSourceUrl(requestedSmartConfig, smartSourceKey)
+        : directWorkerUrl,
       originalPageUrl: entry.url,
-      isIframe: false
+      isIframe: false,
+      livewatchSmartNative: requestedSmartConfig || undefined,
+      livewatchSmartNativeSourceKey: smartSourceKey || undefined
     };
+  }
+
+  const smartConfig = entry.livewatchSmartNative ||
+    getLivewatchSmartNativeConfig(entry.originalPageUrl || entry.url);
+  const smartSourceKey = entry.livewatchSmartNativeSourceKey || smartConfig?.initialKey || '';
+  if (smartConfig && smartSourceKey) {
+    syncLivewatchSmartNativeSession(entry, smartConfig, smartSourceKey);
+  } else {
+    resetLivewatchSmartNativeSession();
   }
 
 
@@ -4945,6 +5201,7 @@ currentEntry = entry;
       console.error('HLS error:', data);
       // Fatal = manifest introuvable / flux down / erreur media irreparable
       if (data && data.fatal && currentEntry && !offlineMode) {
+        if (handleLivewatchSmartNativeFailure('HLS fatal')) return;
         if (switchCurrentEntryToDirectFallback('HLS fatal')) return;
         enterOfflineMode('HLS fatal');
         return;
@@ -6183,8 +6440,14 @@ exportIframeJsonBtn?.addEventListener('click', exportIframeToJson);
 importJsonBtn?.addEventListener('click', importFromJson);
 
 // Video events
-videoEl?.addEventListener('playing', () => { markProgress(); setStatus('Lecture en cours'); });
+videoEl?.addEventListener('playing', () => {
+  markProgress();
+  noteLivewatchSmartNativePlaying();
+  setStatus('Lecture en cours');
+});
 videoEl?.addEventListener('pause', () => setStatus('Pause'));
+videoEl?.addEventListener('waiting', () => scheduleLivewatchSmartNativeStall('waiting'));
+videoEl?.addEventListener('stalled', () => scheduleLivewatchSmartNativeStall('stalled'));
 videoEl?.addEventListener('waiting', () => setStatus('Buffering…'));
 videoEl?.addEventListener('error', () => {
   const mediaError = videoEl.error;
@@ -6198,6 +6461,7 @@ videoEl?.addEventListener('error', () => {
 
   // Si le flux principal tombe, on passe sur le MP4 OFFLINE
   if (!offlineMode && currentEntry && !currentEntry.isIframe) {
+    if (handleLivewatchSmartNativeFailure('video-error')) return;
     if (switchCurrentEntryToDirectFallback('Erreur de lecture')) return;
     enterOfflineMode('Erreur de lecture');
     return;
