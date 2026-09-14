@@ -696,9 +696,25 @@
       "isFavorite": false,
       "isIframe": true,
       "meoCallLetter": "DISCVHD"
-    
-      
-      
+      },
+  
+{
+      "id": "cmtv",
+      "name": "CMTV",
+      "url": "https://amazingtier.top/player/CMTVPT",
+      "logo": {
+        "type": "image",
+        "value": "/media/cmtv.png"
+      },
+      "group": "Généraliste",
+      "isFavorite": false,
+      "isIframe": true,
+      "programUrl": "https://nostv.pt/guia/139",
+      "meoCallLetter": "CMTV"
     }
-  ]
+
+
+
+
+]
 }

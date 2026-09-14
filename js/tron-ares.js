@@ -4114,7 +4114,12 @@ function createChannelElement(entry, index, sourceType, options) {
   const actionsDiv = document.createElement('div');
   actionsDiv.className = 'channel-actions';
 
-  const htmlFallbackUrl = String(entry?.htmlFallbackUrl || '').trim();
+  const entryId = String(entry?.id || '').trim().toLowerCase();
+  const entryName = normalizeName(entry?.name || '').trim().toLowerCase();
+  const isCmtvEntry = entryId === 'cmtv' || entryId === 'cmtvpt' || entryName === 'cmtv';
+  const htmlFallbackUrl = isActive && isCmtvEntry
+    ? (String(entry?.htmlFallbackUrl || '').trim() || '/pages/cmtv-secour.html')
+    : '';
   if (htmlFallbackUrl) {
     const htmlFallbackBtn = document.createElement('button');
     htmlFallbackBtn.type = 'button';
@@ -4127,9 +4132,7 @@ function createChannelElement(entry, index, sourceType, options) {
       const targetUrl = new URL(htmlFallbackUrl, window.location.href).href;
       window.location.assign(targetUrl);
     });
-    // Keep the HTML fallback visible with the card tags, where it cannot be
-    // squeezed out by the other action buttons (info, favorite, overlay).
-    tagsDiv.appendChild(htmlFallbackBtn);
+    actionsDiv.appendChild(htmlFallbackBtn);
   }
 
   // 🎞️ Badge "Trailer" (Films / channelList) — placé avant le bouton Favori

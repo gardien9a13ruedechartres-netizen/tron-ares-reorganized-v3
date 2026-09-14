@@ -3689,18 +3689,9 @@ function upstreamHeaders(url, accept = "*/*") {
     "User-Agent": "Mozilla/5.0"
   };
   if (url.origin === LIVEWATCH_ORIGIN) headers.Referer = `${LIVEWATCH_ORIGIN}/`;
-  if (url.origin === LOVETIER_ORIGIN) {
-    headers.Origin = LOVETIER_PLAYER_ORIGIN;
-    headers.Referer = `${LOVETIER_PLAYER_ORIGIN}/`;
-  }
-  if (isBluetierOrigin(url)) {
-    headers.Origin = WIDEIPTV_PLAYER_ORIGIN;
-    headers.Referer = `${WIDEIPTV_PLAYER_ORIGIN}/`;
-  }
-  if (url.origin === AMAZINGTIER_ORIGIN) {
-    headers.Origin = AMAZINGTIER_PLAYER_ORIGIN;
-    headers.Referer = `${AMAZINGTIER_PLAYER_ORIGIN}/`;
-  }
+  if (url.origin === LOVETIER_ORIGIN) headers.Referer = `${LOVETIER_PLAYER_ORIGIN}/`;
+  if (isBluetierOrigin(url)) headers.Referer = `${WIDEIPTV_PLAYER_ORIGIN}/`;
+  if (url.origin === AMAZINGTIER_ORIGIN) headers.Referer = `${AMAZINGTIER_PLAYER_ORIGIN}/`;
   return headers;
 }
 
@@ -4267,72 +4258,36 @@ async function resolveLovetierSource(channelKey, sourceName, source) {
   // WideIPTV expose le flux HLS Bluetier et renouvelle son token sur chaque
   // appel de la page player.
   const sourceUrl = new URL(`/player/${encodeURIComponent(channel)}`, WIDEIPTV_PLAYER_ORIGIN);
-  const startedAt = Date.now();
-  const browserFallback = (reason) => ({
-    channelKey,
-    mode: sourceName,
-    source: sourceName,
-    sourceId: source.id,
-    label: sourceDisplayName(source),
-    upstreamUrl: sourceUrl,
-    redirectUrl: sourceUrl.href,
-    masterText: "#EXTM3U\n",
-    latencyMs: Date.now() - startedAt,
-    browserFallback: reason || "provider-egress-blocked"
+  const sourceResponse = await fetchWithTimeout(sourceUrl, {
+    headers: {
+      Accept: "text/html,application/xhtml+xml",
+      "User-Agent": "Mozilla/5.0"
+    },
+    redirect: "follow"
   });
-
-  let sourceResponse;
-  try {
-    sourceResponse = await fetchWithTimeout(sourceUrl, {
-      headers: {
-        Accept: "text/html,application/xhtml+xml",
-        "User-Agent": "Mozilla/5.0"
-      },
-      redirect: "follow"
-    }, 10000);
-  } catch (error) {
-    return browserFallback(`player-fetch-${error?.message || "failed"}`);
-  }
-  if (!sourceResponse.ok) {
-    if ([401, 403, 408, 425, 429, 500, 502, 503, 504].includes(sourceResponse.status)) {
-      return browserFallback(`player-http-${sourceResponse.status}`);
-    }
-    throw new Error(`wideiptv source ${sourceResponse.status}`);
-  }
+  if (!sourceResponse.ok) throw new Error(`wideiptv source ${sourceResponse.status}`);
 
   const sourceHtml = await sourceResponse.text();
   const pattern = /streamUrl:\s*"((?:\\.|[^"])*)"/i;
   const match = sourceHtml.match(pattern);
-  if (!match || !match[1]) return browserFallback("player-stream-url-unavailable");
+  if (!match || !match[1]) throw new Error("wideiptv stream URL unavailable");
 
-  let upstreamUrl;
-  try {
-    upstreamUrl = new URL(match[1]
-      .replace(/\\\//g, "/")
-      .replace(/\\u0026/gi, "&"));
-  } catch (_) {
-    return browserFallback("player-stream-url-invalid");
-  }
+  const startedAt = Date.now();
+  const upstreamUrl = new URL(match[1]
+    .replace(/\\\//g, "/")
+    .replace(/\\u0026/gi, "&"));
   if (!isAllowedLovetierUrl(upstreamUrl) ||
       !upstreamUrl.pathname.toLowerCase().endsWith(".m3u8") ||
       !upstreamUrl.searchParams.has("token")) {
-    return browserFallback("player-stream-url-refused");
+    throw new Error("wideiptv stream URL refused");
   }
-  let master;
-  try {
-    master = await fetchWithTimeout(upstreamUrl, {
-      headers: upstreamHeaders(upstreamUrl, "application/vnd.apple.mpegurl,application/x-mpegURL,*/*"),
-      redirect: "follow"
-    });
-  } catch (error) {
-    return browserFallback(`master-fetch-${error?.message || "failed"}`);
-  }
+  const master = await fetchWithTimeout(upstreamUrl, {
+    headers: upstreamHeaders(upstreamUrl, "application/vnd.apple.mpegurl,application/x-mpegURL,*/*"),
+    redirect: "follow"
+  });
   const masterText = await master.text();
   const latencyMs = Date.now() - startedAt;
   if (!master.ok || !masterText.trimStart().startsWith("#EXTM3U")) {
-    if ([401, 403, 408, 425, 429, 500, 502, 503, 504].includes(master.status)) {
-      return browserFallback(`master-http-${master.status}`);
-    }
     throw new Error(`wideiptv master ${master.status}`);
   }
 
@@ -4651,14 +4606,6 @@ function playerPage(origin, channelKey, channel) {
         const amazingTierChannel = String(source.cloudingChannel || "");
         if (amazingTierChannel && amazingTierChannel !== "PortoCanal") {
           sourceRedirects[key] = `${AMAZINGTIER_PLAYER_ORIGIN}/player/${encodeURIComponent(amazingTierChannel)}`;
-        }
-      } else if (source.kind === "lovetier") {
-        // WideIPTV also binds its session/token to the viewer's browser.
-        // Keep this source in the Smart sequence, but let its own player
-        // perform the browser-side bootstrap and token renewal.
-        const wideIptvChannel = String(source.lovetierChannel || "");
-        if (wideIptvChannel) {
-          sourceRedirects[key] = `${WIDEIPTV_PLAYER_ORIGIN}/player/${encodeURIComponent(wideIptvChannel)}`;
         }
       }
     }

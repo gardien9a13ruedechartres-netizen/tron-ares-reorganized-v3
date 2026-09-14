@@ -3689,18 +3689,9 @@ function upstreamHeaders(url, accept = "*/*") {
     "User-Agent": "Mozilla/5.0"
   };
   if (url.origin === LIVEWATCH_ORIGIN) headers.Referer = `${LIVEWATCH_ORIGIN}/`;
-  if (url.origin === LOVETIER_ORIGIN) {
-    headers.Origin = LOVETIER_PLAYER_ORIGIN;
-    headers.Referer = `${LOVETIER_PLAYER_ORIGIN}/`;
-  }
-  if (isBluetierOrigin(url)) {
-    headers.Origin = WIDEIPTV_PLAYER_ORIGIN;
-    headers.Referer = `${WIDEIPTV_PLAYER_ORIGIN}/`;
-  }
-  if (url.origin === AMAZINGTIER_ORIGIN) {
-    headers.Origin = AMAZINGTIER_PLAYER_ORIGIN;
-    headers.Referer = `${AMAZINGTIER_PLAYER_ORIGIN}/`;
-  }
+  if (url.origin === LOVETIER_ORIGIN) headers.Referer = `${LOVETIER_PLAYER_ORIGIN}/`;
+  if (isBluetierOrigin(url)) headers.Referer = `${WIDEIPTV_PLAYER_ORIGIN}/`;
+  if (url.origin === AMAZINGTIER_ORIGIN) headers.Referer = `${AMAZINGTIER_PLAYER_ORIGIN}/`;
   return headers;
 }
 

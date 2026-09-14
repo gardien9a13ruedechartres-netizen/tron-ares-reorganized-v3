@@ -22,6 +22,39 @@
       border: 0;
     }
 
+    iframe.cmtv-frame-live,
+    iframe.cmtv-frame-retiring {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+      transition: opacity 700ms linear;
+    }
+
+    iframe.cmtv-frame-live {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    iframe.cmtv-frame-retiring {
+      z-index: 0;
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .cmtv-frame-preload {
+      position: fixed;
+      top: 0;
+      left: -10000px;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
     #menuToggle {
       position: fixed;
       top: 14px;
@@ -81,6 +114,8 @@
   </div>
 
   <iframe
+    id="fallbackFrame"
+    class="cmtv-frame-live"
     src="https://amazingtier.top/player/CMTVPT"
     title="Lecteur CMTVPT"
     allow="encrypted-media; fullscreen"
@@ -94,6 +129,206 @@
     const returnToPlayer = document.getElementById('returnToPlayer');
     const reloadFallback = document.getElementById('reloadFallback');
     const playerUrl = 'https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev/?channel=cmtv';
+    const fallbackPlayerUrl = 'https://amazingtier.top/player/CMTVPT';
+    const fallbackPlayerOrigin = 'https://amazingtier.top';
+    const FRAME_LOAD_TIMEOUT_MS = 15000;
+    const FRAME_RELOAD_COOLDOWN_MS = 20000;
+    const STREAM_FAULT_DELAY_MS = 9000;
+    const FRAME_REFRESH_INTERVAL_MS = 4 * 60 * 1000;
+    const FRAME_SWAP_WARMUP_MS = 4500;
+    const FRAME_SWAP_FADE_MS = 700;
+    const AUTO_RELOAD_WINDOW_MS = 5 * 60 * 1000;
+    const AUTO_RELOAD_LIMIT = 3;
+
+    let fallbackFrame = document.getElementById('fallbackFrame');
+    let frameLoadTimer = null;
+    let frameFaultTimer = null;
+    let frameSwapTimer = null;
+    let frameReloadTimeout = null;
+    let frameRefreshTimer = null;
+    let frameReloadInProgress = false;
+    let lastFrameLoadAt = 0;
+    let lastFrameReloadAt = 0;
+    let lastHealthySignalAt = 0;
+    let autoReloadHistory = [];
+    let frameLoadPending = false;
+
+    function logWatchdog(event, details) {
+      console.info('[CMTV secours]', event, details || '');
+    }
+
+    function clearFrameLoadTimer() {
+      if (frameLoadTimer) {
+        clearTimeout(frameLoadTimer);
+        frameLoadTimer = null;
+      }
+    }
+
+    function clearFrameFaultTimer() {
+      if (frameFaultTimer) {
+        clearTimeout(frameFaultTimer);
+        frameFaultTimer = null;
+      }
+    }
+
+    function clearFrameSwapTimer() {
+      if (frameSwapTimer) {
+        clearTimeout(frameSwapTimer);
+        frameSwapTimer = null;
+      }
+    }
+
+    function clearFrameRefreshTimer() {
+      if (frameRefreshTimer) {
+        clearTimeout(frameRefreshTimer);
+        frameRefreshTimer = null;
+      }
+    }
+
+    function schedulePreventiveFrameRefresh() {
+      clearFrameRefreshTimer();
+      frameRefreshTimer = setTimeout(() => {
+        requestInvisibleFrameReload('refresh-preventif-jeton');
+        schedulePreventiveFrameRefresh();
+      }, FRAME_REFRESH_INTERVAL_MS);
+    }
+
+    function armFrameLoadWatchdog(frame) {
+      clearFrameLoadTimer();
+      frameLoadPending = true;
+      frameLoadTimer = setTimeout(() => {
+        if (frame !== fallbackFrame || !frameLoadPending) return;
+        requestInvisibleFrameReload('iframe-load-timeout');
+      }, FRAME_LOAD_TIMEOUT_MS);
+    }
+
+    function rememberHealthySignal(signal) {
+      lastHealthySignalAt = Date.now();
+      clearFrameFaultTimer();
+      logWatchdog('flux-sain', signal);
+    }
+
+    function hasRecentHealthySignal() {
+      return lastHealthySignalAt > 0 && Date.now() - lastHealthySignalAt < FRAME_RELOAD_COOLDOWN_MS;
+    }
+
+    function reloadBudgetAvailable() {
+      const now = Date.now();
+      autoReloadHistory = autoReloadHistory.filter((time) => now - time < AUTO_RELOAD_WINDOW_MS);
+      return autoReloadHistory.length < AUTO_RELOAD_LIMIT;
+    }
+
+    function buildReloadUrl() {
+      const url = new URL(fallbackPlayerUrl);
+      url.searchParams.set('_ares_reload', `${Date.now()}-${Math.random().toString(36).slice(2)}`);
+      return url.href;
+    }
+
+    function requestInvisibleFrameReload(reason) {
+      const now = Date.now();
+      if (frameReloadInProgress) return;
+      if (now - lastFrameReloadAt < FRAME_RELOAD_COOLDOWN_MS) return;
+      if (!reloadBudgetAvailable()) {
+        logWatchdog('rechargements-auto-suspendus', 'limite atteinte');
+        return;
+      }
+
+      frameReloadInProgress = true;
+      lastFrameReloadAt = now;
+      autoReloadHistory.push(now);
+      clearFrameLoadTimer();
+      clearFrameFaultTimer();
+      clearFrameSwapTimer();
+
+      const replacement = document.createElement('iframe');
+      replacement.className = 'cmtv-frame-preload';
+      replacement.title = 'Lecteur CMTVPT';
+      replacement.allow = 'encrypted-media; fullscreen';
+      replacement.allowFullscreen = true;
+      replacement.scrolling = 'no';
+      replacement.src = buildReloadUrl();
+
+      let replacementLoaded = false;
+      const finishReload = () => {
+        if (!frameReloadInProgress) return;
+        frameReloadInProgress = false;
+        if (frameReloadTimeout) {
+          clearTimeout(frameReloadTimeout);
+          frameReloadTimeout = null;
+        }
+        replacement.remove();
+        logWatchdog('rechargement-auto-echec', reason);
+      };
+
+      replacement.addEventListener('load', () => {
+        replacementLoaded = true;
+        logWatchdog('nouveau-cadre-charge', reason);
+        frameSwapTimer = setTimeout(() => {
+          if (!frameReloadInProgress) return;
+          const previousFrame = fallbackFrame;
+          replacement.className = 'cmtv-frame-live';
+          replacement.id = 'fallbackFrame';
+          replacement.style.opacity = '0';
+          replacement.style.visibility = 'visible';
+          replacement.style.zIndex = '1';
+          previousFrame.className = 'cmtv-frame-retiring';
+          previousFrame.style.opacity = '1';
+          previousFrame.style.zIndex = '0';
+
+          requestAnimationFrame(() => {
+            replacement.style.opacity = '1';
+            previousFrame.style.opacity = '0';
+          });
+
+          frameSwapTimer = setTimeout(() => {
+            if (!frameReloadInProgress) return;
+            previousFrame.remove();
+            fallbackFrame = replacement;
+            frameLoadPending = false;
+            lastFrameLoadAt = Date.now();
+            frameReloadInProgress = false;
+            if (frameReloadTimeout) {
+              clearTimeout(frameReloadTimeout);
+              frameReloadTimeout = null;
+            }
+            logWatchdog('cadre-remplace-sans-noir', reason);
+            bindFrameWatchdog(fallbackFrame, false);
+            schedulePreventiveFrameRefresh();
+          }, FRAME_SWAP_FADE_MS);
+        }, FRAME_SWAP_WARMUP_MS);
+      });
+
+      document.body.appendChild(replacement);
+      frameReloadTimeout = setTimeout(() => {
+        if (!replacementLoaded) finishReload();
+      }, FRAME_LOAD_TIMEOUT_MS);
+    }
+
+    function scheduleFrameFault(reason) {
+      clearFrameFaultTimer();
+      frameFaultTimer = setTimeout(() => {
+        if (!hasRecentHealthySignal()) {
+          requestInvisibleFrameReload(reason);
+        }
+      }, STREAM_FAULT_DELAY_MS);
+      logWatchdog('flux-instable-detecte', reason);
+    }
+
+    function bindFrameWatchdog(frame, waitForLoad = true) {
+      lastFrameLoadAt = Date.now();
+      clearFrameLoadTimer();
+      frame.addEventListener('load', () => {
+        lastFrameLoadAt = Date.now();
+        frameLoadPending = false;
+        clearFrameLoadTimer();
+        logWatchdog('cadre-charge');
+        try {
+          frame.contentWindow.postMessage({ type: 'cmtv-health-check' }, fallbackPlayerOrigin);
+        } catch (_) {}
+        schedulePreventiveFrameRefresh();
+      });
+      if (waitForLoad) armFrameLoadWatchdog(frame);
+    }
 
     menuToggle.addEventListener('click', () => {
       const isOpen = menuToggle.getAttribute('aria-expanded') === 'true';
@@ -109,6 +344,31 @@
     reloadFallback.addEventListener('click', () => {
       window.location.reload();
     });
+
+    window.addEventListener('message', (event) => {
+      if (event.origin !== fallbackPlayerOrigin || !event.data || typeof event.data !== 'object') return;
+
+      const state = String(event.data.state || event.data.status || event.data.type || '').toLowerCase();
+      const healthyStates = ['playing', 'progress', 'loaded', 'ready', 'started', 'heartbeat', 'stream-ok'];
+      const faultStates = ['error', 'stalled', 'waiting', 'offline', 'no-signal', 'manifest-error', 'network-error', 'buffer-empty'];
+
+      if (healthyStates.some((value) => state.includes(value))) {
+        rememberHealthySignal(state);
+        return;
+      }
+
+      if (faultStates.some((value) => state.includes(value))) {
+        scheduleFrameFault(state);
+      }
+    });
+
+    setInterval(() => {
+      try {
+        fallbackFrame.contentWindow.postMessage({ type: 'cmtv-health-check' }, fallbackPlayerOrigin);
+      } catch (_) {}
+    }, 5000);
+
+    bindFrameWatchdog(fallbackFrame);
   </script>
 </body>
 </html>
