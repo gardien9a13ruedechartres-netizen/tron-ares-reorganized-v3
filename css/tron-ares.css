@@ -1000,6 +1000,164 @@ video { object-fit: fill; }
   height: 100%;
 }
 
+/* LiveWatch Smart yoyo controls */
+.yoyo-menu-toggle {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 45;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 1px solid rgba(0, 229, 255, .62);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, .18);
+  color: #eafcff;
+  box-shadow: 0 0 16px rgba(0, 229, 255, .2);
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.yoyo-menu-toggle:hover,
+.yoyo-menu-toggle:focus-visible {
+  border-color: rgba(255, 145, 0, .9);
+  box-shadow: 0 0 18px rgba(255, 145, 0, .28);
+  outline: none;
+}
+
+.yoyo-menu-panel {
+  position: absolute;
+  top: 56px;
+  right: 10px;
+  z-index: 44;
+  width: min(440px, calc(100% - 20px));
+  max-height: calc(100% - 66px);
+  overflow: auto;
+  padding: 14px;
+  border: 1px solid rgba(0, 229, 255, .48);
+  border-radius: 12px;
+  background: rgba(5, 7, 11, .92);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, .48), 0 0 22px rgba(0, 229, 255, .14);
+  color: #eafcff;
+  font-size: 12px;
+}
+
+.yoyo-menu-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.yoyo-menu-header strong {
+  color: #ffad20;
+  font-size: 14px;
+}
+
+.yoyo-menu-header span {
+  overflow: hidden;
+  color: rgba(234, 252, 255, .72);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.yoyo-menu-action,
+.yoyo-source-button {
+  min-height: 32px;
+  border: 1px solid rgba(0, 229, 255, .38);
+  border-radius: 7px;
+  background: rgba(0, 229, 255, .06);
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.yoyo-menu-action {
+  width: 100%;
+  padding: 6px 9px;
+}
+
+.yoyo-menu-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin: 8px 0;
+}
+
+.yoyo-menu-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  grid-column: 1 / -1;
+  color: inherit;
+  text-decoration: none;
+}
+
+.yoyo-menu-action:hover,
+.yoyo-menu-action:focus-visible,
+.yoyo-menu-action.active,
+.yoyo-source-button:hover,
+.yoyo-source-button:focus-visible,
+.yoyo-source-button.active {
+  border-color: rgba(255, 145, 0, .86);
+  background: rgba(255, 145, 0, .12);
+  outline: none;
+}
+
+.yoyo-source-list {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0;
+}
+
+.yoyo-source-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 9px;
+}
+
+.yoyo-source-button small {
+  color: rgba(234, 252, 255, .6);
+  font-size: 10px;
+}
+
+.yoyo-preference-actions {
+  margin: 8px 0 0;
+}
+
+.yoyo-log-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.yoyo-log {
+  max-height: 140px;
+  min-height: 34px;
+  margin: 8px 0 0;
+  padding: 7px;
+  overflow: auto;
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, .34);
+  color: rgba(234, 252, 255, .78);
+  font: 10px/1.4 ui-monospace, SFMono-Regular, Consolas, monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+  .yoyo-menu-toggle { top: 10px; right: 10px; }
+  .yoyo-menu-panel { top: 56px; right: 10px; width: min(440px, calc(100% - 20px)); }
+}
+
 /* iFrame overlay controls (ex: retour depuis bande-annonce) */
 .iframe-overlay-controls{
   position: absolute;

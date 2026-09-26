@@ -647,6 +647,19 @@ try {
   }
 } catch {}
 const iframeEl = document.getElementById('iframeEl');
+const yoyoMenuToggle = document.getElementById('menuToggle');
+const yoyoMenuPanel = document.getElementById('menuPanel');
+const yoyoToggleButton = document.getElementById('yoyoToggle');
+const yoyoSourceInfo = document.getElementById('yoyoSourceInfo');
+const yoyoSourcesEl = document.getElementById('yoyoSources');
+const yoyoStartButton = document.getElementById('startSmart');
+const yoyoAutoButton = document.getElementById('autoSource');
+const yoyoStatusLink = document.getElementById('yoyoStatusLink');
+const yoyoToggleLogButton = document.getElementById('toggleLog');
+const yoyoResetChoiceButton = document.getElementById('resetChoice');
+const yoyoCopyLogButton = document.getElementById('copyLog');
+const yoyoClearLogButton = document.getElementById('clearLog');
+const yoyoLogEl = document.getElementById('log');
 
 /**
  * Keep embedded trailers (YouTube, iFrame content) inside THIS page on mobile:
@@ -1861,18 +1874,343 @@ function isYoutubeUrl(url) {
 }
 
 const LIVEWATCH_SMART_NATIVE_ORIGIN = 'https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev';
-const LIVEWATCH_SMART_NATIVE_CHANNELS = new Set(['tvi-reality']);
-const LIVEWATCH_SMART_NATIVE_SOURCE_ORDER = Object.freeze(['cable', 'basic', 'clouding']);
 const LIVEWATCH_SMART_NATIVE_SOURCE_LABELS = Object.freeze({
+  auto: 'LiveWatch Smart',
   cable: 'LiveWatch cable',
   basic: 'LiveWatch basic',
-  clouding: 'AmazingTier'
+  'basic-hd': 'LiveWatch basic HD',
+  'basic-fhd': 'LiveWatch basic FHD',
+  'basic-4k': 'LiveWatch basic 4K',
+  'basic-backup': 'LiveWatch basic backup',
+  'basic-hd-backup': 'LiveWatch basic HD backup',
+  satellite: 'LiveWatch satellite',
+  'satellite-hd': 'LiveWatch satellite HD',
+  'satellite-fhd': 'LiveWatch satellite FHD',
+  direct: 'Direct LiveWatch',
+  livewatch: 'LiveWatch',
+  amazingtier: 'AmazingTier',
+  clouding: 'AmazingTier',
+  deviantart: 'WideIPTV',
+  vercel: 'Vercel iframe'
 });
+const LIVEWATCH_SMART_NATIVE_VERCEL_ORIGIN = 'https://cmtv-chrome-publish.vercel.app';
+const LIVEWATCH_SMART_NATIVE_VERCEL_CHANNELS = Object.freeze({
+  cmtv: 'cmtvpt',
+  btv: 'btv1',
+  rtp1: 'rtp1',
+  rtp2: 'rtp2',
+  'rtp-africa': 'rtpafrica',
+  rtp3: 'rtp3',
+  tvi: 'tvi',
+  'tvi-internacional': 'tvi-int',
+  'tvi-reality': 'tvireality',
+  'tvi-ficcao': 'tvi-ficcao',
+  'v-plus-tvi': 'vplustvi',
+  record: 'recordeuropa',
+  sic: 'sic',
+  'sic-noticias': 'sic-noticias',
+  'tcv-int': 'tcv-int',
+  'cnn-portugal': 'cnn-pt',
+  cnews: 'cnewsfr',
+  tf1: 'tf1fr',
+  'canal-plus': 'canalplfr',
+  'bein-sports-1': 'beinsport1fr',
+  'bein-sports-2': 'beinsport2fr',
+  'bein-sports-3': 'beinsport3fr',
+  'sport-tv-plus': 'sptplus',
+  'sport-tv-1': 'spt1',
+  'sport-tv-2': 'spt2',
+  'sport-tv-3': 'spt3',
+  'sport-tv-4': 'spt4',
+  'sport-tv-5': 'spt5',
+  'canal-foot': 'footplusfr',
+  'eurosport-1-pt': 'euro1pt',
+  'eurosport-2-pt': 'euro2pt',
+  'a-bola': 'abola',
+  'dazn-1': 'eleven1',
+  'dazn-2': 'eleven2',
+  'dazn-3': 'eleven3',
+  'dazn-4': 'eleven4',
+  'dazn-5': 'eleven5',
+  sporting: 'sporting',
+  'porto-canal': 'portocanal',
+  'canal-11': 'canal11',
+  m6: 'm6fr',
+  'canal-sport-360': 'canals360',
+  'canal-sport': 'canalsportfr',
+  'eurosport-1': 'euro1fr',
+  'eurosport-2': 'euro2fr',
+  'rmc-sport-1': 'rmcsport1fr',
+  'rmc-sport-2': 'rmcsport2fr',
+  'equidia-fr': 'er1fr',
+  'canal-docs': 'canalpldocs'
+});
+const LIVEWATCH_SMART_NATIVE_SOURCE_ORDERS = Object.freeze({
+  cmtv: ['cable', 'basic', 'amazingtier'],
+  rtp1: ['cable', 'basic-hd', 'clouding'],
+  rtp2: ['basic', 'cable', 'clouding'],
+  'rtp-africa': ['cable', 'basic', 'clouding'],
+  tvi: ['basic-hd', 'cable', 'clouding'],
+  'tvi-internacional': ['clouding'],
+  sic: ['cable', 'basic-hd', 'amazingtier'],
+  record: ['cable', 'basic', 'amazingtier'],
+  'tcv-int': ['cable', 'amazingtier'],
+  rtp3: ['cable', 'basic', 'clouding'],
+  'sic-noticias': ['basic-hd', 'cable', 'clouding'],
+  'cnn-portugal': ['cable', 'clouding'],
+  'tvi-reality': ['cable', 'basic', 'clouding'],
+  'tvi-ficcao': ['cable', 'basic', 'clouding'],
+  'v-plus-tvi': ['cable', 'clouding'],
+  btv: ['basic', 'cable', 'deviantart'],
+  tf1: ['basic', 'satellite', 'deviantart'],
+  'canal-plus': ['cable', 'satellite', 'basic-fhd', 'basic-hd', 'basic-4k', 'deviantart'],
+  'bein-sports-1': ['basic-fhd', 'cable', 'basic-hd', 'basic', 'basic-backup', 'satellite-fhd', 'satellite-hd', 'satellite', 'deviantart'],
+  'bein-sports-2': ['basic-fhd', 'satellite-fhd', 'cable', 'satellite', 'basic-hd', 'satellite-hd', 'basic', 'basic-backup', 'deviantart'],
+  'bein-sports-3': ['basic-fhd', 'satellite-fhd', 'cable', 'satellite', 'basic-hd', 'satellite-hd', 'basic', 'basic-backup', 'deviantart'],
+  'sport-tv-plus': ['basic-hd', 'cable', 'deviantart'],
+  'sport-tv-1': ['basic-hd', 'basic-hd-backup', 'basic', 'cable', 'basic-backup', 'deviantart'],
+  'sport-tv-2': ['basic-hd', 'basic-hd-backup', 'basic', 'cable', 'basic-backup', 'deviantart'],
+  'sport-tv-3': ['basic-hd', 'basic-hd-backup', 'basic', 'cable', 'basic-backup', 'deviantart'],
+  'sport-tv-4': ['basic-hd', 'basic', 'cable', 'basic-backup', 'deviantart'],
+  'sport-tv-5': ['basic-backup', 'cable', 'deviantart'],
+  'canal-foot': ['satellite-fhd', 'satellite-hd', 'cable', 'deviantart'],
+  'eurosport-1-pt': ['basic-hd', 'basic', 'cable', 'deviantart'],
+  'eurosport-2-pt': ['basic', 'cable', 'basic-backup', 'deviantart'],
+  'a-bola': ['basic', 'cable', 'deviantart'],
+  'dazn-1': ['cable', 'deviantart'],
+  'dazn-2': ['cable', 'deviantart'],
+  'dazn-3': ['cable', 'deviantart'],
+  'dazn-4': ['cable', 'deviantart'],
+  'dazn-5': ['cable', 'deviantart'],
+  sporting: ['basic', 'cable', 'basic-backup', 'deviantart'],
+  'porto-canal': ['basic', 'cable', 'basic-backup', 'clouding'],
+  'canal-11': ['basic-hd', 'cable', 'basic-hd-backup', 'deviantart'],
+  m6: ['livewatch', 'deviantart'],
+  cnews: ['satellite-fhd', 'cable', 'deviantart'],
+  'canal-sport-360': ['cable', 'satellite', 'deviantart'],
+  'canal-sport': ['basic-4k', 'basic-fhd', 'satellite-fhd', 'cable', 'satellite', 'basic-hd', 'satellite-hd', 'basic-hd-backup', 'deviantart'],
+  'eurosport-1': ['satellite-fhd', 'basic-hd', 'basic', 'cable', 'satellite', 'deviantart'],
+  'eurosport-2': ['deviantart'],
+  'rmc-sport-1': ['basic-4k', 'basic-fhd', 'basic-hd', 'basic', 'cable', 'satellite', 'basic-backup', 'deviantart'],
+  'rmc-sport-2': ['basic-fhd', 'basic-hd', 'basic', 'cable', 'satellite', 'basic-backup', 'deviantart'],
+  'equidia-fr': ['cable', 'basic-hd', 'satellite-hd', 'satellite', 'basic-hd-backup', 'deviantart'],
+  'canal-docs': ['cable', 'satellite-hd', 'deviantart']
+});
+
+function livewatchSmartNativeCableFirstOrder(channel) {
+  const configured = LIVEWATCH_SMART_NATIVE_SOURCE_ORDERS[channel] || ['cable', 'basic', 'clouding'];
+  const order = [...new Set(configured.map(key => String(key).trim().toLowerCase()).filter(Boolean))];
+  const cableIndex = order.indexOf('cable');
+  if (cableIndex > 0) order.unshift(order.splice(cableIndex, 1)[0]);
+  return Object.freeze(order);
+}
+
+const LIVEWATCH_SMART_NATIVE_CONFIGS = Object.freeze(
+  Object.fromEntries(
+    Object.entries(LIVEWATCH_SMART_NATIVE_VERCEL_CHANNELS).map(([channel, vercelChannel]) => {
+      const sourceOrder = [...livewatchSmartNativeCableFirstOrder(channel), 'vercel'];
+      const profile = {
+        sourceOrder: Object.freeze(sourceOrder),
+        vercelChannel
+      };
+      if (channel === 'cmtv') {
+        profile.sourceOrder = Object.freeze(['cable', 'direct', 'basic', 'amazingtier', 'vercel']);
+        profile.sourceLabels = Object.freeze({
+          cable: 'LiveWatch cable',
+          direct: 'Direct CMTV',
+          basic: 'LiveWatch basic',
+          amazingtier: 'AmazingTier',
+          vercel: 'Vercel CMTV'
+        });
+      }
+      return [channel, Object.freeze(profile)];
+    })
+  )
+);
+const LIVEWATCH_SMART_NATIVE_CHANNELS = new Set(Object.keys(LIVEWATCH_SMART_NATIVE_CONFIGS));
+const LIVEWATCH_SMART_NATIVE_SOURCE_MEMORY_KEY = 'livewatch-smart-source:';
+const LIVEWATCH_SMART_NATIVE_YOYO_MEMORY_KEY = 'livewatch-smart-yoyo:';
 const LIVEWATCH_SMART_NATIVE_STALL_DELAY_MS = 14000;
 const LIVEWATCH_SMART_NATIVE_RECOVERY_DELAY_MS = 60000;
 const LIVEWATCH_SMART_NATIVE_FAILURE_COOLDOWN_MS = 45000;
 const LIVEWATCH_SMART_NATIVE_PROBE_TIMEOUT_MS = 8000;
 let livewatchSmartNativeSession = null;
+let livewatchSmartNativeLogLines = [];
+
+function livewatchSmartNativeReadSource(channel, sourceOrder) {
+  const fallback = Array.isArray(sourceOrder) && sourceOrder.length ? sourceOrder[0] : 'auto';
+  try {
+    const remembered = String(localStorage.getItem(LIVEWATCH_SMART_NATIVE_SOURCE_MEMORY_KEY + channel) || '').trim();
+    if (remembered === 'auto' || (Array.isArray(sourceOrder) && sourceOrder.includes(remembered))) return remembered;
+  } catch {}
+  return fallback;
+}
+
+function livewatchSmartNativeRememberSource(config, key) {
+  if (!config || (key !== 'auto' && !config.sourceOrder.includes(key))) return;
+  try {
+    localStorage.setItem(LIVEWATCH_SMART_NATIVE_SOURCE_MEMORY_KEY + config.channel, key);
+  } catch {}
+}
+
+function livewatchSmartNativeClearMemory(config) {
+  if (!config) return;
+  try {
+    localStorage.removeItem(LIVEWATCH_SMART_NATIVE_SOURCE_MEMORY_KEY + config.channel);
+    localStorage.removeItem(LIVEWATCH_SMART_NATIVE_YOYO_MEMORY_KEY + config.channel);
+  } catch {}
+}
+
+function livewatchSmartNativeIsManualReason(reason) {
+  return String(reason || '').startsWith('manual');
+}
+
+function livewatchSmartNativeAppendLog(eventName, details = {}) {
+  const timestamp = new Date().toLocaleTimeString('fr-FR', { hour12: false });
+  const detailText = Object.entries(details)
+    .filter(([, value]) => value !== undefined && value !== null && value !== '')
+    .map(([key, value]) => `${key}=${String(value).replace(/\s+/g, ' ').slice(0, 110)}`)
+    .join(' ');
+  livewatchSmartNativeLogLines = [
+    ...livewatchSmartNativeLogLines.slice(-79),
+    `[${timestamp}] ${eventName}${detailText ? ` ${detailText}` : ''}`
+  ];
+  if (yoyoLogEl) yoyoLogEl.textContent = livewatchSmartNativeLogLines.join('\n');
+}
+
+function updateLivewatchSmartNativeMenu() {
+  const session = livewatchSmartNativeSession;
+  const active = Boolean(session?.config && currentEntry?.livewatchSmartNative);
+  yoyoMenuToggle?.classList.toggle('hidden', !active);
+  if (!active) {
+    yoyoMenuPanel?.classList.add('hidden');
+    yoyoMenuToggle?.setAttribute('aria-expanded', 'false');
+    yoyoMenuPanel?.setAttribute('aria-hidden', 'true');
+    return;
+  }
+
+  const activeLabel = livewatchSmartNativeSourceLabel(session.config, session.activeKey);
+  const rememberedKey = livewatchSmartNativeReadSource(session.config.channel, session.config.sourceOrder);
+  if (yoyoSourceInfo) {
+    yoyoSourceInfo.textContent = `${session.config.channel} - ${activeLabel}`;
+  }
+  if (yoyoToggleButton) {
+    yoyoToggleButton.textContent = `Yoyo : ${session.yoyoEnabled === false ? 'inactif' : 'actif'}`;
+    yoyoToggleButton.setAttribute('aria-pressed', session.yoyoEnabled === false ? 'false' : 'true');
+  }
+  if (yoyoStartButton) {
+    yoyoStartButton.textContent = `Demarrer Smart (${livewatchSmartNativeSourceLabel(session.config, session.config.sourceOrder[0])})`;
+    yoyoStartButton.title = `Demarrer avec ${livewatchSmartNativeSourceLabel(session.config, session.config.sourceOrder[0])}`;
+  }
+  if (yoyoAutoButton) {
+    yoyoAutoButton.classList.toggle('active', session.activeKey === 'auto');
+    yoyoAutoButton.setAttribute('aria-pressed', session.activeKey === 'auto' ? 'true' : 'false');
+  }
+  if (yoyoStatusLink) {
+    yoyoStatusLink.href = `${LIVEWATCH_SMART_NATIVE_ORIGIN}/api/live/${encodeURIComponent(session.config.channel)}/health`;
+  }
+  if (yoyoSourcesEl) {
+    yoyoSourcesEl.replaceChildren();
+    session.config.sourceOrder.forEach(key => {
+      const button = document.createElement('button');
+      const failed = livewatchSmartNativeFailureIsRecent(key);
+      button.type = 'button';
+      button.className = 'yoyo-source-button' + (key === session.activeKey ? ' active' : '');
+      button.dataset.yoyoSource = key;
+      button.innerHTML = `<span>${livewatchSmartNativeSourceLabel(session.config, key)}</span><small>${failed ? 'recent' : key === session.activeKey ? 'actif' : key === rememberedKey ? 'memorise' : 'manuel'}</small>`;
+      button.title = `Utiliser ${livewatchSmartNativeSourceLabel(session.config, key)}`;
+      yoyoSourcesEl.appendChild(button);
+    });
+  }
+}
+
+function setLivewatchSmartNativeYoyoEnabled(enabled, reason = 'manual') {
+  const session = livewatchSmartNativeSession;
+  if (!session) return;
+  session.yoyoEnabled = enabled !== false;
+  try {
+    localStorage.setItem(LIVEWATCH_SMART_NATIVE_YOYO_MEMORY_KEY + session.config.channel, session.yoyoEnabled ? '1' : '0');
+  } catch {}
+  if (!session.yoyoEnabled) clearLivewatchSmartNativeTimers();
+  livewatchSmartNativeAppendLog('yoyo', { state: session.yoyoEnabled ? 'on' : 'off', reason });
+  updateLivewatchSmartNativeMenu();
+}
+
+yoyoMenuToggle?.addEventListener('click', (event) => {
+  event.preventDefault();
+  const willOpen = yoyoMenuPanel?.classList.contains('hidden');
+  yoyoMenuPanel?.classList.toggle('hidden', !willOpen);
+  yoyoMenuToggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+  yoyoMenuPanel?.setAttribute('aria-hidden', willOpen ? 'false' : 'true');
+});
+
+yoyoToggleButton?.addEventListener('click', () => {
+  const enabled = livewatchSmartNativeSession?.yoyoEnabled !== false;
+  setLivewatchSmartNativeYoyoEnabled(!enabled, 'manual');
+});
+
+yoyoStartButton?.addEventListener('click', () => {
+  const session = livewatchSmartNativeSession;
+  const key = session?.config?.sourceOrder?.[0];
+  if (!key) return;
+  livewatchSmartNativeAppendLog('smart-start', { source: key });
+  switchLivewatchSmartNativeSource(key, 'manual-smart-start');
+});
+
+yoyoAutoButton?.addEventListener('click', () => {
+  if (!livewatchSmartNativeSession) return;
+  livewatchSmartNativeAppendLog('source-manual', { source: 'auto' });
+  switchLivewatchSmartNativeSource('auto', 'manual-auto');
+});
+
+yoyoResetChoiceButton?.addEventListener('click', () => {
+  const session = livewatchSmartNativeSession;
+  const key = session?.config?.sourceOrder?.[0];
+  if (!session || !key) return;
+  livewatchSmartNativeClearMemory(session.config);
+  livewatchSmartNativeAppendLog('memory-reset', { source: key, yoyo: 'on' });
+  setLivewatchSmartNativeYoyoEnabled(true, 'manual-memory-reset');
+  switchLivewatchSmartNativeSource(key, 'manual-memory-reset');
+});
+
+yoyoToggleLogButton?.addEventListener('click', () => {
+  if (!yoyoLogEl) return;
+  const willShow = yoyoLogEl.hidden;
+  yoyoLogEl.hidden = !willShow;
+  yoyoToggleLogButton.textContent = willShow ? 'Masquer logs' : 'Afficher logs';
+  yoyoToggleLogButton.setAttribute('aria-expanded', willShow ? 'true' : 'false');
+});
+
+yoyoSourcesEl?.addEventListener('click', (event) => {
+  const button = event.target?.closest?.('[data-yoyo-source]');
+  const key = button?.dataset?.yoyoSource;
+  if (!key || !livewatchSmartNativeSession) return;
+  livewatchSmartNativeAppendLog('source-manual', { source: key });
+  switchLivewatchSmartNativeSource(key, 'manual');
+});
+
+yoyoCopyLogButton?.addEventListener('click', async () => {
+  const text = livewatchSmartNativeLogLines.join('\n') || 'Aucun log';
+  try {
+    await navigator.clipboard.writeText(text);
+    setStatus('Logs copies');
+  } catch {
+    try { window.prompt('Copie les logs :', text); } catch {}
+  }
+});
+
+yoyoClearLogButton?.addEventListener('click', () => {
+  livewatchSmartNativeLogLines = [];
+  if (yoyoLogEl) yoyoLogEl.textContent = '';
+});
+
+document.addEventListener('click', (event) => {
+  if (!yoyoMenuPanel || yoyoMenuPanel.classList.contains('hidden')) return;
+  if (event.target?.closest?.('#menuToggle, #menuPanel')) return;
+  yoyoMenuPanel.classList.add('hidden');
+  yoyoMenuToggle?.setAttribute('aria-expanded', 'false');
+  yoyoMenuPanel.setAttribute('aria-hidden', 'true');
+});
 
 function getLivewatchSmartNativeConfig(sourceUrl) {
   if (!sourceUrl) return null;
@@ -1884,26 +2222,52 @@ function getLivewatchSmartNativeConfig(sourceUrl) {
     return null;
   }
 
-  const channel = String(pageUrl.searchParams.get('channel') || '').trim().toLowerCase();
-  if (
-    pageUrl.origin !== LIVEWATCH_SMART_NATIVE_ORIGIN ||
-    pageUrl.pathname !== '/' ||
-    !LIVEWATCH_SMART_NATIVE_CHANNELS.has(channel)
-  ) {
-    return null;
+  if (pageUrl.pathname !== '/') return null;
+
+  const isWorkerPage = pageUrl.origin === LIVEWATCH_SMART_NATIVE_ORIGIN;
+  const isVercelPage = pageUrl.origin === LIVEWATCH_SMART_NATIVE_VERCEL_ORIGIN;
+  if (!isWorkerPage && !isVercelPage) return null;
+
+  let channel = String(pageUrl.searchParams.get('channel') || '').trim().toLowerCase();
+  if (isVercelPage) {
+    channel = Object.keys(LIVEWATCH_SMART_NATIVE_CONFIGS).find(key =>
+      LIVEWATCH_SMART_NATIVE_CONFIGS[key].vercelChannel === channel
+    ) || '';
   }
+  if (!LIVEWATCH_SMART_NATIVE_CHANNELS.has(channel)) return null;
+
+  const profile = LIVEWATCH_SMART_NATIVE_CONFIGS[channel];
 
   return {
     channel,
     rootUrl: pageUrl.href,
-    sourceOrder: LIVEWATCH_SMART_NATIVE_SOURCE_ORDER.slice(),
-    initialKey: LIVEWATCH_SMART_NATIVE_SOURCE_ORDER[0]
+    sourceOrder: profile.sourceOrder.slice(),
+    sourceLabels: { ...LIVEWATCH_SMART_NATIVE_SOURCE_LABELS, ...(profile.sourceLabels || {}) },
+    vercelChannel: profile.vercelChannel || '',
+    initialKey: livewatchSmartNativeReadSource(channel, profile.sourceOrder)
   };
 }
 
 function livewatchSmartNativeSourceUrl(config, key) {
-  if (!config || !config.sourceOrder.includes(key)) return '';
+  if (!config || (key !== 'auto' && !config.sourceOrder.includes(key))) return '';
+  if (key === 'auto') {
+    return `${LIVEWATCH_SMART_NATIVE_ORIGIN}/api/live/${encodeURIComponent(config.channel)}/master.m3u8`;
+  }
+  if (key === 'vercel') {
+    if (!config.vercelChannel) return '';
+    const pageUrl = new URL('/', LIVEWATCH_SMART_NATIVE_VERCEL_ORIGIN);
+    pageUrl.searchParams.set('channel', config.vercelChannel);
+    return pageUrl.href;
+  }
   return `${LIVEWATCH_SMART_NATIVE_ORIGIN}/api/live/${encodeURIComponent(config.channel)}/${encodeURIComponent(key)}/master.m3u8`;
+}
+
+function livewatchSmartNativeSourceLabel(config, key) {
+  return config?.sourceLabels?.[key] || LIVEWATCH_SMART_NATIVE_SOURCE_LABELS[key] || key;
+}
+
+function livewatchSmartNativeUsesIframe(config, key) {
+  return key === 'vercel' && Boolean(config?.vercelChannel);
 }
 
 function clearLivewatchSmartNativeTimers() {
@@ -1917,6 +2281,7 @@ function clearLivewatchSmartNativeTimers() {
 function resetLivewatchSmartNativeSession() {
   clearLivewatchSmartNativeTimers();
   livewatchSmartNativeSession = null;
+  updateLivewatchSmartNativeMenu();
 }
 
 function syncLivewatchSmartNativeSession(entry, config, sourceKey) {
@@ -1936,17 +2301,21 @@ function syncLivewatchSmartNativeSession(entry, config, sourceKey) {
       rootUrl: config.rootUrl,
       config,
       activeKey: sourceKey,
-      activeIndex: Math.max(0, config.sourceOrder.indexOf(sourceKey)),
+      activeIndex: sourceKey === 'auto' ? -1 : Math.max(0, config.sourceOrder.indexOf(sourceKey)),
       failureAt: {},
       recoveryFromKey: '',
       stallTimer: null,
       recoveryTimer: null,
-      recoveryInFlight: false
+      recoveryInFlight: false,
+      yoyoEnabled: true
     };
+    try {
+      livewatchSmartNativeSession.yoyoEnabled = localStorage.getItem(LIVEWATCH_SMART_NATIVE_YOYO_MEMORY_KEY + config.channel) !== '0';
+    } catch {}
   } else {
     clearLivewatchSmartNativeTimers();
     livewatchSmartNativeSession.activeKey = sourceKey;
-    livewatchSmartNativeSession.activeIndex = Math.max(0, config.sourceOrder.indexOf(sourceKey));
+    livewatchSmartNativeSession.activeIndex = sourceKey === 'auto' ? -1 : Math.max(0, config.sourceOrder.indexOf(sourceKey));
   }
 
   livewatchSmartNativeSession.recoveryFromKey = String(entry?.livewatchSmartNativeRecoveryFromKey || '');
@@ -1961,11 +2330,13 @@ function livewatchSmartNativeMarkFailure(key, reason) {
   const session = livewatchSmartNativeSession;
   if (!session || !key) return;
   session.failureAt[key] = Date.now();
-  console.warn('[TVI Reality Smart] source failure', {
+  console.warn(`[${session.config?.channel || 'LiveWatch'} Smart] source failure`, {
     key,
-    label: LIVEWATCH_SMART_NATIVE_SOURCE_LABELS[key] || key,
+    label: livewatchSmartNativeSourceLabel(session.config, key),
     reason
   });
+  livewatchSmartNativeAppendLog('source-failure', { source: key, reason });
+  updateLivewatchSmartNativeMenu();
 }
 
 function livewatchSmartNativeFailureIsRecent(key) {
@@ -1976,33 +2347,51 @@ function livewatchSmartNativeFailureIsRecent(key) {
 function switchLivewatchSmartNativeSource(key, reason, recoveryFromKey = '') {
   const session = livewatchSmartNativeSession;
   if (!session || !currentEntry || !session.config) return false;
+  if (!livewatchSmartNativeIsManualReason(reason) && session.yoyoEnabled === false) return false;
   const nextUrl = livewatchSmartNativeSourceUrl(session.config, key);
   if (!nextUrl) return false;
 
+  if (livewatchSmartNativeIsManualReason(reason)) {
+    livewatchSmartNativeRememberSource(session.config, key);
+  }
+
   clearLivewatchSmartNativeTimers();
+  const previousKey = session.activeKey;
+  session.activeKey = key;
+  session.activeIndex = key === 'auto' ? -1 : Math.max(0, session.config.sourceOrder.indexOf(key));
   const nextEntry = {
     ...currentEntry,
     url: nextUrl,
     originalPageUrl: session.rootUrl,
-    isIframe: false,
+    isIframe: livewatchSmartNativeUsesIframe(session.config, key),
     livewatchSmartNative: session.config,
     livewatchSmartNativeSourceKey: key,
     livewatchSmartNativeRecoveryFromKey: recoveryFromKey || ''
   };
-  const label = LIVEWATCH_SMART_NATIVE_SOURCE_LABELS[key] || key;
-  console.info('[TVI Reality Smart] source switch', { from: session.activeKey, to: key, reason });
+  const label = livewatchSmartNativeSourceLabel(session.config, key);
+  console.info(`[${session.config.channel} Smart] source switch`, { from: previousKey, to: key, reason });
+  livewatchSmartNativeAppendLog('source-switch', { from: previousKey, to: key, reason });
   setStatus('Bascule vers ' + label);
+  if (livewatchSmartNativeUsesIframe(session.config, key)) {
+    destroyHls();
+    destroyDash();
+    playEntryAsOverlay(nextEntry);
+    updateLivewatchSmartNativeMenu();
+    scheduleLivewatchSmartNativeRecovery('iframe-fallback-' + reason);
+    return true;
+  }
   playUrl(nextEntry);
+  updateLivewatchSmartNativeMenu();
   return true;
 }
 
 function scheduleLivewatchSmartNativeRecovery(reason) {
   const session = livewatchSmartNativeSession;
-  if (!session || session.activeIndex <= 0 || session.recoveryTimer || session.recoveryInFlight) return;
+  if (!session || session.yoyoEnabled === false || session.activeIndex <= 0 || session.recoveryTimer || session.recoveryInFlight) return;
 
   session.recoveryTimer = setTimeout(async () => {
     session.recoveryTimer = null;
-    if (!isLivewatchSmartNativeEntry() || session.activeIndex <= 0) return;
+    if (!isLivewatchSmartNativeEntry() || session.yoyoEnabled === false || session.activeIndex <= 0) return;
 
     const candidate = session.config.sourceOrder
       .slice(0, session.activeIndex)
@@ -2043,7 +2432,7 @@ function scheduleLivewatchSmartNativeRecovery(reason) {
 
 function handleLivewatchSmartNativeFailure(reason) {
   const session = livewatchSmartNativeSession;
-  if (!isLivewatchSmartNativeEntry() || !session) return false;
+  if (!isLivewatchSmartNativeEntry() || !session || session.yoyoEnabled === false) return false;
 
   const currentKey = session.activeKey;
   livewatchSmartNativeMarkFailure(currentKey, reason);
@@ -2071,7 +2460,7 @@ function handleLivewatchSmartNativeFailure(reason) {
 
 function scheduleLivewatchSmartNativeStall(reason) {
   const session = livewatchSmartNativeSession;
-  if (!isLivewatchSmartNativeEntry() || !session || session.stallTimer) return;
+  if (!isLivewatchSmartNativeEntry() || !session || session.yoyoEnabled === false || session.stallTimer) return;
 
   session.stallTimer = setTimeout(() => {
     session.stallTimer = null;
@@ -2096,6 +2485,8 @@ function noteLivewatchSmartNativePlaying() {
     });
     session.recoveryFromKey = '';
   }
+  livewatchSmartNativeAppendLog('playing', { source: session.activeKey });
+  updateLivewatchSmartNativeMenu();
   scheduleLivewatchSmartNativeRecovery('playing');
 }
 
@@ -2111,6 +2502,11 @@ function resolveWorkerPageDirectMediaUrl(sourceUrl) {
 
   const path = pageUrl.pathname.toLowerCase();
   const channel = String(pageUrl.searchParams.get('channel') || '').trim().toLowerCase();
+
+  const smartConfig = getLivewatchSmartNativeConfig(sourceUrl);
+  if (smartConfig?.vercelChannel) {
+    return livewatchSmartNativeSourceUrl(smartConfig, smartConfig.initialKey);
+  }
 
   if (
     pageUrl.origin === 'https://tron-ares-livewatch-smart.victor-salema-53d.workers.dev' &&
@@ -5009,6 +5405,7 @@ function playEntryAsOverlay(entry) {
 
   currentEntry = entry;
   activePlaybackMode = 'iframe';
+  updateLivewatchSmartNativeMenu();
 
   updateNowPlayingCounter();
 
@@ -5089,7 +5486,9 @@ function playUrl(entry) {
         ? livewatchSmartNativeSourceUrl(requestedSmartConfig, smartSourceKey)
         : directWorkerUrl,
       originalPageUrl: entry.url,
-      isIframe: false,
+      isIframe: requestedSmartConfig
+        ? livewatchSmartNativeUsesIframe(requestedSmartConfig, smartSourceKey)
+        : false,
       livewatchSmartNative: requestedSmartConfig || undefined,
       livewatchSmartNativeSourceKey: smartSourceKey || undefined
     };
@@ -5115,6 +5514,13 @@ if (typeof radioPlaying !== 'undefined' && radioPlaying) {
 
 currentEntry = entry;
   // Met à jour la zone helper-text (qualité du film) dès la sélection
+  if (smartConfig) {
+    livewatchSmartNativeAppendLog('source-selected', {
+      source: smartSourceKey || smartConfig.initialKey,
+      channel: smartConfig.channel
+    });
+  }
+  updateLivewatchSmartNativeMenu();
   try { __updateHelperTextForEntry(entry); } catch {}
   // Met à jour tout de suite l'affichage des contrôles pistes (évite tout clignotement)
   updateTrackControlsVisibility();
@@ -5202,6 +5608,14 @@ currentEntry = entry;
 
     hlsInstance.on(Hls.Events.ERROR, (event, data) => {
       console.error('HLS error:', data);
+      if (isLivewatchSmartNativeEntry()) {
+        livewatchSmartNativeAppendLog('hls-error', {
+          type: data?.type || '',
+          details: data?.details || '',
+          fatal: data?.fatal ? 'true' : 'false',
+          status: data?.networkDetails?.status || ''
+        });
+      }
       // Fatal = manifest introuvable / flux down / erreur media irreparable
       if (data && data.fatal && currentEntry && !offlineMode) {
         if (handleLivewatchSmartNativeFailure('HLS fatal')) return;
