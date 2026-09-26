@@ -1,0 +1,24 @@
+HTTP/1.1 200 OK
+Date: Wed, 16 Sep 2026 22:49:33 GMT
+Content-Type: application/vnd.apple.mpegurl
+Content-Length: 4225
+Connection: keep-alive
+Access-Control-Allow-Origin: *
+Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+Access-Control-Allow-Headers: Range, Accept, Content-Type
+Access-Control-Allow-Methods: GET, HEAD, OPTIONS
+Access-Control-Expose-Headers: Content-Length, Content-Range, Accept-Ranges, X-Livewatch-Smart-Channel, X-Livewatch-Smart-Mode, X-Livewatch-Smart-Source, X-Livewatch-Smart-Source-Id, X-Livewatch-Smart-Detection, X-Livewatch-Smart-Latency
+CDN-Cache-Control: no-store
+Cloudflare-CDN-Cache-Control: no-store
+X-Livewatch-Smart-Channel: btv
+X-Livewatch-Smart-Detection: auto-basic
+X-Livewatch-Smart-Latency: 119ms
+X-Livewatch-Smart-Mode: auto
+X-Livewatch-Smart-Source: basic
+X-Livewatch-Smart-Source-Id: 419434034c29c7a3c7b07-c30c1297e6e5ce
+Report-To: {"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=Be%2FZg9TWEQRthiuasotbft2L%2F9SaOW4ag7oS8bb3YFzYvfcyiTCxtxrXAWaw3%2Feu4SVLx6CaUUtVslJVmr5yZXywwXTRCRayM%2FF938nONWghjSFPbEY1iJpFbZV%2Bqrfzi%2F1ucoL%2FuRlyp6fvnoV3jm8%2Fe2wRMX%2FikDSBQdpQ4s30cDHiRxN4Tjuh"}]}
+Nel: {"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}
+Server: cloudflare
+CF-RAY: a3c36cd0ae436ef9-CDG
+alt-svc: h3=":443"; ma=86400
+
